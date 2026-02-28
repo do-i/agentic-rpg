@@ -1,0 +1,91 @@
+# classes/mage.yaml
+class: mage
+name: Mage
+description: "A fragile but devastating spellcaster. Masters fire, wind, and lightning to obliterate foes."
+
+base_hp: 14
+base_mp: 20
+
+stat_growth:
+  str: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
+  dex: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+  con: [1, 1, 1, 2, 1, 1, 1, 2, 1, 1]
+  int: [4, 3, 4, 3, 4, 3, 4, 3, 4, 3]
+
+exp_curve: quadratic
+exp_base: 95
+exp_factor: 1.5
+
+equipment_slots:
+  weapon: [staff, wand, rod]
+  shield: []
+  helmet: [hat, circlet]
+  body: [robe]
+  accessory: [all]
+
+abilities:
+  - id: fireball
+    name: Fireball
+    unlock_level: 1
+    type: spell
+    element: fire
+    description: "Hurls a fireball at one enemy."
+    mp_cost: 4
+    spell_coeff: 1.2
+    target: single_enemy
+
+  - id: wind_blade
+    name: Wind Blade
+    unlock_level: 3
+    type: spell
+    element: wind
+    description: "Slices all enemies with razor wind."
+    mp_cost: 7
+    spell_coeff: 0.9
+    target: all_enemies
+
+  - id: frost_armor
+    name: Frost Armor
+    unlock_level: 5
+    type: buff
+    element: water
+    description: "Encases self in ice, raising DEF by 30% and reflecting 10% of physical damage for 3 turns."
+    mp_cost: 8
+    effect:
+      target: self
+      stat: def
+      modifier: 1.30
+      reflect_physical_pct: 0.10
+      duration_turns: 3
+
+  - id: chain_lightning
+    name: Chain Lightning
+    unlock_level: 7
+    type: spell
+    element: lightning
+    description: "Strikes one enemy and chains to up to 2 others for 70% damage."
+    mp_cost: 10
+    spell_coeff: 1.4
+    chain_targets: 2
+    chain_coeff: 0.70
+    target: single_enemy
+
+  - id: mana_drain
+    name: Mana Drain
+    unlock_level: 8
+    type: spell
+    description: "Drains MP from one enemy, restoring own MP equal to half the amount drained."
+    mp_cost: 3
+    drain_mp: 12
+    restore_pct: 0.50
+    target: single_enemy
+
+  - id: meteor
+    name: Meteor
+    unlock_level: 10
+    type: spell
+    element: fire
+    description: "Calls down a meteor for massive damage to all enemies."
+    mp_cost: 20
+    spell_coeff: 2.5
+    target: all_enemies
