@@ -109,18 +109,28 @@ atk: 12
 def: 6
 mres: 2
 dex: 14
-exp: 38 # player gets this EXP
-mc_drop: # drops at least one
-  - size: XS
-    qty: 5
-  - size: M
-    qty: 2
-  - size: L
-    qty: 1
-loot_table: loot_forest_wolf
+exp: 38  # player gets this EXP
+drops:
+  mc:
+    - size: XS
+      qty: 3
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: wolf_fang
+          weight: 80
+        - item: wolf_pelt
+          weight: 20
+    - pool:
+        - item: sharp_claw
+          weight: 15
+        - item: rare_wolf_gem
+          weight: 5
+        # weights sum to 20 → 80% nothing
 ```
-
-Value = what the player chooses to do with the bundle — exchange small ones for pt, hoard large ones for crafting.
+- Each pool is resolved independently — one roll per pool.
+- Value = what the player chooses to do with the bundle — exchange small ones for pt, hoard large ones for crafting.
 
 **One design decision to make:** `mc_tier` fixed per enemy, or weighted random between small/large? Fixed is simpler for V1 — rare enemies and bosses always drop `large`, commons always drop `small`.
 
