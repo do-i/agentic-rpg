@@ -17,7 +17,19 @@ mp_per_level  = int // 4 + class_base
 
 ## Encounter
 
-Typical encounter
+```
+# Roll 1 — does encounter happen?
+Roll D100
+If roll <= (encounter_rate * 100) → encounter triggered
+Otherwise → no encounter, keep walking
+
+# Roll 2 — which formation? (only if Roll 1 triggered)
+Roll D100
+Walk encounter_group entries by cumulative weight
+→ formation selected
+```
+
+**Typical encounter**
 
 ```yaml
 encounter_rate: 0.15             # required — drives the roll
@@ -25,7 +37,7 @@ encounter_group: forest_enemies  # required — enemy pool or specific boss
 once: false                      # optional, default false
 ```
 
-Boss Event Encount
+**Boss Event Encount**
 
 ```yaml
 encounter_rate: 1.0             # required — always 100%
@@ -36,6 +48,24 @@ on_complete:                    # optional, omit if no hooks
   start_dialogue: elder_aftermath
 ```
 
+## Encounter Group
+
+Enemy formation min: 1; max: 5
+weight total must always be 100.
+
+```yaml
+id: forest_enemies
+entries:
+  - formation: [forest_wolf]
+    weight: 40
+  - formation: [forest_wolf, forest_wolf]
+    weight: 30
+  - formation: [forest_wolf, forest_wolf, forest_wolf]
+    weight: 25
+  - formation: [forest_wolf, cave_bat]
+    weight: 5
+  - formation: [forest_wolf, forest_wolf, cave_bat, cave_bat]
+```
 
 ## Post-Battle Rewards
 
