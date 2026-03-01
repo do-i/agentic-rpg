@@ -13,10 +13,14 @@ output:
   item: hi_potion
   qty: 1
 inputs:
-  - item: herb_red
-    qty: 3
-  - item: magic_core_small
-    qty: 1
+  mc:
+    - size: L
+      qty: 2
+    - size: XL
+      qty: 1
+  items:
+    - id: herb_red
+      qty: 2
 pt_cost: 180
 unlock:
   flag: story_phase_08_dragon_cave
