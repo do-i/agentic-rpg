@@ -35,3 +35,12 @@ on_complete:                    # optional, omit if no hooks
   set_flag: boss_dragon_defeated
   start_dialogue: elder_aftermath
 ```
+
+
+## Post-Battle Rewards
+
+| Reward | Rule |
+|---|---|
+| **EXP** | Always; split equally among living members |
+| **Magic Core (MC)** | Always; minimum 1 guaranteed |
+| **Items** | Random chance; 0 or more |
