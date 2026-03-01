@@ -4,9 +4,9 @@
 
 A modular, classic JRPG engine inspired by Dragon Quest (NES/SNES era), designed with a clean separation between **engine core** and **story content**. Stories, worlds, and characters are delivered as self-contained plugins, letting developers (or solo creators) swap narratives without touching engine internals.
 
-**License:** MIT  
-**Language:** Python 3.11+  
-**Map Format:** Tiled (.tmx / .tsx)  
+**License:** MIT
+**Language:** Python 3.11+
+**Map Format:** Tiled (.tmx / .tsx)
 **Save Format:** YAML
 
 ---
@@ -100,8 +100,8 @@ exp_base: 100
 exp_factor: 1.5
 ```
 
-**Status Effects:** poison, sleep, paralysis, confusion, blind  
-**Enemy AI tiers:** random, weighted-random, pattern, scripted (boss)  
+**Status Effects:** poison, sleep, paralysis, confusion, blind
+**Enemy AI tiers:** random, weighted-random, pattern, scripted (boss)
 **Elemental affinities:** fire, ice, lightning, holy, dark (resistances per enemy)
 
 ---
@@ -186,8 +186,6 @@ effect:
 description: "Restores 30 HP to one ally."
 ```
 
----
-
 ### 6. Save System
 
 - 3 save slots (configurable)
@@ -236,8 +234,6 @@ flags:
   dungeon_b2_visited: false
 ```
 
----
-
 ### 7. Audio System
 
 - BGM channels: `overworld`, `dungeon`, `battle`, `town`, `boss`, `cutscene`
@@ -245,7 +241,6 @@ flags:
 - Plugin declares asset paths in `plugin.yaml`; engine handles all playback
 - Loop points supported via metadata sidecar `.loop` file (start/end sample offsets)
 
----
 
 ### 8. UI / HUD
 
@@ -255,8 +250,6 @@ flags:
 - Battle UI: command menu + enemy name + animated HP drain
 - Mini-map overlay (optional, togglable per plugin)
 - Font: bitmap pixel font renderer (plugin can supply custom font sheet)
-
----
 
 ## Plugin API (Story Package)
 
