@@ -4,16 +4,72 @@ Turn-based, command-menu driven
 
 **Command menu:** Attack / Spell / Item / Run
 
-**Derived values (computed, not stored in save):**
+## Combat Resolution & Damage Formula
+
 ```
-physical_dmg  = str + weapon_atk - enemy_def
-spell_dmg     = int * spell_coeff - enemy_mres
-hit_chance    = base_hit + (dex * 0.5)
-crit_chance   = min(dex * 0.02, 0.25)
-turn_order    = dex  (higher dex acts first)
-hp_per_level  = con // 3 + class_base
-mp_per_level  = int // 4 + class_base
+# Turn order
+order = dex descending; tie → party wins
+
+# Hit or Miss
+hit_chance = clamp(0.70 + (attacker_dex - defender_dex) * 0.02, 0.05, 0.95)
+
+# Physical
+damage = max(1, (str + weapon_atk) - enemy_def)
+
+# Crit (physical only)
+crit_chance = min(dex * 0.02, 0.25)
+crit_damage = damage * 1.5
+
+# Spell
+damage = max(1, (int * spell_coeff) - enemy_mres)
+# Note: spell_coeff see character-class-config
+
+# Heal
+amount = int * heal_coeff
+# Note: heal_coeff see character-class-config
 ```
+## Hit Chance
+
+| attacker_dex - defender_dex | hit_chance |
+|---|---|
+| +70 | 0.95 (Ceiling)|
+| +10 | 0.90 |
+| 0 (equal) | 0.70 |
+| -10 | 0.50 |
+| -20 | 0.30 |
+| -80 | 0.05 (floor)|
+
+
+## Resolution Order
+
+1. Compute hit_chance
+2. Roll hit → miss: show "MISS", end
+3. Compute base damage
+4. Roll crit → apply ×1.5 if triggered
+5. Apply final damage
+
+## Status Effect Interactions
+
+
+| Effect | Damage | Timing | Duration | Stack |
+|---|---|---|---|---|
+| `poison` | `max(1, floor(enemy_atk * 0.10))` | End of turn | until cured | reset on re-apply |
+| `sleep` | — | — | until hit | reset on re-apply |
+| `stun` | — | — | 1 turn | no |
+| `silence` | — | — | until cured | reset on re-apply |
+
+Good addition. Cure sources — locked:
+
+### Cure Matrix
+
+| Effect | Cleric: Cure | Item | Rest in bed / tent |
+|---|---|---|---|
+| `poison` | ✅ | ✅ | ✅ |
+| `sleep` | — | ✅ | — |
+| `stun` | — | — | — |
+| `silence` | ✅ | ✅ | ✅ |
+
+**Note:** Bed/tent also implies full HP/MP restore — needs to be defined when we cover the **Map/Town rest system**. Flagging that as a design item.
 
 ## Encounter
 
