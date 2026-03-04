@@ -40,15 +40,39 @@ status_effects: []
 | Constitution | `con` | HP growth per level, poison resistance |
 | Intelligence | `int` | Spell damage, MP growth per level |
 
-### Level
+## Level
 
-**Level-up table format** (per class, defined in plugin):
+**Threshold Formula**
+```
+exp_required(level) = exp_base * (level ^ exp_factor)
+```
+
+Example
+
+| Level | Hero (base 100) | Mage (base 95) | Rogue (base 90) |
+|---|---|---|---|
+| 2 | 200 | 190 | 180 |
+| 5 | 1,118 | 1,062 | 1,006 |
+| 10 | 3,162 | 3,004 | 2,846 |
+| 20 | 8,944 | 8,497 | 8,050 |
+| 50 | 35,355 | 33,587 | 31,820 |
+| 100 | 100,000 | 95,000 | 90,000 |
+
+### Exp Rules
+- Cumulative — total EXP ever earned, never resets
+- Level-up triggers when total_exp >= exp_required- (next_level)
+- EXP cap: 1,000,000 (from doc 01)
+- Level cap: 100
+- KO'd members get 0 EXP
+
+### Level-up table format
 ```yaml
 # classes/hero.yaml
 class: hero
 base_hp: 20
 base_mp: 8
 stat_growth:
+# index = level-1, cycles if level > array length
   str:  [2, 2, 3, 2, 3, 2, 3, 3, 2, 3]   # per level 1..N
   dex:  [1, 2, 1, 2, 2, 1, 2, 2, 2, 2]
   con:  [2, 2, 2, 3, 2, 2, 3, 2, 2, 3]
@@ -58,8 +82,39 @@ exp_base: 100
 exp_factor: 1.5
 ```
 
-## Class
+### HP/MP Growth
 
+```
+hp_gain per level = con + 6
+mp_gain per level = int + 6
+
+```
+- Full HP/MP restore on level-up ✅
+- Current HP/MP set to new `hp_max` / `mp_max`
+
+### Mix/Max HP/MP at Level 1 and 100
+
+| Class | HP@1 | HP@100 | MP@1 | MP@100 |
+|---|---|---|---|---|
+| Warrior | 28 | **928** | 0 | **700** |
+| Hero | 22 | **872** | 10 | **740** |
+| Cleric | 18 | **868** | 18 | **918** |
+| Mage | 14 | **764** | 20 | **970** |
+| Rogue | 16 | **766** | 6 | **706** |
+
+
+### Level-up Event Flow
+1. EXP added post-battle
+2. Check total_exp >= exp_required(next_level)
+3. Increment level
+4. Apply stat_growth for new level
+5. Recalculate hp_max, mp_max
+6. Full restore HP/MP
+7. Check ability unlock (level-gated)
+8. Show level-up screen
+9. Repeat from 2 (multi-level possible in one battle)
+
+## Class
 
 | # | Class | Role | Primary Stats | Element |
 |---|-------|------|---------------|---------|
