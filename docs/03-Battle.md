@@ -130,3 +130,26 @@ entries:
 | **EXP** | Always; split equally among living members |
 | **Magic Core (MC)** | Always; minimum 1 guaranteed |
 | **Items** | Random chance; 0 or more |
+
+## Game Over & Retry
+
+**Flow**
+```
+All members HP = 0
+  → Game Over screen
+    ├── Resume from last autosave
+    ├── Resume from any manual save slot
+    └── Quit
+```
+
+## No Penalty
+PT, items, flags all restored to save state
+Nothing is lost beyond progress since last save
+
+## Save State Restored
+
+- character status (hp, mp, status effects)
+- party repository (items, pt)
+- flags
+- map location
+
