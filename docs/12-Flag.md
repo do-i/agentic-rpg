@@ -30,3 +30,4 @@ flags:
 - Never reset in V1
 - Plugin author defines all flag IDs — no central registry needed
 - Flag IDs must be unique across the plugin manifest
+- Anywhere null was used as a default/no-condition value, replace with story_quest_started — injected at new game start, always true.
