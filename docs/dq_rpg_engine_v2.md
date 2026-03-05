@@ -97,7 +97,7 @@ stat_growth:
   int:  [1, 1, 1, 1, 2, 1, 1, 2, 1, 2]
 exp_curve: quadratic     # linear | quadratic | custom
 exp_base: 100
-exp_factor: 1.5
+exp_factor: 2.0
 ```
 
 **Status Effects:** poison, sleep, paralysis, confusion, blind
