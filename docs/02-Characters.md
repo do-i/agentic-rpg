@@ -5,7 +5,7 @@
 # party/member.yaml
 id: sera
 name: Sera
-class: mage
+class: sorcerer
 level: 5
 exp: 1240
 hp: 38
@@ -19,7 +19,7 @@ int: 22
 equipped:
   weapon: staff_oak
   armor: robe_silk
-  shield: null        # mage can't equip shields
+  shield: none        # sorcerer can't equip shields
 abilities_unlocked: [fireball]
 status_effects: []
 ```

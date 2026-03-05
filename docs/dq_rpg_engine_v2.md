@@ -216,9 +216,9 @@ player:
   equipment:
     weapon: iron_sword
     shield: leather_shield
-    helmet: null
+    helmet: none
     body: chain_mail
-    accessory: null
+    accessory: none
   inventory:
     - {id: herb, qty: 4}
     - {id: antidote, qty: 2}

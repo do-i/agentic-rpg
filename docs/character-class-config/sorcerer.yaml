@@ -1,5 +1,5 @@
-# classes/mage.yaml
-class: mage
+# classes/sorcerer.yaml
+class: sorcerer
 name: Mage
 description: "A fragile but devastating spellcaster. Masters fire, wind, and lightning to obliterate foes."
 
