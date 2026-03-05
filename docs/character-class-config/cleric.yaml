@@ -14,7 +14,7 @@ stat_growth:
 
 exp_curve: quadratic
 exp_base: 95
-exp_factor: 1.5
+exp_factor: 2.0
 
 equipment_slots:
   weapon: [staff, mace, wand]

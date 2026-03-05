@@ -44,6 +44,8 @@ status_effects: []
 
 **Threshold Formula**
 ```
+exp_required(level) = exp_base * (level ^ 2.0)
+
 exp_required(level) = exp_base * (level ^ exp_factor)
 ```
 
@@ -79,7 +81,7 @@ stat_growth:
   int:  [1, 1, 1, 1, 2, 1, 1, 2, 1, 2]
 exp_curve: quadratic     # linear | quadratic | custom
 exp_base: 100
-exp_factor: 1.5
+exp_factor: 2.0
 ```
 
 ### HP/MP Growth
