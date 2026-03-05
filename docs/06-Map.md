@@ -51,14 +51,6 @@ Defined per town in map config — cheaper in early towns, pricier later
 inn:
   cost_pt: 50
 ```
-
-## Transportation
-
-- walk
-- fly
-- sail
-- warp
-
 ## Town
 
 - no enemy encouter
