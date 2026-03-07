@@ -13,8 +13,8 @@
 
 - **Boolean only** — presence = `true`, absence = `false`
 - **Never cleared** — once set, permanent (V1)
-- **No central registry** — plugin author owns all flag IDs
-- **Uniqueness** — flag IDs must be unique across the entire plugin manifest
+- **No central registry** — scenario author owns all flag IDs
+- **Uniqueness** — flag IDs must be unique across the entire scenario manifest
 - **Evaluated at read time** — no pub/sub, no event bus; systems check flags on demand
 
 

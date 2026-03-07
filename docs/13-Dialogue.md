@@ -99,4 +99,4 @@ flags:
 ### Benefits
 - `story_quest_started` is a real flag — can be consumed by other systems too
 - Evaluation stays uniform: top-to-bottom, first match wins
-- Plugin author can use `story_quest_started` as baseline condition anywhere
+- Scenario author can use `story_quest_started` as baseline condition anywhere

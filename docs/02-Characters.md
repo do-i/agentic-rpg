@@ -127,7 +127,7 @@ mp_gain per level = int + 6
 | 5 | **Rogue** | High speed, crit, utility | DEX, STR | — |
 
 **Design notes:**
-- Hero is intentionally generic — good for the plugin-defined protagonist
+- Hero is intentionally generic — good for the scenario-defined protagonist
 - Warrior + Hero covers physical front line; Rogue acts first due to high DEX
 - Mage vs. Cleric splits INT usage cleanly: damage vs. support
 - Elemental coverage: Mage handles offensive elements, Cleric handles earth/healing magic
