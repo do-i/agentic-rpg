@@ -7,7 +7,7 @@
 ## Formation
 
 Front	Hero, Warrior
-Back	Mage, Cleric, Rogue
+Back	SorCerer, Cleric, Rogue
 Note: Rogue is flexible — can be front (melee) or back (ranged utility). You could encode this as an `attack_range: melee | ranged` flag per ability.
 
 ## Party-Wide Stats & Derived Values
@@ -21,7 +21,7 @@ Since you have front/back row implicit in role design, consider formalizing it:
 | Row | Members | Effect |
 |---|---|---|
 | Front | Hero, Warrior | Take full physical damage; deal full physical damage |
-| Back | Mage, Cleric, Rogue | Take reduced physical damage (×0.5); ranged/spell attacks unaffected |
+| Back | Sorcerer, Cleric, Rogue | Take reduced physical damage (×0.5); ranged/spell attacks unaffected |
 
 Rogue is flexible — can be front (melee) or back (ranged utility). You could encode this as an `attack_range: melee | ranged` flag per ability.
 
