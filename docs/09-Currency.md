@@ -1,20 +1,20 @@
 # 6. Currency
 
-- Unit: `pt` (point)
-- Source: Monster drops `Magic Core` → exchange at `Magic Core Shop` → `pt`
-- `pt` tied to `Party Repository` (story-consistent)
+- Unit: `GP` (Guild Point)
+- Source: Monster drops `Magic Core` → exchange at `Magic Core Shop` → `GP`
+- `GP` tied to `Party Repository` (story-consistent)
 - `Magic Core` dual-use: currency OR crafting material
 
 | Approach | Feel | Risk |
 |---|---|---|
-| Sell cores for pt, buy materials separately | Clean economy | Feels disconnected |
+| Sell cores for GP, buy materials separately | Clean economy | Feels disconnected |
 | Cores are the only crafting input | Tight resource tension | Player may never craft |
-| **Cores for crafting, pt earned separately** | Best separation | Needs a second pt source |
-| Tiered cores (low → pt, high → craft only) | Elegant | More complex to balance |
+| **Cores for crafting, GP earned separately** | Best separation | Needs a second GP source |
+| Tiered cores (low → GP, high → craft only) | Elegant | More complex to balance |
 
-**Recommendation: tiered cores** — small/common cores → exchanged for `pt`, large/rare cores → reserved for crafting. Naturally emerges from your "size and color drives value" note.
+**Recommendation: tiered cores** — small/common cores → exchanged for `GP`, large/rare cores → reserved for crafting. Naturally emerges from your "size and color drives value" note.
 
-**Suggested `pt` Income Sources**
+**Suggested `GP` Income Sources**
 
 | Source | Feel |
 |---|---|
@@ -25,7 +25,7 @@
 
 **Currency UX Recommendations**
 
-- Display `pt` balance always visible in HUD — it's the only currency unit, keep it prominent
-- Show core → pt exchange rate before confirming at Magic Core Shop
-- In shops, show current `pt` balance inline with item price so player never has to mentally subtract
-- No `gold` + `pt` split — your single-currency design is cleaner, stick with it
+- Display `GP` balance always visible in HUD — it's the only currency unit, keep it prominent
+- Show core → GP exchange rate before confirming at Magic Core Shop
+- In shops, show current `GP` balance inline with item price so player never has to mentally subtract
+- No `gold` + `GP` split — your single-currency design is cleaner, stick with it
