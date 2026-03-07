@@ -2,7 +2,7 @@
 
 ## Vision
 
-A modular, classic JRPG engine inspired by Dragon Quest (NES/SNES era), designed with a clean separation between **engine core** and **story content**. Stories, worlds, and characters are delivered as self-contained plugins, letting developers (or solo creators) swap narratives without touching engine internals.
+A modular, classic JRPG engine inspired by Dragon Quest (NES/SNES era), designed with a clean separation between **engine core** and **story content**. Stories, worlds, and characters are delivered as self-contained Scenarios, letting developers (or solo creators) swap narratives without touching engine internals.
 
 **License:** MIT
 **Language:** Python 3.11+
@@ -15,10 +15,10 @@ A modular, classic JRPG engine inspired by Dragon Quest (NES/SNES era), designed
 
 ```
 ┌─────────────────────────────────────────┐
-│              Story Plugin               │
+│              Story Scenario             │
 │  (maps, dialogue, quests, items, lore)  │
 └────────────────┬────────────────────────┘
-                 │ Plugin API
+                 │ Scenario API
 ┌────────────────▼────────────────────────┐
 │              Engine Core                │
 │  battle · movement · UI · save · audio  │
@@ -34,7 +34,7 @@ A modular, classic JRPG engine inspired by Dragon Quest (NES/SNES era), designed
 | Language | Python 3.11+ | Dataclasses + type hints throughout |
 | Renderer | Pygame-CE | Faster, maintained fork of Pygame |
 | Map format | Tiled (.tmx / .tsx) via `pytmx` | Full layer + object support |
-| Plugin scripting | Python (`RestrictedPython` sandbox) | Native, no FFI needed |
+| Scenario scripting | Python (`RestrictedPython` sandbox) | Native, no FFI needed |
 | Config format | YAML (`ruamel.yaml`) | Human-editable, comment-preserving |
 | Save format | YAML | Single file per slot, hand-editable |
 | Audio | `pygame.mixer` | BGM + SFX, looping support |
@@ -84,7 +84,7 @@ hp_per_level  = con // 3 + class_base
 mp_per_level  = int // 4 + class_base
 ```
 
-**Level-up table format** (per class, defined in plugin):
+**Level-up table format** (per class, defined in scenario):
 ```yaml
 # classes/hero.yaml
 class: hero
@@ -111,7 +111,7 @@ exp_factor: 2.0
 - Tiled `.tmx` maps loaded via `pytmx`
 - Layer types: Ground, Object, Collision, Event, Overhead
 - Overworld + sub-maps (towns, dungeons) with separate tilesets
-- Tile size: 16×16 or 32×32 (configured per plugin)
+- Tile size: 16×16 or 32×32 (configured per scenario)
 - Random encounter zones: `encounter_rate` set as Tiled object property
 - NPC system: proximity + talk-to triggers, state-driven dialogue
 - Warp/door transitions between maps with fade effect
@@ -163,7 +163,7 @@ lines:
 - Global flag store: `dict[str, bool | int]`
 - Quest stages: `NOT_STARTED → ACTIVE → COMPLETE → FAILED`
 - Triggers: map enter, NPC talk, flag change, item pickup, battle end
-- Plugin hooks for custom conditions (Python, sandboxed)
+- Scenario hooks for custom conditions (Python, sandboxed)
 
 ---
 
@@ -197,7 +197,7 @@ description: "Restores 30 HP to one ally."
 ```yaml
 # saves/slot_1.yaml
 schema_version: 1
-plugin: echoes_of_alindra
+scenario: echoes_of_alindra
 timestamp: "2026-02-27T14:32:00"
 playtime_seconds: 3721
 player:
@@ -238,26 +238,26 @@ flags:
 
 - BGM channels: `overworld`, `dungeon`, `battle`, `town`, `boss`, `cutscene`
 - SFX events: attack, spell cast, level up, chest open, menu select, game over
-- Plugin declares asset paths in `plugin.yaml`; engine handles all playback
+- Scenario declares asset paths in `scenario.yaml`; engine handles all playback
 - Loop points supported via metadata sidecar `.loop` file (start/end sample offsets)
 
 
 ### 8. UI / HUD
 
-- DQ-style bordered windows (configurable border tileset per plugin)
+- DQ-style bordered windows (configurable border tileset per scenario)
 - Status HUD: HP/MP displayed as `current/max` numbers (or bar, togglable)
 - Main menu: Items / Equipment / Spells / Status / Save / Settings
 - Battle UI: command menu + enemy name + animated HP drain
-- Mini-map overlay (optional, togglable per plugin)
-- Font: bitmap pixel font renderer (plugin can supply custom font sheet)
+- Mini-map overlay (optional, togglable per scenario)
+- Font: bitmap pixel font renderer (scenario can supply custom font sheet)
 
-## Plugin API (Story Package)
+## Scenario API (Story Package)
 
-A story plugin is a directory (or ZIP) with the following layout:
+A story scenario is a directory (or ZIP) with the following layout:
 
 ```
 my-story/
-├── plugin.yaml          # Metadata + engine config
+├── scenario.yaml          # Metadata + engine config
 ├── maps/                # Tiled .tmx maps + .tsx tilesets
 ├── dialogue/            # YAML dialogue scripts per NPC/event
 ├── quests/              # YAML quest definitions
@@ -271,9 +271,9 @@ my-story/
 └── scripts/             # Optional Python hooks (RestrictedPython sandbox)
 ```
 
-### plugin.yaml
+### scenario.yaml
 ```yaml
-plugin:
+scenario:
   name: "Echoes of Alindra"
   id: echoes_of_alindra
   version: "1.0.0"
@@ -334,8 +334,8 @@ dqengine/
 │   │   └── equipment.py
 │   ├── save/
 │   │   └── manager.py   # YAML read/write + schema migration
-│   ├── plugin/
-│   │   ├── loader.py    # Plugin discovery + validation
+│   ├── scenario/
+│   │   ├── loader.py    # Scenario discovery + validation
 │   │   └── sandbox.py   # RestrictedPython hook runner
 │   ├── audio/
 │   │   └── manager.py
@@ -346,7 +346,7 @@ dqengine/
 └── tests/
     ├── test_battle.py
     ├── test_save.py
-    └── test_plugin.py
+    └── test_scenario.py
 ```
 
 ---
@@ -366,9 +366,9 @@ dqengine/
 - [ ] Inventory + item use
 - [ ] YAML save/load (3-slot system)
 
-### Phase 2 — Plugin API
-- [ ] `plugin.yaml` loader + schema validation
-- [ ] Asset pipeline (load all assets from plugin directory)
+### Phase 2 — Scenario API
+- [ ] `scenario.yaml` loader + schema validation
+- [ ] Asset pipeline (load all assets from scenario directory)
 - [ ] Flag system + quest stage machine
 - [ ] Python hook sandbox (`RestrictedPython`)
 - [ ] NPC state machine + dialogue triggers
@@ -384,9 +384,9 @@ dqengine/
 
 ### Phase 4 — Tooling & Release
 - [ ] Tiled workflow documentation + example map
-- [ ] Plugin template generator (`dqengine new-plugin`)
-- [ ] Plugin validator CLI (`dqengine validate ./my-story`)
-- [ ] Demo story plugin (bundled with engine)
+- [ ] Scenario template generator (`dqengine new-scenario`)
+- [ ] Scenario validator CLI (`dqengine validate ./my-story`)
+- [ ] Demo story scenario (bundled with engine)
 - [ ] PyPI package publish
 
 ---
@@ -397,9 +397,9 @@ dqengine/
 - **Data-driven** — all stats, spells, enemies, items in YAML; no magic constants in Python code
 - **YAML-first** — save files and configs are human-readable and hand-editable by design
 - **Deterministic battle** — seeded `random.Random` instance; reproducible replays and testable
-- **Plugin safety** — `RestrictedPython` sandbox; hooks cannot import `os`, `sys`, or mutate engine internals
+- **Scenario safety** — `RestrictedPython` sandbox; hooks cannot import `os`, `sys`, or mutate engine internals
 - **Tiled-native** — engine is a first-class consumer of Tiled's object model; no proprietary map format
-- **MIT throughout** — engine, demo plugin, and tooling all MIT licensed
+- **MIT throughout** — engine, demo scenario, and tooling all MIT licensed
 
 ---
 
@@ -408,7 +408,7 @@ dqengine/
 - Multiplayer co-op battle (2-player local, shared screen)
 - Procedural dungeon generator as optional engine module
 - Web-based story editor (Flask/HTMX — no-code dialogue + quest builder)
-- Plugin marketplace / community story repository
+- Scenario marketplace / community story repository
 - Web export via Pygbag (WebAssembly Python + Pygame)
 
 ---
@@ -416,7 +416,7 @@ dqengine/
 ## Open Questions
 
 1. **Party size** — Start solo (DQ1 style) and expand to 4? Solo simplifies Phase 1 battle logic significantly.
-2. **Resolution lock** — Pin to 320×240 (NES DQ scale) or leave resolution configurable per plugin?
+2. **Resolution lock** — Pin to 320×240 (NES DQ scale) or leave resolution configurable per scenario?
 3. **Save migration** — `schema_version` field in YAML enables forward migration; implement migrator in Phase 2.
 4. **Tiled version target** — Confirm `pytmx` compatibility with Tiled 1.10+ (both JSON and XML map formats).
 

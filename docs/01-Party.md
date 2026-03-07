@@ -2,7 +2,7 @@
 # 1. Party
 
 ## Composition
-1 fixed protagonist (Hero class, plugin-defined) + 4 support members
+1 fixed protagonist (Hero class, scenario-defined) + 4 support members
 
 ## Formation
 
@@ -73,7 +73,7 @@ Party wipe handling: offer retry from last save. Possible to save the game at an
 - Party order: player-arrangeable
 - Last party memeber must join 10-15% of the story pass
 - EXP is equal split. KO'ed member get 0
-- Naming: player can name player-name. other members names are defined by plugin manifest
+- Naming: player can name player-name. other members names are defined by scenario manifest
 - Level cap 100
 - EXP cap 1,000,000
 - PT (point) cap 8,000,000

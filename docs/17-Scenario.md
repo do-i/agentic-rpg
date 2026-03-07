@@ -1,9 +1,9 @@
-# 17. Plugin Manifest
+# 17. Scenario Manifest
 
 ## Schema
 
 ```
-plugin/
+scenario/
 ├── manifest.yaml # entry point — this doc
 ├── classes/
 │   ├── hero.yaml
@@ -88,7 +88,7 @@ refs:
 
 | Decision | Rule |
 |---|---|
-| One protagonist per plugin | Fixed — no multi-hero support in V1 |
+| One protagonist per scenario | Fixed — no multi-hero support in V1 |
 | Protagonist name | Default from manifest, player can rename at New Game |
 | Party join order | Driven by `join_condition` flag — story-gated |
 | Last member join | Must be enforced at 10–15% story remaining (per `01-Party.md`) |

@@ -11,4 +11,4 @@
 
 - **New Game / Title screen flow**
 - **Settings** (keybinding, volume placeholders for later BGM)
-- **Plugin manifest schema** — protagonist name, party member names are "plugin-defined" but no spec
+- **Scenario manifest schema** — protagonist name, party member names are "scenario-defined" but no spec
