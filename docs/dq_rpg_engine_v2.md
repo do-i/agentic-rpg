@@ -102,7 +102,6 @@ exp_factor: 2.0
 
 **Status Effects:** poison, sleep, paralysis, confusion, blind
 **Enemy AI tiers:** random, weighted-random, pattern, scripted (boss)
-**Elemental affinities:** fire, ice, lightning, holy, dark (resistances per enemy)
 
 ---
 
