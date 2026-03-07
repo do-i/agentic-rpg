@@ -122,7 +122,7 @@ mp_gain per level = int + 6
 |---|-------|------|---------------|---------|
 | 1 | **Hero** | Balanced fighter / party leader | STR, CON | — |
 | 2 | **Warrior** | Tank, high DEF, physical damage | STR, CON | — |
-| 3 | **Sorcerer** | Offensive spells, fragile | INT, DEX | Fire / Ice / Wind |
+| 3 | **Sorcerer** | Offensive spells, fragile | INT, DEX | Fire / Water / Wind |
 | 4 | **Cleric** | Heals, buffs, light offense | INT, CON | Earth / Holy |
 | 5 | **Rogue** | High speed, crit, utility | DEX, STR | — |
 
