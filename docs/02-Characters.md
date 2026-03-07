@@ -51,7 +51,7 @@ exp_required(level) = exp_base * (level ^ exp_factor)
 
 Example
 
-| Level | Hero (base 100) | Mage (base 95) | Rogue (base 90) |
+| Level | Hero (base 100) | Sorcerer (base 95) | Rogue (base 90) |
 |---|---|---|---|
 | 2 | 200 | 190 | 180 |
 | 5 | 1,118 | 1,062 | 1,006 |
@@ -101,7 +101,7 @@ mp_gain per level = int + 6
 | Warrior | 28 | **928** | 0 | **700** |
 | Hero | 22 | **872** | 10 | **740** |
 | Cleric | 18 | **868** | 18 | **918** |
-| Mage | 14 | **764** | 20 | **970** |
+| Sorcerer | 14 | **764** | 20 | **970** |
 | Rogue | 16 | **766** | 6 | **706** |
 
 
@@ -122,15 +122,15 @@ mp_gain per level = int + 6
 |---|-------|------|---------------|---------|
 | 1 | **Hero** | Balanced fighter / party leader | STR, CON | — |
 | 2 | **Warrior** | Tank, high DEF, physical damage | STR, CON | — |
-| 3 | **Mage** | Offensive spells, fragile | INT, DEX | Fire / Ice / Wind |
+| 3 | **Sorcerer** | Offensive spells, fragile | INT, DEX | Fire / Ice / Wind |
 | 4 | **Cleric** | Heals, buffs, light offense | INT, CON | Earth / Holy |
 | 5 | **Rogue** | High speed, crit, utility | DEX, STR | — |
 
 **Design notes:**
 - Hero is intentionally generic — good for the scenario-defined protagonist
 - Warrior + Hero covers physical front line; Rogue acts first due to high DEX
-- Mage vs. Cleric splits INT usage cleanly: damage vs. support
-- Elemental coverage: Mage handles offensive elements, Cleric handles earth/healing magic
+- Sorcerer vs. Cleric splits INT usage cleanly: damage vs. support
+- Elemental coverage: Sorcerer handles offensive elements, Cleric handles earth/healing magic
 - Rogue's utility (e.g., flee success rate, chest traps, encounter rate reduction) fits naturally with your encounter system
 
 ## Ability
@@ -143,7 +143,7 @@ Each class has set of abilities. When EXP reachs certain point, new ability is r
 |-------|-------|-----|------|
 | Hero | Power Strike | Rally (party DEF up) | Limit Slash |
 | Warrior | Shield Bash | Taunt | Fortress Stance |
-| Mage | Fireball | Chain Lightning | Meteor |
+| Sorcerer | Fireball | Chain Lightning | Meteor |
 | Cleric | Heal | Cure Status | Revive |
 | Rogue | Steal | Shadow Step | Assassinate |
 
@@ -154,7 +154,7 @@ Each class has set of abilities. When EXP reachs certain point, new ability is r
 | type | Used by | Formula |
 |------|---------|---------|
 | `physical` | Hero, Warrior, Rogue | `(str + weapon_atk - enemy_def) * damage_coeff` |
-| `spell` | Mage, Cleric | `int * spell_coeff - enemy_mres` |
+| `spell` | Sorcerer, Cleric | `int * spell_coeff - enemy_mres` |
 | `heal` | Cleric, Hero | `int * heal_coeff` or `hp_max * heal_pct` |
 | `buff` | All | No damage — applies `effect` block |
 | `debuff` | Hero, Rogue | No damage — applies `effect` block |

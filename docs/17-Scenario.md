@@ -6,11 +6,11 @@
 scenario/
 ├── manifest.yaml # entry point — this doc
 ├── classes/
-│   ├── hero.yaml
-│   ├── warrior.yaml
-│   ├── mage.yaml
 │   ├── cleric.yaml
-│   └── rogue.yaml
+│   ├── hero.yaml
+│   ├── rogue.yaml
+│   ├── sorcerer.yaml
+│   └── warrior.yaml
 ├── dialogue/
 │   └── elder_intro.yaml
 ├── maps/
