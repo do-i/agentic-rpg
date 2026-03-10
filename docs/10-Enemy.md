@@ -218,6 +218,29 @@
 - Boss encounters would naturally drop more MC + guaranteed rare item on top of this baseline
 - Upon enemy flee, always drop at least one item
 
+
+## Barrier Enemies
+
+| Zone | Enemy | Type | Notes |
+|---|---|---|---|
+| 4 | Ghost | Undead | Mid-early wall |
+| 5 | Wind Elemental | Demon | Mid wall |
+
+**Implications:**
+
+- Player first encounters Ghost in Zone 4 — deals 0 damage, realizes something is wrong
+- Veil Breaker becomes a goal to unlock before or during Zone 5
+- Wind Elemental reinforces the mechanic in the next zone — confirms it's a system, not a bug
+- Both enemies still appear in random encounter sets — they're not rare, so the player hits them often enough to feel the friction
+
+**Open design questions to resolve later:**
+
+| Question | Options |
+|---|---|
+| Veil Breaker consumed or permanent? | Permanent |
+| Unique drop from barrier enemies? | Yes — rare item only they carry |
+| UI feedback when hitting barrier enemy | "A mysterious force blocks your attack" |
+
 ## Stat Block Design
 
 ### Core Stats (stored on enemy)
