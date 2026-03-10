@@ -3,7 +3,7 @@
 
 | # | Category | One-liner |
 |---|---|---|
-| 1 | **Stat Block** | HP, ATK, DEF, MRES, DEX, EXP yield, pt/core drop |
+| 1 | **Stat Block** | HP, ATK, DEF, MRES, DEX, EXP yield, gp/core drop |
 | 2 | **Elemental Profile** | Weaknesses, resistances, immunities |
 | 3 | **Ability & Move Set** | What actions the enemy can take per turn |
 | 4 | **Targeting Logic** | How the enemy picks its target |
@@ -238,7 +238,7 @@
 | Stat | Key | Notes |
 |---|---|---|
 | EXP yield | `exp` | Fixed value per enemy |
-| Magic Core tier | `mc_tier` | `small` / `large` — drives crafting vs pt economy |
+| Magic Core tier | `mc_tier` | `small` / `large` — drives crafting vs gp economy |
 | Magic Core qty | `mc_qty` | Min 1, can be a range e.g. `1-3` |
 | Item drops | `loot_table` | Reference to loot table id |
 
@@ -256,7 +256,7 @@ Size is the only axis — value emerges from the combination.
 
 | Size | Key | Role |
 |---|------|------|
-| Tiny | `XS` | Bulk common drop, primary pt source |
+| Tiny | `XS` | Bulk common drop, primary gp source |
 | Small | `S` | Standard drop |
 | Medium | `M` | Mid crafting material |
 | Large | `L` | Rare drop, advanced crafting |
@@ -265,26 +265,26 @@ Size is the only axis — value emerges from the combination.
 
 ## MC Exchange Rate
 
-| Size | PT value | Ratio |
+| Size | GP value | Ratio |
 |---|---|---|
-| XS | 1 pt | baseline |
-| S | 10 pt | ×10 |
-| M | 100 pt | ×10 |
-| L | 1,000 pt | ×10 |
-| XL | 10,000 pt | ×10 |
+| XS | 1 gp | baseline |
+| S | 10 gp | ×10 |
+| M | 100 gp | ×10 |
+| L | 1,000 gp | ×10 |
+| XL | 10,000 gp | ×10 |
 
 **Example Bundle Value**
 
-`1L + 2M + 5XS` = 1,000 + 200 + 5 = **1,205 pt** if fully exchanged
+`1L + 2M + 5XS` = 1,000 + 200 + 5 = **1,205 gp** if fully exchanged
 
 
 ## Key Design Points
 
 - XS is nearly worthless solo — meaningful only in bulk
-- XL from boss = 10,000 pt if exchanged — but recipe value should far exceed that to discourage selling
+- XL from boss = 10,000 gp if exchanged — but recipe value should far exceed that to discourage selling
 - Easy mental math for player — power of 10 is instantly readable
-- Recipe costs in pt now have a clear anchor: a recipe costing 500 pt = 5 S cores worth of exchange value
-- Crafting tension is sharp: **1 XL sold = 10,000 pt vs. used in end-game recipe** — that's a real decision
+- Recipe costs in gp now have a clear anchor: a recipe costing 500 gp = 5 S cores worth of exchange value
+- Crafting tension is sharp: **1 XL sold = 10,000 gp vs. used in end-game recipe** — that's a real decision
 
 
 ## Example
@@ -319,7 +319,7 @@ drops:
         # weights sum to 20 → 80% nothing
 ```
 - Each pool is resolved independently — one roll per pool.
-- Value = what the player chooses to do with the bundle — exchange small ones for pt, hoard large ones for crafting.
+- Value = what the player chooses to do with the bundle — exchange small ones for gp, hoard large ones for crafting.
 
 **One design decision to make:** `mc_tier` fixed per enemy, or weighted random between small/large? Fixed is simpler for V1 — rare enemies and bosses always drop `large`, commons always drop `small`.
 

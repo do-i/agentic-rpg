@@ -76,6 +76,6 @@ Party wipe handling: offer retry from last save. Possible to save the game at an
 - Naming: player can name player-name. other members names are defined by scenario manifest
 - Level cap 100
 - EXP cap 1,000,000
-- PT (point) cap 8,000,000
+- GP (Guild Point) cap 8,000,000
 - STR, DEX, etc cap: 100
 - each item type count cap: 100

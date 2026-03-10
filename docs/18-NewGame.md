@@ -35,7 +35,7 @@
         │     ├── flags: [story_quest_started]
         │     ├── party: protagonist only
         │     ├── party_repository: empty
-        │     ├── pt: 0
+        │     ├── gp: 0
         │     └── save_slot: none (unsaved)
         │
         ├── 3. Opening cutscene
@@ -84,7 +84,7 @@ Do we allow non English language name -- e.g., Japanese?
 | `flags` | `[story_quest_started]` |
 | `party` | Protagonist only |
 | `party_repository` | Empty |
-| `pt` | 0 |
+| `gp` | 0 |
 | `map` | `start.map` |
 | `position` | `start.position` |
 | `save_slots` | All empty |
