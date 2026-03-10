@@ -1,0 +1,40 @@
+id: zone_07_sunken_cave
+name: Sunken Cave
+encounter_rate: 0.15
+
+set_a:
+  entries:
+    - formation: [venom_spider, venom_spider]
+      weight: 30
+    - formation: [bone_archer, dark_skeleton]
+      weight: 25
+    - formation: [dark_skeleton, dark_skeleton]
+      weight: 20
+    - formation: [cave_golem]
+      weight: 10
+    - formation: [blood_bat, blood_bat]
+      weight: 10
+    - formation: [cave_golem, blood_bat]
+      weight: 5
+
+set_b:
+  entries:
+    - formation: [iron_gargoyle, iron_gargoyle]
+      weight: 30
+    - formation: [fungus_spore, fungus_spore]
+      weight: 25
+    - formation: [iron_gargoyle, fungus_spore]
+      weight: 20
+    - formation: [cave_golem]
+      weight: 10
+    - formation: [blood_bat, blood_bat]
+      weight: 10
+    - formation: [cave_golem, blood_bat]
+      weight: 5
+
+boss:
+  id: stone_dragon
+  name: Stone Dragon
+  once: true
+  on_complete:
+    set_flag: boss_zone07_defeated

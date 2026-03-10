@@ -1,0 +1,40 @@
+id: zone_01_starting_forest
+name: Starting Forest
+encounter_rate: 0.10
+
+set_a:
+  entries:
+    - formation: [cave_spider, cave_spider]
+      weight: 30
+    - formation: [giant_rat, giant_rat]
+      weight: 25
+    - formation: [wild_wolf, cave_spider]
+      weight: 20
+    - formation: [wild_wolf]
+      weight: 10
+    - formation: [cave_bat]
+      weight: 10
+    - formation: [treant]
+      weight: 5
+
+set_b:
+  entries:
+    - formation: [venom_bat, venom_bat]
+      weight: 30
+    - formation: [forest_spider]
+      weight: 30
+    - formation: [venom_bat, forest_spider]
+      weight: 15
+    - formation: [wild_wolf]
+      weight: 10
+    - formation: [cave_bat]
+      weight: 10
+    - formation: [treant]
+      weight: 5
+
+boss:
+  id: forest_spider_giant
+  name: Forest Spider (Giant)
+  once: true
+  on_complete:
+    set_flag: boss_zone01_defeated
