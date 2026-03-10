@@ -32,6 +32,11 @@ set_b:
     - formation: [ghost]
       weight: 5
 
+barrier_enemies:
+  - id: ghost
+    requires_item: veil_breaker
+    blocked_message: "A mysterious force blocks your attack."
+
 boss:
   id: plague_zombie_ancient
   name: Plague Zombie (Ancient)

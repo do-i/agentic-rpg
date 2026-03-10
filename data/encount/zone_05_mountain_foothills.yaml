@@ -32,6 +32,11 @@ set_b:
     - formation: [wind_elemental]
       weight: 5
 
+barrier_enemies:
+  - id: wind_elemental
+    requires_item: veil_breaker
+    blocked_message: "A mysterious force blocks your attack."
+
 boss:
   id: wyvern
   name: Wyvern

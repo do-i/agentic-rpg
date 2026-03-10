@@ -1,0 +1,114 @@
+# Zone 6 — Mountain Pass
+---
+id: frost_wolf
+name: Frost Wolf
+type: beast
+zone: 6
+hp: 145
+atk: 27
+def: 17
+mres: 15
+dex: 21
+exp: 172
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: frost_pelt
+          weight: 60
+        - item: ice_fang
+          weight: 40
+
+---
+id: harpy
+name: Harpy
+type: beast
+zone: 6
+hp: 128
+atk: 28
+def: 16
+mres: 15
+dex: 23
+exp: 180
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: harpy_feather
+          weight: 65
+        - item: talon_shard
+          weight: 35
+
+---
+id: dark_knight
+name: Dark Knight
+type: demon
+zone: 6
+hp: 155
+atk: 34  # +15%
+def: 18
+mres: 20  # +10%
+dex: 23  # +10%
+exp: 198
+drops:
+  mc:
+    - size: S
+      qty: 2
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: dark_armor_shard
+          weight: 50
+        - item: cursed_blade
+          weight: 50
+
+---
+id: griffon
+name: Griffon
+type: beast
+zone: 6
+hp: 140
+atk: 28
+def: 17
+mres: 15
+dex: 22
+exp: 175
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: griffon_feather
+          weight: 60
+        - item: beak_shard
+          weight: 40
+
+---
+id: iron_gargoyle
+name: Iron Gargoyle
+type: construct
+zone: 6
+hp: 192  # base 160 +20%
+atk: 26
+def: 32  # +25%
+mres: 13  # -20%
+dex: 17  # -15%
+exp: 188
+drops:
+  mc:
+    - size: S
+      qty: 2
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: iron_wing
+          weight: 60
+        - item: gargoyle_core
+          weight: 40

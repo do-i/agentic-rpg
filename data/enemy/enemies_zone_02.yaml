@@ -1,0 +1,122 @@
+# Zone 2 — Open Plains
+---
+id: forest_wolf
+name: Forest Wolf
+type: beast
+zone: 2
+hp: 45
+atk: 12
+def: 6
+mres: 3
+dex: 14
+exp: 38
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: wolf_fang
+          weight: 60
+        - item: wolf_pelt
+          weight: 30
+        - item: sharp_claw
+          weight: 10
+
+---
+id: horned_rabbit
+name: Horned Rabbit
+type: beast
+zone: 2
+hp: 35
+atk: 14
+def: 5
+mres: 3
+dex: 14
+exp: 42
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: rabbit_horn
+          weight: 60
+        - item: soft_fur
+          weight: 40
+
+---
+id: sand_serpent
+name: Sand Serpent
+type: beast
+zone: 2
+hp: 38
+atk: 13
+def: 5
+mres: 4
+dex: 13
+exp: 45
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: serpent_scale
+          weight: 65
+        - item: venom_gland
+          weight: 35
+
+---
+id: forest_spider
+name: Forest Spider
+type: beast
+zone: 2
+hp: 36
+atk: 12
+def: 5
+mres: 3
+dex: 12
+exp: 40
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: spider_silk
+          weight: 55
+        - item: venom_sac
+          weight: 45
+
+---
+id: venom_bat
+name: Venom Bat
+type: beast
+zone: 2
+hp: 33
+atk: 11
+def: 4
+mres: 3
+dex: 14
+exp: 36
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: bat_wing
+          weight: 60
+        - item: venom_sac
+          weight: 40

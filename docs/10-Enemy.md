@@ -241,7 +241,33 @@
 | Unique drop from barrier enemies? | Yes — rare item only they carry |
 | UI feedback when hitting barrier enemy | "A mysterious force blocks your attack" |
 
-## Stat Block Design
+## Stat Scaling Framework
+
+### Zone → Stat Range
+
+| Zone | HP | ATK | DEF | MRES | DEX | EXP |
+|---|---|---|---|---|---|---|
+| 1 | 20-40 | 8-12 | 3-6 | 2-4 | 8-12 | 20-40 |
+| 2 | 35-55 | 11-15 | 5-8 | 3-6 | 10-14 | 35-60 |
+| 3 | 50-75 | 14-18 | 7-11 | 5-8 | 12-16 | 55-85 |
+| 4 | 70-100 | 17-22 | 10-14 | 8-12 | 14-18 | 80-120 |
+| 5 | 95-130 | 21-26 | 13-17 | 11-15 | 16-20 | 115-160 |
+| 6 | 125-165 | 25-31 | 16-21 | 14-18 | 18-23 | 155-210 |
+| 7 | 160-205 | 30-37 | 20-26 | 17-22 | 21-26 | 205-265 |
+| 8 | 200-250 | 36-44 | 25-32 | 21-27 | 24-30 | 260-330 |
+| 9 | 245-300 | 43-52 | 31-39 | 26-33 | 28-35 | 325-405 |
+| 10 | 295-380 | 51-63 | 38-48 | 32-41 | 33-42 | 400-510 |
+
+Boss multiplier: `x2.5 HP`, `x1.5 ATK/DEF/MRES`, `x3 EXP`
+
+### Type modifiers
+
+| Type | HP | ATK | DEF | MRES | DEX |
+|---|---|---|---|---|---|
+| Beast | base | base | base | base | base |
+| Undead | +10% | base | base | +15% | -10% |
+| Construct | +20% | base | +25% | -20% | -15% |
+| Demon | base | +15% | base | +10% | +10% |
 
 ### Core Stats (stored on enemy)
 

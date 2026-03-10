@@ -1,0 +1,136 @@
+# Zone 5 — Mountain Foothills
+---
+id: stone_golem
+name: Stone Golem
+type: construct
+zone: 5
+hp: 156  # base 130 +20%
+atk: 22
+def: 26  # base 21 +25%
+mres: 10  # base 13 -20%
+dex: 14  # base 17 -15%
+exp: 138
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: golem_core
+          weight: 60
+        - item: stone_chunk
+          weight: 40
+
+---
+id: iron_golem
+name: Iron Golem
+type: construct
+zone: 5
+hp: 162  # base 135 +20%
+atk: 24
+def: 28  # +25%
+mres: 11  # -20%
+dex: 14  # -15%
+exp: 148
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: golem_core
+          weight: 55
+        - item: iron_plate
+          weight: 45
+
+---
+id: rock_crab
+name: Rock Crab
+type: construct
+zone: 5
+hp: 144  # base 120 +20%
+atk: 21
+def: 28  # +25%
+mres: 9  # -20%
+dex: 13  # -15%
+exp: 128
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: crab_shell
+          weight: 60
+        - item: hard_claw
+          weight: 40
+
+---
+id: sand_worm
+name: Sand Worm
+type: beast
+zone: 5
+hp: 120
+atk: 24
+def: 14
+mres: 12
+dex: 16
+exp: 140
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: worm_hide
+          weight: 65
+        - item: sand_crystal
+          weight: 35
+
+---
+id: wind_elemental
+name: Wind Elemental
+type: demon
+zone: 5
+barrier: true
+requires_item: veil_breaker
+hp: 108
+atk: 28  # +15%
+def: 13
+mres: 17  # +10%
+dex: 24  # +10%
+exp: 152
+drops:
+  mc:
+    - size: S
+      qty: 2
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: wind_crystal
+          weight: 55
+        - item: gale_feather
+          weight: 45
+
+---
+id: plague_rat
+name: Plague Rat
+type: beast
+zone: 5
+hp: 100
+atk: 22
+def: 13
+mres: 11
+dex: 18
+exp: 122
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: rat_tail
+          weight: 55
+        - item: plague_sample
+          weight: 45

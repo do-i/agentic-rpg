@@ -1,0 +1,120 @@
+# Zone 7 — Sunken Cave
+---
+id: cave_golem
+name: Cave Golem
+type: construct
+zone: 7
+hp: 240  # base 200 +20%
+atk: 31
+def: 38  # +25%
+mres: 16  # -20%
+dex: 18  # -15%
+exp: 232
+drops:
+  mc:
+    - size: S
+      qty: 1
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: golem_core
+          weight: 55
+        - item: cave_crystal
+          weight: 45
+
+---
+id: blood_bat
+name: Blood Bat
+type: beast
+zone: 7
+hp: 165
+atk: 32
+def: 21
+mres: 18
+dex: 26
+exp: 218
+drops:
+  mc:
+    - size: S
+      qty: 1
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: bat_wing
+          weight: 55
+        - item: blood_vial
+          weight: 45
+
+---
+id: venom_spider
+name: Venom Spider
+type: beast
+zone: 7
+hp: 168
+atk: 33
+def: 21
+mres: 18
+dex: 25
+exp: 222
+drops:
+  mc:
+    - size: S
+      qty: 1
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: spider_silk
+          weight: 50
+        - item: venom_sac
+          weight: 50
+
+---
+id: dark_skeleton
+name: Dark Skeleton
+type: undead
+zone: 7
+hp: 187  # base 170 +10%
+atk: 31
+def: 21
+mres: 27  # +15%
+dex: 20  # -10%
+exp: 228
+drops:
+  mc:
+    - size: S
+      qty: 1
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: dark_bone
+          weight: 60
+        - item: shadow_shard
+          weight: 40
+
+---
+id: fungus_spore
+name: Fungus Spore
+type: beast
+zone: 7
+hp: 172
+atk: 30
+def: 22
+mres: 20
+dex: 21
+exp: 215
+drops:
+  mc:
+    - size: S
+      qty: 1
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: spore_dust
+          weight: 60
+        - item: toxic_cap
+          weight: 40
