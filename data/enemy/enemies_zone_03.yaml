@@ -1,0 +1,192 @@
+# Zone 3 — Marshland
+---
+id: marsh_rat
+name: Marsh Rat
+type: beast
+zone: 3
+hp: 52
+atk: 14
+def: 7
+mres: 5
+dex: 13
+exp: 58
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: rat_tail
+          weight: 70
+        - item: rat_hide
+          weight: 30
+
+---
+id: marsh_serpent
+name: Marsh Serpent
+type: beast
+zone: 3
+hp: 58
+atk: 16
+def: 8
+mres: 6
+dex: 15
+exp: 68
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: serpent_scale
+          weight: 60
+        - item: venom_gland
+          weight: 40
+
+---
+id: marsh_frog
+name: Marsh Frog
+type: beast
+zone: 3
+hp: 50
+atk: 14
+def: 7
+mres: 6
+dex: 12
+exp: 55
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: frog_leg
+          weight: 65
+        - item: poison_mucus
+          weight: 35
+
+---
+id: bog_leech
+name: Bog Leech
+type: beast
+zone: 3
+hp: 55
+atk: 15
+def: 6
+mres: 5
+dex: 12
+exp: 60
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: leech_oil
+          weight: 70
+        - item: dark_fluid
+          weight: 30
+
+---
+id: mandrake
+name: Mandrake
+type: beast
+zone: 3
+hp: 62
+atk: 17
+def: 9
+mres: 8
+dex: 11
+exp: 75
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: mandrake_root
+          weight: 55
+        - item: rare_herb
+          weight: 45
+
+---
+id: water_elemental
+name: Water Elemental
+type: demon
+zone: 3
+hp: 58
+atk: 16
+def: 7
+mres: 9
+dex: 14
+exp: 72
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: water_crystal
+          weight: 60
+        - item: mana_droplet
+          weight: 40
+
+---
+id: mud_crab
+name: Mud Crab
+type: beast
+zone: 3
+hp: 70
+atk: 15
+def: 11
+mres: 5
+dex: 10
+exp: 78
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: crab_shell
+          weight: 65
+        - item: crab_claw
+          weight: 35
+
+---
+id: plague_rat
+name: Plague Rat
+type: beast
+zone: 3
+hp: 54
+atk: 15
+def: 7
+mres: 5
+dex: 14
+exp: 62
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: rat_tail
+          weight: 60
+        - item: plague_sample
+          weight: 40

@@ -1,0 +1,114 @@
+# Zone 1 — Starting Forest
+---
+id: wild_wolf
+name: Wild Wolf
+type: beast
+zone: 1
+hp: 28
+atk: 9
+def: 4
+mres: 2
+dex: 11
+exp: 25
+drops:
+  mc:
+    - size: XS
+      qty: 3
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: wolf_fang
+          weight: 70
+        - item: wolf_pelt
+          weight: 30
+
+---
+id: cave_bat
+name: Cave Bat
+type: beast
+zone: 1
+hp: 20
+atk: 8
+def: 3
+mres: 2
+dex: 12
+exp: 20
+drops:
+  mc:
+    - size: XS
+      qty: 3
+  loot:
+    - pool:
+        - item: bat_wing
+          weight: 70
+        - item: small_fang
+          weight: 30
+
+---
+id: cave_spider
+name: Cave Spider
+type: beast
+zone: 1
+hp: 24
+atk: 10
+def: 4
+mres: 2
+dex: 10
+exp: 28
+drops:
+  mc:
+    - size: XS
+      qty: 3
+  loot:
+    - pool:
+        - item: spider_silk
+          weight: 60
+        - item: venom_sac
+          weight: 40
+
+---
+id: treant
+name: Treant
+type: beast
+zone: 1
+hp: 40
+atk: 11
+def: 6
+mres: 3
+dex: 8
+exp: 38
+drops:
+  mc:
+    - size: XS
+      qty: 3
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: bark_shard
+          weight: 70
+        - item: ancient_root
+          weight: 30
+
+---
+id: giant_rat
+name: Giant Rat
+type: beast
+zone: 1
+hp: 22
+atk: 8
+def: 3
+mres: 2
+dex: 11
+exp: 22
+drops:
+  mc:
+    - size: XS
+      qty: 3
+  loot:
+    - pool:
+        - item: rat_tail
+          weight: 80
+        - item: rat_hide
+          weight: 20

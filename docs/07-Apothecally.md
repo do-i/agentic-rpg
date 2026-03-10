@@ -21,7 +21,7 @@ inputs:
   items:
     - id: herb_red
       qty: 2
-pt_cost: 180
+gp_cost: 180
 unlock:
   flag: story_phase_08_dragon_cave
 

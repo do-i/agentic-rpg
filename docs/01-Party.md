@@ -34,7 +34,7 @@ Stats that belong to the party (not a character):
 | `flee_rate` | Rogue's DEX (if in party) | Base flee 30%, +2% per Rogue DEX |
 | `encounter_modifier` | Rogue passive | Reduces random encounter roll by ~20% |
 | `trap_detect` | Rogue passive | Auto-reveal chest traps |
-| `pt_balance` | Party Repository | Shared currency, always synced |
+| `gp_balance` | Party Repository | Shared currency, always synced |
 
 ## Recruitment & Availability
 
