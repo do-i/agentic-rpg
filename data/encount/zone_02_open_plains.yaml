@@ -1,0 +1,40 @@
+id: zone_02_open_plains
+name: Open Plains
+encounter_rate: 0.12
+
+set_a:
+  entries:
+    - formation: [giant_rat, giant_rat, giant_rat]
+      weight: 30
+    - formation: [sand_serpent]
+      weight: 25
+    - formation: [forest_spider, giant_rat]
+      weight: 20
+    - formation: [forest_wolf]
+      weight: 10
+    - formation: [horned_rabbit]
+      weight: 10
+    - formation: [forest_wolf, horned_rabbit]
+      weight: 5
+
+set_b:
+  entries:
+    - formation: [marsh_rat, marsh_rat]
+      weight: 30
+    - formation: [treant, venom_bat]
+      weight: 25
+    - formation: [marsh_rat, venom_bat]
+      weight: 20
+    - formation: [forest_wolf]
+      weight: 10
+    - formation: [horned_rabbit]
+      weight: 10
+    - formation: [forest_wolf, horned_rabbit]
+      weight: 5
+
+boss:
+  id: mountain_bear
+  name: Mountain Bear
+  once: true
+  on_complete:
+    set_flag: boss_zone02_defeated

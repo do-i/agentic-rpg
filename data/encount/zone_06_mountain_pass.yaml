@@ -1,0 +1,40 @@
+id: zone_06_mountain_pass
+name: Mountain Pass
+encounter_rate: 0.14
+
+set_a:
+  entries:
+    - formation: [iron_golem, griffon]
+      weight: 30
+    - formation: [griffon, griffon]
+      weight: 25
+    - formation: [iron_golem, frost_wolf]
+      weight: 20
+    - formation: [frost_wolf]
+      weight: 10
+    - formation: [harpy]
+      weight: 10
+    - formation: [dark_knight]
+      weight: 5
+
+set_b:
+  entries:
+    - formation: [iron_gargoyle, iron_gargoyle]
+      weight: 30
+    - formation: [griffon, iron_gargoyle]
+      weight: 25
+    - formation: [iron_gargoyle, frost_wolf]
+      weight: 20
+    - formation: [frost_wolf]
+      weight: 10
+    - formation: [harpy]
+      weight: 10
+    - formation: [dark_knight]
+      weight: 5
+
+boss:
+  id: frost_dragon
+  name: Frost Dragon
+  once: true
+  on_complete:
+    set_flag: boss_zone06_defeated

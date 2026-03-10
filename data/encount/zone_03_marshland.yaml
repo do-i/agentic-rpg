@@ -1,0 +1,40 @@
+id: zone_03_marshland
+name: Marshland
+encounter_rate: 0.13
+
+set_a:
+  entries:
+    - formation: [marsh_rat, marsh_rat]
+      weight: 30
+    - formation: [marsh_serpent]
+      weight: 25
+    - formation: [mandrake]
+      weight: 20
+    - formation: [marsh_frog]
+      weight: 10
+    - formation: [bog_leech]
+      weight: 10
+    - formation: [marsh_frog, bog_leech]
+      weight: 5
+
+set_b:
+  entries:
+    - formation: [water_elemental]
+      weight: 30
+    - formation: [mud_crab]
+      weight: 25
+    - formation: [plague_rat, plague_rat]
+      weight: 20
+    - formation: [marsh_frog]
+      weight: 10
+    - formation: [bog_leech]
+      weight: 10
+    - formation: [marsh_frog, bog_leech]
+      weight: 5
+
+boss:
+  id: mud_crab_king
+  name: Mud Crab (King)
+  once: true
+  on_complete:
+    set_flag: boss_zone03_defeated
