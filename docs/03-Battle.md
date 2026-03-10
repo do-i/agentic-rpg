@@ -201,13 +201,13 @@ All members HP = 0
 ```
 
 ## No Penalty
-PT, items, flags all restored to save state
+GP, items, flags all restored to save state
 Nothing is lost beyond progress since last save
 
 ## Save State Restored
 
 - character status (hp, mp, status effects)
-- party repository (items, pt)
+- party repository (items, gp)
 - flags
 - map location
 

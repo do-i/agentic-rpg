@@ -1,6 +1,6 @@
 # 7. Apothecary
 
-**Core Model**: An NPC service station — player supplies materials + pays `pt` fee → receives output item. 100% success, no gambling.
+**Core Model**: An NPC service station — player supplies materials + pays `gp` fee → receives output item. 100% success, no gambling.
 
 ## Recipe System
 
@@ -67,7 +67,7 @@ Note: It's rare to have locked but has all inputs. But, possible. Typical flow s
 | Lock/unlock icon | ✅ Visible | ✅ Visible |
 | Output item | ❌ Hidden | ✅ Visible |
 | Input items | ❌ Hidden | ✅ Visible |
-| pt cost | ❌ Hidden | ✅ Visible |
+| gp cost | ❌ Hidden | ✅ Visible |
 | Craft button | ❌ Disabled | ✅ If ready |
 
 Clean separation — unlock is the gate to all mechanical detail.
@@ -78,13 +78,13 @@ Clean separation — unlock is the gate to all mechanical detail.
 [Apothecary NPC]
   └── [Recipes List]
         ├── Filter: Show only unlocked and ready (has all input items)
-        ├── [Recipe Row] → recipe name, output item icon, pt cost
+        ├── [Recipe Row] → recipe name, output item icon, gp cost
         └── [Select Recipe] → Detail Panel
               ├── Output: Elixir ×1
               ├── Inputs:
               │     ├── Herb (Red) ×2
               │     └── Magic Core (S) ×1
-              ├── Cost: 150 pt  [Balance: 3,200 pt]
+              ├── Cost: 150 gp  [Balance: 3,200 gp]
               ├── [Craft]
               └── [Cancel]
 ```
@@ -96,11 +96,11 @@ Most recipes produce items unavailable in stores. A few overlap with store items
 **Goal**
 Crafted Item is too good to sell.
 
-- Crafting isn't about saving pt — it's about access
+- Crafting isn't about saving gp — it's about access
 - Store covers basics (Potion, Antidote); Apothecary covers Hi-Potion, Elixir, battle throws, buff tonics
 - Player isn't doing math to decide whether to craft — they craft because they need that item
 - Rare/late recipes feel like genuine power unlocks, not just efficiency plays
 
 For the small overlap category (store also sells it), crafted version could yield qty 2 for roughly the cost of 1 — makes crafting feel efficient without breaking the store economy.
 
-Crafted item is unsellable or 0.5× on craft-exclusive items — you don't want players treating Apothecary as a pt printer. The profit loop should come from selling excess raw materials, not finished crafted goods.
+Crafted item is unsellable or 0.5× on craft-exclusive items — you don't want players treating Apothecary as a gp printer. The profit loop should come from selling excess raw materials, not finished crafted goods.
