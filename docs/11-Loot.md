@@ -30,3 +30,14 @@ Roll random(1, 100)
 If roll > 80 → nothing drops
 Otherwise → walk table as normal
 ```
+
+## Updated MC Drop by Zone:
+
+| Zone | Common MC | Rare MC | Boss MC |
+|---|---|---|---|
+| 1–2 | XS ×3 | S ×1 | S ×2, M ×1 |
+| 3–4 | XS ×2, S ×1 | S ×2 | M ×2, L ×1 |
+| 5–6 | S ×2 | M ×1 | L ×1, XL ×1 |
+| 7–8 | S ×1, M ×1 | M ×2 | L ×2, XL ×1 |
+| 9 | M ×2 | L ×1 | L ×2, XL ×2 |
+| 10 (final) | M ×2 | L ×1 | L ×3, XL ×3 |
