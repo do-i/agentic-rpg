@@ -1,0 +1,12 @@
+# map/world.yaml
+transport:
+  sail:
+    unlock_flag: transport_sail_unlocked
+    origin: port_tile
+  fly:
+    unlock_flag: transport_fly_unlocked
+    origin: world_map_any
+  warp:
+    unlock_flag: transport_warp_unlocked
+    origin: world_map_any
+    destinations: visited_only
