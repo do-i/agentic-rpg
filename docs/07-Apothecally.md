@@ -4,7 +4,7 @@
 
 ## Recipe System
 
-```
+```yaml
 id: recipe_hi_potion
 scroll_name: "Vital Brew"        # always visible, intentionally vague
 output_name: "Hi-Potion"         # shown only after unlock
