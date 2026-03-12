@@ -1,4 +1,23 @@
 # 10. Enemy Design
+
+## AI complexity level
+Random for regulars, conditional (moves triggered by HP threshold, turn count, party state) for bosses
+
+## Targeting Logic
+
+```yaml
+targeting:
+  default: random_alive         # random living party member
+  overrides:
+    - ability: frost_breath
+      target: all_party
+    - ability: ice_shield
+      target: self
+    - when: party_hp_lowest     # focus wounded — optional aggression
+      target: lowest_hp
+
+```
+
 ## High-Level Categories
 
 | # | Category | One-liner |
