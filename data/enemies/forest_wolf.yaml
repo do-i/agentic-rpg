@@ -1,0 +1,9 @@
+# enemies/forest_wolf.yaml
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 80
+    - action: ability
+      id: howl           # ATK buff self
+      weight: 20
