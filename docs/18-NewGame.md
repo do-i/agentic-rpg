@@ -48,7 +48,6 @@
               └── position: start.position from manifest.yaml
 ```
 
-
 ## Manifest Hook
 
 ```yaml
@@ -62,9 +61,6 @@ protagonist:
   name: "Aric"          # default name, player can override
   name_max_length: 12
 ```
-
-Do we allow non English language name -- e.g., Japanese?
-
 ## Load Game Flow
 
 ```
