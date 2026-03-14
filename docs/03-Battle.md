@@ -181,6 +181,67 @@ entries:
   - formation: [forest_wolf, forest_wolf, cave_bat, cave_bat]
 ```
 
+## Battle Damage Formula
+
+Spells/abilities ignore row entirely (only physical is affected)
+
+**Incoming physical damage to party member:**
+```
+incoming_physical = max(1, (enemy_atk) - member_def)
+
+if member.row == back:
+    incoming_physical = floor(incoming_physical * 0.5)
+```
+
+**Outgoing physical damage from back row:**
+```
+if attacker.row == back AND ability.attack_range == melee:
+    damage = floor(damage * 0.5)   # penalty for melee from back
+elif attacker.row == back AND ability.attack_range == ranged:
+    damage = damage                # no penalty
+```
+
+Spells (`type: spell`, `type: heal`) → **row ignored entirely**.
+
+
+### Summary Table
+
+| Attacker Row | Attack Type | Damage |
+|---|---|---|
+| Front | Melee | Full |
+| Back | Melee | ×0.5 |
+| Back | Ranged | Full |
+| Any | Spell | Full (row ignored) |
+| Front/Back | Incoming physical | Full / ×0.5 |
+
+### Row Assignment
+
+| Member | Default Row |
+|---|---|
+| Hero | Front |
+| Warrior | Front |
+| Sorcerer | Back |
+| Cleric | Back |
+| Rogue | Back (default) |
+
+Player can swap Rogue to Front via party arrangement screen.
+
+### Ability Schema Addition
+
+```yaml
+# example: rogue back-row melee vs ranged
+- id: dual_strike
+  attack_range: melee    # penalized from back row
+
+- id: steal
+  attack_range: melee
+
+- id: shadow_step
+  attack_range: melee    # vanish mechanic — could exempt this one
+```
+
+Default: if `attack_range` omitted → assume `melee`.
+
 ## Post-Battle Rewards
 
 | Reward | Rule |

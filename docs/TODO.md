@@ -2,14 +2,6 @@
 
 Based on all docs reviewed, here are the open areas:
 
-### 🔴 Critical (blocks implementation)
-
-| Area | Gap |
-|---|---|
-| **Enemy AI / Move Set** | `10-Enemy.md` lists it as a design category but no actual behavior defined (which ability, when, targeting logic) |
-| **Item master list** | Items referenced everywhere (`wolf_fang`, `herb_red`, `elixir`, etc.) but no `items/` schema file exists |
-| **Battle resolution — row system** | Front/back row defined in `01-Party.md` but never wired into damage formula in `03-Battle.md` |
-
 ### 🟡 Medium (needed before content complete)
 
 | Area | Gap |
