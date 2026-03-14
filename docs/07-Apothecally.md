@@ -104,3 +104,24 @@ Crafted Item is too good to sell.
 For the small overlap category (store also sells it), crafted version could yield qty 2 for roughly the cost of 1 — makes crafting feel efficient without breaking the store economy.
 
 Crafted item is unsellable or 0.5× on craft-exclusive items — you don't want players treating Apothecary as a gp printer. The profit loop should come from selling excess raw materials, not finished crafted goods.
+
+## Recipe Unlock Summary
+
+| Scroll Name | Output | Unlock | Key Inputs |
+|---|---|---|---|
+| Purging Salve | Remedy ×1 | Act 1 | Venom Sac, Red Herb |
+| Arcane Tonic | Ether ×2 | Act 1 | MC-S, Mana Droplet |
+| Vital Brew | Hi-Potion ×2 | Act 2 | MC-S, Rare Herb |
+| Clarity Brew | Hi-Ether ×2 | Act 2 | MC-M, Water Crystal |
+| Alchemist's Lens | Veil Breaker ×1 | Act 2 | MC-M, Spirit Orb, Ectoplasm |
+| Volatile Concoction | Fire Vial ×3 | Act 2 | Fire Gland, Venom Sac |
+| Sacred Mixture | Holy Water ×3 | Act 3 | MC-S, Spirit Orb |
+| Searing Mixture | Ice Vial ×3 | Act 3 | Ice Fang, Wind Crystal |
+| Forbidden Brew | Life Crystal ×1 | Act 3 | MC-L, Soul Fragment, Phantom Veil |
+| Grand Elixir | Elixir ×1 | Act 4 | MC-L, MC-M ×2, Soul Fragment |
+
+## Notes
+
+- `life_crystal` recipe uses `phoenix_wing` as a **condition check** (not consumed) — worth confirming if engine supports presence-check vs consume
+- `veil_breaker` outputs `qty: 1` and is a key item — engine should guard against crafting duplicates once owned
+- Shock Vial left open for Act 3 if you want wind-element coverage
