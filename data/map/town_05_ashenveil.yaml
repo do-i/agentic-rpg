@@ -1,0 +1,35 @@
+id: town_05_ashenveil
+name: Ashenveil
+inn:
+  cost_pt: 800
+
+shop:
+  items:
+    - id: hi_potion
+      qty: 5
+      buy_price: 500
+      unlock_flag: story_act3_started
+    - id: hi_ether
+      qty: 5
+      buy_price: 600
+      unlock_flag: story_act3_started
+    - id: remedy
+      qty: 5
+      buy_price: 300
+      unlock_flag: story_act3_started
+    - id: rest_capsule
+      qty: 5
+      buy_price: 500
+      unlock_flag: story_act3_started
+    - id: warp_stone
+      qty: 3
+      buy_price: 800
+      unlock_flag: story_act4_started
+
+npcs:
+  - id: ashenveil_oracle
+    dialogue: ashenveil_oracle_hint
+    position: [7, 4]
+  - id: zeph
+    dialogue: zeph_join
+    position: [3, 7]

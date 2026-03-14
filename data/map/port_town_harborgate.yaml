@@ -1,0 +1,18 @@
+id: port_town_harborgate
+name: Harborgate
+
+shop:
+  items:
+    - id: potion
+      qty: 5
+      buy_price: 100
+      unlock_flag: story_quest_started
+    - id: antidote
+      qty: 5
+      buy_price: 80
+      unlock_flag: story_quest_started
+
+npcs:
+  - id: port_master
+    dialogue: port_master_intro
+    position: [5, 3]

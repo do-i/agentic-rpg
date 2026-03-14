@@ -1,5 +1,0 @@
-# map/town_port.yaml
-npcs:
-  - id: port_master
-    dialogue: port_master_intro
-    position: [5, 3]
