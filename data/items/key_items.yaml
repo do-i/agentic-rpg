@@ -1,0 +1,29 @@
+- id: veil_breaker
+  name: Veil Breaker
+  type: key
+  use_context: null         # passive — auto-applied in battle
+  effect:
+    bypass_barrier: true
+  sellable: false
+  droppable: false
+  description: "Allows attacks to reach barrier-type enemies (Ghost, Wind Elemental)."
+
+- id: phoenix_wing
+  name: Phoenix Wing
+  type: key                 # permanent, never lost, never consumed
+  use_context: [world_map]
+  effect:
+    revive_hp_pct: 0.30
+  sellable: false
+  droppable: false
+  description: "A mystical wing. Revives a fallen ally on the world map. Never consumed."
+
+- id: sky_crystal
+  name: Sky Crystal
+  type: key
+  use_context: null         # triggers fly unlock via story script
+  effect:
+    unlock_flag: transport_fly_unlocked
+  sellable: false
+  droppable: false
+  description: "A crystal that grants the power of flight across the world map."

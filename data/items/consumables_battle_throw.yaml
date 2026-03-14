@@ -1,0 +1,44 @@
+- id: fire_vial
+  name: Fire Vial
+  type: consumable
+  use_context: [battle]
+  effect:
+    damage: 150
+    element: fire
+    target: single_enemy
+  buy_price: null
+  sell_price: 0
+
+- id: ice_vial
+  name: Ice Vial
+  type: consumable
+  use_context: [battle]
+  effect:
+    damage: 150
+    element: water
+    target: single_enemy
+  buy_price: null
+  sell_price: 0
+
+- id: shock_vial
+  name: Shock Vial
+  type: consumable
+  use_context: [battle]
+  effect:
+    damage: 150
+    element: wind
+    target: single_enemy
+  buy_price: null
+  sell_price: 0
+
+- id: holy_water
+  name: Holy Water
+  type: consumable
+  use_context: [battle]
+  effect:
+    damage: 200
+    element: holy
+    target: single_enemy
+    bonus_vs: [undead, demon]
+  buy_price: 200
+  sell_price: 100

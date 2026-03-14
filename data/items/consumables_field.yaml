@@ -1,0 +1,28 @@
+- id: tent
+  name: Tent
+  type: consumable
+  use_context: [world_map]
+  effect:
+    restore: [hp, mp]
+    cure: [poison, silence]
+  buy_price: 500
+  sell_price: 250
+
+- id: rest_capsule
+  name: Rest Capsule
+  type: consumable
+  use_context: [world_map, town, dungeon]
+  effect:
+    restore: [hp, mp]
+    cure: [poison, silence]
+  buy_price: 500
+  sell_price: 250
+
+- id: warp_stone
+  name: Warp Stone
+  type: consumable
+  use_context: [world_map, dungeon]
+  effect:
+    action: warp
+  buy_price: 800
+  sell_price: 400
