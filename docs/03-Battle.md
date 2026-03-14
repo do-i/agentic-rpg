@@ -19,7 +19,7 @@ rank_index = {}  # {enemy_id: rank}
 for path in glob("data/enemies/enemies_rank_*.yaml"):
     for doc in yaml.safe_load_all(open(path)):
         rank_index[doc["id"]] = doc["rank"]
-        
+
 # Phase 2 — targeted load example
 def load_enemy(enemy_id: str) -> dict:
     rank = rank_index[enemy_id]
@@ -117,7 +117,8 @@ final_encounter_rate = clamp(encounter_rate + encounter_modifier, 0.0, 1.0)
 # items/stealth_cloak.yaml
 id: stealth_cloak
 type: accessory
-gp_cost: 800
+buy_price: 800
+sell_price: 400
 equippable: [rogue]
 stats:
   encounter_modifier: -0.15    # reduce encounters
@@ -125,7 +126,8 @@ stats:
 # items/lure_charm.yaml
 id: lure_charm
 type: accessory
-gp_cost: 600
+buy_price: 600
+sell_price: 300
 equippable: [rogue]
 stats:
   encounter_modifier: +0.20    # increase encounters (grinding)

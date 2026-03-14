@@ -1,3 +1,13 @@
+- id: veil_breaker
+  name: Veil Breaker
+  type: consumable
+  use_context: [battle]
+  effect:
+    bypass_barrier: true
+  buy_price: null
+  sell_price: 0
+  description: "Allows attacks to reach barrier-type enemies (Ghost, Wind Elemental)."
+  
 - id: tent
   name: Tent
   type: consumable
@@ -5,8 +15,8 @@
   effect:
     restore: [hp, mp]
     cure: [poison, silence]
-  buy_price: 500
-  sell_price: 250
+  buy_price: 300
+  sell_price: 150
 
 - id: rest_capsule
   name: Rest Capsule
