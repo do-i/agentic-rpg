@@ -1,0 +1,194 @@
+# Rank E Enemies
+---
+id: forest_spider
+name: Forest Spider
+type: beast
+rank: E
+hp: 36
+atk: 12
+def: 5
+mres: 3
+dex: 12
+exp: 40
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: spider_silk
+          weight: 55
+        - item: venom_sac
+          weight: 45
+
+---
+id: sand_serpent
+name: Sand Serpent
+type: beast
+rank: E
+hp: 38
+atk: 13
+def: 5
+mres: 4
+dex: 13
+exp: 45
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: serpent_scale
+          weight: 65
+        - item: venom_gland
+          weight: 35
+
+---
+id: horned_rabbit
+name: Horned Rabbit
+type: beast
+rank: E
+hp: 35
+atk: 14
+def: 5
+mres: 3
+dex: 14
+exp: 42
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: rabbit_horn
+          weight: 60
+        - item: soft_fur
+          weight: 40
+
+---
+id: forest_wolf
+name: Forest Wolf
+type: beast
+rank: E
+hp: 45
+atk: 12
+def: 6
+mres: 3
+dex: 14
+exp: 38
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: wolf_fang
+          weight: 60
+        - item: wolf_pelt
+          weight: 30
+        - item: sharp_claw
+          weight: 10
+
+---
+id: marsh_frog
+name: Marsh Frog
+type: beast
+rank: E
+hp: 50
+atk: 14
+def: 7
+mres: 6
+dex: 12
+exp: 55
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: frog_leg
+          weight: 65
+        - item: poison_mucus
+          weight: 35
+
+---
+id: marsh_rat
+name: Marsh Rat
+type: beast
+rank: E
+hp: 52
+atk: 14
+def: 7
+mres: 5
+dex: 13
+exp: 58
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: rat_tail
+          weight: 70
+        - item: rat_hide
+          weight: 30
+
+---
+id: bog_leech
+name: Bog Leech
+type: beast
+rank: E
+hp: 55
+atk: 15
+def: 6
+mres: 5
+dex: 12
+exp: 60
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: leech_oil
+          weight: 70
+        - item: dark_fluid
+          weight: 30
+
+---
+id: plague_rat
+name: Plague Rat
+type: beast
+rank: E
+hp: 54
+atk: 15
+def: 7
+mres: 5
+dex: 14
+exp: 62
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: rat_tail
+          weight: 60
+        - item: plague_sample
+          weight: 40

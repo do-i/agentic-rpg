@@ -1,0 +1,268 @@
+# Rank D Enemies
+---
+id: marsh_serpent
+name: Marsh Serpent
+type: beast
+rank: D
+hp: 58
+atk: 16
+def: 8
+mres: 6
+dex: 15
+exp: 68
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: serpent_scale
+          weight: 60
+        - item: venom_gland
+          weight: 40
+
+---
+id: water_elemental
+name: Water Elemental
+type: demon
+rank: D
+hp: 58
+atk: 16
+def: 7
+mres: 9
+dex: 14
+exp: 72
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: water_crystal
+          weight: 60
+        - item: mana_droplet
+          weight: 40
+
+---
+id: mud_crab
+name: Mud Crab
+type: beast
+rank: D
+hp: 70
+atk: 15
+def: 11
+mres: 5
+dex: 10
+exp: 78
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: crab_shell
+          weight: 65
+        - item: crab_claw
+          weight: 35
+
+---
+id: mandrake
+name: Mandrake
+type: beast
+rank: D
+hp: 62
+atk: 17
+def: 9
+mres: 8
+dex: 11
+exp: 75
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: mandrake_root
+          weight: 55
+        - item: rare_herb
+          weight: 45
+
+---
+id: forest_spider_giant
+name: Forest Spider (Giant)
+type: beast
+rank: D
+boss: true
+immune_to: [instant_kill]
+hp: 90
+atk: 18
+def: 9
+mres: 5
+dex: 13
+exp: 108
+drops:
+  mc:
+    - size: S
+      qty: 2
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: giant_spider_silk
+          weight: 50
+        - item: queen_venom_sac
+          weight: 50
+
+---
+id: plague_zombie
+name: Plague Zombie
+type: undead
+rank: D
+hp: 88  # base +10% undead
+atk: 17
+def: 11
+mres: 13  # base +15%
+dex: 11   # base -10%
+exp: 85
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: zombie_flesh
+          weight: 65
+        - item: plague_sample
+          weight: 35
+
+---
+id: skeleton
+name: Skeleton
+type: undead
+rank: D
+hp: 77  # base +10%
+atk: 18
+def: 11
+mres: 14  # base +15%
+dex: 13   # base -10%
+exp: 88
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: bone_shard
+          weight: 70
+        - item: old_sword
+          weight: 30
+
+---
+id: ghost
+name: Ghost
+type: undead
+rank: D
+barrier: true
+requires_item: veil_breaker
+hp: 80  # base +10%
+atk: 18
+def: 10
+mres: 16  # base +15%
+dex: 15   # base -10%
+exp: 95
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: ectoplasm
+          weight: 55
+        - item: spirit_orb
+          weight: 45
+
+---
+id: stone_gargoyle
+name: Stone Gargoyle
+type: construct
+rank: D
+hp: 84  # base +20%
+atk: 18
+def: 18  # base +25%
+mres: 10  # base -20%
+dex: 12   # base -15%
+exp: 92
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: stone_fragment
+          weight: 65
+        - item: gargoyle_wing
+          weight: 35
+
+---
+id: bone_archer
+name: Bone Archer
+type: undead
+rank: D
+hp: 79  # base +10%
+atk: 19
+def: 11
+mres: 15  # base +15%
+dex: 16   # base -10%
+exp: 90
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: bone_shard
+          weight: 60
+        - item: arrow_bundle
+          weight: 40
+
+---
+id: will_o_wisp
+name: Will-o-Wisp
+type: demon
+rank: D
+hp: 72
+atk: 20  # base +15%
+def: 10
+mres: 15  # base +10%
+dex: 20   # base +10%
+exp: 100
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: wisp_flame
+          weight: 55
+        - item: silence_dust
+          weight: 45

@@ -1,0 +1,162 @@
+# Rank C Enemies
+---
+id: mimic
+name: Mimic
+type: construct
+rank: C
+hp: 100  # base +20%
+atk: 22
+def: 18  # base +25%
+mres: 10  # base -20%
+dex: 12   # base -15%
+exp: 118
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: mimic_key
+          weight: 40
+        - item: rare_coin
+          weight: 60
+
+---
+id: plague_rat_elite
+name: Plague Rat (Elite)
+type: beast
+rank: C
+hp: 100
+atk: 22
+def: 13
+mres: 11
+dex: 18
+exp: 122
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: rat_tail
+          weight: 55
+        - item: plague_sample
+          weight: 45
+
+---
+id: mountain_bear
+name: Mountain Bear
+type: beast
+rank: C
+boss: true
+immune_to: [instant_kill]
+hp: 125
+atk: 22
+def: 12
+mres: 8
+dex: 15
+exp: 150
+drops:
+  mc:
+    - size: S
+      qty: 2
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: bear_pelt
+          weight: 50
+        - item: bear_claw
+          weight: 50
+
+---
+id: sand_worm
+name: Sand Worm
+type: beast
+rank: C
+hp: 120
+atk: 24
+def: 14
+mres: 12
+dex: 16
+exp: 140
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: worm_hide
+          weight: 65
+        - item: sand_crystal
+          weight: 35
+
+---
+id: rock_crab
+name: Rock Crab
+type: construct
+rank: C
+hp: 144  # base +20%
+atk: 21
+def: 28  # base +25%
+mres: 9   # base -20%
+dex: 13   # base -15%
+exp: 128
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: crab_shell
+          weight: 60
+        - item: hard_claw
+          weight: 40
+
+---
+id: wind_elemental
+name: Wind Elemental
+type: demon
+rank: C
+barrier: true
+requires_item: veil_breaker
+hp: 108
+atk: 28  # base +15%
+def: 13
+mres: 17  # base +10%
+dex: 24   # base +10%
+exp: 152
+drops:
+  mc:
+    - size: S
+      qty: 2
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: wind_crystal
+          weight: 55
+        - item: gale_feather
+          weight: 45
+
+---
+id: stone_golem
+name: Stone Golem
+type: construct
+rank: C
+hp: 156  # base +20%
+atk: 22
+def: 26  # base +25%
+mres: 10  # base -20%
+dex: 14   # base -15%
+exp: 138
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: golem_core
+          weight: 60
+        - item: stone_chunk
+          weight: 40

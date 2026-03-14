@@ -1,0 +1,78 @@
+# Rank SS Enemies
+---
+id: succubus
+name: Succubus
+type: demon
+rank: SS
+boss: true
+immune_to: [instant_kill]
+hp: 550
+atk: 60  # base +15%
+def: 42
+mres: 38  # base +10%
+dex: 35   # base +10%
+exp: 750
+drops:
+  mc:
+    - size: L
+      qty: 2
+    - size: XL
+      qty: 1
+  loot:
+    - pool:
+        - item: succubus_veil
+          weight: 50
+        - item: charm_crystal
+          weight: 50
+
+---
+id: flame_dragon
+name: Flame Dragon
+type: beast
+rank: SS
+boss: true
+immune_to: [instant_kill]
+hp: 650
+atk: 70
+def: 50
+mres: 45
+dex: 38
+exp: 900
+drops:
+  mc:
+    - size: L
+      qty: 2
+    - size: XL
+      qty: 1
+  loot:
+    - pool:
+        - item: flame_dragon_scale
+          weight: 50
+        - item: fire_dragon_horn
+          weight: 50
+
+---
+id: dullahan
+name: Dullahan
+type: undead
+rank: SS
+boss: true
+immune_to: [instant_kill]
+hp: 800
+atk: 80
+def: 58
+mres: 52  # base +15%
+dex: 42   # base -10%
+exp: 1200
+drops:
+  mc:
+    - size: XL
+      qty: 2
+    - size: L
+      qty: 2
+  loot:
+    - pool:
+        - item: dullahan_helm
+          weight: 40
+        - item: void_core
+          weight: 60
