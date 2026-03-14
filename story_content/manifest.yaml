@@ -1,1 +1,10 @@
 # manifest
+refs:
+  classes:   story_content/classes/
+  maps:      story_content/maps/
+  dialogue:  story_content/dialogue/
+  items:     story_content/items/
+  enemies:   story_content/enemies/
+  loot:      story_content/loot/
+  encount:   story_content/encount/
+  recipe:    story_content/recipe/
