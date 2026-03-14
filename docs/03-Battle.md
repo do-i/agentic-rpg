@@ -4,6 +4,34 @@ Turn-based, command-menu driven
 
 **Command menu:** Attack / Spell / Item / Run
 
+## Suggested Loading Strategy
+
+Two-phase approach:
+
+- **Phase 1 — startup:** Build `rank_index` (and optionally a `name_index`) from all enemy YAMLs. Lightweight scan, keyed by `id`.
+- **Phase 2 — battle trigger:** Load only the specific enemy YAML docs needed for that formation. Targeted, not bulk.
+
+
+```python
+# At startup — build rank index from filenames + ids
+rank_index = {}  # {enemy_id: rank}
+
+for path in glob("data/enemies/enemies_rank_*.yaml"):
+    for doc in yaml.safe_load_all(open(path)):
+        rank_index[doc["id"]] = doc["rank"]
+        
+# Phase 2 — targeted load example
+def load_enemy(enemy_id: str) -> dict:
+    rank = rank_index[enemy_id]
+    path = f"data/enemies/enemies_{rank}.yaml"
+    for doc in yaml.safe_load_all(open(path)):
+        if doc["id"] == enemy_id:
+            return doc
+```
+
+The filename convention does double duty — `rank_index` tells you which file to open directly. No scanning other files at all.
+
+
 ## Combat Resolution & Damage Formula
 
 ```
