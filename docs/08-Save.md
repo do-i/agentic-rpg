@@ -91,3 +91,39 @@ map:
     - town_01
     - zone_01_starting_forest
 ```
+
+## Playtime Tracking
+
+```yaml
+meta:
+  playtime_seconds: 367200
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `playtime_seconds` | int | Cumulative, never resets |
+| Session start | datetime | In-memory only, not saved |
+
+### How It Works
+
+- On game load → record `session_start = now()`
+- On save → `playtime_seconds += (now() - session_start).seconds; session_start = now()`
+- On quit without save → discard session delta
+
+### Display Format
+
+```python
+def format_playtime(seconds: int) -> str:
+    d = seconds // 86400
+    h = (seconds % 86400) // 3600
+    m = (seconds % 3600) // 60
+    return f"{d:02d}d {h:02d}h {m:02d}m"
+# 367200 → "04d 06h 00m"
+```
+
+### Where Displayed
+
+| Location | Format |
+|---|---|
+| Save slot list | `04d 06h 00m` |
+| Pause menu / title | Same |

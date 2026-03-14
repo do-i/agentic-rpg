@@ -9,7 +9,6 @@ Based on all docs reviewed, here are the open areas:
 | **Barrier enemy — Veil Breaker** | Referenced but no item definition, no acquisition path |
 | **Map/town configs** | Only `town_01` partially defined; zones 2–10 missing |
 | **Non-English protagonist name** | `18-NewGame.md` explicitly flags this as open |
-| **Playtime tracking** | Listed in save state fields, no spec |
 
 ### 🟢 Minor / Polish
 
