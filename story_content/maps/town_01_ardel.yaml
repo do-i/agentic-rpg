@@ -1,7 +1,8 @@
 id: town_01_ardel
 name: Ardel Village
 inn:
-  cost_gp: 50
+  cost: 50
+  position: [8, 5]
 
 shop:
   items:
@@ -23,6 +24,13 @@ shop:
       unlock_flag: story_quest_started
 
 npcs:
+  - id: guide_ellen
+    name: "Guide Ellen"
+    type: guide
+    availability: 0.30
+    dialogue: dialogue/guide_ardel.yaml
+    excuses: dialogue/guide_excuses.yaml   # shared across all guides
+    position: [5, 3]
   - id: elder
     dialogue: elder_intro
     position: [12, 8]
