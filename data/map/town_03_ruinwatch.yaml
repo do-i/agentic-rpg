@@ -1,7 +1,7 @@
 id: town_03_ruinwatch
 name: Ruinwatch
 inn:
-  cost_pt: 250
+  cost_gp: 250
 
 shop:
   items:

@@ -1,7 +1,7 @@
 id: town_04_frostholm
 name: Frostholm
 inn:
-  cost_pt: 450
+  cost_gp: 450
 
 shop:
   items:
