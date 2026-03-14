@@ -1,0 +1,55 @@
+- id: potion
+  name: Potion
+  type: consumable
+  use_context: [battle, world_map, town, dungeon]
+  effect:
+    restore_hp: 100
+  buy_price: 100
+  sell_price: 50
+
+- id: hi_potion
+  name: Hi-Potion
+  type: consumable
+  use_context: [battle, world_map, town, dungeon]
+  effect:
+    restore_hp: 500
+  buy_price: 500
+  sell_price: 250
+
+- id: elixir
+  name: Elixir
+  type: consumable
+  use_context: [battle, world_map, town, dungeon]
+  effect:
+    restore_hp: full
+    restore_mp: full
+  buy_price: null
+  sell_price: 0
+
+- id: ether
+  name: Ether
+  type: consumable
+  use_context: [battle, world_map, town, dungeon]
+  effect:
+    restore_mp: 50
+  buy_price: 150
+  sell_price: 75
+
+- id: hi_ether
+  name: Hi-Ether
+  type: consumable
+  use_context: [battle, world_map, town, dungeon]
+  effect:
+    restore_mp: 200
+  buy_price: 600
+  sell_price: 300
+
+- id: life_crystal
+  name: Life Crystal
+  type: consumable
+  use_context: [battle, world_map, dungeon]
+  effect:
+    revive_hp_pct: 1.0
+  buy_price: null
+  sell_price: 0
+  description: "A radiant crystal. Fully revives a fallen ally."

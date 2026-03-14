@@ -50,3 +50,4 @@ Quality and Cost are determined by base material and design
 - Armer: lether vest, chainmail, adamantite, hiiroikane etc
 - Sheild: wood, steal, mythril, dragon scale, etc
 - System: at store display price along with status shift up or down
+

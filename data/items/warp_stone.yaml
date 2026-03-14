@@ -1,8 +1,0 @@
-# items/warp_stone.yaml
-id: warp_stone
-type: consumable
-use_context: [world_map, dungeon]
-effect:
-  action: warp
-buy_price: 800
-sell_price: 400

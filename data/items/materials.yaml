@@ -1,0 +1,611 @@
+# Zone 1
+- id: wolf_fang
+  name: Wolf Fang
+  type: material
+  sell_price: 20
+
+- id: wolf_pelt
+  name: Wolf Pelt
+  type: material
+  sell_price: 15
+
+- id: bat_wing
+  name: Bat Wing
+  type: material
+  sell_price: 12
+
+- id: small_fang
+  name: Small Fang
+  type: material
+  sell_price: 10
+
+- id: spider_silk
+  name: Spider Silk
+  type: material
+  sell_price: 18
+
+- id: venom_sac
+  name: Venom Sac
+  type: material
+  sell_price: 25
+
+- id: bark_shard
+  name: Bark Shard
+  type: material
+  sell_price: 10
+
+- id: ancient_root
+  name: Ancient Root
+  type: material
+  sell_price: 30
+
+- id: rat_tail
+  name: Rat Tail
+  type: material
+  sell_price: 8
+
+- id: rat_hide
+  name: Rat Hide
+  type: material
+  sell_price: 10
+
+# Zone 2
+- id: sharp_claw
+  name: Sharp Claw
+  type: material
+  sell_price: 35
+
+- id: rabbit_horn
+  name: Rabbit Horn
+  type: material
+  sell_price: 30
+
+- id: soft_fur
+  name: Soft Fur
+  type: material
+  sell_price: 20
+
+- id: serpent_scale
+  name: Serpent Scale
+  type: material
+  sell_price: 28
+
+- id: venom_gland
+  name: Venom Gland
+  type: material
+  sell_price: 32
+
+# Zone 3
+- id: frog_leg
+  name: Frog Leg
+  type: material
+  sell_price: 30
+
+- id: poison_mucus
+  name: Poison Mucus
+  type: material
+  sell_price: 40
+
+- id: leech_oil
+  name: Leech Oil
+  type: material
+  sell_price: 28
+
+- id: dark_fluid
+  name: Dark Fluid
+  type: material
+  sell_price: 45
+
+- id: mandrake_root
+  name: Mandrake Root
+  type: material
+  sell_price: 50
+
+- id: rare_herb
+  name: Rare Herb
+  type: material
+  sell_price: 60
+
+- id: water_crystal
+  name: Water Crystal
+  type: material
+  sell_price: 55
+
+- id: mana_droplet
+  name: Mana Droplet
+  type: material
+  sell_price: 65
+
+- id: crab_shell
+  name: Crab Shell
+  type: material
+  sell_price: 35
+
+- id: crab_claw
+  name: Crab Claw
+  type: material
+  sell_price: 40
+
+- id: plague_sample
+  name: Plague Sample
+  type: material
+  sell_price: 45
+
+# Zone 4
+- id: bone_shard
+  name: Bone Shard
+  type: material
+  sell_price: 50
+
+- id: old_sword
+  name: Old Sword
+  type: material
+  sell_price: 80
+
+- id: stone_fragment
+  name: Stone Fragment
+  type: material
+  sell_price: 45
+
+- id: gargoyle_wing
+  name: Gargoyle Wing
+  type: material
+  sell_price: 60
+
+- id: ectoplasm
+  name: Ectoplasm
+  type: material
+  sell_price: 70
+
+- id: spirit_orb
+  name: Spirit Orb
+  type: material
+  sell_price: 90
+
+- id: mimic_key
+  name: Mimic Key
+  type: material
+  sell_price: 120
+
+- id: rare_coin
+  name: Rare Coin
+  type: material
+  sell_price: 100
+
+- id: wisp_flame
+  name: Wisp Flame
+  type: material
+  sell_price: 80
+
+- id: silence_dust
+  name: Silence Dust
+  type: material
+  sell_price: 75
+
+- id: arrow_bundle
+  name: Arrow Bundle
+  type: material
+  sell_price: 40
+
+- id: zombie_flesh
+  name: Zombie Flesh
+  type: material
+  sell_price: 35
+
+# Zone 5
+- id: golem_core
+  name: Golem Core
+  type: material
+  sell_price: 110
+
+- id: stone_chunk
+  name: Stone Chunk
+  type: material
+  sell_price: 60
+
+- id: iron_plate
+  name: Iron Plate
+  type: material
+  sell_price: 90
+
+- id: hard_claw
+  name: Hard Claw
+  type: material
+  sell_price: 80
+
+- id: worm_hide
+  name: Worm Hide
+  type: material
+  sell_price: 70
+
+- id: sand_crystal
+  name: Sand Crystal
+  type: material
+  sell_price: 100
+
+- id: wind_crystal
+  name: Wind Crystal
+  type: material
+  sell_price: 120
+
+- id: gale_feather
+  name: Gale Feather
+  type: material
+  sell_price: 110
+
+# Zone 6
+- id: frost_pelt
+  name: Frost Pelt
+  type: material
+  sell_price: 130
+
+- id: ice_fang
+  name: Ice Fang
+  type: material
+  sell_price: 140
+
+- id: harpy_feather
+  name: Harpy Feather
+  type: material
+  sell_price: 125
+
+- id: talon_shard
+  name: Talon Shard
+  type: material
+  sell_price: 120
+
+- id: dark_armor_shard
+  name: Dark Armor Shard
+  type: material
+  sell_price: 160
+
+- id: cursed_blade
+  name: Cursed Blade
+  type: material
+  sell_price: 180
+
+- id: griffon_feather
+  name: Griffon Feather
+  type: material
+  sell_price: 135
+
+- id: beak_shard
+  name: Beak Shard
+  type: material
+  sell_price: 115
+
+- id: iron_wing
+  name: Iron Wing
+  type: material
+  sell_price: 145
+
+- id: gargoyle_core
+  name: Gargoyle Core
+  type: material
+  sell_price: 170
+
+# Zone 7
+- id: cave_crystal
+  name: Cave Crystal
+  type: material
+  sell_price: 190
+
+- id: blood_vial
+  name: Blood Vial
+  type: material
+  sell_price: 200
+
+- id: dark_bone
+  name: Dark Bone
+  type: material
+  sell_price: 180
+
+- id: shadow_shard
+  name: Shadow Shard
+  type: material
+  sell_price: 210
+
+- id: spore_dust
+  name: Spore Dust
+  type: material
+  sell_price: 170
+
+- id: toxic_cap
+  name: Toxic Cap
+  type: material
+  sell_price: 195
+
+# Zone 8
+- id: shadow_pelt
+  name: Shadow Pelt
+  type: material
+  sell_price: 230
+
+- id: dark_fang
+  name: Dark Fang
+  type: material
+  sell_price: 240
+
+- id: blighted_bark
+  name: Blighted Bark
+  type: material
+  sell_price: 220
+
+- id: cursed_root
+  name: Cursed Root
+  type: material
+  sell_price: 235
+
+- id: phantom_veil
+  name: Phantom Veil
+  type: material
+  sell_price: 260
+
+- id: imp_horn
+  name: Imp Horn
+  type: material
+  sell_price: 270
+
+- id: dark_crystal
+  name: Dark Crystal
+  type: material
+  sell_price: 280
+
+- id: wraith_cloth
+  name: Wraith Cloth
+  type: material
+  sell_price: 255
+
+- id: soul_fragment
+  name: Soul Fragment
+  type: material
+  sell_price: 290
+
+- id: rot_sample
+  name: Rot Sample
+  type: material
+  sell_price: 215
+
+- id: cursed_stone
+  name: Cursed Stone
+  type: material
+  sell_price: 245
+
+- id: banshee_veil
+  name: Banshee Veil
+  type: material
+  sell_price: 275
+
+- id: wail_crystal
+  name: Wail Crystal
+  type: material
+  sell_price: 285
+
+# Zone 9
+- id: lava_scale
+  name: Lava Scale
+  type: material
+  sell_price: 310
+
+- id: fire_gland
+  name: Fire Gland
+  type: material
+  sell_price: 320
+
+- id: magma_core
+  name: Magma Core
+  type: material
+  sell_price: 350
+
+- id: obsidian_shard
+  name: Obsidian Shard
+  type: material
+  sell_price: 330
+
+- id: fire_crystal
+  name: Fire Crystal
+  type: material
+  sell_price: 360
+
+- id: ember_core
+  name: Ember Core
+  type: material
+  sell_price: 370
+
+- id: heat_sac
+  name: Heat Sac
+  type: material
+  sell_price: 305
+
+- id: hellhound_fang
+  name: Hellhound Fang
+  type: material
+  sell_price: 390
+
+- id: brimstone_collar
+  name: Brimstone Collar
+  type: material
+  sell_price: 400
+
+- id: vile_essence
+  name: Vile Essence
+  type: material
+  sell_price: 375
+
+- id: chimera_mane
+  name: Chimera Mane
+  type: material
+  sell_price: 410
+
+- id: beast_core
+  name: Beast Core
+  type: material
+  sell_price: 420
+
+# Zone 10
+- id: ancient_core
+  name: Ancient Core
+  type: material
+  sell_price: 480
+
+- id: rune_fragment
+  name: Rune Fragment
+  type: material
+  sell_price: 460
+
+- id: lich_staff
+  name: Lich Staff
+  type: material
+  sell_price: 520
+
+- id: soul_crystal
+  name: Soul Crystal
+  type: material
+  sell_price: 540
+
+- id: chaos_crystal
+  name: Chaos Crystal
+  type: material
+  sell_price: 560
+
+- id: void_shard
+  name: Void Shard
+  type: material
+  sell_price: 550
+
+- id: specter_veil
+  name: Specter Veil
+  type: material
+  sell_price: 490
+
+- id: death_blade
+  name: Death Blade
+  type: material
+  sell_price: 530
+
+- id: angel_feather
+  name: Angel Feather
+  type: material
+  sell_price: 570
+
+- id: divine_shard
+  name: Divine Shard
+  type: material
+  sell_price: 580
+
+- id: guard_emblem
+  name: Guard Emblem
+  type: material
+  sell_price: 510
+
+- id: demon_core
+  name: Demon Core
+  type: material
+  sell_price: 590
+
+# Boss drops
+- id: giant_spider_silk
+  name: Giant Spider Silk
+  type: material
+  sell_price: 150
+
+- id: queen_venom_sac
+  name: Queen Venom Sac
+  type: material
+  sell_price: 180
+
+- id: bear_pelt
+  name: Bear Pelt
+  type: material
+  sell_price: 200
+
+- id: bear_claw
+  name: Bear Claw
+  type: material
+  sell_price: 220
+
+- id: king_crab_shell
+  name: King Crab Shell
+  type: material
+  sell_price: 300
+
+- id: royal_claw
+  name: Royal Claw
+  type: material
+  sell_price: 320
+
+- id: ancient_plague_sample
+  name: Ancient Plague Sample
+  type: material
+  sell_price: 380
+
+- id: cursed_relic
+  name: Cursed Relic
+  type: material
+  sell_price: 420
+
+- id: wyvern_scale
+  name: Wyvern Scale
+  type: material
+  sell_price: 500
+
+- id: wyvern_wing
+  name: Wyvern Wing
+  type: material
+  sell_price: 520
+
+- id: frost_dragon_scale
+  name: Frost Dragon Scale
+  type: material
+  sell_price: 700
+
+- id: ice_dragon_horn
+  name: Ice Dragon Horn
+  type: material
+  sell_price: 720
+
+- id: stone_dragon_scale
+  name: Stone Dragon Scale
+  type: material
+  sell_price: 900
+
+- id: petrified_horn
+  name: Petrified Horn
+  type: material
+  sell_price: 920
+
+- id: succubus_veil
+  name: Succubus Veil
+  type: material
+  sell_price: 1100
+
+- id: charm_crystal
+  name: Charm Crystal
+  type: material
+  sell_price: 1150
+
+- id: flame_dragon_scale
+  name: Flame Dragon Scale
+  type: material
+  sell_price: 1400
+
+- id: inferno_horn
+  name: Inferno Horn
+  type: material
+  sell_price: 1450
+
+- id: dullahan_helm
+  name: Dullahan Helm
+  type: material
+  sell_price: 1800
+
+- id: headless_blade
+  name: Headless Blade
+  type: material
+  sell_price: 2000
+
+# Crafting herbs
+- id: herb_red
+  name: Red Herb
+  type: material
+  sell_price: 10
