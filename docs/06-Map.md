@@ -13,7 +13,7 @@
 ```yaml
 # Inn (town)
 type: bed
-cost_pt: TBD        # set per town in map config
+cost_gp: 50        # See data/map/town_*.yaml
 effect:
   restore: [hp, mp]
   cure: [poison, silence]
@@ -49,8 +49,10 @@ Defined per town in map config — cheaper in early towns, pricier later
 
 # map/town_01.yaml
 inn:
-  cost_pt: 50
+  cost_gp: 50
 ```
+
+
 ## Town
 
 - no enemy encouter
