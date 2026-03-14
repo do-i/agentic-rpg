@@ -1,7 +1,8 @@
 id: town_05_ashenveil
 name: Ashenveil
 inn:
-  cost_gp: 800
+  cost: 800
+  position: [8, 5]
 
 shop:
   items:

@@ -1,7 +1,8 @@
 id: town_02_millhaven
 name: Millhaven
 inn:
-  cost_gp: 120
+  cost: 120
+  position: [8, 5]
 
 shop:
   items:
