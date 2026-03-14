@@ -1,33 +1,31 @@
-# Zone 1 — Starting Forest
+# Rank F Enemies
 ---
-id: wild_wolf
-name: Wild Wolf
+id: giant_rat
+name: Giant Rat
 type: beast
-zone: 1
-hp: 28
-atk: 9
-def: 4
+rank: F
+hp: 22
+atk: 8
+def: 3
 mres: 2
 dex: 11
-exp: 25
+exp: 22
 drops:
   mc:
     - size: XS
       qty: 3
-    - size: S
-      qty: 1
   loot:
     - pool:
-        - item: wolf_fang
-          weight: 70
-        - item: wolf_pelt
-          weight: 30
+        - item: rat_tail
+          weight: 80
+        - item: rat_hide
+          weight: 20
 
 ---
 id: cave_bat
 name: Cave Bat
 type: beast
-zone: 1
+rank: F
 hp: 20
 atk: 8
 def: 3
@@ -49,7 +47,7 @@ drops:
 id: cave_spider
 name: Cave Spider
 type: beast
-zone: 1
+rank: F
 hp: 24
 atk: 10
 def: 4
@@ -68,10 +66,34 @@ drops:
           weight: 40
 
 ---
+id: wild_wolf
+name: Wild Wolf
+type: beast
+rank: F
+hp: 28
+atk: 9
+def: 4
+mres: 2
+dex: 11
+exp: 25
+drops:
+  mc:
+    - size: XS
+      qty: 3
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: wolf_fang
+          weight: 70
+        - item: wolf_pelt
+          weight: 30
+
+---
 id: treant
 name: Treant
 type: beast
-zone: 1
+rank: F
 hp: 40
 atk: 11
 def: 6
@@ -92,23 +114,25 @@ drops:
           weight: 30
 
 ---
-id: giant_rat
-name: Giant Rat
+id: venom_bat
+name: Venom Bat
 type: beast
-zone: 1
-hp: 22
-atk: 8
-def: 3
-mres: 2
-dex: 11
-exp: 22
+rank: F
+hp: 33
+atk: 11
+def: 4
+mres: 3
+dex: 14
+exp: 36
 drops:
   mc:
     - size: XS
-      qty: 3
+      qty: 2
+    - size: S
+      qty: 1
   loot:
     - pool:
-        - item: rat_tail
-          weight: 80
-        - item: rat_hide
-          weight: 20
+        - item: bat_wing
+          weight: 60
+        - item: venom_sac
+          weight: 40

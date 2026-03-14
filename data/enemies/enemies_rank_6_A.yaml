@@ -1,0 +1,340 @@
+# Rank A Enemies
+---
+id: cave_golem
+name: Cave Golem
+type: construct
+rank: A
+hp: 240  # base +20%
+atk: 31
+def: 38  # base +25%
+mres: 16  # base -20%
+dex: 18   # base -15%
+exp: 232
+drops:
+  mc:
+    - size: S
+      qty: 1
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: golem_core
+          weight: 55
+        - item: cave_crystal
+          weight: 45
+
+---
+id: shadow_wolf
+name: Shadow Wolf
+type: beast
+rank: A
+hp: 215
+atk: 38
+def: 26
+mres: 22
+dex: 29
+exp: 275
+drops:
+  mc:
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: shadow_pelt
+          weight: 55
+        - item: dark_fang
+          weight: 45
+
+---
+id: blighted_treant
+name: Blighted Treant
+type: beast
+rank: A
+hp: 248
+atk: 36
+def: 30
+mres: 22
+dex: 24
+exp: 288
+drops:
+  mc:
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: blighted_bark
+          weight: 60
+        - item: cursed_root
+          weight: 40
+
+---
+id: rot_zombie
+name: Rot Zombie
+type: undead
+rank: A
+hp: 242  # base +10%
+atk: 36
+def: 27
+mres: 32  # base +15%
+dex: 22   # base -10%
+exp: 278
+drops:
+  mc:
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: zombie_flesh
+          weight: 60
+        - item: rot_sample
+          weight: 40
+
+---
+id: phantom
+name: Phantom
+type: undead
+rank: A
+hp: 231  # base +10%
+atk: 38
+def: 26
+mres: 34  # base +15%
+dex: 24   # base -10%
+exp: 282
+drops:
+  mc:
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: ectoplasm
+          weight: 50
+        - item: phantom_veil
+          weight: 50
+
+---
+id: wraith
+name: Wraith
+type: undead
+rank: A
+hp: 225  # base +10%
+atk: 39
+def: 27
+mres: 35  # base +15%
+dex: 25   # base -10%
+exp: 290
+drops:
+  mc:
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: wraith_cloth
+          weight: 50
+        - item: soul_fragment
+          weight: 50
+
+---
+id: banshee
+name: Banshee
+type: undead
+rank: A
+hp: 222  # base +10%
+atk: 40
+def: 26
+mres: 36  # base +15%
+dex: 26   # base -10%
+exp: 298
+drops:
+  mc:
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: banshee_veil
+          weight: 50
+        - item: wail_crystal
+          weight: 50
+
+---
+id: shadow_imp
+name: Shadow Imp
+type: demon
+rank: A
+hp: 205
+atk: 46  # base +15%
+def: 25
+mres: 29  # base +10%
+dex: 36   # base +10%
+exp: 295
+drops:
+  mc:
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: imp_horn
+          weight: 55
+        - item: dark_crystal
+          weight: 45
+
+---
+id: wyvern
+name: Wyvern
+type: beast
+rank: A
+boss: true
+immune_to: [instant_kill]
+hp: 300
+atk: 38
+def: 26
+mres: 18
+dex: 22
+exp: 375
+drops:
+  mc:
+    - size: L
+      qty: 1
+    - size: XL
+      qty: 1
+  loot:
+    - pool:
+        - item: wyvern_scale
+          weight: 50
+        - item: wyvern_wing
+          weight: 50
+
+---
+id: cursed_gargoyle
+name: Cursed Gargoyle
+type: construct
+rank: A
+hp: 264  # base +20%
+atk: 37
+def: 44  # base +25%
+mres: 18  # base -20%
+dex: 22   # base -15%
+exp: 285
+drops:
+  mc:
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: cursed_stone
+          weight: 55
+        - item: gargoyle_core
+          weight: 45
+
+---
+id: lava_lizard
+name: Lava Lizard
+type: beast
+rank: A
+hp: 255
+atk: 44
+def: 33
+mres: 28
+dex: 30
+exp: 342
+drops:
+  mc:
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: lava_scale
+          weight: 65
+        - item: heat_sac
+          weight: 35
+
+---
+id: lava_serpent
+name: Lava Serpent
+type: beast
+rank: A
+hp: 262
+atk: 45
+def: 33
+mres: 28
+dex: 31
+exp: 348
+drops:
+  mc:
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: lava_scale
+          weight: 60
+        - item: fire_gland
+          weight: 40
+
+---
+id: cerberus
+name: Cerberus
+type: beast
+rank: A
+hp: 285
+atk: 48
+def: 35
+mres: 29
+dex: 33
+exp: 388
+drops:
+  mc:
+    - size: M
+      qty: 2
+    - size: L
+      qty: 1
+  loot:
+    - pool:
+        - item: hellhound_fang
+          weight: 50
+        - item: brimstone_collar
+          weight: 50
+
+---
+id: chimera
+name: Chimera
+type: beast
+rank: A
+hp: 292
+atk: 50
+def: 36
+mres: 30
+dex: 32
+exp: 398
+drops:
+  mc:
+    - size: M
+      qty: 2
+    - size: L
+      qty: 1
+  loot:
+    - pool:
+        - item: chimera_mane
+          weight: 50
+        - item: beast_core
+          weight: 50
+
+---
+id: vile_imp
+name: Vile Imp
+type: demon
+rank: A
+hp: 248
+atk: 60  # base +15%
+def: 31
+mres: 38  # base +10%
+dex: 36   # base +10%
+exp: 368
+drops:
+  mc:
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: imp_horn
+          weight: 55
+        - item: vile_essence
+          weight: 45

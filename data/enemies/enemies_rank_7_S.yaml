@@ -1,0 +1,293 @@
+# Rank S Enemies
+---
+id: magma_golem
+name: Magma Golem
+type: construct
+rank: S
+hp: 336  # base +20%
+atk: 44
+def: 56  # base +25%
+mres: 22  # base -20%
+dex: 24   # base -15%
+exp: 362
+drops:
+  mc:
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: magma_core
+          weight: 55
+        - item: obsidian_shard
+          weight: 45
+
+---
+id: fire_elemental
+name: Fire Elemental
+type: demon
+rank: S
+hp: 258
+atk: 62  # base +15%
+def: 31
+mres: 40  # base +10%
+dex: 38   # base +10%
+exp: 375
+drops:
+  mc:
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: fire_crystal
+          weight: 55
+        - item: ember_core
+          weight: 45
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: fire_bolt
+      weight: 40
+
+---
+id: frost_dragon
+name: Frost Dragon
+type: beast
+rank: S
+boss: true
+immune_to: [instant_kill]
+hp: 388
+atk: 46
+def: 32
+mres: 26
+dex: 27
+exp: 495
+drops:
+  mc:
+    - size: L
+      qty: 1
+    - size: XL
+      qty: 1
+  loot:
+    - pool:
+        - item: frost_dragon_scale
+          weight: 50
+        - item: ice_dragon_horn
+          weight: 50
+ai_ref: boss_move_sets/frost_dragon.yaml
+
+---
+id: specter
+name: Specter
+type: undead
+rank: S
+hp: 341  # base +10%
+atk: 52
+def: 39
+mres: 53  # base +15%
+dex: 36   # base -10%
+exp: 455
+drops:
+  mc:
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: specter_veil
+          weight: 55
+        - item: soul_fragment
+          weight: 45
+
+---
+id: lich
+name: Lich
+type: undead
+rank: S
+hp: 352  # base +10%
+atk: 52
+def: 39
+mres: 55  # base +15%
+dex: 34   # base -10%
+exp: 462
+drops:
+  mc:
+    - size: M
+      qty: 2
+    - size: L
+      qty: 1
+  loot:
+    - pool:
+        - item: lich_staff
+          weight: 45
+        - item: soul_crystal
+          weight: 55
+
+---
+id: death_knight
+name: Death Knight
+type: undead
+rank: S
+hp: 363  # base +10%
+atk: 53
+def: 40
+mres: 54  # base +15%
+dex: 33   # base -10%
+exp: 468
+drops:
+  mc:
+    - size: M
+      qty: 2
+    - size: L
+      qty: 1
+  loot:
+    - pool:
+        - item: death_blade
+          weight: 45
+        - item: dark_armor_shard
+          weight: 55
+
+---
+id: dark_elemental
+name: Dark Elemental
+type: demon
+rank: S
+hp: 308
+atk: 74  # base +15%
+def: 38
+mres: 51  # base +10%
+dex: 46   # base +10%
+exp: 470
+drops:
+  mc:
+    - size: M
+      qty: 2
+    - size: L
+      qty: 1
+  loot:
+    - pool:
+        - item: dark_crystal
+          weight: 55
+        - item: void_shard
+          weight: 45
+
+---
+id: stone_dragon
+name: Stone Dragon
+type: beast
+rank: S
+boss: true
+immune_to: [instant_kill]
+hp: 488
+atk: 55
+def: 39
+mres: 32
+dex: 30
+exp: 630
+drops:
+  mc:
+    - size: L
+      qty: 2
+    - size: XL
+      qty: 1
+  loot:
+    - pool:
+        - item: stone_dragon_scale
+          weight: 50
+        - item: stone_dragon_horn
+          weight: 50
+
+---
+id: chaos_elemental
+name: Chaos Elemental
+type: demon
+rank: S
+hp: 315
+atk: 76  # base +15%
+def: 38
+mres: 52  # base +10%
+dex: 48   # base +10%
+exp: 475
+drops:
+  mc:
+    - size: M
+      qty: 2
+    - size: L
+      qty: 1
+  loot:
+    - pool:
+        - item: chaos_crystal
+          weight: 50
+        - item: void_shard
+          weight: 50
+
+---
+id: ancient_golem
+name: Ancient Golem
+type: construct
+rank: S
+hp: 444  # base +20%
+atk: 52
+def: 73  # base +25%
+mres: 30  # base -20%
+dex: 30   # base -15%
+exp: 448
+drops:
+  mc:
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: ancient_core
+          weight: 55
+        - item: rune_fragment
+          weight: 45
+
+---
+id: fallen_angel
+name: Fallen Angel
+type: demon
+rank: S
+hp: 322
+atk: 78  # base +15%
+def: 39
+mres: 53  # base +10%
+dex: 50   # base +10%
+exp: 488
+drops:
+  mc:
+    - size: L
+      qty: 1
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: angel_feather
+          weight: 45
+        - item: divine_shard
+          weight: 55
+
+---
+id: demon_lords_guard
+name: Demon Lord's Guard
+type: demon
+rank: S
+hp: 340
+atk: 80  # base +15%
+def: 40
+mres: 55  # base +10%
+dex: 52   # base +10%
+exp: 505
+drops:
+  mc:
+    - size: L
+      qty: 1
+    - size: M
+      qty: 2
+  loot:
+    - pool:
+        - item: guard_emblem
+          weight: 40
+        - item: demon_core
+          weight: 60

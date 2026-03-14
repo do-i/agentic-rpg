@@ -354,37 +354,47 @@ Size is the only axis — value emerges from the combination.
 - Recipe costs in gp now have a clear anchor: a recipe costing 500 gp = 5 S cores worth of exchange value
 - Crafting tension is sharp: **1 XL sold = 10,000 gp vs. used in end-game recipe** — that's a real decision
 
+## Move Set File Convention
+
+| Enemy type | AI location | Field |
+|---|---|---|
+| Regular | Inline in `enemies_rank_*.yaml` | `ai:` |
+| Boss | Separate file | `ai_ref: boss_move_sets/<id>.yaml` |
+
+Rule: if `boss: true` → use `ai_ref`. Otherwise → inline `ai`.
 
 ## Example
 
 ```yaml
-id: forest_wolf
-name: Forest Wolf
-type: beast
-hp: 45
-atk: 12
-def: 6
-mres: 2
-dex: 14
-exp: 38  # player gets this EXP
+id: fire_elemental
+name: Fire Elemental
+type: demon
+rank: S
+hp: 258
+atk: 62  # base +15%
+def: 31
+mres: 40  # base +10%
+dex: 38   # base +10%
+exp: 375
 drops:
   mc:
-    - size: XS
-      qty: 3
-    - size: S
-      qty: 1
+    - size: M
+      qty: 2
   loot:
     - pool:
-        - item: wolf_fang
-          weight: 80
-        - item: wolf_pelt
-          weight: 20
-    - pool:
-        - item: sharp_claw
-          weight: 15
-        - item: rare_wolf_gem
-          weight: 5
-        # weights sum to 20 → 80% nothing
+        - item: fire_crystal
+          weight: 55
+        - item: ember_core
+          weight: 45
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: fire_bolt
+      weight: 40
+
 ```
 - Each pool is resolved independently — one roll per pool.
 - Value = what the player chooses to do with the bundle — exchange small ones for gp, hoard large ones for crafting.

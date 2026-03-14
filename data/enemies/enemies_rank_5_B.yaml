@@ -1,0 +1,284 @@
+# Rank B Enemies
+---
+id: harpy
+name: Harpy
+type: beast
+rank: B
+hp: 128
+atk: 28
+def: 16
+mres: 15
+dex: 23
+exp: 180
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: harpy_feather
+          weight: 65
+        - item: talon_shard
+          weight: 35
+
+---
+id: frost_wolf
+name: Frost Wolf
+type: beast
+rank: B
+hp: 145
+atk: 27
+def: 17
+mres: 15
+dex: 21
+exp: 172
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: frost_pelt
+          weight: 60
+        - item: ice_fang
+          weight: 40
+
+---
+id: griffon
+name: Griffon
+type: beast
+rank: B
+hp: 140
+atk: 28
+def: 17
+mres: 15
+dex: 22
+exp: 175
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: griffon_feather
+          weight: 60
+        - item: beak_shard
+          weight: 40
+
+---
+id: iron_golem
+name: Iron Golem
+type: construct
+rank: B
+hp: 162  # base +20%
+atk: 24
+def: 28  # base +25%
+mres: 11  # base -20%
+dex: 14   # base -15%
+exp: 148
+drops:
+  mc:
+    - size: S
+      qty: 2
+  loot:
+    - pool:
+        - item: golem_core
+          weight: 55
+        - item: iron_plate
+          weight: 45
+
+---
+id: mud_crab_king
+name: Mud Crab (King)
+type: beast
+rank: B
+boss: true
+immune_to: [instant_kill]
+hp: 175
+atk: 27
+def: 22
+mres: 10
+dex: 14
+exp: 225
+drops:
+  mc:
+    - size: M
+      qty: 2
+    - size: L
+      qty: 1
+  loot:
+    - pool:
+        - item: king_crab_shell
+          weight: 50
+        - item: royal_claw
+          weight: 50
+
+---
+id: dark_knight
+name: Dark Knight
+type: demon
+rank: B
+hp: 155
+atk: 34  # base +15%
+def: 18
+mres: 20  # base +10%
+dex: 23   # base +10%
+exp: 198
+drops:
+  mc:
+    - size: S
+      qty: 2
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: dark_armor_shard
+          weight: 50
+        - item: cursed_blade
+          weight: 50
+
+---
+id: iron_gargoyle
+name: Iron Gargoyle
+type: construct
+rank: B
+hp: 192  # base +20%
+atk: 26
+def: 32  # base +25%
+mres: 13  # base -20%
+dex: 17   # base -15%
+exp: 188
+drops:
+  mc:
+    - size: S
+      qty: 2
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: iron_wing
+          weight: 60
+        - item: gargoyle_core
+          weight: 40
+
+---
+id: fungus_spore
+name: Fungus Spore
+type: beast
+rank: B
+hp: 172
+atk: 30
+def: 22
+mres: 20
+dex: 21
+exp: 215
+drops:
+  mc:
+    - size: S
+      qty: 1
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: spore_dust
+          weight: 60
+        - item: toxic_cap
+          weight: 40
+
+---
+id: blood_bat
+name: Blood Bat
+type: beast
+rank: B
+hp: 165
+atk: 32
+def: 21
+mres: 18
+dex: 26
+exp: 218
+drops:
+  mc:
+    - size: S
+      qty: 1
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: bat_wing
+          weight: 55
+        - item: blood_vial
+          weight: 45
+
+---
+id: venom_spider
+name: Venom Spider
+type: beast
+rank: B
+hp: 168
+atk: 33
+def: 21
+mres: 18
+dex: 25
+exp: 222
+drops:
+  mc:
+    - size: S
+      qty: 1
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: spider_silk
+          weight: 50
+        - item: venom_sac
+          weight: 50
+
+---
+id: dark_skeleton
+name: Dark Skeleton
+type: undead
+rank: B
+hp: 187  # base +10%
+atk: 31
+def: 21
+mres: 27  # base +15%
+dex: 20   # base -10%
+exp: 228
+drops:
+  mc:
+    - size: S
+      qty: 1
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: dark_bone
+          weight: 60
+        - item: shadow_shard
+          weight: 40
+
+---
+id: plague_zombie_ancient
+name: Plague Zombie (Ancient)
+type: undead
+rank: B
+boss: true
+immune_to: [instant_kill]
+hp: 242  # base +10%
+atk: 30
+def: 20
+mres: 26  # base +15%
+dex: 18   # base -10%
+exp: 285
+drops:
+  mc:
+    - size: M
+      qty: 2
+    - size: L
+      qty: 1
+  loot:
+    - pool:
+        - item: ancient_plague_sample
+          weight: 50
+        - item: cursed_relic
+          weight: 50
