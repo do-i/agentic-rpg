@@ -394,3 +394,18 @@ drops:
 **Suggested drill-down order** — each feeds the next:
 
 Move Set → Targeting Logic → Behavior Pattern → Loot Table → Encounter Grouping → Boss Rules → Scaling & Placement
+
+## Ability Types Needed (boss examples)
+
+| Boss | Abilities needed |
+|---|---|
+| Forest Spider Giant | Web Shot (slow), Poison Bite |
+| Mountain Bear | Maul (high dmg), Roar (ATK down party) |
+| Wyvern | Wing Slash (all), Poison Tail |
+| Frost Dragon | Frost Breath (all), Ice Shield (DEF up) |
+| Dullahan | Death Gaze (instant KO attempt), Shadow Slash |
+
+### Rule of Death Gaze - Instant Death Attack
+- Blocked by accessory holy_talisman (to be defined in item master)
+- If not blocked → reduces HP to 1 instead of KO
+- Keeps threat without frustration

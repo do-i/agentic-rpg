@@ -1,0 +1,33 @@
+ai:
+  pattern: conditional
+  moves:
+    - condition:
+        hp_pct_below: 1.0
+      action: attack
+      weight: 40
+    - condition:
+        hp_pct_below: 1.0
+      action: ability
+      id: stone_breath      # all party, 90% magic, stun 30%
+      weight: 35
+    - condition:
+        hp_pct_below: 0.50
+      action: ability
+      id: petrify_roar      # all party, stun 50%
+      weight: 50
+    - condition:
+        turn_mod:
+          every: 4
+      action: ability
+      id: granite_hide      # DEF up 50% self, 2 turns
+      weight: 100
+
+targeting:
+  default: random_alive
+  overrides:
+    - ability: stone_breath
+      target: all_party
+    - ability: petrify_roar
+      target: all_party
+    - ability: granite_hide
+      target: self
