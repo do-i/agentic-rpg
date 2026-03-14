@@ -24,6 +24,7 @@ drops:
           weight: 50
         - item: charm_crystal
           weight: 50
+ai_ref: boss_move_sets/succubus.yaml
 
 ---
 id: flame_dragon
@@ -50,6 +51,7 @@ drops:
           weight: 50
         - item: fire_dragon_horn
           weight: 50
+ai_ref: boss_move_sets/flame_dragon.yaml
 
 ---
 id: dullahan
@@ -76,3 +78,4 @@ drops:
           weight: 40
         - item: void_core
           weight: 60
+ai_ref: boss_move_sets/dullahan.yaml

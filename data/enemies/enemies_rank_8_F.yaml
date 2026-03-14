@@ -20,6 +20,16 @@ drops:
           weight: 80
         - item: rat_hide
           weight: 20
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: scratch           # 90% physical, single target
+      weight: 30
+targeting:
+  default: random_alive
 
 ---
 id: cave_bat
@@ -42,6 +52,16 @@ drops:
           weight: 70
         - item: small_fang
           weight: 30
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: sonic_screech     # DEX down 15% single target, 2 turns
+      weight: 30
+targeting:
+  default: random_alive
 
 ---
 id: cave_spider
@@ -64,6 +84,16 @@ drops:
           weight: 60
         - item: venom_sac
           weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: poison_bite       # poison single target
+      weight: 40
+targeting:
+  default: random_alive
 
 ---
 id: wild_wolf
@@ -88,6 +118,16 @@ drops:
           weight: 70
         - item: wolf_pelt
           weight: 30
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: lunge             # 120% physical, single target
+      weight: 30
+targeting:
+  default: random_alive
 
 ---
 id: treant
@@ -112,6 +152,19 @@ drops:
           weight: 70
         - item: ancient_root
           weight: 30
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: branch_slam       # DEF up 20% self, 2 turns
+      weight: 30
+targeting:
+  default: random_alive
+  overrides:
+    - ability: branch_slam
+      target: self
 
 ---
 id: venom_bat
@@ -136,3 +189,13 @@ drops:
           weight: 60
         - item: venom_sac
           weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: venom_bite        # poison single target
+      weight: 40
+targeting:
+  default: random_alive
