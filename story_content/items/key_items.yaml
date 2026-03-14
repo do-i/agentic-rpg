@@ -1,13 +1,3 @@
-- id: veil_breaker
-  name: Veil Breaker
-  type: key
-  use_context: null         # passive — auto-applied in battle
-  effect:
-    bypass_barrier: true
-  sellable: false
-  droppable: false
-  description: "Allows attacks to reach barrier-type enemies (Ghost, Wind Elemental)."
-
 - id: phoenix_wing
   name: Phoenix Wing
   type: key                 # permanent, never lost, never consumed

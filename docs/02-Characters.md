@@ -18,7 +18,7 @@ con: 9
 int: 22
 equipped:
   weapon: staff_oak
-  armor: robe_silk
+  body: robe_silk
   shield: none        # sorcerer can't equip shields
 abilities_unlocked: [fireball]
 status_effects: []
