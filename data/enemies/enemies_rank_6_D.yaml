@@ -22,6 +22,16 @@ drops:
           weight: 60
         - item: venom_gland
           weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: poison_fang       # poison single target
+      weight: 40
+targeting:
+  default: random_alive
 
 ---
 id: water_elemental
@@ -46,6 +56,16 @@ drops:
           weight: 60
         - item: mana_droplet
           weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 50
+    - action: ability
+      id: water_shot        # 110% magic, single target
+      weight: 50
+targeting:
+  default: random_alive
 
 ---
 id: mud_crab
@@ -70,6 +90,16 @@ drops:
           weight: 65
         - item: crab_claw
           weight: 35
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: claw_snap         # DEF down 15% single target, 2 turns
+      weight: 30
+targeting:
+  default: random_alive
 
 ---
 id: mandrake
@@ -94,6 +124,16 @@ drops:
           weight: 55
         - item: rare_herb
           weight: 45
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: shriek            # silence single target
+      weight: 40
+targeting:
+  default: random_alive
 
 ---
 id: forest_spider_giant
@@ -120,6 +160,7 @@ drops:
           weight: 50
         - item: queen_venom_sac
           weight: 50
+ai_ref: boss_move_sets/forest_spider_giant.yaml
 
 ---
 id: plague_zombie
@@ -144,6 +185,16 @@ drops:
           weight: 65
         - item: plague_sample
           weight: 35
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: infectious_claw   # poison single target
+      weight: 40
+targeting:
+  default: random_alive
 
 ---
 id: skeleton
@@ -168,6 +219,16 @@ drops:
           weight: 70
         - item: old_sword
           weight: 30
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: bone_throw        # 110% physical ranged, single target
+      weight: 30
+targeting:
+  default: random_alive
 
 ---
 id: ghost
@@ -194,6 +255,16 @@ drops:
           weight: 55
         - item: spirit_orb
           weight: 45
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 50
+    - action: ability
+      id: cold_touch        # silence single target
+      weight: 50
+targeting:
+  default: random_alive
 
 ---
 id: stone_gargoyle
@@ -218,6 +289,16 @@ drops:
           weight: 65
         - item: gargoyle_wing
           weight: 35
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: stone_gaze        # stun single target, 1 turn
+      weight: 30
+targeting:
+  default: random_alive
 
 ---
 id: bone_archer
@@ -242,6 +323,16 @@ drops:
           weight: 60
         - item: arrow_bundle
           weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: piercing_arrow    # 120% physical ranged, single target
+      weight: 40
+targeting:
+  default: random_alive
 
 ---
 id: will_o_wisp
@@ -266,3 +357,13 @@ drops:
           weight: 55
         - item: silence_dust
           weight: 45
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 50
+    - action: ability
+      id: hex               # random debuff (ATK or DEF down 15%), single target
+      weight: 50
+targeting:
+  default: random_alive

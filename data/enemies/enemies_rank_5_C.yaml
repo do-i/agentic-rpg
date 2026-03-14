@@ -20,6 +20,16 @@ drops:
           weight: 40
         - item: rare_coin
           weight: 60
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: loot_drain        # steals 1 random item from party repository
+      weight: 40
+targeting:
+  default: random_alive
 
 ---
 id: plague_rat_elite
@@ -42,6 +52,16 @@ drops:
           weight: 55
         - item: plague_sample
           weight: 45
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: plague_bite       # poison single target
+      weight: 40
+targeting:
+  default: random_alive
 
 ---
 id: mountain_bear
@@ -68,6 +88,7 @@ drops:
           weight: 50
         - item: bear_claw
           weight: 50
+ai_ref: boss_move_sets/mountain_bear.yaml
 
 ---
 id: sand_worm
@@ -90,6 +111,19 @@ drops:
           weight: 65
         - item: sand_crystal
           weight: 35
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: sand_burst        # DEX down 20% all party, 1 turn
+      weight: 40
+targeting:
+  default: random_alive
+  overrides:
+    - ability: sand_burst
+      target: all_party
 
 ---
 id: rock_crab
@@ -112,6 +146,16 @@ drops:
           weight: 60
         - item: hard_claw
           weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: iron_claw         # DEF down 20% single target, 2 turns
+      weight: 30
+targeting:
+  default: random_alive
 
 ---
 id: wind_elemental
@@ -138,6 +182,16 @@ drops:
           weight: 55
         - item: gale_feather
           weight: 45
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 50
+    - action: ability
+      id: wind_slash        # 110% magic wind, single target
+      weight: 50
+targeting:
+  default: random_alive
 
 ---
 id: stone_golem
@@ -160,3 +214,13 @@ drops:
           weight: 60
         - item: stone_chunk
           weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: rock_throw        # 110% physical ranged, stun 20%, single target
+      weight: 30
+targeting:
+  default: random_alive

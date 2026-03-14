@@ -22,6 +22,16 @@ drops:
           weight: 55
         - item: venom_sac
           weight: 45
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: poison_bite       # poison single target
+      weight: 40
+targeting:
+  default: random_alive
 
 ---
 id: sand_serpent
@@ -46,6 +56,16 @@ drops:
           weight: 65
         - item: venom_gland
           weight: 35
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: constrict         # DEX down 20% single target, 2 turns
+      weight: 30
+targeting:
+  default: random_alive
 
 ---
 id: horned_rabbit
@@ -70,6 +90,16 @@ drops:
           weight: 60
         - item: soft_fur
           weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 80
+    - action: ability
+      id: horn_charge       # 130% physical, single target
+      weight: 20
+targeting:
+  default: random_alive
 
 ---
 id: forest_wolf
@@ -96,6 +126,19 @@ drops:
           weight: 30
         - item: sharp_claw
           weight: 10
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: howl              # ATK up 20% self, 2 turns
+      weight: 30
+targeting:
+  default: random_alive
+  overrides:
+    - ability: howl
+      target: self
 
 ---
 id: marsh_frog
@@ -120,6 +163,16 @@ drops:
           weight: 65
         - item: poison_mucus
           weight: 35
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: tongue_lash       # 110% physical, single target
+      weight: 30
+targeting:
+  default: random_alive
 
 ---
 id: marsh_rat
@@ -144,6 +197,16 @@ drops:
           weight: 70
         - item: rat_hide
           weight: 30
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 80
+    - action: ability
+      id: gnaw              # DEF down 15% single target, 2 turns
+      weight: 20
+targeting:
+  default: random_alive
 
 ---
 id: bog_leech
@@ -168,6 +231,19 @@ drops:
           weight: 70
         - item: dark_fluid
           weight: 30
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: drain             # steals 10% target HP, heals self
+      weight: 40
+targeting:
+  default: highest_hp
+  overrides:
+    - ability: drain
+      target: highest_hp
 
 ---
 id: plague_rat
@@ -192,3 +268,13 @@ drops:
           weight: 60
         - item: plague_sample
           weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: plague_bite       # poison single target
+      weight: 40
+targeting:
+  default: random_alive

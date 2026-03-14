@@ -20,6 +20,16 @@ drops:
           weight: 65
         - item: talon_shard
           weight: 35
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: talon_dive        # 130% physical, single target
+      weight: 40
+targeting:
+  default: random_alive
 
 ---
 id: frost_wolf
@@ -42,6 +52,16 @@ drops:
           weight: 60
         - item: ice_fang
           weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: ice_fang          # 110% physical, freeze 20%, single target
+      weight: 40
+targeting:
+  default: random_alive
 
 ---
 id: griffon
@@ -64,6 +84,19 @@ drops:
           weight: 60
         - item: beak_shard
           weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: wing_buffet       # DEX down 20% all party, 1 turn
+      weight: 40
+targeting:
+  default: random_alive
+  overrides:
+    - ability: wing_buffet
+      target: all_party
 
 ---
 id: iron_golem
@@ -86,6 +119,16 @@ drops:
           weight: 55
         - item: iron_plate
           weight: 45
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: iron_fist         # 140% physical, single target
+      weight: 30
+targeting:
+  default: random_alive
 
 ---
 id: mud_crab_king
@@ -112,6 +155,7 @@ drops:
           weight: 50
         - item: royal_claw
           weight: 50
+ai_ref: boss_move_sets/mud_crab_king.yaml
 
 ---
 id: dark_knight
@@ -136,6 +180,19 @@ drops:
           weight: 50
         - item: cursed_blade
           weight: 50
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 50
+    - action: ability
+      id: dark_slash        # 130% physical, single target
+      weight: 30
+    - action: ability
+      id: intimidate        # ATK down 15% single target, 2 turns
+      weight: 20
+targeting:
+  default: random_alive
 
 ---
 id: iron_gargoyle
@@ -160,6 +217,16 @@ drops:
           weight: 60
         - item: gargoyle_core
           weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: stone_claw        # 120% physical, stun 20%, single target
+      weight: 30
+targeting:
+  default: random_alive
 
 ---
 id: fungus_spore
@@ -184,6 +251,19 @@ drops:
           weight: 60
         - item: toxic_cap
           weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 50
+    - action: ability
+      id: spore_cloud       # poison all party
+      weight: 50
+targeting:
+  default: random_alive
+  overrides:
+    - ability: spore_cloud
+      target: all_party
 
 ---
 id: blood_bat
@@ -208,6 +288,19 @@ drops:
           weight: 55
         - item: blood_vial
           weight: 45
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: blood_drain       # steals 15% target HP, heals self
+      weight: 40
+targeting:
+  default: highest_hp
+  overrides:
+    - ability: blood_drain
+      target: highest_hp
 
 ---
 id: venom_spider
@@ -232,6 +325,16 @@ drops:
           weight: 50
         - item: venom_sac
           weight: 50
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: venom_web         # poison + DEX down 20% single target
+      weight: 40
+targeting:
+  default: random_alive
 
 ---
 id: dark_skeleton
@@ -256,6 +359,16 @@ drops:
           weight: 60
         - item: shadow_shard
           weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: shadow_blade      # 130% physical, single target
+      weight: 40
+targeting:
+  default: random_alive
 
 ---
 id: plague_zombie_ancient
@@ -282,3 +395,4 @@ drops:
           weight: 50
         - item: cursed_relic
           weight: 50
+ai_ref: boss_move_sets/plague_zombie_ancient.yaml

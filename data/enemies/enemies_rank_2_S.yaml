@@ -20,6 +20,16 @@ drops:
           weight: 55
         - item: obsidian_shard
           weight: 45
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: magma_fist        # 130% physical, burn 40%, single target
+      weight: 40
+targeting:
+  default: random_alive
 
 ---
 id: fire_elemental
@@ -46,10 +56,18 @@ ai:
   pattern: random
   moves:
     - action: attack
-      weight: 60
-    - action: ability
-      id: fire_bolt
       weight: 40
+    - action: ability
+      id: fire_bolt         # 120% magic fire, single target
+      weight: 40
+    - action: ability
+      id: ember_burst       # 80% magic fire, all party
+      weight: 20
+targeting:
+  default: random_alive
+  overrides:
+    - ability: ember_burst
+      target: all_party
 
 ---
 id: frost_dragon
@@ -99,6 +117,19 @@ drops:
           weight: 55
         - item: soul_fragment
           weight: 45
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 40
+    - action: ability
+      id: soul_rend         # 120% magic, DEF down 20% single target
+      weight: 40
+    - action: ability
+      id: curse             # ATK + DEF down 10% single target, 2 turns
+      weight: 20
+targeting:
+  default: random_alive
 
 ---
 id: lich
@@ -123,6 +154,24 @@ drops:
           weight: 45
         - item: soul_crystal
           weight: 55
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 30
+    - action: ability
+      id: dark_wave         # 100% magic, all party
+      weight: 40
+    - action: ability
+      id: drain_life        # steals 20% target HP, heals self
+      weight: 30
+targeting:
+  default: random_alive
+  overrides:
+    - ability: dark_wave
+      target: all_party
+    - ability: drain_life
+      target: lowest_hp
 
 ---
 id: death_knight
@@ -147,6 +196,22 @@ drops:
           weight: 45
         - item: dark_armor_shard
           weight: 55
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 50
+    - action: ability
+      id: death_blade       # 140% physical, single target
+      weight: 30
+    - action: ability
+      id: dark_aura         # ATK down 20% all party, 2 turns
+      weight: 20
+targeting:
+  default: random_alive
+  overrides:
+    - ability: dark_aura
+      target: all_party
 
 ---
 id: dark_elemental
@@ -171,6 +236,19 @@ drops:
           weight: 55
         - item: void_shard
           weight: 45
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 40
+    - action: ability
+      id: dark_bolt         # 120% magic, single target
+      weight: 40
+    - action: ability
+      id: void_touch        # silence single target
+      weight: 20
+targeting:
+  default: random_alive
 
 ---
 id: stone_dragon
@@ -197,6 +275,7 @@ drops:
           weight: 50
         - item: stone_dragon_horn
           weight: 50
+ai_ref: boss_move_sets/stone_dragon.yaml
 
 ---
 id: chaos_elemental
@@ -221,6 +300,22 @@ drops:
           weight: 50
         - item: void_shard
           weight: 50
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 30
+    - action: ability
+      id: chaos_bolt        # 130% magic, random element, single target
+      weight: 40
+    - action: ability
+      id: entropy           # random debuff on all party (ATK, DEF, or DEX down 15%)
+      weight: 30
+targeting:
+  default: random_alive
+  overrides:
+    - ability: entropy
+      target: all_party
 
 ---
 id: ancient_golem
@@ -243,6 +338,16 @@ drops:
           weight: 55
         - item: rune_fragment
           weight: 45
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: ancient_fist      # 140% physical, stun 30%, single target
+      weight: 40
+targeting:
+  default: random_alive
 
 ---
 id: fallen_angel
@@ -267,6 +372,19 @@ drops:
           weight: 45
         - item: divine_shard
           weight: 55
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 40
+    - action: ability
+      id: divine_strike     # 130% magic holy, single target
+      weight: 40
+    - action: ability
+      id: holy_seal         # silence single target
+      weight: 20
+targeting:
+  default: random_alive
 
 ---
 id: demon_lords_guard
@@ -291,3 +409,19 @@ drops:
           weight: 40
         - item: demon_core
           weight: 60
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 40
+    - action: ability
+      id: dark_slash        # 140% physical, single target
+      weight: 40
+    - action: ability
+      id: intimidate        # ATK down 20% all party, 2 turns
+      weight: 20
+targeting:
+  default: random_alive
+  overrides:
+    - ability: intimidate
+      target: all_party
