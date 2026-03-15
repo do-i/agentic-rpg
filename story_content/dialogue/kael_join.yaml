@@ -1,0 +1,23 @@
+# story_content/dialogue/kael_join.yaml
+id: kael_join
+type: npc
+entries:
+  - condition:
+      requires: [story_act4_started]
+      excludes: [npc_kael_joined]
+    lines:
+      - "That emblem on your pack. Where did you get it."
+      - "..."
+      - "The Lost Flame. I was there the night they issued the burn order."
+      - "I refused. They called it treason. I called it the only decent thing I'd ever done."
+      - "I've been waiting in this frozen town for two years wondering if it meant anything."
+      - "Looks like it did."
+      - "I'm in. Don't thank me. Just don't waste it."
+    on_complete:
+      set_flag: npc_kael_joined
+      join_party: kael
+
+  - condition:
+      requires: [npc_kael_joined]
+    lines:
+      - "Stay sharp. Frostholm isn't the last hard thing you'll face."

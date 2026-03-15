@@ -1,0 +1,21 @@
+# story_content/dialogue/elise_join.yaml
+id: elise_join
+type: npc
+entries:
+  - condition:
+      requires: [story_quest_started]
+      excludes: [npc_elise_joined]
+    lines:
+      - "Aric. I saw the flame last night — near your father's forge."
+      - "I know you saw it too. Don't say you didn't."
+      - "The sisters will tell me to stay. But I think I'm supposed to go with you."
+      - "I can heal. I can fight a little. And I'm not afraid."
+      - "Please. Let me come."
+    on_complete:
+      set_flag: npc_elise_joined
+      join_party: elise
+
+  - condition:
+      requires: [npc_elise_joined]
+    lines:
+      - "I'm ready whenever you are."
