@@ -1,4 +1,4 @@
-# manifest
+# story_content/manifest.yaml
 id: my_rpg_story
 name: "Chronicles of the Lost Flame"
 version: "1.0.0"
@@ -7,51 +7,58 @@ protagonist:
   id: hero_aric
   name: "Aric"  # player-renameable in New Game flow
   class: hero
+  character: story_content/characters/aric.yaml
   sprite: sprites/hero.png
 
 party:
   members:
-    - id: sera
-      name: "Sera"
-      class: sorcerer
-      join_condition: story_quest_started   # joins immediately
-      join_map: town_01
+    - id: elise
+      name: "Elise"
+      class: cleric
+      character: story_content/characters/elise.yaml
+      join_condition: story_quest_started
+      join_map: town_01_ardel
       join_position: [10, 6]
+
+    - id: reiya
+      name: "Reiya"
+      class: sorcerer
+      character: story_content/characters/reiya.yaml
+      join_condition: story_act2_started
+      join_map: town_02_millhaven
+      join_position: [8, 5]
+
+    - id: jep
+      name: "Jep"
+      class: rogue
+      character: story_content/characters/jep.yaml
+      join_condition: story_act3_started
+      join_map: dungeon_ruinwatch
+      join_position: [5, 9]
 
     - id: kael
       name: "Kael"
       class: warrior
-      join_condition: story_act2_started
-      join_map: town_02
-      join_position: [8, 4]
-
-    - id: lira
-      name: "Lira"
-      class: cleric
-      join_condition: story_act3_started
-      join_map: dungeon_03
-      join_position: [5, 9]
-
-    - id: zeph
-      name: "Zeph"
-      class: rogue
+      character: story_content/characters/kael.yaml
       join_condition: story_act4_started
-      join_map: port_town
-      join_position: [3, 7]
+      join_map: town_frostholm
+      join_position: [6, 4]
 
 start:
-  map: town_01
+  map: town_01_ardel
   position: [12, 8]
+  intro_dialogue: story_content/dialogue/intro_cutscene.yaml
 
 bootstrap_flags:
   - story_quest_started
 
 refs:
-  classes:   story_content/classes/
-  maps:      story_content/maps/
-  dialogue:  story_content/dialogue/
-  items:     story_content/items/
-  enemies:   story_content/enemies/
-  loot:      story_content/loot/
-  encount:   story_content/encount/
-  recipe:    story_content/recipe/
+  characters: story_content/characters/
+  classes:    story_content/classes/
+  maps:       story_content/maps/
+  dialogue:   story_content/dialogue/
+  items:      story_content/items/
+  enemies:    story_content/enemies/
+  loot:       story_content/loot/
+  encount:    story_content/encount/
+  recipe:     story_content/recipe/

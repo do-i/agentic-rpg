@@ -43,29 +43,6 @@ party:
       - effect: poison
         duration_turns: 6000 # avoid null. Just put unrealistically long duration
 
-  - id: sera
-    protagonist: false
-    name: "Sera"
-    class: sorcerer
-    level: 7
-    exp: 5400
-    hp: 38
-    hp_max: 38
-    mp: 52
-    mp_max: 60
-    str: 8
-    dex: 14
-    con: 9
-    int: 22
-    equipped:
-      weapon: staff_oak
-      shield: none
-      helmet: circlet_silver
-      body: robe_silk
-      accessory: none
-    abilities_unlocked: [fire_bolt, aqua_shot]
-    status_effects: []
-
 party_repository:
   gp: 3200
   items:

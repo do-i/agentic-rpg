@@ -1,0 +1,29 @@
+# story_content/characters/aric.yaml
+id: hero_aric
+name: "Aric"
+age: 17
+gender: male
+class: hero
+protagonist: true
+join_condition: story_quest_started
+join_map: town_01_ardel
+join_position: [12, 8]
+row: front
+level: 1
+exp: 0
+hp: 22
+hp_max: 22
+mp: 10
+mp_max: 10
+str: 8
+dex: 7
+con: 8
+int: 5
+equipped:
+  weapon: short_sword
+  shield: wooden_shield
+  helmet: leather_cap
+  body: leather_vest
+  accessory: none
+abilities_unlocked: []
+status_effects: []

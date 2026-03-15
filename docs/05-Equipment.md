@@ -9,7 +9,7 @@ General Store
 │       ├── Price
 │       ├── Status preview per character
 │       │     ├── Aric:  STR 8 → 10▲, DEF 5 → 5
-│       │     ├── Sera:  [grayed — cannot equip]
+│       │     ├── Elise: [grayed — cannot equip]
 │       │     └── Kael:  STR 7 → 8▲
 │       └── [Buy] / [Cancel]
 │
