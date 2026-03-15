@@ -27,10 +27,3 @@ shop:
       buy_price: 800
       unlock_flag: story_act4_started
 
-npcs:
-  - id: ashenveil_oracle
-    dialogue: ashenveil_oracle_hint
-    position: [7, 4]
-  - id: zeph
-    dialogue: zeph_join
-    position: [3, 7]
