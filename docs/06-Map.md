@@ -3,6 +3,18 @@
 - bird-eye view world Map
 - character can move 8 directions
 
+```yaml
+world:
+  name: Rusted Kingdoms
+  tagline: "Where magic faded, steam rose — and heroes are still needed."
+  blend:
+    foundation: Medieval Fantasy
+    culture: Steampunk
+    backstory: Post-Apocalyptic ruins
+  tone: Lighthearted & Whimsical
+  story_arc: Hero's Journey
+```
+
 ## World Map
 
 - enemy is invisible
