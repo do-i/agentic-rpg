@@ -111,7 +111,7 @@ def collect_flags(root: Path) -> tuple[dict[str, list[str]], dict[str, list[str]
         manifest = load_yaml(manifest_path)
         for flag in manifest.get("bootstrap_flags", []):
             add_defined(flag, "manifest.yaml:bootstrap_flags")
-            
+
     for flag in manifest.get("engine_managed_flags", []):
         add_defined(flag, "manifest.yaml:engine_managed_flags")
 
@@ -164,6 +164,14 @@ def collect_flags(root: Path) -> tuple[dict[str, list[str]], dict[str, list[str]
             for item in data.get("shop", {}).get("items", []):
                 flag = item.get("unlock_flag")
                 if flag:
+                    add_consumed(flag, str(rel))
+                    
+            # world map NPC present conditions
+            for npc in data.get("npcs", []):
+                present = npc.get("present", {})
+                for flag in present.get("requires", []):
+                    add_consumed(flag, str(rel))
+                for flag in present.get("excludes", []):
                     add_consumed(flag, str(rel))
 
     # recipe files — unlock_flag
