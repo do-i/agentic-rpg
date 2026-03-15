@@ -58,6 +58,5 @@ refs:
   dialogue:   data/dialogue/
   items:      data/items/
   enemies:    data/enemies/
-  loot:       data/loot/
   encount:    data/encount/
   recipe:     data/recipe/
