@@ -26,11 +26,3 @@ shop:
       qty: 3
       buy_price: 500
       unlock_flag: story_act2_started
-
-npcs:
-  - id: kael
-    dialogue: kael_join
-    position: [8, 4]
-  - id: millhaven_elder
-    dialogue: millhaven_elder_hint
-    position: [5, 7]
