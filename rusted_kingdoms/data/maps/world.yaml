@@ -18,3 +18,10 @@ npcs:
     dialogue: bridge_guard_zone5
     present:
       excludes: [boss_zone04_defeated]
+
+  - id: stronghold_gate_guard
+    type: gate
+    position: [28, 5]
+    dialogue: stronghold_gate_guard
+    present:
+      excludes: [boss_zone09_defeated]

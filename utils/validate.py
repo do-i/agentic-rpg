@@ -165,7 +165,7 @@ def collect_flags(root: Path) -> tuple[dict[str, list[str]], dict[str, list[str]
                 flag = item.get("unlock_flag")
                 if flag:
                     add_consumed(flag, str(rel))
-                    
+
             # world map NPC present conditions
             for npc in data.get("npcs", []):
                 present = npc.get("present", {})
@@ -370,12 +370,11 @@ def unreachable_pass(root: Path, visited: set[Path]) -> list[str]:
 # Pass 3 — Flag audit
 # ─────────────────────────────────────────────
 
-def flag_audit(defined: dict, consumed: dict) -> tuple[list[str], list[str], list[str]]:
+def flag_audit(defined: dict, consumed: dict, engine_managed: set) -> tuple[list[str], list[str], list[str]]:
     defined_set = set(defined.keys())
     consumed_set = set(consumed.keys())
-
     broken = sorted(consumed_set - defined_set)    # consumed but never defined
-    orphan = sorted(defined_set - consumed_set)    # defined but never consumed
+    orphan = sorted(defined_set - consumed_set - engine_managed)    # defined but never consumed
 
     broken_msgs = [
         f"  '{f}' — consumed in: {consumed[f][0]}" for f in broken
@@ -399,6 +398,8 @@ def main():
     root = Path(args.root).resolve()
     print(f"Validating: {root}\n")
 
+    manifest = load_yaml(root / "manifest.yaml")
+
     # Build registries
     item_reg = build_item_registry(root)
     char_reg = build_character_registry(root)
@@ -412,7 +413,8 @@ def main():
 
     # Pass 3 — flag audit
     defined_flags, consumed_flags = collect_flags(root)
-    broken_flags, orphan_flags, all_defined = flag_audit(defined_flags, consumed_flags)
+    engine_managed = set(manifest.get("engine_managed_flags", []))
+    broken_flags, orphan_flags, all_defined = flag_audit(defined_flags, consumed_flags, engine_managed)
 
     # ── Output ──────────────────────────────
 
