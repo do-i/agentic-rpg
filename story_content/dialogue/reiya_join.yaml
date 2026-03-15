@@ -1,0 +1,21 @@
+# story_content/dialogue/reiya_join.yaml
+id: reiya_join
+type: npc
+entries:
+  - condition:
+      requires: [story_act2_started]
+      excludes: [npc_reiya_joined]
+    lines:
+      - "You described a flame with no heat. No smoke. Just light."
+      - "That's not a fire. That's a signal."
+      - "My father spent his life chasing that signature. They took everything from him for it."
+      - "I have his notes. You have whatever is following you."
+      - "I'd say that makes us useful to each other."
+    on_complete:
+      set_flag: npc_reiya_joined
+      join_party: reiya
+
+  - condition:
+      requires: [npc_reiya_joined]
+    lines:
+      - "Don't slow me down and we'll be fine."
