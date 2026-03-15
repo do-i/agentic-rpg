@@ -28,8 +28,8 @@ npcs:
     name: "Guide Ellen"
     type: guide
     availability: 0.30
-    dialogue: dialogue/guide_ardel.yaml
-    excuses: dialogue/guide_excuses.yaml   # shared across all guides
+    dialogue: guide_ardel
+    excuses: guide_excuses
     position: [5, 3]
   - id: elder
     dialogue: elder_intro
