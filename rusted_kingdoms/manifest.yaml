@@ -17,6 +17,11 @@ start:
 bootstrap_flags:
   - story_quest_started
 
+engine_managed_flags:
+  - story_act2_started
+  - story_act3_started
+  - story_act4_started
+  
 refs:
   party:      data/party.yaml
   characters: data/characters/
