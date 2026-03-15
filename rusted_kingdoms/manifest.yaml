@@ -1,4 +1,3 @@
-# story_content/manifest.yaml
 id: my_rpg_story
 name: "Chronicles of the Lost Flame"
 version: "1.0.0"
@@ -7,7 +6,7 @@ protagonist:
   id: hero_aric
   name: "Aric"  # player-renameable in New Game flow
   class: hero
-  character: story_content/characters/aric.yaml
+  character: data/characters/aric.yaml
   sprite: sprites/hero.png
 
 party:
@@ -15,7 +14,7 @@ party:
     - id: elise
       name: "Elise"
       class: cleric
-      character: story_content/characters/elise.yaml
+      character: data/characters/elise.yaml
       join_condition: story_quest_started
       join_map: town_01_ardel
       join_position: [10, 6]
@@ -23,7 +22,7 @@ party:
     - id: reiya
       name: "Reiya"
       class: sorcerer
-      character: story_content/characters/reiya.yaml
+      character: data/characters/reiya.yaml
       join_condition: story_act2_started
       join_map: town_02_millhaven
       join_position: [8, 5]
@@ -31,7 +30,7 @@ party:
     - id: jep
       name: "Jep"
       class: rogue
-      character: story_content/characters/jep.yaml
+      character: data/characters/jep.yaml
       join_condition: story_act3_started
       join_map: dungeon_ruinwatch
       join_position: [5, 9]
@@ -39,7 +38,7 @@ party:
     - id: kael
       name: "Kael"
       class: warrior
-      character: story_content/characters/kael.yaml
+      character: data/characters/kael.yaml
       join_condition: story_act4_started
       join_map: town_frostholm
       join_position: [6, 4]
@@ -47,18 +46,18 @@ party:
 start:
   map: town_01_ardel
   position: [12, 8]
-  intro_dialogue: story_content/dialogue/intro_cutscene.yaml
+  intro_dialogue: data/dialogue/intro_cutscene.yaml
 
 bootstrap_flags:
   - story_quest_started
 
 refs:
-  characters: story_content/characters/
-  classes:    story_content/classes/
-  maps:       story_content/maps/
-  dialogue:   story_content/dialogue/
-  items:      story_content/items/
-  enemies:    story_content/enemies/
-  loot:       story_content/loot/
-  encount:    story_content/encount/
-  recipe:     story_content/recipe/
+  characters: data/characters/
+  classes:    data/classes/
+  maps:       data/maps/
+  dialogue:   data/dialogue/
+  items:      data/items/
+  enemies:    data/enemies/
+  loot:       data/loot/
+  encount:    data/encount/
+  recipe:     data/recipe/
