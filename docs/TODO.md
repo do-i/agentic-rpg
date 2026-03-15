@@ -2,12 +2,6 @@
 
 ## V1 Gap
 
-| Priority | File | NPC | Purpose | Status |
-|---|---|---|---|---|
-| 🟡 P2 | `elder_intro.yaml` | Elder Ardel | Story hint + reward gate | ⚠️ Stub only |
-| 🟡 P2 | `millhaven_elder_hint.yaml` | Millhaven Elder | Act 2 hint | ❌ Missing (referenced) |
-| 🟡 P2 | `ashenveil_oracle_hint.yaml` | Oracle | Act 3/4 hint | ❌ Missing (referenced) |
-| 🟡 P2 | `guide_ardel.yaml` | Guide Ellen | Optional hint | ❌ Missing (referenced) |
 
 ## V2 Note (for the docs)
 
