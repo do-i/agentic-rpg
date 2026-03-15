@@ -4,9 +4,6 @@ name: "Kael"
 age: 20
 gender: male
 class: warrior
-join_condition: story_act4_started
-join_map: town_frostholm
-join_position: [6, 4]
 row: front
 level: 20
 exp: 40000

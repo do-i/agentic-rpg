@@ -4,9 +4,6 @@ name: "Jep"
 age: 15
 gender: male
 class: rogue
-join_condition: story_act3_started
-join_map: dungeon_ruinwatch
-join_position: [5, 9]
 row: back
 level: 14
 exp: 17606

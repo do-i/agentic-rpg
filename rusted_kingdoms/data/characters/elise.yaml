@@ -4,9 +4,6 @@ name: "Elise"
 age: 16
 gender: female
 class: cleric
-join_condition: story_quest_started
-join_map: town_01_ardel
-join_position: [10, 6]
 row: back
 level: 1
 exp: 0

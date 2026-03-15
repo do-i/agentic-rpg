@@ -4,9 +4,6 @@ name: "Reiya"
 age: 18
 gender: female
 class: sorcerer
-join_condition: story_act2_started
-join_map: town_02_millhaven
-join_position: [8, 5]
 row: back
 level: 8
 exp: 6080
