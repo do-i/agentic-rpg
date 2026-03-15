@@ -21,7 +21,8 @@ engine_managed_flags:
   - story_act2_started
   - story_act3_started
   - story_act4_started
-  
+  - boss_zone10_defeated
+
 refs:
   party:      data/party.yaml
   characters: data/characters/
