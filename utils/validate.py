@@ -111,6 +111,9 @@ def collect_flags(root: Path) -> tuple[dict[str, list[str]], dict[str, list[str]
         manifest = load_yaml(manifest_path)
         for flag in manifest.get("bootstrap_flags", []):
             add_defined(flag, "manifest.yaml:bootstrap_flags")
+            
+    for flag in manifest.get("engine_managed_flags", []):
+        add_defined(flag, "manifest.yaml:engine_managed_flags")
 
     # dialogue files
     dialogue_dir = root / "data" / "dialogue"
@@ -382,7 +385,7 @@ def flag_audit(defined: dict, consumed: dict) -> tuple[list[str], list[str], lis
 
 def main():
     parser = argparse.ArgumentParser(description="Validate Rusted Kingdoms data files.")
-    parser.add_argument("--root", default=".", help="Path to scenario root (default: current directory)")
+    parser.add_argument("--root", default="../rusted_kingdoms", help="Path to scenario root (default: current directory)")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
