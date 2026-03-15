@@ -1,4 +1,4 @@
-# map/world.yaml
+# data/maps/world.yaml
 transport:
   sail:
     unlock_flag: transport_sail_unlocked
@@ -10,3 +10,11 @@ transport:
     unlock_flag: transport_warp_unlocked
     origin: world_map_any
     destinations: visited_only
+
+npcs:
+  - id: bridge_guard_zone5
+    type: gate
+    position: [4, 8]
+    dialogue: bridge_guard_zone5
+    present:
+      excludes: [boss_zone04_defeated]
