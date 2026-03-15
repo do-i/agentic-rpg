@@ -1,0 +1,28 @@
+# story_content/characters/reiya.yaml
+id: reiya
+name: "Reiya"
+age: 18
+gender: female
+class: sorcerer
+join_condition: story_act2_started
+join_map: town_02_millhaven
+join_position: [8, 5]
+row: back
+level: 8
+exp: 6080
+hp: 28
+hp_max: 28
+mp: 48
+mp_max: 48
+str: 6
+dex: 12
+con: 7
+int: 20
+equipped:
+  weapon: oak_staff
+  shield: none
+  helmet: circlet_silver
+  body: robe_silk
+  accessory: none
+abilities_unlocked: [fire_bolt, aqua_shot]
+status_effects: []

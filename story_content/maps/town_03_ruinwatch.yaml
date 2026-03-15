@@ -35,6 +35,6 @@ npcs:
   - id: ruinwatch_scholar
     dialogue: ruinwatch_scholar_hint
     position: [10, 6]
-  - id: lira
-    dialogue: lira_join
+  - id: jep
+    dialogue: jep_join
     position: [5, 9]

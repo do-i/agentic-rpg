@@ -1,0 +1,28 @@
+# story_content/characters/jep.yaml
+id: jep
+name: "Jep"
+age: 15
+gender: male
+class: rogue
+join_condition: story_act3_started
+join_map: dungeon_ruinwatch
+join_position: [5, 9]
+row: back
+level: 14
+exp: 17606
+hp: 44
+hp_max: 44
+mp: 16
+mp_max: 16
+str: 16
+dex: 26
+con: 13
+int: 8
+equipped:
+  weapon: dagger
+  shield: buckler
+  helmet: hood_leather
+  body: leather_vest
+  accessory: none
+abilities_unlocked: [steal, dual_strike, smoke_screen]
+status_effects: []

@@ -3,7 +3,7 @@
 Each party member carries a personal Infinity Bag — a magical conduit to a single shared `Party Repository`. Any member can deposit or withdraw at any time, from anywhere. The bag itself is weightless and pocketless — it's just a portal.
 ```
 [Aric's Bag] ──┐
-[Sera's Bag] ──┼──▶  Party Repository  (one shared pool)
+[Jep's Bag ] ──┼──▶  Party Repository  (one shared pool)
 [Kael's Bag] ──┘
 ```
 

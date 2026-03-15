@@ -1,0 +1,28 @@
+# story_content/characters/elise.yaml
+id: elise
+name: "Elise"
+age: 16
+gender: female
+class: cleric
+join_condition: story_quest_started
+join_map: town_01_ardel
+join_position: [10, 6]
+row: back
+level: 1
+exp: 0
+hp: 18
+hp_max: 18
+mp: 18
+mp_max: 18
+str: 5
+dex: 6
+con: 7
+int: 9
+equipped:
+  weapon: oak_staff
+  shield: buckler
+  helmet: circlet_wood
+  body: robe_linen
+  accessory: none
+abilities_unlocked: [heal]
+status_effects: []

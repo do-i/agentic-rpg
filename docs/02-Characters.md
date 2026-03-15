@@ -1,28 +1,32 @@
 # 2. Characters
 
-## Party Member Data Model
-```yaml
-# party/member.yaml
-id: sera
-name: Sera
-class: sorcerer
-level: 5
-exp: 1240
-hp: 38
-hp_max: 38
-mp: 52
-mp_max: 60
-str: 8
-dex: 14
-con: 9
-int: 22
-equipped:
-  weapon: staff_oak
-  body: robe_silk
-  shield: none        # sorcerer can't equip shields
-abilities_unlocked: [fireball]
-status_effects: []
-```
+## 🗡️ Aric — Hero | Male | 17
+
+**Backstory:** A blacksmith's son from Ardel Village. After his father died in a mysterious fire that consumed their forge, Aric took over running the household for his younger siblings. Quiet and reliable beyond his years. The quest begins when the same flame reappears near Ardel — and only he can see it.
+
+## ✨ Elise — Cleric | Female | 16
+
+**Backstory:** An orphan raised by the Earth Order temple in Ardel. The sisters who raised her say she was found during a flood — the only survivor. She's never left the village, but has been secretly praying for a reason to help the wider world. Aric's arrival feels like an answered prayer.
+
+## 🔥 Reiya — Sorcerer | Female | 18
+
+**Backstory:** Daughter of a disgraced court mage, she taught herself advanced elemental magic using her father's confiscated notes. Sharp and self-sufficient, she ended up in Millhaven running a small "consultation" business — reading ley lines, identifying cursed objects. Joins when she recognizes the Lost Flame signature in Aric's description.
+
+## 🗝️ Jep — Rogue | Male | 15
+
+**Backstory:** A street kid from a port city who got swept into Ruinwatch chasing rumors of hidden treasure. Surprisingly skilled — picked up lockpicking, scouting, and sleight of hand surviving on his own since age 11. Gets caught snooping around the same ruins the party is exploring. Talks his way out of it. Ends up tagging along because he has nowhere else to go.
+
+## ⚔️ Kael — Warrior | Male | 20
+
+**Backstory:** Enlisted in the royal army at 16, became a guard captain's protégé. Discharged at 19 after refusing to burn a village under orders. Ended up in Frostholm doing odd jobs — chopping wood, escorting merchants through mountain passes. Gruff and tired of people, but the moment the party arrives he recognizes the Lost Flame emblem on Aric's gear. He's seen it before — on the order that got him discharged.
+
+## Party Dynamic at a Glance
+
+| | Aric | Elise | Reiya | Jep | Kael |
+|---|---|---|---|---|---|
+| Age | 17 | 16 | 18 | 15 | 20 |
+| Tone | Steady | Warm | Sharp | Chaotic | Weathered |
+| Relationship | Center | Trusts everyone | Trusts data | Trusts nobody yet | Trusts Aric instinctively |
 
 ## Status
 
@@ -68,21 +72,7 @@ Example
 - KO'd members get 0 EXP
 
 ### Level-up table format
-```yaml
-# classes/hero.yaml
-class: hero
-base_hp: 20
-base_mp: 8
-stat_growth:
-# index = level-1, cycles if level > array length
-  str:  [2, 2, 3, 2, 3, 2, 3, 3, 2, 3]   # per level 1..N
-  dex:  [1, 2, 1, 2, 2, 1, 2, 2, 2, 2]
-  con:  [2, 2, 2, 3, 2, 2, 3, 2, 2, 3]
-  int:  [1, 1, 1, 1, 2, 1, 1, 2, 1, 2]
-exp_curve: quadratic     # linear | quadratic | custom
-exp_base: 100
-exp_factor: 2.0
-```
+See story_content/classes
 
 ### HP/MP Growth
 
