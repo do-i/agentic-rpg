@@ -1,0 +1,31 @@
+# data/dialogue/millhaven_elder_hint.yaml
+id: millhaven_elder_hint
+type: npc
+
+entries:
+  # After Act 3 started — acknowledge progress, hint forward
+  - condition:
+      requires: [story_act3_started]
+      excludes: []
+    lines:
+      - "You've come a long way from the forest fire that brought you here."
+      - "The ruins of Ashenveil hold older secrets than Millhaven ever knew."
+      - "Whatever you're chasing — it's older than this kingdom."
+
+  # Act 2 underway, zone02 boss cleared — hint toward Act 3 trigger
+  - condition:
+      requires: [story_act2_started, boss_zone02_defeated]
+      excludes: [story_act3_started]
+    lines:
+      - "The plains have quieted since you passed through."
+      - "I've heard travelers mention strange lights near the old ruins to the east."
+      - "Ashenveil has been abandoned for good reason. If you go — go prepared."
+
+  # Act 2 started, boss not yet cleared — nudge toward zone02
+  - condition:
+      requires: [story_act2_started]
+      excludes: [boss_zone02_defeated]
+    lines:
+      - "Millhaven used to trade with the eastern villages. Not anymore."
+      - "Something in the open plains has been driving travelers off the roads."
+      - "If the roads are to reopen, someone has to deal with whatever is out there."
