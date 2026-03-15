@@ -1,6 +1,17 @@
 # Design Gap Audit
 
-## V1 Gap
+## V1 Suggested Engine Build Order
+
+| Phase | Deliverable | Playable? |
+|---|---|---|
+| 1 | Boot → load manifest → world map render + player movement | Walk around |
+| 2 | Town entry → NPC interaction → dialogue engine | Talk to NPCs |
+| 3 | Flag system + save/load | Persist state |
+| 4 | Random encounter → battle system → exp/loot | Fight enemies |
+| 5 | Party join flow | Full party |
+| 6 | Shop + Apothecary | Buy/craft |
+| 7 | Boss encounters + story act transitions | Story progression |
+| 8 | Full playthrough pass | End-to-end |
 
 
 ## V2 Note (for the docs)
