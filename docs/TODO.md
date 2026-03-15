@@ -8,8 +8,6 @@
 | 🟡 P2 | `millhaven_elder_hint.yaml` | Millhaven Elder | Act 2 hint | ❌ Missing (referenced) |
 | 🟡 P2 | `ashenveil_oracle_hint.yaml` | Oracle | Act 3/4 hint | ❌ Missing (referenced) |
 | 🟡 P2 | `guide_ardel.yaml` | Guide Ellen | Optional hint | ❌ Missing (referenced) |
-| 🟢 P3 | Port master | Port Master | ✅ Done | ✅ |
-| 🟢 P3 | `guide_excuses.yaml` | All guides | ✅ Done | ✅ |
 
 ## V2 Note (for the docs)
 

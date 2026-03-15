@@ -11,45 +11,15 @@ type: cutscene  # one-shot — no conditions, no NPC, plays once
 - Condition: top-to-bottom, first match wins
 - Re-evaluated every time player talks to NPC (dynamic)
 
+## Design summary
+
+Dialogue entry ordering: bottom-up story progression — latest state first, default last.
+excludes on give_items entries: always keep as safety net against re-triggering rewards.
+
 ### Dialogue Entry Schema
 
-```yaml
-# dialogue/elder_intro.yaml
-id: elder_intro
-entries:
-  - condition:
-      requires: [boss_dragon_defeated]
-      excludes: [npc_elder_reward_given]
-    lines:
-      - "The dragon is gone. Peace has returned."
-      - "Thank you, hero."
-    on_complete:
-      set_flag:
-        - npc_elder_post_dragon_spoken
-        - npc_elder_reward_given
-      give_items:
-        - id: elixir
-          qty: 1
-        - id: potion
-          qty: 3
+See `rusted_kingdoms/data/dialogue`
 
-  - condition:
-      requires: [story_act2_started]
-      excludes: []
-    lines:
-      - "The cave to the north grows restless."
-      - "Be careful out there."
-    on_complete:
-      unlock: shop_blacksmith_unlocked
-
-  - condition:
-      requires: [story_quest_started] # default fallback
-      excludes: []
-    lines:
-      - "Welcome to our village, traveler."
-    on_complete:
-      start_battle: tutorial_slime    # optional — rare for NPC, but valid
-```
 ### `on_complete` Actions
 
 | Action | Effect | Available in |
