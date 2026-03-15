@@ -5,9 +5,6 @@ age: 17
 gender: male
 class: hero
 protagonist: true
-join_condition: story_quest_started
-join_map: town_01_ardel
-join_position: [12, 8]
 row: front
 level: 1
 exp: 0

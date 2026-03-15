@@ -1,0 +1,33 @@
+# data/party.yaml
+party:
+  - id: elise
+    name: "Elise"
+    class: cleric
+    character: data/characters/elise.yaml
+    join_condition: story_quest_started
+    join_map: town_01_ardel
+    join_position: [10, 6]
+
+  - id: reiya
+    name: "Reiya"
+    class: sorcerer
+    character: data/characters/reiya.yaml
+    join_condition: story_act2_started
+    join_map: town_02_millhaven
+    join_position: [8, 5]
+
+  - id: jep
+    name: "Jep"
+    class: rogue
+    character: data/characters/jep.yaml
+    join_condition: story_act3_started
+    join_map: dungeon_ruinwatch
+    join_position: [5, 9]
+
+  - id: kael
+    name: "Kael"
+    class: warrior
+    character: data/characters/kael.yaml
+    join_condition: story_act4_started
+    join_map: town_04_frostholm
+    join_position: [6, 4]
