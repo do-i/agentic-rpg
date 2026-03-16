@@ -1,12 +1,19 @@
 # TODO give title
 
+## Virtual Environment
+
+```sh
+cd $project_root
+python -m venv .venv
+source .venv/bin/activate.fish
+pip install .
+```
+
 ## Run Game
 
 ```sh
 cd $project_root
-
-source engine/.venv/bin/activate.fish
-
+source .venv/bin/activate.fish
 python -m engine.main --scenario ./rusted_kingdoms
 ```
 
@@ -14,7 +21,9 @@ python -m engine.main --scenario ./rusted_kingdoms
 
 
 ```sh
-source tests/.venv/bin/activate.fish
+cd $project_root
+source .venv/bin/activate.fish
+pip install -e ".[dev]"
 
 # Run all tests
 python -m pytest
@@ -34,6 +43,8 @@ python -m pytest tests/unit/core/state/test_map_state.py::TestMoveTo::test_updat
 
 ```sh
 source tests/.venv/bin/activate.fish
+pip install -e ".[dev]"
+
 cd tests/tools
 ./validate.py
 ```

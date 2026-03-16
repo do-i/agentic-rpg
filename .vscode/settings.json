@@ -1,12 +1,16 @@
 {
   "files.exclude": {
+    "**/.egg-info": true,
     "**/.git": true,
-    "**/__pycache__": true,
+    "**/.pytest_cache": true,
     "**/.venv_*": true,
+    "**/__pycache__": true,
   },
   "search.exclude": {
+    "**/.egg-info": true,
     "**/.git": true,
-    "**/__pycache__": true,
+    "**/.pytest_cache": true,
     "**/.venv_*": true,
+    "**/__pycache__": true,
   }
 }
