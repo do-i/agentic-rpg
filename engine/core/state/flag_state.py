@@ -6,17 +6,18 @@ class FlagState:
     Boolean flag registry.
     Flags are write-once — once set, never cleared (V1 rule).
     Presence = True, absence = False.
+    Uses set internally — duplicates are silently ignored.
     """
 
-    def __init__(self, flags: list[str] | None = None) -> None:
+    def __init__(self, flags: set[str] | None = None) -> None:
         self._flags: set[str] = set(flags) if flags else set()
 
     # ── Mutation ──────────────────────────────────────────────
 
-    def set_flag(self, flag: str) -> None:
+    def add_flag(self, flag: str) -> None:
         self._flags.add(flag)
 
-    def set_flags(self, flags: list[str]) -> None:
+    def add_flags(self, flags: set[str] | list[str]) -> None:
         for flag in flags:
             self._flags.add(flag)
 
@@ -25,15 +26,15 @@ class FlagState:
     def has_flag(self, flag: str) -> bool:
         return flag in self._flags
 
-    def has_all(self, flags: list[str]) -> bool:
+    def has_all(self, flags: set[str] | list[str]) -> bool:
         """True if ALL flags are set (AND)."""
         return all(f in self._flags for f in flags)
 
-    def has_any(self, flags: list[str]) -> bool:
+    def has_any(self, flags: set[str] | list[str]) -> bool:
         """True if AT LEAST ONE flag is set (OR)."""
         return any(f in self._flags for f in flags)
 
-    def has_none(self, flags: list[str]) -> bool:
+    def has_none(self, flags: set[str] | list[str]) -> bool:
         """True if NONE of the flags are set (excludes check)."""
         return not any(f in self._flags for f in flags)
 
@@ -43,7 +44,7 @@ class FlagState:
         return sorted(self._flags)
 
     @classmethod
-    def from_list(cls, flags: list[str]) -> "FlagState":
+    def from_set(cls, flags: set[str]) -> "FlagState":
         return cls(flags)
 
     def __repr__(self) -> str:

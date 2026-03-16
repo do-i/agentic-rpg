@@ -31,7 +31,7 @@ class GameState:
 
         # flags
         bootstrap_flags = manifest.get("bootstrap_flags", [])
-        state.flags.set_flags(bootstrap_flags)
+        state.flags.add_flags(bootstrap_flags)
 
         # protagonist
         proto = manifest.get("protagonist", {})
@@ -63,7 +63,7 @@ class GameState:
         Full implementation in Phase 3 (save/load).
         """
         state = cls()
-        state.flags = FlagState.from_list(save.get("flags", []))
+        state.flags = FlagState.from_set(set(save.get("flags", [])))
         state.map = MapState.from_dict(save.get("map", {}))
         state.playtime = Playtime.from_seconds(
             save.get("meta", {}).get("playtime_seconds", 0)
