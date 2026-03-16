@@ -5,6 +5,7 @@ from engine.core.state.map_state import MapState
 from engine.core.state.playtime import Playtime
 from engine.core.state.party_state import PartyState, MemberState
 from engine.core.state.repository_state import RepositoryState
+from engine.core.models.position import Position
 
 
 class GameState:
