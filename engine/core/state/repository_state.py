@@ -7,7 +7,10 @@
 GP_CAP = 8_000_000
 ITEM_QTY_CAP = 100
 
-
+"""
+Review Feedback
+tags: list[str] -> tags: set[str]
+"""
 class ItemEntry:
     """Stub — single item stack in the Party Repository."""
 
@@ -26,7 +29,10 @@ class ItemEntry:
     def __repr__(self) -> str:
         return f"ItemEntry({self.id!r}, qty={self.qty}, locked={self.locked})"
 
-
+"""
+Review Feedback
+_items data type should be dict. Key be item ID, value be ItemEntry. O(1) look up.
+"""
 class RepositoryState:
     """
     Stub — Party Repository (shared item pool + GP).

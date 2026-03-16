@@ -2,7 +2,11 @@
 
 from datetime import datetime
 
-
+"""
+Review Feedback
+Hard to write unit test if non-deterministic object such as datetime.now() is embedded.
+Think alternative way -- injecting SystemClock service.
+"""
 class Playtime:
     """
     Tracks cumulative playtime across sessions.
