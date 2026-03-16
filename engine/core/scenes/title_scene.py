@@ -8,14 +8,16 @@ from engine.core.settings import Settings
 class TitleScene(Scene):
     def __init__(self, manifest: dict) -> None:
         self._title = manifest.get("name", "RPG")
-        self._font = pygame.font.SysFont("Arial", 48)
+        self._font = None  # defer until render
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
         for event in events:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                pass  # NewGameScene will plug in here
+                pass
 
     def render(self, screen: pygame.Surface) -> None:
+        if self._font is None:
+            self._font = pygame.font.SysFont("Arial", 48)
         screen.fill((10, 10, 30))
         text = self._font.render(self._title, True, (220, 220, 180))
         x = (Settings.SCREEN_WIDTH - text.get_width()) // 2
