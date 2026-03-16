@@ -1,2 +1,3 @@
-pygame
 dependency-injector
+pygame
+pyyaml
