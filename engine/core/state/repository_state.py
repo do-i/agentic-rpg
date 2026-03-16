@@ -1,16 +1,13 @@
 # engine/core/state/repository_state.py
 #
 # STUB — full implementation in Phase 6 (shop / apothecary)
-# For now: holds gp and a flat item list.
+# For now: holds gp and a flat item dict.
 
 # Caps defined in design docs
 GP_CAP = 8_000_000
 ITEM_QTY_CAP = 100
 
-"""
-Review Feedback
-tags: list[str] -> tags: set[str]
-"""
+
 class ItemEntry:
     """Stub — single item stack in the Party Repository."""
 
@@ -18,21 +15,18 @@ class ItemEntry:
         self,
         item_id: str,
         qty: int = 1,
-        tags: list[str] | None = None,
+        tags: set[str] | None = None,
         locked: bool = False,
     ) -> None:
         self.id = item_id
         self.qty = qty
-        self.tags: list[str] = tags if tags is not None else []
+        self.tags: set[str] = tags if tags is not None else set()
         self.locked = locked
 
     def __repr__(self) -> str:
         return f"ItemEntry({self.id!r}, qty={self.qty}, locked={self.locked})"
 
-"""
-Review Feedback
-_items data type should be dict. Key be item ID, value be ItemEntry. O(1) look up.
-"""
+
 class RepositoryState:
     """
     Stub — Party Repository (shared item pool + GP).
@@ -41,7 +35,7 @@ class RepositoryState:
 
     def __init__(self, gp: int = 0) -> None:
         self._gp: int = gp
-        self._items: list[ItemEntry] = []
+        self._items: dict[str, ItemEntry] = {}
 
     # ── GP ────────────────────────────────────────────────────
 
@@ -62,21 +56,17 @@ class RepositoryState:
     # ── Items ─────────────────────────────────────────────────
 
     def add_item(self, item_id: str, qty: int = 1) -> None:
-        for entry in self._items:
-            if entry.id == item_id:
-                entry.qty = min(entry.qty + qty, ITEM_QTY_CAP)
-                return
-        self._items.append(ItemEntry(item_id, qty))
+        if item_id in self._items:
+            self._items[item_id].qty = min(self._items[item_id].qty + qty, ITEM_QTY_CAP)
+        else:
+            self._items[item_id] = ItemEntry(item_id, qty)
 
     def get_item(self, item_id: str) -> ItemEntry | None:
-        for entry in self._items:
-            if entry.id == item_id:
-                return entry
-        return None
+        return self._items.get(item_id)
 
     @property
     def items(self) -> list[ItemEntry]:
-        return list(self._items)
+        return list(self._items.values())
 
     def __repr__(self) -> str:
         return f"RepositoryState(gp={self._gp}, items={len(self._items)})"
