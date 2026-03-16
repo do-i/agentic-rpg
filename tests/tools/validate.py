@@ -392,7 +392,7 @@ def flag_audit(defined: dict, consumed: dict, engine_managed: set) -> tuple[list
 
 def main():
     parser = argparse.ArgumentParser(description="Validate Rusted Kingdoms data files.")
-    parser.add_argument("--root", default="../rusted_kingdoms", help="Path to scenario root (default: current directory)")
+    parser.add_argument("--root", default="../../rusted_kingdoms", help="Path to scenario root (default: current directory)")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()

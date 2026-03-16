@@ -6,7 +6,7 @@ from engine.core.container import Container
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scenario", required=True)
+    parser.add_argument("--scenario", default="./rusted_kingdoms",)
     return parser.parse_args()
 
 
