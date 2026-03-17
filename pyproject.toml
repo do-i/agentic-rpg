@@ -5,12 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "agentic-rpg-engine"
 version = "0.1.0"
-description = "A Python project using pygame and dependency-injector"
+description = "A Python project using pygame and injector"
 readme = "README.md"
 requires-python = ">=3.14.3"
 license = "MIT"
 dependencies = [
-    "dependency-injector==4.48.3",
+    "injector>=0.22.0",
     "pygame==2.6.1",
     "PyYAML==6.0.3",
 ]
@@ -25,13 +25,11 @@ testpaths = ["tests", "engine"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-# Add useful flags like -v (verbose) and -x (exit on first fail)
 addopts = "-v -x"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["engine"]  # Finds the 'engine' directory
+include = ["engine"]
 
 [tool.setuptools.package-data]
-# This tells setuptools to include everything inside the 'data' dir
 "engine" = ["../rusted_kingdoms/*", "../rusted_kingdoms/**/*"]

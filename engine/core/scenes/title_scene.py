@@ -2,14 +2,24 @@
 
 import pygame
 from engine.core.scene import Scene
+from engine.core.scene_manager import SceneManager
+from engine.core.scene_registry import SceneRegistry
 from engine.core.settings import Settings
+from engine.data.loader import ManifestLoader
 from engine.ui.menu import Menu
 
 
 class TitleScene(Scene):
-    def __init__(self, manifest: dict) -> None:
-        self._manifest = manifest
-        self._title = manifest.get("name", "RPG")
+    def __init__(
+        self,
+        loader: ManifestLoader,
+        scene_manager: SceneManager,
+        registry: SceneRegistry,
+    ) -> None:
+        self._manifest = loader.load()
+        self._scene_manager = scene_manager
+        self._registry = registry
+        self._title = self._manifest.get("name", "RPG")
         self._title_font = None
         self._menu_font = None
         self._menu = None
@@ -34,7 +44,7 @@ class TitleScene(Scene):
         if item == "Quit":
             pygame.event.post(pygame.event.Event(pygame.QUIT))
         elif item == "New Game":
-            pass  # NewGameScene plugs in here
+            self._scene_manager.switch(self._registry.get("name_entry"))
         elif item == "Load Game":
             pass  # LoadGameScene plugs in here
 
@@ -44,11 +54,9 @@ class TitleScene(Scene):
 
         screen.fill((10, 10, 30))
 
-        # title
         text = self._title_font.render(self._title, True, (220, 220, 180))
         x = (Settings.SCREEN_WIDTH - text.get_width()) // 2
         screen.blit(text, (x, 180))
 
-        # menu centered
         menu_x = (Settings.SCREEN_WIDTH - 200) // 2
         self._menu.render(screen, menu_x, 380)

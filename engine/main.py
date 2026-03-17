@@ -1,19 +1,18 @@
 # engine/main.py
 
 import argparse
-from engine.core.container import Container
+from injector import Injector
+from engine.core.app_module import AppModule
+from engine.core.game import Game
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scenario", default="./rusted_kingdoms",)
+    parser.add_argument("--scenario", default="./rusted_kingdoms")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
-    container = Container()
-    container.config.scenario_path.from_value(args.scenario)
-
-    container.scene_manager().switch(container.boot_scene())
-    container.game().run()
+    injector = Injector([AppModule(scenario_path=args.scenario)])
+    injector.get(Game).run()
