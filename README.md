@@ -37,6 +37,9 @@ python -m pytest tests/unit/core/state/test_map_state.py::TestMoveTo
 # Run a specific test
 python -m pytest tests/unit/core/state/test_map_state.py::TestMoveTo::test_updates_current_and_position
 
+# Suppress warning
+PYTHONWARNINGS="ignore::RuntimeWarning" python -m pytest
+
 ```
 
 ## Run Data Validation
