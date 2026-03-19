@@ -12,6 +12,7 @@ license = "MIT"
 dependencies = [
     "injector>=0.22.0",
     "pygame==2.6.1",
+    "pytmx",
     "PyYAML==6.0.3",
 ]
 

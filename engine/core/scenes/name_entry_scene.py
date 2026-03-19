@@ -6,6 +6,7 @@ from engine.core.scene_manager import SceneManager
 from engine.core.scene_registry import SceneRegistry
 from engine.core.settings import Settings
 from engine.core.state.game_state import GameState
+from engine.core.state.game_state_holder import GameStateHolder
 from engine.data.loader import ManifestLoader
 
 
@@ -15,8 +16,7 @@ NAME_MAX_LENGTH = 12
 class NameEntryScene(Scene):
     """
     Prompts the player to enter the protagonist's name.
-    Default name loaded from manifest. RETURN confirms.
-    On confirm → bootstrap GameState → switch to WorldMapScene (stub).
+    On confirm → bootstraps GameState → sets holder → switches to world_map.
     """
 
     def __init__(
@@ -24,10 +24,12 @@ class NameEntryScene(Scene):
         loader: ManifestLoader,
         scene_manager: SceneManager,
         registry: SceneRegistry,
+        holder: GameStateHolder,
     ) -> None:
         self._manifest = loader.load()
         self._scene_manager = scene_manager
         self._registry = registry
+        self._holder = holder
         self._name: str = self._manifest.get("protagonist", {}).get("name", "Hero")
         self._prompt_font = None
         self._input_font = None
@@ -53,8 +55,7 @@ class NameEntryScene(Scene):
 
     def _confirm(self) -> None:
         name = self._name.strip() or self._manifest.get("protagonist", {}).get("name", "Hero")
-        game_state = GameState.from_new_game(self._manifest, name)
-        # WorldMapScene plugs in here — Phase 1
+        self._holder.set(GameState.from_new_game(self._manifest, name))
         self._scene_manager.switch(self._registry.get("world_map"))
 
     # ── Render ────────────────────────────────────────────────
@@ -65,7 +66,6 @@ class NameEntryScene(Scene):
             pygame.key.start_text_input()
 
         screen.fill((10, 10, 30))
-
         cx = Settings.SCREEN_WIDTH // 2
         cy = Settings.SCREEN_HEIGHT // 2
 

@@ -1,13 +1,16 @@
+# rusted_kingdoms/manifest.yaml
+# -- updated refs and protagonist.sprite path --
+
 id: my_rpg_story
 name: "Chronicles of the Lost Flame"
 version: "1.0.0"
 
 protagonist:
   id: hero_aric
-  name: "Aric"  # player-renameable in New Game flow
+  name: "Aric"
   class: hero
   character: data/characters/aric.yaml
-  sprite: sprites/hero.png
+  sprite: assets/sprites/hero.png        # ← updated
 
 start:
   map: town_01_ardel
@@ -28,8 +31,10 @@ refs:
   characters: data/characters/
   classes:    data/classes/
   maps:       data/maps/
+  tmx:        data/tmx/                  # ← new
   dialogue:   data/dialogue/
   items:      data/items/
   enemies:    data/enemies/
   encount:    data/encount/
   recipe:     data/recipe/
+  assets:     assets/                    # ← new

@@ -9,7 +9,10 @@ from engine.core.game import Game
 from engine.core.scenes.boot_scene import BootScene
 from engine.core.scenes.title_scene import TitleScene
 from engine.core.scenes.name_entry_scene import NameEntryScene
+from engine.core.scenes.world_map_scene import WorldMapScene
+from engine.core.state.game_state_holder import GameStateHolder
 from engine.data.loader import ManifestLoader
+from engine.world.tile_map_factory import TileMapFactory
 
 
 class AppModule(Module):
@@ -38,25 +41,32 @@ class AppModule(Module):
 
     @provider
     @singleton
+    def provide_game_state_holder(self) -> GameStateHolder:
+        return GameStateHolder()
+
+    @provider
+    @singleton
+    def provide_tile_map_factory(self) -> TileMapFactory:
+        return TileMapFactory()
+
+    @provider
+    @singleton
     def provide_scene_registry(
         self,
         loader: ManifestLoader,
         scene_manager: SceneManager,
+        holder: GameStateHolder,
+        tile_map_factory: TileMapFactory,
     ) -> SceneRegistry:
         registry = SceneRegistry()
 
-        # build boot scene first — singleton, no registry needed at construction
-        boot = BootScene(scene_manager, loader, registry)
-        registry.register_singleton("boot", boot)
-
-        # factories — fresh instance each switch, registry passed in
+        registry.register_singleton("boot", BootScene(scene_manager, loader, registry))
         registry.register_factory("title",
             lambda: TitleScene(loader, scene_manager, registry))
         registry.register_factory("name_entry",
-            lambda: NameEntryScene(loader, scene_manager, registry))
-        # world_map — Phase 1
-        # registry.register_factory("world_map",
-        #     lambda: WorldMapScene(loader, scene_manager, registry))
+            lambda: NameEntryScene(loader, scene_manager, registry, holder))
+        registry.register_factory("world_map",
+            lambda: WorldMapScene(holder, loader, tile_map_factory, scene_manager, registry))
 
         return registry
 
