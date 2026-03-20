@@ -10,16 +10,12 @@ PLAYER_SPEED = 3        # pixels per frame
 PLAYER_SIZE  = 24       # placeholder rectangle size
 PLAYER_COLOR = (220, 80, 80)
 
-# 8-direction movement vectors
+# 8-direction movement vectors — arrow keys only
 DIRECTION_MAP: dict[int, tuple[int, int]] = {
     pygame.K_UP:    (0, -1),
     pygame.K_DOWN:  (0,  1),
     pygame.K_LEFT:  (-1, 0),
     pygame.K_RIGHT: (1,  0),
-    pygame.K_w:     (0, -1),
-    pygame.K_s:     (0,  1),
-    pygame.K_a:     (-1, 0),
-    pygame.K_d:     (1,  0),
 }
 
 
@@ -30,7 +26,7 @@ class Player:
     """
 
     def __init__(self, start: Position, map_width_px: int, map_height_px: int) -> None:
-        # convert tile position → pixel centre
+        # convert tile position → pixel coordinates
         self._x: float = float(start.x * Settings.TILE_SIZE)
         self._y: float = float(start.y * Settings.TILE_SIZE)
         self._map_w = map_width_px
@@ -60,8 +56,8 @@ class Player:
         new_y = self._y + dy * PLAYER_SPEED
 
         # clamp to map bounds
-        self._x = max(0, min(new_x, self._map_w - PLAYER_SIZE))
-        self._y = max(0, min(new_y, self._map_h - PLAYER_SIZE))
+        self._x = max(0.0, min(new_x, float(self._map_w - PLAYER_SIZE)))
+        self._y = max(0.0, min(new_y, float(self._map_h - PLAYER_SIZE)))
 
     def render(self, screen: pygame.Surface, offset_x: int, offset_y: int) -> None:
         """Phase 1 — coloured rectangle placeholder."""

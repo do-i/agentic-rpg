@@ -47,7 +47,7 @@ class GameState:
         start = manifest.get("start", {})
         state.map.move_to(
             map_id=start.get("map", ""),
-            position=start.get("position", [0, 0]),
+            position=Position.from_list(start.get("position", [0, 0])),
         )
 
         # playtime starts at 0, begin session
