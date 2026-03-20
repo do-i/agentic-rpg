@@ -108,23 +108,14 @@ Constraints:
 Output: clean PNG spritesheet, game-ready.
 ```
 
+## Phase 1 — Complete ✅
+
+- Boot → Title → Name Entry → World Map
+- Tile map rendering, player movement, camera
+- 159 tests, all green
+
 ## Next session starting point
 
-**Problem to solve:** `SceneRegistry` stays generic (`dict[str, Scene]`), `AppModule` owns all construction knowledge.
-
-**Direction:**
-- `AppModule` registers scenes into `SceneRegistry` — singletons as instances, transients as lambdas/factories
-- `SceneRegistry` just stores and returns, no type knowledge
-- Scenes receive `SceneManager` + `SceneRegistry`, switch via `registry.get("name")`
-
-**Files that will change:**
-- `engine/core/scene_registry.py` — new
-- `engine/core/app_module.py` — registers scenes
-- `boot_scene.py`, `title_scene.py`, `name_entry_scene.py` — use registry to switch
-
-
-## V2 Note (for the docs)
-
-> In V2, the engine will accept a `--scenario` launch argument pointing to an external `story_content/` path. For V1, `story_content/` is embedded in the repo and the path is hardcoded in the engine.
-
-Worth logging this now so the engine src doesn't get too tightly coupled to the embedded path when we write it. A single `SCENARIO_ROOT` constant in the engine will make V2 easy to wire up.
+**Phase 2 options to decide:**
+- NPC interaction + dialogue engine
+- Save/load system
