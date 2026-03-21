@@ -5,7 +5,7 @@ from engine.core.scene import Scene
 from engine.core.scene_manager import SceneManager
 from engine.core.scene_registry import SceneRegistry
 from engine.core.settings import Settings
-from engine.core.state.save_manager import SaveManager
+from engine.core.state.game_state_manager import GameStateManager
 from engine.core.state.game_state_holder import GameStateHolder
 from engine.core.models.save_slot import SaveSlot
 
@@ -23,12 +23,12 @@ class LoadGameScene(Scene):
 
     def __init__(
         self,
-        save_manager: SaveManager,
+        game_state_manager: GameStateManager,
         holder: GameStateHolder,
         scene_manager: SceneManager,
         registry: SceneRegistry,
     ) -> None:
-        self._save_manager = save_manager
+        self._game_state_manager = game_state_manager
         self._holder = holder
         self._scene_manager = scene_manager
         self._registry = registry
@@ -42,7 +42,7 @@ class LoadGameScene(Scene):
         self._font_slot  = pygame.font.SysFont("Arial", 22)
         self._font_hint  = pygame.font.SysFont("Arial", 18)
         self._fonts_ready = True
-        self._slots = self._save_manager.list_slots()
+        self._slots = self._game_state_manager.list_slots()
         # start selection at first non-empty slot
         for i, s in enumerate(self._slots):
             if not s.is_empty:
@@ -79,7 +79,7 @@ class LoadGameScene(Scene):
         slot = self._slots[self._selected]
         if slot.is_empty or slot.path is None:
             return
-        state = self._save_manager.load(slot.path)
+        state = self._game_state_manager.load(slot.path)
         self._holder.set(state)
         self._scene_manager.switch(self._registry.get("world_map"))
 

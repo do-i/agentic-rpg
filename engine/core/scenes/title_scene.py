@@ -5,7 +5,7 @@ from engine.core.scene import Scene
 from engine.core.scene_manager import SceneManager
 from engine.core.scene_registry import SceneRegistry
 from engine.core.settings import Settings
-from engine.core.state.save_manager import SaveManager
+from engine.core.state.game_state_manager import GameStateManager
 from engine.data.loader import ManifestLoader
 from engine.ui.menu import Menu
 
@@ -16,12 +16,12 @@ class TitleScene(Scene):
         loader: ManifestLoader,
         scene_manager: SceneManager,
         registry: SceneRegistry,
-        save_manager: SaveManager,
+        game_state_manager: GameStateManager,
     ) -> None:
         self._manifest = loader.load()
         self._scene_manager = scene_manager
         self._registry = registry
-        self._save_manager = save_manager
+        self._game_state_manager = game_state_manager
         self._title = self._manifest.get("name", "RPG")
         self._title_font = None
         self._menu_font = None
@@ -33,7 +33,7 @@ class TitleScene(Scene):
         self._menu_font  = pygame.font.SysFont("Arial", 36)
 
         # check if any non-empty save slots exist
-        slots = self._save_manager.list_slots()
+        slots = self._game_state_manager.list_slots()
         self._has_saves = any(not s.is_empty for s in slots)
 
         self._menu = Menu(

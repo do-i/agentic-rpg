@@ -3,7 +3,7 @@
 import pygame
 from engine.core.scene import Scene
 from engine.core.settings import Settings
-from engine.core.state.save_manager import SaveManager
+from engine.core.state.game_state_manager import GameStateManager
 from engine.core.state.game_state import GameState
 from engine.core.models.save_slot import SaveSlot
 
@@ -21,17 +21,17 @@ class SaveModalScene(Scene):
     Caller renders world map underneath, then calls this render on top.
 
     Usage:
-        modal = SaveModalScene(save_manager, game_state, on_close)
+        modal = SaveModalScene(game_state_manager, game_state, on_close)
         # each frame: modal.update(delta); modal.render(screen)
     """
 
     def __init__(
         self,
-        save_manager: SaveManager,
+        game_state_manager: GameStateManager,
         state: GameState,
         on_close: callable,
     ) -> None:
-        self._save_manager = save_manager
+        self._game_state_manager = game_state_manager
         self._state = state
         self._on_close = on_close
 
@@ -49,7 +49,7 @@ class SaveModalScene(Scene):
         self._font_hint   = pygame.font.SysFont("Arial", 18)
         self._font_toast  = pygame.font.SysFont("Arial", 26, bold=True)
         self._fonts_ready = True
-        self._slots = self._save_manager.list_slots()
+        self._slots = self._game_state_manager.list_slots()
 
     # ── Events ────────────────────────────────────────────────
 
@@ -102,12 +102,12 @@ class SaveModalScene(Scene):
             self._do_save(slot)
 
     def _do_save(self, slot: SaveSlot) -> None:
-        self._save_manager.save(
+        self._game_state_manager.save(
             self._state,
             slot_index=slot.slot_index,
             overwrite_path=slot.path,
         )
-        self._slots = self._save_manager.list_slots()
+        self._slots = self._game_state_manager.list_slots()
         self._toast_text = "Game Saved!"
         self._toast_timer = TOAST_DURATION
 

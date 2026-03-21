@@ -1,4 +1,4 @@
-# engine/core/state/save_manager.py
+# engine/core/state/game_state_manager.py
 
 import binascii
 import re
@@ -21,9 +21,9 @@ def _crc32(data: str) -> str:
     return f"{binascii.crc32(data.encode()) & 0xFFFFFFFF:08X}"
 
 
-def _make_filename(timestamp: str, prefix: str) -> str:
+def _make_filename(timestamp: str, prefix: str, slot_index: int) -> str:
     crc = _crc32(timestamp + prefix)
-    return f"{timestamp}-{crc}.yaml"
+    return f"{prefix}-{timestamp}-{slot_index:03d}-{crc}.yaml"
 
 
 def _parse_timestamp(filename: str) -> str:
@@ -35,7 +35,7 @@ def _parse_timestamp(filename: str) -> str:
     return ""
 
 
-class SaveManager:
+class GameStateManager:
     """
     Handles save/load slot management and GameState serialization.
 
@@ -71,7 +71,7 @@ class SaveManager:
                 # remove old autosave
                 for old in self._dir.glob(f"{AUTOSAVE_PREFIX}-*.yaml"):
                     old.unlink()
-            path = self._dir / _make_filename(now, prefix)
+            path = self._dir / _make_filename(now, prefix, slot_index)
 
         data = self._serialize(state, is_autosave)
         with open(path, "w") as f:

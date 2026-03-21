@@ -1,10 +1,10 @@
-# tests/unit/core/state/test_save_manager.py
+# tests/unit/core/state/test_game_state_manager.py
 
 import pytest
 from pathlib import Path
 from datetime import datetime
 
-from engine.core.state.save_manager import SaveManager
+from engine.core.state.game_state_manager import GameStateManager
 from engine.core.state.game_state import GameState
 
 MANIFEST_STUB = {
@@ -20,8 +20,8 @@ def saves_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def manager(saves_dir: Path) -> SaveManager:
-    return SaveManager(saves_dir=saves_dir)
+def manager(saves_dir: Path) -> GameStateManager:
+    return GameStateManager(saves_dir=saves_dir)
 
 
 @pytest.fixture

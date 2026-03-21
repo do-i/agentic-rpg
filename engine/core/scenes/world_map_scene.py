@@ -6,7 +6,7 @@ from engine.core.scene_manager import SceneManager
 from engine.core.scene_registry import SceneRegistry
 from engine.core.settings import Settings
 from engine.core.state.game_state_holder import GameStateHolder
-from engine.core.state.save_manager import SaveManager
+from engine.core.state.game_state_manager import GameStateManager
 from engine.core.dialogue.dialogue_engine import DialogueEngine
 from engine.core.scenes.save_modal_scene import SaveModalScene
 from engine.core.scenes.dialogue_scene import DialogueScene
@@ -31,7 +31,7 @@ class WorldMapScene(Scene):
         tile_map_factory: TileMapFactory,
         scene_manager: SceneManager,
         registry: SceneRegistry,
-        save_manager: SaveManager,
+        game_state_manager: GameStateManager,
         dialogue_engine: DialogueEngine,
         npc_loader: NpcLoader,
         text_speed: str = "fast",
@@ -41,7 +41,7 @@ class WorldMapScene(Scene):
         self._tile_map_factory = tile_map_factory
         self._scene_manager = scene_manager
         self._registry = registry
-        self._save_manager = save_manager
+        self._game_state_manager = game_state_manager
         self._dialogue_engine = dialogue_engine
         self._npc_loader = npc_loader
         self._text_speed = text_speed
@@ -93,7 +93,7 @@ class WorldMapScene(Scene):
 
     def _open_save_modal(self) -> None:
         self._save_modal = SaveModalScene(
-            save_manager=self._save_manager,
+            game_state_manager=self._game_state_manager,
             state=self._holder.get(),
             on_close=self._close_save_modal,
         )
@@ -140,7 +140,7 @@ class WorldMapScene(Scene):
     def _handle_transition(self, transition: dict) -> None:
         # autosave before map transition
         state = self._holder.get()
-        self._save_manager.save(state, slot_index=0)
+        self._game_state_manager.save(state, slot_index=0)
         # stub — Phase 2b: implement full map switch
         # For now: update map state only
         from engine.core.models.position import Position

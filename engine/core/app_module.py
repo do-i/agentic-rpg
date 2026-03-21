@@ -14,7 +14,7 @@ from engine.core.scenes.name_entry_scene import NameEntryScene
 from engine.core.scenes.world_map_scene import WorldMapScene
 from engine.core.scenes.load_game_scene import LoadGameScene
 from engine.core.state.game_state_holder import GameStateHolder
-from engine.core.state.save_manager import SaveManager
+from engine.core.state.game_state_manager import GameStateManager
 from engine.core.dialogue.dialogue_engine import DialogueEngine
 from engine.data.loader import ManifestLoader
 from engine.world.tile_map_factory import TileMapFactory
@@ -62,8 +62,8 @@ class AppModule(Module):
 
     @provider
     @singleton
-    def provide_save_manager(self, settings: EngineSettings) -> SaveManager:
-        return SaveManager(saves_dir=settings.saves_dir)
+    def provide_game_state_manager(self, settings: EngineSettings) -> GameStateManager:
+        return GameStateManager(saves_dir=settings.saves_dir)
 
     @provider
     @singleton
@@ -84,7 +84,7 @@ class AppModule(Module):
         scene_manager: SceneManager,
         holder: GameStateHolder,
         tile_map_factory: TileMapFactory,
-        save_manager: SaveManager,
+        game_state_manager: GameStateManager,
         dialogue_engine: DialogueEngine,
         npc_loader: NpcLoader,
     ) -> SceneRegistry:
@@ -92,16 +92,16 @@ class AppModule(Module):
 
         registry.register_singleton("boot", BootScene(scene_manager, loader, registry))
         registry.register_factory("title",
-            lambda: TitleScene(loader, scene_manager, registry, save_manager))
+            lambda: TitleScene(loader, scene_manager, registry, game_state_manager))
         registry.register_factory("name_entry",
             lambda: NameEntryScene(loader, scene_manager, registry, holder))
         registry.register_factory("load_game",
-            lambda: LoadGameScene(save_manager, holder, scene_manager, registry))
+            lambda: LoadGameScene(game_state_manager, holder, scene_manager, registry))
         registry.register_factory("world_map",
             lambda: WorldMapScene(
                 holder, loader, tile_map_factory,
                 scene_manager, registry,
-                save_manager, dialogue_engine, npc_loader,
+                game_state_manager, dialogue_engine, npc_loader,
                 text_speed=settings.text_speed,
             ))
 
