@@ -16,7 +16,7 @@ class MapState:
     ) -> None:
         self.current: str = current
         self.position: Position = position if position is not None else Position(0, 0)
-        self._visited: set[str] = visited if visited is not None else []
+        self._visited: set[str] = set(visited) if visited is not None else set()
 
     # ── Mutation ──────────────────────────────────────────────
 

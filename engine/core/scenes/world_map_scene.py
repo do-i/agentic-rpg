@@ -1,6 +1,7 @@
 # engine/core/scenes/world_map_scene.py
 
 import pygame
+from engine.core.models.position import Position
 from engine.core.scene import Scene
 from engine.core.scene_manager import SceneManager
 from engine.core.scene_registry import SceneRegistry
@@ -72,6 +73,7 @@ class WorldMapScene(Scene):
         # load NPCs for current map
         map_yaml = scenario_path / "data" / "maps" / f"{map_id}.yaml"
         self._npcs = self._npc_loader.load_from_map(map_yaml)
+        print(f"[DEBUG] loading map={state.map.current} pos={state.map.position}")
 
     # ── Events ────────────────────────────────────────────────
 
@@ -92,6 +94,12 @@ class WorldMapScene(Scene):
                     self._try_interact()
 
     def _open_save_modal(self) -> None:
+
+        state = self._holder.get()
+        tile_x = self._player.pixel_position.x // Settings.TILE_SIZE
+        tile_y = self._player.pixel_position.y // Settings.TILE_SIZE
+        state.map.set_position(Position(tile_x, tile_y))
+        
         self._save_modal = SaveModalScene(
             game_state_manager=self._game_state_manager,
             state=self._holder.get(),
@@ -140,10 +148,16 @@ class WorldMapScene(Scene):
     def _handle_transition(self, transition: dict) -> None:
         # autosave before map transition
         state = self._holder.get()
+
+        # sync player position before save
+        tile_x = self._player.pixel_position.x // Settings.TILE_SIZE
+        tile_y = self._player.pixel_position.y // Settings.TILE_SIZE
+        state.map.set_position(Position(tile_x, tile_y))
+
+        print(f"[DEBUG] moved tile-x={tile_x} tile-y={tile_y}")
+
         self._game_state_manager.save(state, slot_index=0)
-        # stub — Phase 2b: implement full map switch
-        # For now: update map state only
-        from engine.core.models.position import Position
+
         new_map = transition.get("map", state.map.current)
         pos = transition.get("position", [0, 0])
         state.map.move_to(new_map, Position.from_list(pos))
