@@ -5,6 +5,7 @@ from engine.core.scene import Scene
 from engine.core.scene_manager import SceneManager
 from engine.core.scene_registry import SceneRegistry
 from engine.core.settings import Settings
+from engine.core.state.save_manager import SaveManager
 from engine.data.loader import ManifestLoader
 from engine.ui.menu import Menu
 
@@ -15,18 +16,26 @@ class TitleScene(Scene):
         loader: ManifestLoader,
         scene_manager: SceneManager,
         registry: SceneRegistry,
+        save_manager: SaveManager,
     ) -> None:
         self._manifest = loader.load()
         self._scene_manager = scene_manager
         self._registry = registry
+        self._save_manager = save_manager
         self._title = self._manifest.get("name", "RPG")
         self._title_font = None
         self._menu_font = None
         self._menu = None
+        self._has_saves: bool = False
 
     def _init_fonts(self) -> None:
         self._title_font = pygame.font.SysFont("Arial", 64, bold=True)
-        self._menu_font = pygame.font.SysFont("Arial", 36)
+        self._menu_font  = pygame.font.SysFont("Arial", 36)
+
+        # check if any non-empty save slots exist
+        slots = self._save_manager.list_slots()
+        self._has_saves = any(not s.is_empty for s in slots)
+
         self._menu = Menu(
             items=["New Game", "Load Game", "Quit"],
             font=self._menu_font,
@@ -46,7 +55,8 @@ class TitleScene(Scene):
         elif item == "New Game":
             self._scene_manager.switch(self._registry.get("name_entry"))
         elif item == "Load Game":
-            pass  # LoadGameScene plugs in here
+            if self._has_saves:
+                self._scene_manager.switch(self._registry.get("load_game"))
 
     def render(self, screen: pygame.Surface) -> None:
         if self._menu is None:
@@ -57,6 +67,10 @@ class TitleScene(Scene):
         text = self._title_font.render(self._title, True, (220, 220, 180))
         x = (Settings.SCREEN_WIDTH - text.get_width()) // 2
         screen.blit(text, (x, 180))
+
+        # gray out Load Game if no saves
+        if not self._has_saves:
+            self._menu.set_item_disabled("Load Game", True)
 
         menu_x = (Settings.SCREEN_WIDTH - 200) // 2
         self._menu.render(screen, menu_x, 380)

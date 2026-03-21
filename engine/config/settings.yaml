@@ -1,0 +1,7 @@
+# engine/config/settings.yaml
+
+dialogue:
+  text_speed: fast   # slow | fast | very_fast
+
+saves:
+  dir: ~/user_save_data
