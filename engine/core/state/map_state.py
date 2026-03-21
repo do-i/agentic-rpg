@@ -23,7 +23,7 @@ class MapState:
     def move_to(self, map_id: str, position: Position) -> None:
         """Switch to a new map and record previous as visited."""
         if self.current and self.current not in self._visited:
-            self._visited.append(self.current)
+            self._visited.add(self.current)
         self.current = map_id
         self.position = position
 
