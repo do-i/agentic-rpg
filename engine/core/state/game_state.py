@@ -70,7 +70,12 @@ class GameState:
             save.get("meta", {}).get("playtime_seconds", 0)
         )
         state.playtime.start_session()
-        # party + repository restore — Phase 3
+        for m in save.get("party", []):
+            state.party.add_member(MemberState(
+                member_id=m.get("id", ""),
+                name=m.get("name", ""),
+                protagonist=m.get("protagonist", False),
+            ))
         return state
 
     def __repr__(self) -> str:

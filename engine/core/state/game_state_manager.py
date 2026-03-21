@@ -149,7 +149,7 @@ class GameStateManager:
         now = datetime.now()
         proto = state.party.protagonist
         map_state = state.map
-
+        print(f"[DEBUG] party members={state.party.members}")
         # stub — Phase 5: full party serialization
         party_data = []
         if proto:
