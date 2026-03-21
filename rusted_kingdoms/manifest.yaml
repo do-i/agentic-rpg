@@ -31,10 +31,10 @@ refs:
   characters: data/characters/
   classes:    data/classes/
   maps:       data/maps/
-  tmx:        data/tmx/                  # ← new
   dialogue:   data/dialogue/
   items:      data/items/
   enemies:    data/enemies/
   encount:    data/encount/
   recipe:     data/recipe/
-  assets:     assets/                    # ← new
+  assets:     assets/
+  tmx:        assets/maps/

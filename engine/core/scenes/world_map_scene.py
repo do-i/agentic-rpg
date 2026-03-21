@@ -61,7 +61,7 @@ class WorldMapScene(Scene):
         state = self._holder.get()
         map_id = state.map.current
 
-        tmx_path = scenario_path / "data" / "tmx" / f"{map_id}.tmx"
+        tmx_path = scenario_path / "assets" / "maps" / f"{map_id}.tmx"
         self._tile_map = self._tile_map_factory.create(str(tmx_path))
         self._camera = Camera(self._tile_map.width_px, self._tile_map.height_px)
         self._player = Player(
@@ -99,7 +99,7 @@ class WorldMapScene(Scene):
         tile_x = self._player.pixel_position.x // Settings.TILE_SIZE
         tile_y = self._player.pixel_position.y // Settings.TILE_SIZE
         state.map.set_position(Position(tile_x, tile_y))
-        
+
         self._save_modal = SaveModalScene(
             game_state_manager=self._game_state_manager,
             state=self._holder.get(),

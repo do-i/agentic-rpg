@@ -4,9 +4,7 @@
 
 | Phase | Deliverable | Playable? |
 |---|---|---|
-| 1 | Boot → load manifest → world map render + player movement | Walk around |
-| 2 | Town entry → NPC interaction → dialogue engine | Talk to NPCs |
-| 3 | Flag system + save/load | Persist state |
+| 3 | World map and town exit | Exit Town, Reenter Town |
 | 4 | Random encounter → battle system → exp/loot | Fight enemies |
 | 5 | Party join flow | Full party |
 | 6 | Shop + Apothecary | Buy/craft |
