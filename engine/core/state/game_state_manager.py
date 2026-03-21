@@ -34,6 +34,9 @@ def _parse_timestamp(filename: str) -> str:
         return raw[:10] + " " + raw[11:].replace("-", ":")
     return ""
 
+def _slot_index_from_filename(filename: str) -> int:
+    m = re.search(r"-(\d{3})-[0-9A-F]{8}\.yaml$", filename)
+    return int(m.group(1)) if m else 0
 
 class GameStateManager:
     """
@@ -106,14 +109,17 @@ class GameStateManager:
         else:
             slots.append(SaveSlot(slot_index=0, path=None, is_autosave=True))
 
-        # slots 1-N — player saves
-        for i, f in enumerate(player_files[:PLAYER_SLOT_COUNT], start=1):
-            slots.append(self._slot_from_file(f, i))
+        slot_map: dict[int, SaveSlot] = {}
+        for f in player_files:
+            idx = _slot_index_from_filename(f.name)
+            slot_map[idx] = self._slot_from_file(f, idx)
 
-        # pad with empty slots up to PLAYER_SLOT_COUNT
-        filled = len(slots) - 1  # exclude autosave
-        for i in range(filled + 1, PLAYER_SLOT_COUNT + 1):
-            slots.append(SaveSlot(slot_index=i, path=None))
+        for i in range(1, PLAYER_SLOT_COUNT + 1):
+            if i in slot_map:
+                slots.append(slot_map[i])
+            else:
+                slots.append(SaveSlot(slot_index=i, path=None))
+
 
         return slots
 
