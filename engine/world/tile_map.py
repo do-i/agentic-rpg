@@ -3,6 +3,7 @@
 import pytmx
 import pygame
 from engine.core.settings import Settings
+from engine.world.collision import CollisionMap
 
 
 class TileMap:
@@ -12,12 +13,14 @@ class TileMap:
     Phase 2: mid + top layers, Y-sort.
     """
 
-    def __init__(self, tmx_path: str) -> None:
+    def __init__(self, tmx_path: str, collision_factory=CollisionMap) -> None:
         self._tmx = pytmx.load_pygame(tmx_path, pixelalpha=True)
         self.tile_width  = self._tmx.tilewidth
         self.tile_height = self._tmx.tileheight
         self.width       = self._tmx.width     # in tiles
         self.height      = self._tmx.height    # in tiles
+        self.collision_map = collision_factory(self._tmx)
+        print(f"[DEBUG] collision_map={self.collision_map}")
 
     @property
     def width_px(self) -> int:

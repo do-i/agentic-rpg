@@ -176,7 +176,7 @@ class WorldMapScene(Scene):
         if self._player is None:
             return
         keys = pygame.key.get_pressed()
-        self._player.update(keys)
+        self._player.update(keys, self._tile_map.collision_map)
         self._camera.update(self._player.pixel_position)
 
     # ── Render ────────────────────────────────────────────────

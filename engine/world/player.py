@@ -5,6 +5,7 @@
 import pygame
 from engine.core.models.position import Position
 from engine.core.settings import Settings
+from engine.world.collision import CollisionMap
 
 PLAYER_SPEED = 3        # pixels per frame
 PLAYER_SIZE  = 24       # placeholder rectangle size
@@ -36,7 +37,7 @@ class Player:
     def pixel_position(self) -> Position:
         return Position(int(self._x), int(self._y))
 
-    def update(self, keys: pygame.key.ScancodeWrapper) -> None:
+    def update(self, keys: pygame.key.ScancodeWrapper, collision_map: CollisionMap | None = None) -> None:
         dx, dy = 0, 0
         for key, (vx, vy) in DIRECTION_MAP.items():
             if keys[key]:
@@ -55,9 +56,16 @@ class Player:
         new_x = self._x + dx * PLAYER_SPEED
         new_y = self._y + dy * PLAYER_SPEED
 
-        # clamp to map bounds
-        self._x = max(0.0, min(new_x, float(self._map_w - PLAYER_SIZE)))
-        self._y = max(0.0, min(new_y, float(self._map_h - PLAYER_SIZE)))
+        new_x = max(0.0, min(new_x, float(self._map_w - PLAYER_SIZE)))
+        new_y = max(0.0, min(new_y, float(self._map_h - PLAYER_SIZE)))
+
+        if collision_map and collision_map.is_rect_blocked(int(new_x), int(new_y), PLAYER_SIZE, PLAYER_SIZE):
+            print(f"[DEBUG] blocked at tile ({int(new_x)//32}, {int(new_y)//32})")
+    
+            return  # ← stop completely
+
+        self._x = new_x
+        self._y = new_y
 
     def render(self, screen: pygame.Surface, offset_x: int, offset_y: int) -> None:
         """Phase 1 — coloured rectangle placeholder."""
