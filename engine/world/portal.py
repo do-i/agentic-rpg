@@ -4,12 +4,14 @@ from dataclasses import dataclass
 from engine.core.models.position import Position
 from engine.core.settings import Settings
 
+PORTAL_TRIGGER_RADIUS = 8  # px — portal fires when centers are within this distance
+
 
 @dataclass
 class Portal:
     """
     Represents a map exit.
-    Pixel coords from TMX object layer — trigger uses pixel overlap.
+    Trigger: portal center within PORTAL_TRIGGER_RADIUS of collision rect center.
     """
     x: int              # pixel x (top-left of object)
     y: int              # pixel y (top-left of object)
@@ -18,24 +20,25 @@ class Portal:
     target_map: str
     target_position: Position
 
-    def overlaps_rect(self, rx: int, ry: int, rw: int, rh: int) -> bool:
-        """
-        Returns True if the given rect overlaps this portal's bounds.
-        For point objects, uses a single tile area centered on the point.
-        """
-        # point object — treat as one tile area
-        if self.width == 0 or self.height == 0:
-            ts = Settings.TILE_SIZE
-            px = self.x - ts // 2
-            py = self.y - ts // 2
-            pw = ts
-            ph = ts
-        else:
-            px, py, pw, ph = self.x, self.y, self.width, self.height
+    @property
+    def center_x(self) -> int:
+        if self.width == 0:
+            return self.x
+        return self.x + self.width // 2
 
-        return (
-            rx < px + pw and
-            rx + rw > px and
-            ry < py + ph and
-            ry + rh > py
-        )
+    @property
+    def center_y(self) -> int:
+        if self.height == 0:
+            return self.y
+        return self.y + self.height // 2
+
+    def is_triggered_by(self, col_x: int, col_y: int, col_w: int, col_h: int) -> bool:
+        """
+        Returns True if portal center is within PORTAL_TRIGGER_RADIUS
+        of the collision rect center.
+        """
+        ccx = col_x + col_w // 2
+        ccy = col_y + col_h // 2
+        dx = abs(self.center_x - ccx)
+        dy = abs(self.center_y - ccy)
+        return dx <= PORTAL_TRIGGER_RADIUS and dy <= PORTAL_TRIGGER_RADIUS

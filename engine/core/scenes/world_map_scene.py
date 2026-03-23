@@ -188,7 +188,7 @@ class WorldMapScene(Scene):
             return
         col = self._player.collision_rect_position
         for portal in self._tile_map.portals:
-            if portal.overlaps_rect(col.x, col.y, COLLISION_W, COLLISION_H):
+            if portal.is_triggered_by(col.x, col.y, COLLISION_W, COLLISION_H):
                 self._start_fade_out({
                     "map": portal.target_map,
                     "position": [portal.target_position.x, portal.target_position.y],
