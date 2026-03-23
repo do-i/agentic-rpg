@@ -16,13 +16,17 @@ from engine.world.tile_map import TileMap
 from engine.world.tile_map_factory import TileMapFactory
 from engine.world.camera import Camera
 from engine.world.player import Player
+from engine.world.sprite_sheet import SpriteSheet
 from engine.world.npc import Npc
 from engine.world.npc_loader import NpcLoader
+
+FADE_SPEED = 300  # alpha units per second (0-255)
 
 
 class WorldMapScene(Scene):
     """
-    Phase 2 — tile map + player + camera + NPC interaction + save modal.
+    Phase 3 — tile map + player sprite + camera + NPC interaction +
+               portal transitions + save modal.
     """
 
     def __init__(
@@ -56,29 +60,65 @@ class WorldMapScene(Scene):
         self._save_modal: SaveModalScene | None = None
         self._dialogue: DialogueScene | None = None
 
+        # fade state
+        self._fade_alpha: int = 255       # start fully black → fade in
+        self._fade_dir: int = -1          # -1 = fade in, +1 = fade out
+        self._pending_transition: dict | None = None  # set during fade out
+
     def _init(self) -> None:
         scenario_path = self._loader.scenario_path
+        manifest = self._loader.load()
         state = self._holder.get()
         map_id = state.map.current
 
         tmx_path = scenario_path / "assets" / "maps" / f"{map_id}.tmx"
         self._tile_map = self._tile_map_factory.create(str(tmx_path))
         self._camera = Camera(self._tile_map.width_px, self._tile_map.height_px)
+
+        # load sprite sheet for protagonist
+        sprite_sheet = self._load_protagonist_sprite(manifest, scenario_path)
+
         self._player = Player(
             start=state.map.position,
             map_width_px=self._tile_map.width_px,
             map_height_px=self._tile_map.height_px,
+            sprite_sheet=sprite_sheet,
         )
 
         # load NPCs for current map
         map_yaml = scenario_path / "data" / "maps" / f"{map_id}.yaml"
         self._npcs = self._npc_loader.load_from_map(map_yaml)
-        print(f"[DEBUG] loading map={state.map.current} pos={state.map.position}")
+
+        # start fade in
+        self._fade_alpha = 255
+        self._fade_dir = -1
+        self._pending_transition = None
+
+        print(f"[DEBUG] loading map={map_id} pos={state.map.position}")
+
+    def _load_protagonist_sprite(self, manifest: dict, scenario_path) -> SpriteSheet | None:
+        sprite_path = manifest.get("protagonist", {}).get("sprite")
+        if not sprite_path:
+            return None
+        full_path = scenario_path / sprite_path
+        if not full_path.exists():
+            print(f"[WARN] sprite not found: {full_path}")
+            return None
+        try:
+            return SpriteSheet(full_path)
+        except Exception as e:
+            print(f"[WARN] failed to load sprite: {e}")
+            return None
 
     # ── Events ────────────────────────────────────────────────
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
-        # overlays get events first
+        # block input during fade
+        if self._fade_alpha > 0 and self._fade_dir == -1:
+            return
+        if self._fade_dir == 1:
+            return
+
         if self._dialogue:
             self._dialogue.handle_events(events)
             return
@@ -94,12 +134,8 @@ class WorldMapScene(Scene):
                     self._try_interact()
 
     def _open_save_modal(self) -> None:
-
         state = self._holder.get()
-        tile_x = self._player.pixel_position.x // Settings.TILE_SIZE
-        tile_y = self._player.pixel_position.y // Settings.TILE_SIZE
-        state.map.set_position(Position(tile_x, tile_y))
-
+        state.map.set_position(self._player.tile_position)
         self._save_modal = SaveModalScene(
             game_state_manager=self._game_state_manager,
             state=self._holder.get(),
@@ -140,33 +176,62 @@ class WorldMapScene(Scene):
         )
         # stub — Phase 5: handle join_party
         # stub — Phase 4: handle start_battle
-        # transition handled here
         transition = remaining.get("transition")
         if transition:
-            self._handle_transition(transition)
+            self._start_fade_out(transition)
 
-    def _handle_transition(self, transition: dict) -> None:
-        # autosave before map transition
+    # ── Portal ────────────────────────────────────────────────
+
+    def _check_portals(self) -> None:
+        if self._tile_map is None or self._player is None:
+            return
+        tile_pos = self._player.tile_position
+        for portal in self._tile_map.portals:
+            if portal.contains_tile(tile_pos.x, tile_pos.y):
+                self._start_fade_out({
+                    "map": portal.target_map,
+                    "position": [portal.target_position.x, portal.target_position.y],
+                })
+                break
+
+    # ── Fade & Transition ─────────────────────────────────────
+
+    def _start_fade_out(self, transition: dict) -> None:
+        if self._fade_dir == 1:
+            return  # already fading out
+        self._pending_transition = transition
+        self._fade_dir = 1   # fade out
+        self._fade_alpha = 0
+
+    def _apply_transition(self) -> None:
         state = self._holder.get()
-
-        # sync player position before save
-        tile_x = self._player.pixel_position.x // Settings.TILE_SIZE
-        tile_y = self._player.pixel_position.y // Settings.TILE_SIZE
-        state.map.set_position(Position(tile_x, tile_y))
-
-        print(f"[DEBUG] moved tile-x={tile_x} tile-y={tile_y}")
-
+        state.map.set_position(self._player.tile_position)
         self._game_state_manager.save(state, slot_index=0)
 
+        transition = self._pending_transition
         new_map = transition.get("map", state.map.current)
         pos = transition.get("position", [0, 0])
         state.map.move_to(new_map, Position.from_list(pos))
-        # full scene reload on next render cycle
+
+        # trigger full reload
         self._tile_map = None
+        self._player = None
 
     # ── Update ────────────────────────────────────────────────
 
     def update(self, delta: float) -> None:
+        # handle fade
+        if self._fade_dir != 0:
+            self._fade_alpha += int(FADE_SPEED * delta) * self._fade_dir
+            if self._fade_dir == 1 and self._fade_alpha >= 255:
+                self._fade_alpha = 255
+                self._fade_dir = 0
+                self._apply_transition()
+                return
+            elif self._fade_dir == -1 and self._fade_alpha <= 0:
+                self._fade_alpha = 0
+                self._fade_dir = 0
+
         if self._dialogue:
             self._dialogue.update(delta)
             return
@@ -175,9 +240,11 @@ class WorldMapScene(Scene):
             return
         if self._player is None:
             return
+
         keys = pygame.key.get_pressed()
         self._player.update(keys, self._tile_map.collision_map)
         self._camera.update(self._player.pixel_position)
+        self._check_portals()
 
     # ── Render ────────────────────────────────────────────────
 
@@ -203,3 +270,11 @@ class WorldMapScene(Scene):
             self._save_modal.render(screen)
         if self._dialogue:
             self._dialogue.render(screen)
+
+        # fade overlay
+        if self._fade_alpha > 0:
+            fade_surf = pygame.Surface(
+                (Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT), pygame.SRCALPHA
+            )
+            fade_surf.fill((0, 0, 0, self._fade_alpha))
+            screen.blit(fade_surf, (0, 0))
