@@ -10,7 +10,7 @@ protagonist:
   name: "Aric"
   class: hero
   character: data/characters/aric.yaml
-  sprite: assets/sprites/hero.png        # ← updated
+  sprite: assets/sprites/party/01_aric_walk.tsx
 
 start:
   map: town_01_ardel
