@@ -7,16 +7,16 @@ from engine.world.collision import CollisionMap
 from engine.world.sprite_sheet import SpriteSheet, Direction
 from engine.world.animation_controller import AnimationController
 
-PLAYER_SPEED  = 3        # pixels per frame
+PLAYER_SPEED  = 5        # pixels per frame
 PLAYER_WIDTH  = 64       # sprite render width (half of 64px frame)
 PLAYER_HEIGHT = 64       # sprite render height
 
+DEBUG_COLLISION = True  # toggle this
 # Collision rect — 32×32, centered horizontally, 5px from bottom
-COLLISION_W = 28
-COLLISION_H = 32
+COLLISION_W = 20
+COLLISION_H = 20
 COLLISION_OFFSET_X = (PLAYER_WIDTH - COLLISION_W) // 2   # 0  (already 32px wide)
-COLLISION_OFFSET_Y = PLAYER_HEIGHT - COLLISION_H - 5     # 27
-
+COLLISION_OFFSET_Y = PLAYER_HEIGHT - COLLISION_H - 5
 PLAYER_COLOR = (220, 80, 80)  # fallback placeholder color
 
 # 8-direction movement vectors — arrow keys only
@@ -116,6 +116,12 @@ class Player:
     def render(self, screen: pygame.Surface, offset_x: int, offset_y: int) -> None:
         screen_x = int(self._x) - offset_x
         screen_y = int(self._y) - offset_y
+        if DEBUG_COLLISION:
+            # collision rect
+            col_x = int(self._x) + COLLISION_OFFSET_X - offset_x
+            col_y = int(self._y) + COLLISION_OFFSET_Y - offset_y
+            pygame.draw.rect(screen, (255, 0, 0), (col_x, col_y, COLLISION_W, COLLISION_H), 2)
+
 
         if self._animation:
             frame = self._animation.current_frame
@@ -123,7 +129,6 @@ class Player:
             scaled = pygame.transform.scale(frame, (PLAYER_WIDTH, PLAYER_HEIGHT))
             screen.blit(scaled, (screen_x, screen_y))
         else:
-            # placeholder rect
             pygame.draw.rect(
                 screen,
                 PLAYER_COLOR,

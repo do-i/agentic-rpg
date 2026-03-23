@@ -14,7 +14,7 @@ protagonist:
 
 start:
   map: town_01_ardel
-  position: [12, 8]
+  position: [14, 3]
   intro_dialogue: data/dialogue/intro_cutscene.yaml
 
 bootstrap_flags:

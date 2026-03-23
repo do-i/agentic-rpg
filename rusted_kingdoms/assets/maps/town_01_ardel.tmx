@@ -7,15 +7,15 @@
   <object id="2" x="947" y="386" width="12" height="64">
    <properties>
     <property name="target_map" value="world_01"/>
-    <property name="target_position_x" type="int" value="11"/>
-    <property name="target_position_y" type="int" value="18"/>
+    <property name="target_position_x" type="int" value="28"/>
+    <property name="target_position_y" type="int" value="1"/>
    </properties>
   </object>
   <object id="3" x="464" y="80">
    <properties>
     <property name="target_map" value="world_01"/>
-    <property name="target_position_x" type="int" value="14"/>
-    <property name="target_position_y" type="int" value="7"/>
+    <property name="target_position_x" type="int" value="25"/>
+    <property name="target_position_y" type="int" value="3"/>
    </properties>
    <ellipse/>
   </object>
