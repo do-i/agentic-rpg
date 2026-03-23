@@ -1,7 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="1">
+<map version="1.10" tiledversion="1.12.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="4">
  <tileset firstgid="1" source="../tilesets/grass_cave_walls_24x14.tsx"/>
  <tileset firstgid="337" source="../tilesets/stone_tile_stares_16x16.tsx"/>
+ <tileset firstgid="593" source="../tilesets/icon_table_stage_14x9.tsx"/>
+ <objectgroup id="8" name="portals">
+  <object id="2" x="947" y="386" width="12" height="64">
+   <properties>
+    <property name="target_map" value="world_01"/>
+    <property name="target_position_x" type="int" value="11"/>
+    <property name="target_position_y" type="int" value="18"/>
+   </properties>
+  </object>
+  <object id="3" x="464" y="80">
+   <properties>
+    <property name="target_map" value="world_01"/>
+    <property name="target_position_x" type="int" value="14"/>
+    <property name="target_position_y" type="int" value="7"/>
+   </properties>
+   <ellipse/>
+  </object>
+ </objectgroup>
  <layer id="1" name="ground" width="30" height="20">
   <data encoding="csv">
 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
@@ -30,7 +48,7 @@
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,145,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,195,0,0,0,0,0,145,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,145,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -39,7 +57,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,149,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,145,149,149,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,152,356,0,0,
+0,0,0,0,0,0,145,149,149,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,152,0,0,0,
 0,0,0,0,0,0,0,0,0,0,145,0,0,0,0,0,0,150,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,145,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,150,0,0,0,0,0,0,152,0,0,
