@@ -18,7 +18,7 @@ class Direction(IntEnum):
 # row 0 = UP, row 1 = LEFT, row 2 = DOWN, row 3 = RIGHT
 FRAME_WIDTH  = 64
 FRAME_HEIGHT = 64
-FRAMES_PER_ROW = 8
+FRAMES_PER_ROW = 9
 
 
 class SpriteSheet:
@@ -27,10 +27,10 @@ class SpriteSheet:
     Frames indexed by (direction, frame_index).
 
     TSX layout assumption:
-        row 0 — UP    (frames 0 - 7)
-        row 1 — LEFT  (frames 8 - 15)
-        row 2 — DOWN  (frames 16 - 23)
-        row 3 — RIGHT (frames 24 - 31)
+        row 0 — UP    (frames 1 - 8)
+        row 1 — LEFT  (frames 10 - 17)
+        row 2 — DOWN  (frames 19 - 26)
+        row 3 — RIGHT (frames 28 - 35)
     """
 
     def __init__(self, tsx_path: str | Path) -> None:

@@ -21,7 +21,7 @@ def make_fake_sheet() -> pygame.Surface:
 
 def make_tsx(tmp_path: Path, image_filename: str) -> Path:
     tsx_content = f"""<?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.10" name="hero" tilewidth="{FRAME_WIDTH}" tileheight="{FRAME_HEIGHT}" tilecount="32" columns="{FRAMES_PER_ROW}">
+<tileset version="1.10" name="hero" tilewidth="{FRAME_WIDTH}" tileheight="{FRAME_HEIGHT}" tilecount="36" columns="{FRAMES_PER_ROW}">
  <image source="{image_filename}" width="{FRAME_WIDTH * FRAMES_PER_ROW}" height="{FRAME_HEIGHT * 4}"/>
 </tileset>"""
     tsx_path = tmp_path / "hero.tsx"
@@ -41,11 +41,11 @@ def sprite_sheet(tmp_path):
 
 class TestSpriteSheetInit:
     def test_loads_all_frames(self, sprite_sheet):
-        assert len(sprite_sheet._frames) == 32  # 4 directions x 8 frames
+        assert len(sprite_sheet._frames) == 36  # 4 directions x 9 frames
 
     def test_repr(self, sprite_sheet):
         assert "hero.tsx" in repr(sprite_sheet)
-        assert "32" in repr(sprite_sheet)
+        assert "36" in repr(sprite_sheet)
 
     def test_missing_image_raises(self, tmp_path):
         tsx_path = make_tsx(tmp_path, "nonexistent.png")

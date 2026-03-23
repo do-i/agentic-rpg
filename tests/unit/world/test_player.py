@@ -3,7 +3,7 @@
 import math
 import pytest
 import pygame
-from engine.world.player import Player, PLAYER_SPEED, PLAYER_SIZE
+from engine.world.player import Player, PLAYER_SPEED, PLAYER_WIDTH, PLAYER_HEIGHT
 from engine.core.models.position import Position
 from engine.core.settings import Settings
 
@@ -115,10 +115,10 @@ class TestBounds:
         p = Player(Position(0, 0), MAP_W, MAP_H)
         for _ in range(1000):
             p.update(make_keys(right=True))
-        assert p.pixel_position.x <= MAP_W - PLAYER_SIZE
+        assert p.pixel_position.x <= MAP_W - PLAYER_WIDTH
 
     def test_cannot_move_below_map(self):
         p = Player(Position(0, 0), MAP_W, MAP_H)
         for _ in range(1000):
             p.update(make_keys(down=True))
-        assert p.pixel_position.y <= MAP_H - PLAYER_SIZE
+        assert p.pixel_position.y <= MAP_H - PLAYER_HEIGHT

@@ -4,18 +4,22 @@ import pygame
 from engine.world.sprite_sheet import SpriteSheet, Direction
 
 FRAME_DURATION = 0.1  # seconds per frame (matches TSX duration="100")
+IDLE_FRAME = 0
+WALK_FRAME_START = 1
+WALK_FRAME_END = 8
 
 
 class AnimationController:
     """
     Tracks current direction and advances frame on timer.
-    Stationary player holds frame 0 of current direction.
+    col 0 = idle (standing), cols 1-8 = walk cycle.
+    Key released → immediately resets to frame 0 (idle).
     """
 
     def __init__(self, sprite_sheet: SpriteSheet) -> None:
         self._sheet = sprite_sheet
         self._direction = Direction.DOWN
-        self._frame_index: int = 0
+        self._frame_index: int = IDLE_FRAME
         self._timer: float = 0.0
         self._moving: bool = False
 
@@ -28,12 +32,18 @@ class AnimationController:
 
         if self._moving:
             self._update_direction(dx, dy)
+            # start walk cycle at frame 1 if coming from idle
+            if self._frame_index == IDLE_FRAME:
+                self._frame_index = WALK_FRAME_START
             self._timer += delta
             if self._timer >= FRAME_DURATION:
                 self._timer -= FRAME_DURATION
-                self._frame_index = (self._frame_index + 1) % self._sheet.frame_count
+                next_frame = self._frame_index + 1
+                if next_frame > WALK_FRAME_END:
+                    next_frame = WALK_FRAME_START
+                self._frame_index = next_frame
         else:
-            self._frame_index = 0
+            self._frame_index = IDLE_FRAME
             self._timer = 0.0
 
     def _update_direction(self, dx: int, dy: int) -> None:

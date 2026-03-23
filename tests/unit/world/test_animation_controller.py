@@ -3,7 +3,10 @@
 import pytest
 from unittest.mock import MagicMock
 import pygame
-from engine.world.animation_controller import AnimationController, FRAME_DURATION
+from engine.world.animation_controller import (
+    AnimationController, FRAME_DURATION,
+    IDLE_FRAME, WALK_FRAME_START, WALK_FRAME_END,
+)
 from engine.world.sprite_sheet import Direction, FRAMES_PER_ROW
 
 
@@ -26,8 +29,8 @@ class TestInit:
     def test_default_direction_is_down(self, controller):
         assert controller.direction == Direction.DOWN
 
-    def test_default_frame_is_zero(self, controller):
-        assert controller._frame_index == 0
+    def test_default_frame_is_idle(self, controller):
+        assert controller._frame_index == IDLE_FRAME
 
 
 # ── Direction update ──────────────────────────────────────────
@@ -62,24 +65,31 @@ class TestDirectionUpdate:
 # ── Frame advance ─────────────────────────────────────────────
 
 class TestFrameAdvance:
+    def test_moving_starts_at_walk_frame_start(self, controller):
+        controller.update(0.0, 1, 0)
+        assert controller._frame_index == WALK_FRAME_START
+
     def test_frame_advances_after_duration(self, controller):
-        controller.update(FRAME_DURATION, 1, 0)
-        assert controller._frame_index == 1
+        controller.update(0.0, 1, 0)           # enter walk — frame 1
+        controller.update(FRAME_DURATION, 1, 0) # advance — frame 2
+        assert controller._frame_index == WALK_FRAME_START + 1
 
     def test_frame_does_not_advance_before_duration(self, controller):
-        controller.update(FRAME_DURATION * 0.5, 1, 0)
-        assert controller._frame_index == 0
+        controller.update(0.0, 1, 0)                    # enter walk — frame 1
+        controller.update(FRAME_DURATION * 0.5, 1, 0)   # not enough time
+        assert controller._frame_index == WALK_FRAME_START
 
-    def test_frame_wraps_at_end(self, controller):
-        for _ in range(FRAMES_PER_ROW):
-            controller.update(FRAME_DURATION, 1, 0)
-        assert controller._frame_index == 0
-
-    def test_stationary_resets_frame(self, controller):
+    def test_frame_wraps_from_end_to_walk_start(self, controller):
+        # advance to WALK_FRAME_END then one more tick
+        controller._frame_index = WALK_FRAME_END
+        controller._moving = True
         controller.update(FRAME_DURATION, 1, 0)
-        assert controller._frame_index == 1
-        controller.update(0.1, 0, 0)
-        assert controller._frame_index == 0
+        assert controller._frame_index == WALK_FRAME_START
+
+    def test_stationary_resets_to_idle(self, controller):
+        controller.update(0.0, 1, 0)   # start walking
+        controller.update(0.1, 0, 0)   # stop
+        assert controller._frame_index == IDLE_FRAME
 
     def test_stationary_resets_timer(self, controller):
         controller.update(FRAME_DURATION * 0.5, 1, 0)
