@@ -83,7 +83,12 @@ class Player:
         self,
         keys: pygame.key.ScancodeWrapper,
         collision_map: CollisionMap | None = None,
+        frozen: bool = False,
     ) -> None:
+        if frozen:
+            if self._animation:
+                self._animation.update(1 / Settings.FPS, 0, 0)
+            return
         dx, dy = 0, 0
         for key, (vx, vy) in DIRECTION_MAP.items():
             if keys[key]:
