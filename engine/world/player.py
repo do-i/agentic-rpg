@@ -60,8 +60,6 @@ class Player:
         new_y = max(0.0, min(new_y, float(self._map_h - PLAYER_SIZE)))
 
         if collision_map and collision_map.is_rect_blocked(int(new_x), int(new_y), PLAYER_SIZE, PLAYER_SIZE):
-            print(f"[DEBUG] blocked at tile ({int(new_x)//32}, {int(new_y)//32})")
-    
             return  # ← stop completely
 
         self._x = new_x
