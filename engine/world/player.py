@@ -8,18 +8,20 @@ from engine.world.sprite_sheet import SpriteSheet, Direction
 from engine.world.animation_controller import AnimationController
 
 PLAYER_SPEED  = 5        # pixels per frame
-PLAYER_WIDTH  = 64       # sprite render width (half of 64px frame)
+PLAYER_WIDTH  = 64       # sprite render width
 PLAYER_HEIGHT = 64       # sprite render height
 
-DEBUG_COLLISION = True  # toggle this
-# Collision rect — 32×32, centered horizontally, 5px from bottom
+# Collision rect — 20×20, centered horizontally, 5px from bottom
 COLLISION_W = 20
 COLLISION_H = 20
-COLLISION_OFFSET_X = (PLAYER_WIDTH - COLLISION_W) // 2   # 0  (already 32px wide)
-COLLISION_OFFSET_Y = PLAYER_HEIGHT - COLLISION_H - 5
+COLLISION_OFFSET_X = (PLAYER_WIDTH - COLLISION_W) // 2   # 22
+COLLISION_OFFSET_Y = PLAYER_HEIGHT - COLLISION_H - 5     # 39
+
+DEBUG_COLLISION = True  # toggle to show red collision rect
+
 PLAYER_COLOR = (220, 80, 80)  # fallback placeholder color
 
-# 8-direction movement vectors — arrow keys only
+# movement vectors — arrow keys only
 DIRECTION_MAP: dict[int, tuple[int, int]] = {
     pygame.K_UP:    (0, -1),
     pygame.K_DOWN:  (0,  1),
@@ -32,7 +34,8 @@ class Player:
     """
     Handles player input, position update, animation, and rendering.
     Pixel position = top-left of the 64×64 sprite.
-    Collision rect = 32×32 centered, 5px from sprite bottom.
+    Collision rect = 20×20 centered horizontally, 5px from sprite bottom.
+    Spawn aligns collision rect center to tile center.
     """
 
     def __init__(
@@ -42,9 +45,14 @@ class Player:
         map_height_px: int,
         sprite_sheet: SpriteSheet | None = None,
     ) -> None:
-        # convert tile position → pixel coordinates
-        self._x: float = float(start.x * Settings.TILE_SIZE)
-        self._y: float = float(start.y * Settings.TILE_SIZE)
+        # align collision rect center to tile center
+        ts = Settings.TILE_SIZE
+        self._x: float = float(
+            start.x * ts + ts // 2 - COLLISION_OFFSET_X - COLLISION_W // 2
+        )
+        self._y: float = float(
+            start.y * ts + ts // 2 - COLLISION_OFFSET_Y - COLLISION_H // 2
+        )
         self._map_w = map_width_px
         self._map_h = map_height_px
         self._animation: AnimationController | None = (
@@ -100,7 +108,7 @@ class Player:
         new_x = self._x + dx_move
         new_y = self._y + dy_move
 
-        # clamp to map bounds using collision rect
+        # clamp to map bounds
         new_x = max(0.0, min(new_x, float(self._map_w - PLAYER_WIDTH)))
         new_y = max(0.0, min(new_y, float(self._map_h - PLAYER_HEIGHT)))
 
@@ -116,16 +124,9 @@ class Player:
     def render(self, screen: pygame.Surface, offset_x: int, offset_y: int) -> None:
         screen_x = int(self._x) - offset_x
         screen_y = int(self._y) - offset_y
-        if DEBUG_COLLISION:
-            # collision rect
-            col_x = int(self._x) + COLLISION_OFFSET_X - offset_x
-            col_y = int(self._y) + COLLISION_OFFSET_Y - offset_y
-            pygame.draw.rect(screen, (255, 0, 0), (col_x, col_y, COLLISION_W, COLLISION_H), 2)
-
 
         if self._animation:
             frame = self._animation.current_frame
-            # scale 64x64 frame to 32x64
             scaled = pygame.transform.scale(frame, (PLAYER_WIDTH, PLAYER_HEIGHT))
             screen.blit(scaled, (screen_x, screen_y))
         else:
@@ -134,3 +135,8 @@ class Player:
                 PLAYER_COLOR,
                 (screen_x, screen_y, PLAYER_WIDTH, PLAYER_HEIGHT),
             )
+
+        if DEBUG_COLLISION:
+            col_x = int(self._x) + COLLISION_OFFSET_X - offset_x
+            col_y = int(self._y) + COLLISION_OFFSET_Y - offset_y
+            pygame.draw.rect(screen, (255, 0, 0), (col_x, col_y, COLLISION_W, COLLISION_H), 2)

@@ -7,7 +7,7 @@
   <object id="2" x="947" y="386" width="12" height="64">
    <properties>
     <property name="target_map" value="world_01"/>
-    <property name="target_position_x" type="int" value="28"/>
+    <property name="target_position_x" type="int" value="29"/>
     <property name="target_position_y" type="int" value="1"/>
    </properties>
   </object>
