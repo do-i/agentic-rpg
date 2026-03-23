@@ -3,22 +3,20 @@
 import pytest
 import pygame
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from engine.world.sprite_sheet import SpriteSheet, Direction, FRAME_WIDTH, FRAME_HEIGHT, FRAMES_PER_ROW
 
 
 @pytest.fixture(autouse=True)
 def init_pygame():
-    pygame.display.init()
-    pygame.display.set_mode((1, 1))
+    pygame.init()
     yield
     pygame.quit()
 
 
 def make_fake_sheet() -> pygame.Surface:
-    """4 rows x 8 cols of 64x64 frames."""
-    surface = pygame.Surface((FRAME_WIDTH * FRAMES_PER_ROW, FRAME_HEIGHT * 4), pygame.SRCALPHA)
-    return surface
+    """4 rows x 8 cols of 64x64 frames — no display required."""
+    return pygame.Surface((FRAME_WIDTH * FRAMES_PER_ROW, FRAME_HEIGHT * 4), pygame.SRCALPHA)
 
 
 def make_tsx(tmp_path: Path, image_filename: str) -> Path:
@@ -33,11 +31,10 @@ def make_tsx(tmp_path: Path, image_filename: str) -> Path:
 
 @pytest.fixture
 def sprite_sheet(tmp_path):
-    image_path = tmp_path / "hero.png"
-    sheet = make_fake_sheet()
-    pygame.image.save(sheet, str(image_path))
     tsx_path = make_tsx(tmp_path, "hero.png")
-    return SpriteSheet(tsx_path)
+    fake_surface = make_fake_sheet()
+    with patch("pygame.image.load", return_value=fake_surface):
+        return SpriteSheet(tsx_path)
 
 
 # ── Construction ──────────────────────────────────────────────

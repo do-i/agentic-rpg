@@ -48,7 +48,8 @@ class SpriteSheet:
 
         image_src = image_el.attrib["source"]
         image_path = (self._tsx_path.parent / image_src).resolve()
-        sheet = pygame.image.load(str(image_path)).convert_alpha()
+        # sheet = pygame.image.load(str(image_path)).convert_alpha()
+        sheet = pygame.image.load(str(image_path))
 
         for direction in Direction:
             row = direction.value
