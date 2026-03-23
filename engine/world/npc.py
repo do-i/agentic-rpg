@@ -7,7 +7,7 @@ from engine.core.state.flag_state import FlagState
 from engine.core.settings import Settings
 from engine.world.sprite_sheet import SpriteSheet, Direction
 
-NPC_SIZE = 24
+NPC_SIZE = 64
 NPC_COLOR = (80, 160, 220)
 INDICATOR_COLOR = (255, 220, 50)
 INTERACTION_RANGE = Settings.TILE_SIZE * 1.5  # pixels
@@ -91,7 +91,7 @@ class Npc:
             direction = self._facing(player_pos, near)
             frame = self._sprite_sheet.get_frame(direction, FRAME_INDEX)
             # scale 64x64 → 32x64 to match player rendering
-            scaled = pygame.transform.scale(frame, (32, 64))
+            scaled = pygame.transform.scale(frame, (64, 64))
             screen.blit(scaled, (sx, sy))
         else:
             pygame.draw.rect(screen, NPC_COLOR, (sx, sy, NPC_SIZE, NPC_SIZE))
