@@ -13,7 +13,7 @@ PLAYER_HEIGHT = 64       # sprite render height
 
 # Collision rect — 20×20, centered horizontally, 5px from bottom
 COLLISION_W = 20
-COLLISION_H = 20
+COLLISION_H = 18
 COLLISION_OFFSET_X = (PLAYER_WIDTH - COLLISION_W) // 2   # 22
 COLLISION_OFFSET_Y = PLAYER_HEIGHT - COLLISION_H - 5     # 39
 

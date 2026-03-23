@@ -19,6 +19,7 @@ from engine.world.player import Player
 from engine.world.sprite_sheet import SpriteSheet
 from engine.world.npc import Npc
 from engine.world.npc_loader import NpcLoader
+from engine.world.player import COLLISION_W, COLLISION_H
 
 FADE_SPEED = 300  # alpha units per second (0-255)
 
@@ -185,9 +186,9 @@ class WorldMapScene(Scene):
     def _check_portals(self) -> None:
         if self._tile_map is None or self._player is None:
             return
-        tile_pos = self._player.tile_position
+        col = self._player.collision_rect_position
         for portal in self._tile_map.portals:
-            if portal.contains_tile(tile_pos.x, tile_pos.y):
+            if portal.overlaps_rect(col.x, col.y, COLLISION_W, COLLISION_H):
                 self._start_fade_out({
                     "map": portal.target_map,
                     "position": [portal.target_position.x, portal.target_position.y],
