@@ -108,9 +108,15 @@ class Player:
         new_x = self._x + dx_move
         new_y = self._y + dy_move
 
-        # clamp to map bounds
-        new_x = max(0.0, min(new_x, float(self._map_w - PLAYER_WIDTH)))
-        new_y = max(0.0, min(new_y, float(self._map_h - PLAYER_HEIGHT)))
+        # clamp to map bounds using collision rect edges
+        new_x = max(
+            float(-COLLISION_OFFSET_X),
+            min(new_x, float(self._map_w - COLLISION_OFFSET_X - COLLISION_W))
+        )
+        new_y = max(
+            float(-COLLISION_OFFSET_Y),
+            min(new_y, float(self._map_h - COLLISION_OFFSET_Y - COLLISION_H))
+        )
 
         if collision_map:
             col_x = int(new_x) + COLLISION_OFFSET_X
