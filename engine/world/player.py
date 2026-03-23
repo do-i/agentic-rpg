@@ -8,11 +8,11 @@ from engine.world.sprite_sheet import SpriteSheet, Direction
 from engine.world.animation_controller import AnimationController
 
 PLAYER_SPEED  = 3        # pixels per frame
-PLAYER_WIDTH  = 32       # sprite render width (half of 64px frame)
+PLAYER_WIDTH  = 64       # sprite render width (half of 64px frame)
 PLAYER_HEIGHT = 64       # sprite render height
 
 # Collision rect — 32×32, centered horizontally, 5px from bottom
-COLLISION_W = 27
+COLLISION_W = 28
 COLLISION_H = 32
 COLLISION_OFFSET_X = (PLAYER_WIDTH - COLLISION_W) // 2   # 0  (already 32px wide)
 COLLISION_OFFSET_Y = PLAYER_HEIGHT - COLLISION_H - 5     # 27
