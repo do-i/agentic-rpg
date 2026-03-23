@@ -3,13 +3,20 @@
 import pytest
 import yaml
 from pathlib import Path
+from unittest.mock import patch, MagicMock
 from engine.world.npc_loader import NpcLoader
 from engine.world.npc import Npc
+from engine.world.sprite_sheet import Direction
 
 
 @pytest.fixture
 def loader() -> NpcLoader:
     return NpcLoader()
+
+
+@pytest.fixture
+def loader_with_path(tmp_path) -> NpcLoader:
+    return NpcLoader(scenario_path=tmp_path)
 
 
 def write_map(tmp_path: Path, data: dict) -> Path:
@@ -76,3 +83,41 @@ class TestNpcLoader:
         pos = npcs[0].pixel_position
         assert pos.x == 3 * Settings.TILE_SIZE
         assert pos.y == 7 * Settings.TILE_SIZE
+
+    def test_default_facing_loaded(self, loader, tmp_path):
+        p = write_map(tmp_path, {
+            "npcs": [{"id": "n", "dialogue": "d", "position": [1, 1], "default_facing": "left"}]
+        })
+        npcs = loader.load_from_map(p)
+        assert npcs[0]._default_facing == Direction.LEFT
+
+    def test_default_facing_defaults_to_down(self, loader, tmp_path):
+        p = write_map(tmp_path, {
+            "npcs": [{"id": "n", "dialogue": "d", "position": [1, 1]}]
+        })
+        npcs = loader.load_from_map(p)
+        assert npcs[0]._default_facing == Direction.DOWN
+
+    def test_no_sprite_gives_none(self, loader, tmp_path):
+        p = write_map(tmp_path, {
+            "npcs": [{"id": "n", "dialogue": "d", "position": [1, 1]}]
+        })
+        npcs = loader.load_from_map(p)
+        assert npcs[0]._sprite_sheet is None
+
+    def test_sprite_path_missing_logs_warn(self, loader_with_path, tmp_path):
+        p = write_map(tmp_path, {
+            "npcs": [{"id": "n", "dialogue": "d", "position": [1, 1],
+                      "sprite": "assets/sprites/npc/nonexistent.tsx"}]
+        })
+        # missing sprite → no crash, no sprite loaded
+        npcs = loader_with_path.load_from_map(p)
+        assert npcs[0]._sprite_sheet is None
+
+    def test_no_scenario_path_skips_sprite(self, loader, tmp_path):
+        p = write_map(tmp_path, {
+            "npcs": [{"id": "n", "dialogue": "d", "position": [1, 1],
+                      "sprite": "assets/sprites/npc/man_01.tsx"}]
+        })
+        npcs = loader.load_from_map(p)
+        assert npcs[0]._sprite_sheet is None

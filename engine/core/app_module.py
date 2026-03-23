@@ -1,4 +1,6 @@
 # engine/core/app_module.py
+# Change from previous version:
+#   - NpcLoader now receives scenario_path so it can resolve sprite TSX paths
 
 from injector import Module, singleton, provider
 
@@ -72,8 +74,8 @@ class AppModule(Module):
 
     @provider
     @singleton
-    def provide_npc_loader(self) -> NpcLoader:
-        return NpcLoader()
+    def provide_npc_loader(self, loader: ManifestLoader) -> NpcLoader:
+        return NpcLoader(scenario_path=loader.scenario_path)
 
     @provider
     @singleton

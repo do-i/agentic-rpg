@@ -1,7 +1,10 @@
 # tests/unit/world/test_npc.py
 
 import pytest
-from engine.world.npc import Npc, INTERACTION_RANGE
+from unittest.mock import MagicMock
+import pygame
+from engine.world.npc import Npc, INTERACTION_RANGE, _direction_toward
+from engine.world.sprite_sheet import SpriteSheet, Direction
 from engine.core.state.flag_state import FlagState
 from engine.core.models.position import Position
 from engine.core.settings import Settings
@@ -10,6 +13,8 @@ from engine.core.settings import Settings
 def make_npc(
     tile_x=5, tile_y=5,
     requires=None, excludes=None,
+    sprite_sheet=None,
+    default_facing="down",
 ) -> Npc:
     return Npc(
         npc_id="test_npc",
@@ -18,7 +23,15 @@ def make_npc(
         tile_y=tile_y,
         present_requires=requires or [],
         present_excludes=excludes or [],
+        sprite_sheet=sprite_sheet,
+        default_facing=default_facing,
     )
+
+
+def make_mock_sprite() -> SpriteSheet:
+    sheet = MagicMock(spec=SpriteSheet)
+    sheet.get_frame.return_value = pygame.Surface((64, 64))
+    return sheet
 
 
 # ── is_present ────────────────────────────────────────────────
@@ -74,3 +87,75 @@ class TestIsNear:
         npc_px = 5 * Settings.TILE_SIZE
         pos = Position(npc_px + int(INTERACTION_RANGE) + 1, npc_px)
         assert not npc.is_near(pos)
+
+
+# ── _direction_toward ─────────────────────────────────────────
+
+class TestDirectionToward:
+    def test_player_below_npc(self):
+        assert _direction_toward(0, 0, Position(0, 10)) == Direction.DOWN
+
+    def test_player_above_npc(self):
+        assert _direction_toward(0, 10, Position(0, 0)) == Direction.UP
+
+    def test_player_right_of_npc(self):
+        assert _direction_toward(0, 0, Position(10, 0)) == Direction.RIGHT
+
+    def test_player_left_of_npc(self):
+        assert _direction_toward(10, 0, Position(0, 0)) == Direction.LEFT
+
+    def test_vertical_wins_on_equal(self):
+        # dy == dx → vertical wins (abs(dy) >= abs(dx))
+        assert _direction_toward(0, 0, Position(5, 5)) == Direction.DOWN
+
+    def test_vertical_wins_when_dominant(self):
+        assert _direction_toward(0, 0, Position(2, 10)) == Direction.DOWN
+
+
+# ── default_facing ────────────────────────────────────────────
+
+class TestDefaultFacing:
+    def test_default_facing_down(self):
+        npc = make_npc(default_facing="down")
+        assert npc._default_facing == Direction.DOWN
+
+    def test_default_facing_up(self):
+        npc = make_npc(default_facing="up")
+        assert npc._default_facing == Direction.UP
+
+    def test_default_facing_left(self):
+        npc = make_npc(default_facing="left")
+        assert npc._default_facing == Direction.LEFT
+
+    def test_default_facing_right(self):
+        npc = make_npc(default_facing="right")
+        assert npc._default_facing == Direction.RIGHT
+
+    def test_unknown_facing_defaults_to_down(self):
+        npc = make_npc(default_facing="north")
+        assert npc._default_facing == Direction.DOWN
+
+
+# ── _facing ───────────────────────────────────────────────────
+
+class TestFacing:
+    def test_not_near_returns_default(self):
+        npc = make_npc(default_facing="up")
+        player = Position(999, 999)
+        assert npc._facing(player, near=False) == Direction.UP
+
+    def test_near_faces_player_below(self):
+        npc = make_npc(tile_x=5, tile_y=5)
+        npc_py = 5 * Settings.TILE_SIZE
+        player = Position(5 * Settings.TILE_SIZE, npc_py + 20)
+        assert npc._facing(player, near=True) == Direction.DOWN
+
+    def test_near_faces_player_above(self):
+        npc = make_npc(tile_x=5, tile_y=5)
+        npc_py = 5 * Settings.TILE_SIZE
+        player = Position(5 * Settings.TILE_SIZE, npc_py - 20)
+        assert npc._facing(player, near=True) == Direction.UP
+
+    def test_near_no_player_pos_returns_default(self):
+        npc = make_npc(default_facing="left")
+        assert npc._facing(None, near=True) == Direction.LEFT

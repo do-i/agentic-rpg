@@ -1,4 +1,6 @@
 # engine/core/scenes/world_map_scene.py
+# Change from previous version:
+#   - npc.render() now receives player_pos so NPC can face the player
 
 import pygame
 from engine.core.models.position import Position
@@ -64,7 +66,7 @@ class WorldMapScene(Scene):
         # fade state
         self._fade_alpha: int = 255       # start fully black → fade in
         self._fade_dir: int = -1          # -1 = fade in, +1 = fade out
-        self._pending_transition: dict | None = None  # set during fade out
+        self._pending_transition: dict | None = None
 
     def _init(self) -> None:
         scenario_path = self._loader.scenario_path
@@ -76,7 +78,6 @@ class WorldMapScene(Scene):
         self._tile_map = self._tile_map_factory.create(str(tmx_path))
         self._camera = Camera(self._tile_map.width_px, self._tile_map.height_px)
 
-        # load sprite sheet for protagonist
         sprite_sheet = self._load_protagonist_sprite(manifest, scenario_path)
 
         self._player = Player(
@@ -86,11 +87,9 @@ class WorldMapScene(Scene):
             sprite_sheet=sprite_sheet,
         )
 
-        # load NPCs for current map
         map_yaml = scenario_path / "data" / "maps" / f"{map_id}.yaml"
         self._npcs = self._npc_loader.load_from_map(map_yaml)
 
-        # start fade in
         self._fade_alpha = 255
         self._fade_dir = -1
         self._pending_transition = None
@@ -114,7 +113,6 @@ class WorldMapScene(Scene):
     # ── Events ────────────────────────────────────────────────
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
-        # block input during fade
         if self._fade_alpha > 0 and self._fade_dir == -1:
             return
         if self._fade_dir == 1:
@@ -199,9 +197,9 @@ class WorldMapScene(Scene):
 
     def _start_fade_out(self, transition: dict) -> None:
         if self._fade_dir == 1:
-            return  # already fading out
+            return
         self._pending_transition = transition
-        self._fade_dir = 1   # fade out
+        self._fade_dir = 1
         self._fade_alpha = 0
 
     def _apply_transition(self) -> None:
@@ -214,14 +212,12 @@ class WorldMapScene(Scene):
         pos = transition.get("position", [0, 0])
         state.map.move_to(new_map, Position.from_list(pos))
 
-        # trigger full reload
         self._tile_map = None
         self._player = None
 
     # ── Update ────────────────────────────────────────────────
 
     def update(self, delta: float) -> None:
-        # handle fade
         if self._fade_dir != 0:
             self._fade_alpha += int(FADE_SPEED * delta) * self._fade_dir
             if self._fade_dir == 1 and self._fade_alpha >= 255:
@@ -243,8 +239,7 @@ class WorldMapScene(Scene):
             return
 
         keys = pygame.key.get_pressed()
-        frozen = self._fade_dir != 0
-        self._player.update(keys, self._tile_map.collision_map, frozen)
+        self._player.update(keys, self._tile_map.collision_map)
         self._camera.update(self._player.pixel_position)
         self._check_portals()
 
@@ -257,23 +252,27 @@ class WorldMapScene(Scene):
         screen.fill((0, 0, 0))
         self._tile_map.render(screen, self._camera.offset_x, self._camera.offset_y)
 
-        # NPCs
         state = self._holder.get()
         player_pos = self._player.pixel_position
+
         for npc in self._npcs:
             if npc.is_present(state.flags):
                 near = npc.is_near(player_pos) and self._dialogue is None
-                npc.render(screen, self._camera.offset_x, self._camera.offset_y, near=near)
+                npc.render(
+                    screen,
+                    self._camera.offset_x,
+                    self._camera.offset_y,
+                    near=near,
+                    player_pos=player_pos,   # ← new: NPC faces player
+                )
 
         self._player.render(screen, self._camera.offset_x, self._camera.offset_y)
 
-        # overlays
         if self._save_modal:
             self._save_modal.render(screen)
         if self._dialogue:
             self._dialogue.render(screen)
 
-        # fade overlay
         if self._fade_alpha > 0:
             fade_surf = pygame.Surface(
                 (Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT), pygame.SRCALPHA
