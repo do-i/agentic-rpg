@@ -6,8 +6,8 @@
     "extensionsPath": "extensions",
     "folders": [
         ".",
-        "../tilesets",
-        "../sprites/party"
+        "../sprites",
+        "../tilesets"
     ],
     "properties": [
     ],

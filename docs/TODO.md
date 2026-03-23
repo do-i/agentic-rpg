@@ -4,7 +4,6 @@
 
 | Phase | Deliverable | Playable? |
 |---|---|---|
-| 3 | World map and town exit | Exit Town, Reenter Town |
 | 4 | Random encounter → battle system → exp/loot | Fight enemies |
 | 5 | Party join flow | Full party |
 | 6 | Shop + Apothecary | Buy/craft |
@@ -19,20 +18,15 @@ Quick summary of where we left off so we can pick up cleanly:
 
 https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/
 
-### Aric
-https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&armour=Leather_teal&legs=Long_Pants_forest&shoes=Basic_Boots_bluegray&hair=Spiked_ash&shoulders=Epaulets_teal
+### Party
+- Aric: https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&armour=Leather_teal&legs=Long_Pants_forest&shoes=Basic_Boots_bluegray&hair=Spiked_ash&shoulders=Epaulets_teal
+- Elise: https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Body_Color_light&head=Human_Male_light&eye_color=Eye_Color_green&eyebrows=Thin_Eyebrows_strawberry&hair=Long_center_part_sandy&clothes=Longsleeve_white&belt=Robe_Belt_white&cape_trim=Cape_Trim_white&cape=Solid_sky&armour=Leather_sky&legs=Straight_skirt_sky&hat=Christmas_Hat_sky&hat_trim=Santa_Trim_yellow&weapon=Simple_staff_simple
+- Reiya: https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Bob_side_part_rose&legs=Plain_skirt_pink&dress=Kimono_pink&weapon=Gnarled_staff_brass&clothes=Robe_red
+- Jep: https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&jacket=Tabard_gray&legs=Fur_Pants_fur_tan&socks=Ankle_Socks_walnut&hair=High_and_tight_light%20brown&shoes=Sandals_gray
+- Kael: http://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_light&eyebrows=Thick_Eyebrows_light%20brown&beard=Basic_Beard_light%20brown&hair=Messy1_light%20brown&armour=Plate_silver&legs=Armour_iron&shoes=Armour_bronze&weapon=Waraxe_waraxe&shoulders=Leather_leather&wrists=Cuffs_leather
 
-### Elise
-https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Body_Color_light&head=Human_Male_light&eye_color=Eye_Color_green&eyebrows=Thin_Eyebrows_strawberry&hair=Long_center_part_sandy&clothes=Longsleeve_white&belt=Robe_Belt_white&cape_trim=Cape_Trim_white&cape=Solid_sky&armour=Leather_sky&legs=Straight_skirt_sky&hat=Christmas_Hat_sky&hat_trim=Santa_Trim_yellow&weapon=Simple_staff_simple
-
-### Reiya
-https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Bob_side_part_rose&legs=Plain_skirt_pink&dress=Kimono_pink&weapon=Gnarled_staff_brass&clothes=Robe_red
-
-### Jep
-https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&jacket=Tabard_gray&legs=Fur_Pants_fur_tan&socks=Ankle_Socks_walnut&hair=High_and_tight_light%20brown&shoes=Sandals_gray
-
-### Kael
-http://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_light&eyebrows=Thick_Eyebrows_light%20brown&beard=Basic_Beard_light%20brown&hair=Messy1_light%20brown&armour=Plate_silver&legs=Armour_iron&shoes=Armour_bronze&weapon=Waraxe_waraxe&shoulders=Leather_leather&wrists=Cuffs_leather
+### NPC
+- old_man_01: https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&vest=Vest_open_walnut&clothes=TShirt_tan&legs=Cuffed_Pants_walnut&hair=Balding_chestnut&shoes=Basic_Shoes_steel
 
 **Core Prompt**
 
