@@ -1,6 +1,6 @@
 # engine/core/app_module.py
 # Change from previous version:
-#   - NpcLoader now receives scenario_path so it can resolve sprite TSX paths
+#   - registers "status" scene factory
 
 from injector import Module, singleton, provider
 
@@ -15,6 +15,7 @@ from engine.core.scenes.title_scene import TitleScene
 from engine.core.scenes.name_entry_scene import NameEntryScene
 from engine.core.scenes.world_map_scene import WorldMapScene
 from engine.core.scenes.load_game_scene import LoadGameScene
+from engine.core.scenes.status_scene import StatusScene
 from engine.core.state.game_state_holder import GameStateHolder
 from engine.core.state.game_state_manager import GameStateManager
 from engine.core.dialogue.dialogue_engine import DialogueEngine
@@ -105,6 +106,13 @@ class AppModule(Module):
                 scene_manager, registry,
                 game_state_manager, dialogue_engine, npc_loader,
                 text_speed=settings.text_speed,
+            ))
+        registry.register_factory("status",
+            lambda: StatusScene(
+                holder=holder,
+                scene_manager=scene_manager,
+                registry=registry,
+                return_scene_name="world_map",
             ))
 
         return registry

@@ -1,17 +1,60 @@
 # engine/core/state/party_state.py
 #
-# STUB — full implementation in Phase 4 (battle system)
-# For now: holds protagonist name only.
+# Extended stub — adds display fields needed by StatusScene.
+# Full battle stats, formation, row logic added in Phase 4.
+
+from __future__ import annotations
+import math
 
 
 class MemberState:
-    """Stub — minimal member data needed before battle system is built."""
+    """
+    Holds all per-member state needed for display and battle (Phase 4).
+    Fields marked stub will be populated from character YAML in Phase 5.
+    """
 
-    def __init__(self, member_id: str, name: str, protagonist: bool = False) -> None:
-        self.id = member_id
-        self.name = name
+    def __init__(
+        self,
+        member_id: str,
+        name: str,
+        protagonist: bool = False,
+        class_name: str = "",
+        level: int = 1,
+        exp: int = 0,
+        exp_next: int = 100,
+        hp: int = 1,
+        hp_max: int = 1,
+        mp: int = 0,
+        mp_max: int = 0,
+        str_: int = 0,
+        dex: int = 0,
+        con: int = 0,
+        int_: int = 0,
+        equipped: dict | None = None,
+    ) -> None:
+        self.id         = member_id
+        self.name       = name
         self.protagonist = protagonist
-        # Full stats, equipment, abilities etc. added in Phase 4
+        self.class_name = class_name
+        self.level      = level
+        self.exp        = exp
+        self.exp_next   = exp_next
+        self.hp         = hp
+        self.hp_max     = hp_max
+        self.mp         = mp
+        self.mp_max     = mp_max
+        self.str_       = str_
+        self.dex        = dex
+        self.con        = con
+        self.int_       = int_
+        self.equipped: dict = equipped or {}   # {slot: item_name_str}
+
+    @property
+    def exp_pct(self) -> float:
+        """0.0 – 1.0 progress toward next level."""
+        if self.exp_next <= 0:
+            return 1.0
+        return min(self.exp / self.exp_next, 1.0)
 
     def __repr__(self) -> str:
         tag = " [protagonist]" if self.protagonist else ""
@@ -20,7 +63,7 @@ class MemberState:
 
 class PartyState:
     """
-    Stub — holds party member list.
+    Holds party member list.
     Full logic (formation, row, exp, level-up) added in Phase 4.
     """
 

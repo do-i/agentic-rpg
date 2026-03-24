@@ -129,6 +129,8 @@ class WorldMapScene(Scene):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_F2:
                     self._open_save_modal()
+                elif event.key == pygame.K_s:
+                    self._scene_manager.switch(self._registry.get("status"))
                 elif event.key == pygame.K_RETURN:
                     self._try_interact()
 
