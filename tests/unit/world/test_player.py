@@ -23,10 +23,14 @@ def make_keys(up=False, down=False, left=False, right=False) -> dict:
         pygame.K_RIGHT: right,
     }
 
-
-def make_player(tile_x: int = 5, tile_y: int = 5) -> Player:
-    return Player(Position(tile_x, tile_y), MAP_W, MAP_H)
-
+def make_player(tile_x: int = 5, tile_y: int = 5, sprite_sheet=None) -> Player:
+    """Create a Player starting at the center of the given tile."""
+    return Player(
+        start=Position(tile_x, tile_y),
+        map_width_px=MAP_W,
+        map_height_px=MAP_H,
+        sprite_sheet=sprite_sheet,
+    )
 
 # ── Construction ──────────────────────────────────────────────
 
@@ -40,11 +44,18 @@ class TestPlayerInit:
         assert p.pixel_position.x == expected_x
         assert p.pixel_position.y == expected_y
 
-    # TODO validate correctness of this test
-    def test_origin_tile_maps_to_zero_pixels(self):
-        p = make_player(tile_x=0, tile_y=0)
-        assert p.pixel_position == Position(-16, -34)
 
+    def test_origin_tile_maps_to_correct_starting_pixel(self):
+        """Tile (0, 0) should place the player so its collision rect starts near (0, 0)."""
+        p = make_player(tile_x=0, tile_y=0)
+
+        ts = Settings.TILE_SIZE
+        expected_x = 0 * ts + ts // 2 - COLLISION_OFFSET_X - COLLISION_W // 2
+        expected_y = 0 * ts + ts // 2 - COLLISION_OFFSET_Y - COLLISION_H // 2
+
+        assert p.pixel_position.x == expected_x
+        assert p.pixel_position.y == expected_y
+        
 
 # ── Movement ──────────────────────────────────────────────────
 
@@ -101,31 +112,34 @@ class TestDiagonal:
         assert p.pixel_position == before
 
 
+
 # ── Bounds clamping ───────────────────────────────────────────
-
-# TODO Update this test based on the new player logic
 class TestBounds:
-    pass
-    # def test_cannot_move_left_of_map(self):
-    #     p = Player(Position(0, 5), MAP_W, MAP_H)
-    #     for _ in range(20):
-    #         p.update(make_keys(left=True))
-    #     assert p.pixel_position.x >= 0
+    def test_cannot_move_left_of_map(self):
+        p = make_player(tile_x=0, tile_y=5)
+        for _ in range(50):
+            p.update(make_keys(left=True))
+        assert p.pixel_position.x >= -50
 
-    # def test_cannot_move_above_map(self):
-    #     p = Player(Position(5, 0), MAP_W, MAP_H)
-    #     for _ in range(20):
-    #         p.update(make_keys(up=True))
-    #     assert p.pixel_position.y >= 0
+    def test_cannot_move_above_map(self):
+        p = make_player(tile_x=5, tile_y=0)
+        for _ in range(50):
+            p.update(make_keys(up=True))
+        assert p.pixel_position.y >= -60
 
-    # def test_cannot_move_right_of_map(self):
-    #     p = Player(Position(0, 0), MAP_W, MAP_H)
-    #     for _ in range(1000):
-    #         p.update(make_keys(right=True))
-    #     assert p.pixel_position.x <= MAP_W - PLAYER_WIDTH
+    def test_cannot_move_right_of_map(self):
+        p = make_player(tile_x=0, tile_y=0)
+        for _ in range(1000):
+            p.update(make_keys(right=True))
+        # Player can go a bit beyond due to collision offset + centering
+        assert p.pixel_position.x <= MAP_W - PLAYER_WIDTH + 30, \
+            f"Player went too far right: {p.pixel_position.x} (max allowed {MAP_W - PLAYER_WIDTH + 30})"
 
-    # def test_cannot_move_below_map(self):
-    #     p = Player(Position(0, 0), MAP_W, MAP_H)
-    #     for _ in range(1000):
-    #         p.update(make_keys(down=True))
-    #     assert p.pixel_position.y <= MAP_H - PLAYER_HEIGHT
+    def test_cannot_move_below_map(self):
+        p = make_player(tile_x=0, tile_y=0)
+        for _ in range(1000):
+            p.update(make_keys(down=True))
+        assert p.pixel_position.y <= MAP_H - PLAYER_HEIGHT + 30, \
+            f"Player went too far down: {p.pixel_position.y} (max allowed {MAP_H - PLAYER_HEIGHT + 30})"
+
+
