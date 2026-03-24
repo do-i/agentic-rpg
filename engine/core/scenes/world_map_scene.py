@@ -241,7 +241,8 @@ class WorldMapScene(Scene):
             return
 
         keys = pygame.key.get_pressed()
-        self._player.update(keys, self._tile_map.collision_map)
+        frozen = self._fade_dir != 0
+        self._player.update(keys, self._tile_map.collision_map, frozen)
         self._camera.update(self._player.pixel_position)
         self._check_portals()
 
