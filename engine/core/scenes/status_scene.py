@@ -15,8 +15,8 @@ from engine.core.state.party_state import MemberState
 
 # ── Layout constants ──────────────────────────────────────────
 # Screen: 1280×720
-# Available height = 720 - PAD_Y(16) - HEADER_H(40) - COL_HDR(18) - FOOTER_H(28) - PAD_Y(16) = 602
-# 5 rows × ROW_H + 4 gaps × ROW_GAP ≤ 602  →  ROW_H=116, ROW_GAP=4  →  5*116+4*4=596 ✓
+# Available height = 720 - PAD_Y(16) - HEADER_H(40) - FOOTER_H(28) - PAD_Y(16) = 620
+# No col-header row. 5 rows × 120 + 4 gaps × 4 = 616 ✓
 
 BG_COLOR        = (26, 26, 46)
 ROW_COLOR_SEL   = (42, 42, 74)
@@ -39,22 +39,20 @@ HP_LOW_THRESHOLD = 0.35
 
 PAD_X           = 20
 PAD_Y           = 16
-ROW_H           = 116        # ← enlarged: 5 rows fill screen
+ROW_H           = 120        # 5 × 120 + 4 × 4 = 616, fits in 620 available
 ROW_GAP         = 4
 HEADER_H        = 40
-COL_HDR_H       = 18
 FOOTER_H        = 28
 
-PORTRAIT_SIZE   = 48         # ← enlarged
-BAR_H           = 6          # ← thicker bars
+PORTRAIT_SIZE   = 100        # ← 100px portrait
+BAR_H           = 6
 
 COL_GUTTER      = 22
-COL_NAME_W      = 130
-COL_EXP_W       = 130
-COL_HPMP_W      = 185
-COL_STATS_W     = 125
-COL_WEAP_W      = 120
-COL_ARMOR_W     = 120
+COL_NAME_W      = 155        # portrait(100) + name/class beside it
+COL_EXP_W       = 140        # lv + exp/next + bar
+COL_HPMP_W      = 195        # HP+MP bars
+COL_STATS_W     = 125        # STR DEX CON INT
+COL_GEAR_W      = 210        # combined: Helm Body Weapon Shield Acc (2 cols inside)
 
 
 # ── Debug: full party stub (remove when Phase 5 populates party from YAML) ──
@@ -174,9 +172,8 @@ class StatusScene(Scene):
         members = self._get_members(state)
 
         self._draw_header(screen, state.repository.gp)
-        self._draw_col_headers(screen)
 
-        row_y = PAD_Y + HEADER_H + COL_HDR_H
+        row_y = PAD_Y + HEADER_H
         for i, member in enumerate(members):
             self._draw_row(screen, member, i, row_y, selected=(i == self._selected))
             row_y += ROW_H + ROW_GAP
@@ -200,16 +197,6 @@ class StatusScene(Scene):
             (PAD_X, PAD_Y + HEADER_H - 4),
             (Settings.SCREEN_WIDTH - PAD_X, PAD_Y + HEADER_H - 4),
         )
-
-    def _draw_col_headers(self, screen: pygame.Surface) -> None:
-        y = PAD_Y + HEADER_H + 2
-        x = PAD_X + COL_GUTTER
-        labels = ["NAME / CLASS", "EXP", "HP / MP", "STATS", "WEAPON · SHIELD", "ARMOR"]
-        widths = [COL_NAME_W, COL_EXP_W, COL_HPMP_W, COL_STATS_W, COL_WEAP_W, COL_ARMOR_W]
-        for label, w in zip(labels, widths):
-            surf = self._font_header.render(label, True, MUTED)
-            screen.blit(surf, (x, y))
-            x += w + 12
 
     # ── Row ───────────────────────────────────────────────────
 
@@ -236,8 +223,7 @@ class StatusScene(Scene):
         x = self._draw_col_exp(screen, member, x, y)
         x = self._draw_col_hpmp(screen, member, x, y)
         x = self._draw_col_stats(screen, member, x, y)
-        x = self._draw_col_weapon(screen, member, x, y)
-        self._draw_col_armor(screen, member, x, y)
+        self._draw_col_gear(screen, member, x, y)
 
     # ── Columns ───────────────────────────────────────────────
 
@@ -272,18 +258,21 @@ class StatusScene(Scene):
         pct = m.exp_pct
         bar_w = COL_EXP_W - 4
 
-        # Vertically center: level text + bar
-        content_h = self._font_stat.get_height() + 8 + BAR_H
+        line_h = self._font_stat.get_height()
+        content_h = line_h + 4 + line_h + 6 + BAR_H
         cy = y + (ROW_H - content_h) // 2
 
-        lv_text = f"Lv {m.level}"
-        lv_surf = self._font_stat.render(lv_text, True, TEXT_PRIMARY)
+        # Level
+        lv_surf = self._font_stat.render(f"Lv {m.level}", True, TEXT_PRIMARY)
         screen.blit(lv_surf, (x, cy))
 
-        pct_surf = self._font_stat.render(f"{int(pct * 100)}%", True, TEXT_SECONDARY)
-        screen.blit(pct_surf, (x + bar_w - pct_surf.get_width(), cy))
+        # EXP / next
+        exp_str = f"{m.exp:,} / {m.exp_next:,}"
+        exp_surf = self._font_stat.render(exp_str, True, TEXT_SECONDARY)
+        screen.blit(exp_surf, (x, cy + line_h + 4))
 
-        bar_y = cy + self._font_stat.get_height() + 6
+        # EXP bar
+        bar_y = cy + line_h + 4 + line_h + 4
         pygame.draw.rect(screen, (17, 17, 46), (x, bar_y, bar_w, BAR_H), border_radius=3)
         pygame.draw.rect(screen, EXP_BAR, (x, bar_y, int(bar_w * pct), BAR_H), border_radius=3)
 
@@ -359,37 +348,30 @@ class StatusScene(Scene):
 
         return x + COL_STATS_W + 12
 
-    def _draw_col_weapon(self, screen: pygame.Surface, m: MemberState, x: int, y: int) -> int:
-        weapon = m.equipped.get("weapon", "")
-        shield = m.equipped.get("shield", "")
-
-        line_h = self._font_stat.get_height() + 6
-        total_h = line_h * 2
-        cy = y + (ROW_H - total_h) // 2
-
-        w_surf = self._font_stat.render(weapon or "—", True, TEXT_PRIMARY if weapon else TEXT_DIM)
-        s_surf = self._font_stat.render(shield or "—", True, TEXT_SECONDARY if shield else TEXT_DIM)
-        screen.blit(w_surf, (x, cy))
-        screen.blit(s_surf, (x, cy + line_h))
-
-        return x + COL_WEAP_W + 12
-
-    def _draw_col_armor(self, screen: pygame.Surface, m: MemberState, x: int, y: int) -> None:
+    def _draw_col_gear(self, screen: pygame.Surface, m: MemberState, x: int, y: int) -> None:
+        # Order: Helm, Body, Weapon, Shield, Acc
         slots = [
-            ("Helm",  m.equipped.get("helmet",    "")),
-            ("Body",  m.equipped.get("body",      "")),
-            ("Acc",   m.equipped.get("accessory", "")),
+            ("Helm",   m.equipped.get("helmet",    "")),
+            ("Body",   m.equipped.get("body",      "")),
+            ("Wpn",    m.equipped.get("weapon",    "")),
+            ("Shld",   m.equipped.get("shield",    "")),
+            ("Acc",    m.equipped.get("accessory", "")),
         ]
-        line_h = self._font_stat.get_height() + 6
+       
+        line_h = self._font_stat.get_height() + 5
         total_h = len(slots) * line_h
         cy = y + (ROW_H - total_h) // 2
 
-        for i, (slot_label, val) in enumerate(slots):
-            row_y = cy + i * line_h
-            lbl_s = self._font_stat.render(slot_label, True, MUTED)
+        lbl_w = 34
+        half_w = COL_GEAR_W // 2
+
+        for i, (lbl, val) in enumerate(slots):
+            ry = cy + i * line_h
+            lbl_s = self._font_stat.render(lbl, True, MUTED)
             val_s = self._font_stat.render(val or "—", True, TEXT_SECONDARY if val else TEXT_DIM)
-            screen.blit(lbl_s, (x,      row_y))
-            screen.blit(val_s, (x + 38, row_y))
+            screen.blit(lbl_s, (x, ry))
+            screen.blit(val_s, (x + lbl_w, ry))
+
 
     # ── Footer ────────────────────────────────────────────────
 
