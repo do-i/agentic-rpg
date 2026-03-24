@@ -38,6 +38,34 @@ def make_member(name="Aric", protagonist=False, hp=100, hp_max=100,
         equipped={"weapon": "Iron Sword", "body": "Chainmail"},
     )
 
+def make_all_members() -> list[MemberState]:
+    return [
+        make_member("Aric",  protagonist=True, class_name="Hero",
+                    hp=68, hp_max=68, mp=40, mp_max=40,
+                    level=8, exp=6200, exp_next=8944,
+                    str_=18, dex=14, con=16, int_=9),
+        make_member("Elise", class_name="Cleric",
+                    hp=180, hp_max=180, mp=120, mp_max=140,
+                    level=7, exp=4900, exp_next=6317,
+                    str_=8, dex=10, con=14, int_=16,
+                    equipped={"weapon": "Oak Staff", "body": "Robe Linen"}),
+        make_member("Reiya", class_name="Sorcerer",
+                    hp=11, hp_max=28, mp=48, mp_max=48,
+                    level=8, exp=6080, exp_next=8497,
+                    str_=6, dex=12, con=7, int_=20,
+                    equipped={"weapon": "Oak Staff", "body": "Silk Robe"}),
+        make_member("Jep",   class_name="Rogue",
+                    hp=44, hp_max=44, mp=16, mp_max=16,
+                    level=14, exp=17606, exp_next=21213,
+                    str_=16, dex=26, con=13, int_=8,
+                    equipped={"weapon": "Dagger", "shield": "Buckler"}),
+        make_member("kael", "Kael", class_name="Warrior",
+                    hp=128, hp_max=128, mp=0, mp_max=0,
+                    str_=28, dex=14, con=26, int_=5,
+                    level=20, exp=40000, exp_next=44721,
+                    equipped={"weapon": "Iron Sword", "shield": "Iron Shield",
+                              "body": "Chainmail"}),
+    ]
 
 def make_scene(members: list[MemberState] | None = None) -> tuple[StatusScene, GameStateHolder]:
     holder = GameStateHolder()
@@ -142,6 +170,7 @@ class TestRender:
         scene.render(screen)
 
     def test_render_does_not_crash_full_party(self):
+
         members = [
             make_member("Aric",  protagonist=True, class_name="Hero"),
             make_member("Elise", class_name="Cleric",   mp_max=140, hp=180, hp_max=180),
