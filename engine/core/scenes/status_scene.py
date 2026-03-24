@@ -35,22 +35,22 @@ HP_LOW_THRESHOLD = 0.35   # below this → red
 
 PAD_X           = 20
 PAD_Y           = 16
-ROW_H           = 58
-ROW_GAP         = 6
+ROW_H           = 112
+ROW_GAP         = 4
 HEADER_H        = 40
 FOOTER_H        = 28
 
 # Column x-offsets (relative to PAD_X + 20 gutter for cursor)
 COL_GUTTER      = 20    # cursor gutter width
-COL_NAME_W      = 110
-COL_EXP_W       = 120
-COL_HPMP_W      = 160
-COL_STATS_W     = 120
-COL_WEAP_W      = 110
-COL_ARMOR_W     = 110
+COL_NAME_W      = 120
+COL_EXP_W       = 130
+COL_HPMP_W      = 175
+COL_STATS_W     = 125
+COL_WEAP_W      = 115
+COL_ARMOR_W     = 115
 
-BAR_H           = 4
-PORTRAIT_SIZE   = 32
+BAR_H           = 6
+PORTRAIT_SIZE   = 44
 
 
 class StatusScene(Scene):
@@ -78,15 +78,14 @@ class StatusScene(Scene):
         self._fonts_ready = False
 
     # ── Font init (deferred — pygame must be running) ─────────
-
     def _init_fonts(self) -> None:
-        self._font_title  = pygame.font.SysFont("Arial", 18, bold=True)
-        self._font_header = pygame.font.SysFont("Arial", 10)
-        self._font_name   = pygame.font.SysFont("Arial", 13)
-        self._font_class  = pygame.font.SysFont("Arial", 11)
-        self._font_stat   = pygame.font.SysFont("Arial", 10)
-        self._font_hint   = pygame.font.SysFont("Arial", 11)
-        self._font_gp     = pygame.font.SysFont("Arial", 12)
+        self._font_title  = pygame.font.SysFont("Arial", 20, bold=True)  # was 18
+        self._font_header = pygame.font.SysFont("Arial", 12)              # was 10
+        self._font_name   = pygame.font.SysFont("Arial", 16)              # was 13
+        self._font_class  = pygame.font.SysFont("Arial", 13)              # was 11
+        self._font_stat   = pygame.font.SysFont("Arial", 13)              # was 10
+        self._font_hint   = pygame.font.SysFont("Arial", 13)              # was 11
+        self._font_gp     = pygame.font.SysFont("Arial", 14)              # was 12
         self._fonts_ready = True
 
     # ── Events ────────────────────────────────────────────────
@@ -261,7 +260,7 @@ class StatusScene(Scene):
         ]
         col2_x = x + 36
         for i, (label, val) in enumerate(lines):
-            row_y = y + 8 + i * 11
+            row_y = y + 8 + i * 20
             lbl_s = self._font_stat.render(label, True, TEXT_SECONDARY)
             val_s = self._font_stat.render(val,   True, TEXT_PRIMARY)
             screen.blit(lbl_s, (x,      row_y))
@@ -292,7 +291,7 @@ class StatusScene(Scene):
             text = val if val else "—"
             tcol = col if val else TEXT_DIM
             surf = self._font_stat.render(text, True, tcol)
-            screen.blit(surf, (x, y + 8 + i * 14))
+            screen.blit(surf, (x, y + 8 + i * 22))
 
     # ── Footer ────────────────────────────────────────────────
 
