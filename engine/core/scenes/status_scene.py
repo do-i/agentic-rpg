@@ -127,6 +127,7 @@ class StatusScene(Scene):
         self._font_title  = pygame.font.SysFont("Arial", 20, bold=True)
         self._font_name   = pygame.font.SysFont("Arial", 18, bold=True)
         self._font_class  = pygame.font.SysFont("Arial", 15)
+        self._font_level  = pygame.font.SysFont("Arial", 15)
         self._font_stat   = pygame.font.SysFont("Arial", 14)
         self._font_hint   = pygame.font.SysFont("Arial", 14)
         self._font_gp     = pygame.font.SysFont("Arial", 17)
@@ -262,18 +263,18 @@ class StatusScene(Scene):
         cy = y + (ROW_H - content_h) // 2
 
         # Level
-        lv_surf = self._font_stat.render(f"Lv {m.level}", True, TEXT_PRIMARY)
+        lv_surf = self._font_level.render(f"Lv {m.level}", True, TEXT_PRIMARY)
         screen.blit(lv_surf, (x, cy))
 
         # EXP bar
-        bar_y = cy + line_h + 4
+        bar_y = cy + line_h + 10
         pygame.draw.rect(screen, (17, 17, 46), (x, bar_y, bar_w, BAR_H), border_radius=3)
         pygame.draw.rect(screen, EXP_BAR, (x, bar_y, int(bar_w * pct), BAR_H), border_radius=3)
 
         # EXP / next
         exp_str = f"{m.exp}/{m.exp_next}"
         exp_surf = self._font_stat.render(exp_str, True, TEXT_SECONDARY)
-        screen.blit(exp_surf, (x, cy + line_h + 15))
+        screen.blit(exp_surf, (x, cy + line_h + 25))
 
         return x + COL_EXP_W + 12
 
