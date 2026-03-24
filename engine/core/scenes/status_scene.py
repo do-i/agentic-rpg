@@ -45,7 +45,7 @@ HEADER_H        = 40
 FOOTER_H        = 28
 
 PORTRAIT_SIZE   = 100        # ← 100px portrait
-BAR_H           = 6
+BAR_H           = 10
 
 COL_GUTTER      = 22
 COL_NAME_W      = 155        # portrait(100) + name/class beside it
@@ -124,13 +124,12 @@ class StatusScene(Scene):
     # ── Font init ─────────────────────────────────────────────
 
     def _init_fonts(self) -> None:
-        self._font_title  = pygame.font.SysFont("Arial", 22, bold=True)
-        self._font_header = pygame.font.SysFont("Arial", 13)
-        self._font_name   = pygame.font.SysFont("Arial", 17, bold=True)
-        self._font_class  = pygame.font.SysFont("Arial", 14)
-        self._font_stat   = pygame.font.SysFont("Arial", 13)
-        self._font_hint   = pygame.font.SysFont("Arial", 13)
-        self._font_gp     = pygame.font.SysFont("Arial", 14)
+        self._font_title  = pygame.font.SysFont("Arial", 20, bold=True)
+        self._font_name   = pygame.font.SysFont("Arial", 18, bold=True)
+        self._font_class  = pygame.font.SysFont("Arial", 15)
+        self._font_stat   = pygame.font.SysFont("Arial", 14)
+        self._font_hint   = pygame.font.SysFont("Arial", 14)
+        self._font_gp     = pygame.font.SysFont("Arial", 17)
         self._fonts_ready = True
 
     # ── Events ────────────────────────────────────────────────
@@ -252,11 +251,11 @@ class StatusScene(Scene):
         cls_surf = self._font_class.render(m.class_name, True, TEXT_SECONDARY)
         screen.blit(cls_surf, (tx, ty + self._font_name.get_height() + 4))
 
-        return x + COL_NAME_W + 12
+        return x + COL_NAME_W + 50
 
     def _draw_col_exp(self, screen: pygame.Surface, m: MemberState, x: int, y: int) -> int:
         pct = m.exp_pct
-        bar_w = COL_EXP_W - 4
+        bar_w = COL_EXP_W
 
         line_h = self._font_stat.get_height()
         content_h = line_h + 4 + line_h + 6 + BAR_H
@@ -266,21 +265,21 @@ class StatusScene(Scene):
         lv_surf = self._font_stat.render(f"Lv {m.level}", True, TEXT_PRIMARY)
         screen.blit(lv_surf, (x, cy))
 
-        # EXP / next
-        exp_str = f"{m.exp:,} / {m.exp_next:,}"
-        exp_surf = self._font_stat.render(exp_str, True, TEXT_SECONDARY)
-        screen.blit(exp_surf, (x, cy + line_h + 4))
-
         # EXP bar
-        bar_y = cy + line_h + 4 + line_h + 4
+        bar_y = cy + line_h + 4
         pygame.draw.rect(screen, (17, 17, 46), (x, bar_y, bar_w, BAR_H), border_radius=3)
         pygame.draw.rect(screen, EXP_BAR, (x, bar_y, int(bar_w * pct), BAR_H), border_radius=3)
+
+        # EXP / next
+        exp_str = f"{m.exp}/{m.exp_next}"
+        exp_surf = self._font_stat.render(exp_str, True, TEXT_SECONDARY)
+        screen.blit(exp_surf, (x, cy + line_h + 15))
 
         return x + COL_EXP_W + 12
 
     def _draw_col_hpmp(self, screen: pygame.Surface, m: MemberState, x: int, y: int) -> int:
-        bar_w = 90
-        lbl_w = 22
+        bar_w = 100
+        lbl_w = 28
 
         # Two bars + labels: HP block + gap + MP block
         line_h = self._font_stat.get_height()
@@ -299,11 +298,11 @@ class StatusScene(Scene):
         screen.blit(hp_lbl, (x, cy))
 
         hp_val = self._font_stat.render(f"{m.hp}/{m.hp_max}", True, hp_tcol)
-        screen.blit(hp_val, (x + lbl_w + bar_w + 4, cy))
+        screen.blit(hp_val, (x + lbl_w + bar_w + 10, cy))
 
-        bar_y = cy + line_h + 2
-        pygame.draw.rect(screen, (17, 17, 46), (x + lbl_w, bar_y, bar_w, BAR_H), border_radius=3)
-        pygame.draw.rect(screen, hp_col,       (x + lbl_w, bar_y, int(bar_w * hp_pct), BAR_H), border_radius=3)
+        bar_y = cy + 4
+        pygame.draw.rect(screen, (17, 17, 46), (x + lbl_w + 5, bar_y, bar_w, BAR_H), border_radius=3)
+        pygame.draw.rect(screen, hp_col,       (x + lbl_w + 5, bar_y, int(bar_w * hp_pct), BAR_H), border_radius=3)
 
         # ── MP ────────────────────────────────────────────────
         mp_y = cy + block_h + gap
@@ -314,18 +313,18 @@ class StatusScene(Scene):
             screen.blit(mp_lbl, (x, mp_y))
 
             mp_val = self._font_stat.render(f"{m.mp}/{m.mp_max}", True, TEXT_SECONDARY)
-            screen.blit(mp_val, (x + lbl_w + bar_w + 4, mp_y))
+            screen.blit(mp_val, (x + lbl_w + bar_w + 10, mp_y))
 
-            mp_bar_y = mp_y + line_h + 2
-            pygame.draw.rect(screen, (17, 17, 46), (x + lbl_w, mp_bar_y, bar_w, BAR_H), border_radius=3)
-            pygame.draw.rect(screen, MP_BAR,       (x + lbl_w, mp_bar_y, int(bar_w * mp_pct), BAR_H), border_radius=3)
+            mp_bar_y = mp_y + 4
+            pygame.draw.rect(screen, (17, 17, 46), (x + lbl_w + 5, mp_bar_y, bar_w, BAR_H), border_radius=3)
+            pygame.draw.rect(screen, MP_BAR,       (x + lbl_w + 5, mp_bar_y, int(bar_w * mp_pct), BAR_H), border_radius=3)
         else:
             mp_lbl = self._font_stat.render("MP", True, TEXT_DIM)
             screen.blit(mp_lbl, (x, mp_y))
             mp_dash = self._font_stat.render("—", True, TEXT_DIM)
             screen.blit(mp_dash, (x + lbl_w + 4, mp_y))
 
-        return x + COL_HPMP_W + 12
+        return x + COL_HPMP_W + 25
 
     def _draw_col_stats(self, screen: pygame.Surface, m: MemberState, x: int, y: int) -> int:
         lines = [
@@ -357,13 +356,12 @@ class StatusScene(Scene):
             ("Shld",   m.equipped.get("shield",    "")),
             ("Acc",    m.equipped.get("accessory", "")),
         ]
-       
+
         line_h = self._font_stat.get_height() + 5
         total_h = len(slots) * line_h
         cy = y + (ROW_H - total_h) // 2
 
-        lbl_w = 34
-        half_w = COL_GEAR_W // 2
+        lbl_w = 50
 
         for i, (lbl, val) in enumerate(slots):
             ry = cy + i * line_h
@@ -371,7 +369,6 @@ class StatusScene(Scene):
             val_s = self._font_stat.render(val or "—", True, TEXT_SECONDARY if val else TEXT_DIM)
             screen.blit(lbl_s, (x, ry))
             screen.blit(val_s, (x + lbl_w, ry))
-
 
     # ── Footer ────────────────────────────────────────────────
 
