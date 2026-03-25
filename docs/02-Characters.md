@@ -2,21 +2,31 @@
 
 ## 🗡️ Aric — Hero | Male | 17
 
+[Portrait](https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&armour=Leather_teal&legs=Long_Pants_forest&shoes=Basic_Boots_bluegray&hair=Spiked_ash&shoulders=Epaulets_teal)
+
 **Backstory:** A blacksmith's son from Ardel Village. After his father died in a mysterious fire that consumed their forge, Aric took over running the household for his younger siblings. Quiet and reliable beyond his years. The quest begins when the same flame reappears near Ardel — and only he can see it.
 
 ## ✨ Elise — Cleric | Female | 16
+
+[Portrait](https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Body_Color_light&head=Human_Male_light&eye_color=Eye_Color_green&eyebrows=Thin_Eyebrows_strawberry&hair=Long_center_part_sandy&clothes=Longsleeve_white&belt=Robe_Belt_white&cape_trim=Cape_Trim_white&cape=Solid_sky&armour=Leather_sky&legs=Straight_skirt_sky&hat=Christmas_Hat_sky&hat_trim=Santa_Trim_yellow&weapon=Simple_staff_simple)
 
 **Backstory:** An orphan raised by the Earth Order temple in Ardel. The sisters who raised her say she was found during a flood — the only survivor. She's never left the village, but has been secretly praying for a reason to help the wider world. Aric's arrival feels like an answered prayer.
 
 ## 🔥 Reiya — Sorcerer | Female | 18
 
+[Portrait](https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Bob_side_part_rose&legs=Plain_skirt_pink&dress=Kimono_pink&weapon=Gnarled_staff_brass&clothes=Robe_red)
+
 **Backstory:** Daughter of a disgraced court mage, she taught herself advanced elemental magic using her father's confiscated notes. Sharp and self-sufficient, she ended up in Millhaven running a small "consultation" business — reading ley lines, identifying cursed objects. Joins when she recognizes the Lost Flame signature in Aric's description.
 
 ## 🗝️ Jep — Rogue | Male | 15
 
+[Portrait](https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&jacket=Tabard_gray&legs=Fur_Pants_fur_tan&socks=Ankle_Socks_walnut&hair=High_and_tight_light%20brown&shoes=Sandals_gray)
+
 **Backstory:** A street kid from a port city who got swept into Ruinwatch chasing rumors of hidden treasure. Surprisingly skilled — picked up lockpicking, scouting, and sleight of hand surviving on his own since age 11. Gets caught snooping around the same ruins the party is exploring. Talks his way out of it. Ends up tagging along because he has nowhere else to go.
 
 ## ⚔️ Kael — Warrior | Male | 20
+
+[Portrait](http://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_light&eyebrows=Thick_Eyebrows_light%20brown&beard=Basic_Beard_light%20brown&hair=Messy1_light%20brown&armour=Plate_silver&legs=Armour_iron&shoes=Armour_bronze&weapon=Waraxe_waraxe&shoulders=Leather_leather&wrists=Cuffs_leather)
 
 **Backstory:** Enlisted in the royal army at 16, became a guard captain's protégé. Discharged at 19 after refusing to burn a village under orders. Ended up in Frostholm doing odd jobs — chopping wood, escorting merchants through mountain passes. Gruff and tired of people, but the moment the party arrives he recognizes the Lost Flame emblem on Aric's gear. He's seen it before — on the order that got him discharged.
 
