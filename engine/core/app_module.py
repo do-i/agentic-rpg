@@ -11,6 +11,7 @@ from engine.core.scene_manager import SceneManager
 from engine.core.scene_registry import SceneRegistry
 from engine.core.game import Game
 from engine.core.scenes.boot_scene import BootScene
+from engine.core.scenes.item_scene import ItemScene
 from engine.core.scenes.title_scene import TitleScene
 from engine.core.scenes.name_entry_scene import NameEntryScene
 from engine.core.scenes.world_map_scene import WorldMapScene
@@ -94,6 +95,7 @@ class AppModule(Module):
         registry = SceneRegistry()
 
         registry.register_singleton("boot", BootScene(scene_manager, loader, registry))
+
         registry.register_factory("title",
             lambda: TitleScene(loader, scene_manager, registry, game_state_manager))
         registry.register_factory("name_entry",
@@ -115,7 +117,9 @@ class AppModule(Module):
                 scenario_path=str(loader.scenario_path),
                 return_scene_name="world_map",
             ))
-
+        registry.register_factory("items",
+            lambda: ItemScene(holder, scene_manager, registry))
+            
         return registry
 
     @provider

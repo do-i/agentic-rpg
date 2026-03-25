@@ -133,6 +133,8 @@ class WorldMapScene(Scene):
                     self._scene_manager.switch(self._registry.get("status"))
                 elif event.key == pygame.K_RETURN:
                     self._try_interact()
+                elif event.key == pygame.K_i:
+                    self._scene_manager.switch(self._registry.get("items"))
 
     def _open_save_modal(self) -> None:
         state = self._holder.get()
