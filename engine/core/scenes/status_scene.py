@@ -128,10 +128,9 @@ class StatusScene(Scene):
     # ── Portrait loader ──────────────────────────────────────
 
     def _load_portrait(self, member_id: str, scenario_path: str) -> pygame.Surface | None:
-        print(f"DEBUG -> member_id: {member_id}")
         if member_id in self._portraits:
             return self._portraits[member_id]
-        path = Path(scenario_path) / "assets" / "images" / f"01_{member_id}_profile.png"
+        path = Path(scenario_path) / "assets" / "images" / f"{member_id}_profile.png"
         if not path.exists():
             return None
         try:
