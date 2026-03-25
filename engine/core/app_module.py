@@ -112,6 +112,7 @@ class AppModule(Module):
                 holder=holder,
                 scene_manager=scene_manager,
                 registry=registry,
+                scenario_path=str(loader.scenario_path),
                 return_scene_name="world_map",
             ))
 

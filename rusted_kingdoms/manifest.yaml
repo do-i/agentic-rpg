@@ -6,7 +6,7 @@ name: "Chronicles of the Lost Flame"
 version: "1.0.0"
 
 protagonist:
-  id: hero_aric
+  id: aric
   name: "Aric"
   class: hero
   character: data/characters/aric.yaml

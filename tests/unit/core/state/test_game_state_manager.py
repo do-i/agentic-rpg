@@ -8,7 +8,7 @@ from engine.core.state.game_state_manager import GameStateManager
 from engine.core.state.game_state import GameState
 
 MANIFEST_STUB = {
-    "protagonist": {"id": "hero_aric", "name": "Aric"},
+    "protagonist": {"id": "aric", "name": "Aric"},
     "start": {"map": "town_01_ardel", "position": [12, 8]},
     "bootstrap_flags": ["story_quest_started"],
 }

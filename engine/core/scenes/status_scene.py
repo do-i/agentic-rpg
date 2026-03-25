@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 import pygame
 from engine.core.scene import Scene
 from engine.core.scene_manager import SceneManager
@@ -59,7 +60,7 @@ COL_GEAR_W      = 210        # combined: Helm Body Weapon Shield Acc (2 cols ins
 def _make_debug_party() -> list[MemberState]:
     return [
         MemberState(
-            "hero_aric", "Aric", protagonist=True, class_name="Hero",
+            "aric", "Aric", protagonist=True, class_name="Hero",
             level=8,  exp=6200,  exp_next=8944,
             hp=68,  hp_max=68,  mp=40, mp_max=40,
             str_=18, dex=14, con=16, int_=9,
@@ -112,6 +113,7 @@ class StatusScene(Scene):
         holder: GameStateHolder,
         scene_manager: SceneManager,
         registry: SceneRegistry,
+        scenario_path: str = "",
         return_scene_name: str = "world_map",
     ) -> None:
         self._holder = holder
@@ -120,6 +122,25 @@ class StatusScene(Scene):
         self._return_scene_name = return_scene_name
         self._selected = 0
         self._fonts_ready = False
+        self._scenario_path = scenario_path
+        self._portraits: dict[str, pygame.Surface] = {}
+
+    # ── Portrait loader ──────────────────────────────────────
+
+    def _load_portrait(self, member_id: str, scenario_path: str) -> pygame.Surface | None:
+        print(f"DEBUG -> member_id: {member_id}")
+        if member_id in self._portraits:
+            return self._portraits[member_id]
+        path = Path(scenario_path) / "assets" / "images" / f"01_{member_id}_profile.png"
+        if not path.exists():
+            return None
+        try:
+            img = pygame.image.load(str(path)).convert_alpha()
+            img = pygame.transform.scale(img, (PORTRAIT_SIZE, PORTRAIT_SIZE))
+            self._portraits[member_id] = img
+            return img
+        except Exception:
+            return None
 
     # ── Font init ─────────────────────────────────────────────
 
@@ -231,15 +252,20 @@ class StatusScene(Scene):
         # Portrait box — centered vertically in row
         port_y = y + (ROW_H - PORTRAIT_SIZE) // 2
         port_rect = (x, port_y, PORTRAIT_SIZE, PORTRAIT_SIZE)
-        pygame.draw.rect(screen, (50, 50, 80), port_rect, border_radius=4)
-        pygame.draw.rect(screen, (90, 90, 130), port_rect, 1, border_radius=4)
 
-        initials = "".join(w[0].upper() for w in m.name.split()[:2])
-        init_surf = self._font_stat.render(initials, True, TEXT_SECONDARY)
-        screen.blit(init_surf, (
-            port_rect[0] + PORTRAIT_SIZE // 2 - init_surf.get_width() // 2,
-            port_rect[1] + PORTRAIT_SIZE // 2 - init_surf.get_height() // 2,
-        ))
+        img = self._load_portrait(m.id, self._scenario_path)
+        if img:
+            screen.blit(img, (x, port_y))
+        else:
+            pygame.draw.rect(screen, (50, 50, 80), port_rect, border_radius=4)
+            pygame.draw.rect(screen, (90, 90, 130), port_rect, 1, border_radius=4)
+
+            initials = "".join(w[0].upper() for w in m.name.split()[:2])
+            init_surf = self._font_stat.render(initials, True, TEXT_SECONDARY)
+            screen.blit(init_surf, (
+                port_rect[0] + PORTRAIT_SIZE // 2 - init_surf.get_width() // 2,
+                port_rect[1] + PORTRAIT_SIZE // 2 - init_surf.get_height() // 2,
+            ))
 
         # Name + class — vertically centered beside portrait
         tx = x + PORTRAIT_SIZE + 10

@@ -18,7 +18,7 @@ meta:
   is_autosave: false
 
 party:
-  - id: hero_aric
+  - id: aric
     protagonist: true
     name: "Aric"
     class: hero

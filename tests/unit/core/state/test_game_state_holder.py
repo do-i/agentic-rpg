@@ -8,7 +8,7 @@ from engine.core.models.position import Position
 # ── Shared manifest stub ──────────────────────────────────────
 
 MANIFEST_STUB = {
-    "protagonist": {"id": "hero_aric", "name": "Aric"},
+    "protagonist": {"id": "aric", "name": "Aric"},
     "start": {"map": "town_01_ardel", "position": [12, 8]},
     "bootstrap_flags": ["story_quest_started"],
 }
@@ -16,7 +16,7 @@ MANIFEST_STUB = {
 def test_from_new_game_position_is_position_object():
     gs = GameState.from_new_game(MANIFEST_STUB, "Aric")
     assert isinstance(gs.map.position, Position)
-    
+
 # ── Construction ──────────────────────────────────────────────
 
 class TestGameStateHolderInit:
