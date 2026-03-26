@@ -39,6 +39,9 @@ class Combatant:
     status_effects: list[StatusEffect] = field(default_factory=list)
     is_ko:     bool = False
 
+    # reward stats — enemies only
+    exp_yield: int = 0
+
     # abilities available this battle — list of ability dicts from class YAML
     abilities: list[dict] = field(default_factory=list)
 

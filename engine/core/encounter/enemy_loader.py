@@ -76,6 +76,7 @@ class EnemyLoader:
             is_enemy=True,
             boss=data.get("boss", False),
             sprite_id=enemy_id,
+            exp_yield=data.get("exp", 0),
             abilities=abilities,
         )
 
