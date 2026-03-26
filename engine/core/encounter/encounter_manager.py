@@ -80,13 +80,12 @@ class EncounterManager:
         if self._zone is None:
             return None
 
-        modifier = self._compute_modifier(party)
-
         # boss check first
         boss_state = self._resolver.try_boss_encounter(self._zone, flags)
         if boss_state:
             return self._fill_party(boss_state, party)
 
+        modifier = self._compute_modifier(party)
         # random encounter
         state = self._resolver.try_random_encounter(
             self._zone, modifier, flags, inventory_item_ids
