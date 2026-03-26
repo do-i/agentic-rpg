@@ -59,6 +59,9 @@ class BattleState:
     damage_floats: list[DamageFloat] = field(default_factory=list)
     message:       str = ""               # bottom message text
 
+    # boss metadata — set by EncounterManager when a boss battle is triggered
+    boss_flag:     str = ""               # flag to set on victory
+
     def build_turn_order(self) -> None:
         """Sort all alive combatants by DEX descending. Party wins ties."""
         alive = [c for c in self.party + self.enemies if c.is_alive]

@@ -81,7 +81,9 @@ class EncounterResolver:
         if not enemy:
             return None
 
-        return BattleState(party=[], enemies=[enemy])
+        state = BattleState(party=[], enemies=[enemy])
+        state.boss_flag = boss.flag_set
+        return state
 
     # ── Formation selection ───────────────────────────────────
 

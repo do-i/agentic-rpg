@@ -213,23 +213,20 @@ class WorldMapScene(Scene):
         if battle_state is None:
             return False
 
-        self._launch_battle(battle_state)
+        boss_flag = getattr(battle_state, "boss_flag", "")
+        self._launch_battle(battle_state, boss_flag=boss_flag)
         return True
 
-    def _launch_battle(self, battle_state) -> None:
+    def _launch_battle(self, battle_state, boss_flag: str = "") -> None:
         scene = BattleScene(
             battle_state=battle_state,
             scene_manager=self._scene_manager,
             registry=self._registry,
+            holder=self._holder,
             scenario_path=str(self._loader.scenario_path),
-            on_victory=self._on_battle_victory,
-            on_defeat=self._on_battle_defeat,
+            boss_flag=boss_flag,
         )
         self._scene_manager.switch(scene)
-
-    def _on_battle_victory(self) -> None:
-        # stub — Phase 4: show post-battle EXP screen then return here
-        self._scene_manager.switch(self._registry.get("world_map"))
 
     def _on_battle_defeat(self) -> None:
         # stub — Phase 4: show game over screen
