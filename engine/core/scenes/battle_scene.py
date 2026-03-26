@@ -116,6 +116,20 @@ class BattleScene(Scene):
         self._target_sel: int = 0
 
         self._state.build_turn_order()
+        # for p in self._state.party:
+        #     print(f"[DEBUG] Party member {p.name}: HP={p.hp}/{p.hp_max}")
+        #     p.hp = 100
+        #     p.hp_max = 200
+        active = self._state.active
+        print(f"[BATTLE START] First active: {active.name if active else 'None'} | is_enemy={active.is_enemy if active else False}")
+        if active and active.is_enemy:
+            self._state.phase = BattlePhase.ENEMY_TURN
+            self._resolve_enemy_turn()   # enemy acts immediately on first turn
+        else:
+            self._state.phase = BattlePhase.PLAYER_TURN
+            self._cmd_sel = 0
+
+
 
     # ── Font / asset init ─────────────────────────────────────
 
@@ -152,20 +166,44 @@ class BattleScene(Scene):
             return ENEMY_SIZES["large"]
         idx = len(enemy.name) % 3
         return [ENEMY_SIZES["medium"], ENEMY_SIZES["small"], ENEMY_SIZES["medium"]][idx]
-
     # ── Events ────────────────────────────────────────────────
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
+        if not events:
+            return
+
         phase = self._state.phase
+
         for event in events:
+            if event.type == pygame.QUIT:
+                # Let the main loop handle this if needed
+                continue
+
             if event.type != pygame.KEYDOWN:
                 continue
+
+            # Global escape handling
+            if event.key == pygame.K_ESCAPE:
+                if phase in (BattlePhase.SELECT_SPELL, BattlePhase.SELECT_ITEM, BattlePhase.SELECT_TARGET):
+                    self._state.phase = BattlePhase.PLAYER_TURN
+                    self._sub_items.clear()
+                    continue
+                elif phase == BattlePhase.PLAYER_TURN:
+                    self._attempt_run()
+                    continue
+
+            # Phase-specific handling
             if phase == BattlePhase.PLAYER_TURN:
                 self._handle_cmd(event.key)
             elif phase in (BattlePhase.SELECT_SPELL, BattlePhase.SELECT_ITEM):
                 self._handle_sub(event.key)
             elif phase == BattlePhase.SELECT_TARGET:
                 self._handle_target(event.key)
+            elif phase in (BattlePhase.POST_BATTLE, BattlePhase.GAME_OVER):
+                if event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_ESCAPE):
+                    if phase == BattlePhase.GAME_OVER:
+                        self._return_to_world_map()
+                    # PostBattleScene handles its own continue logic
 
     def _handle_cmd(self, key: int) -> None:
         active = self._state.active
@@ -268,7 +306,9 @@ class BattleScene(Scene):
     def _handle_target(self, key: int) -> None:
         if key in (pygame.K_ESCAPE, pygame.K_LEFT):
             self._state.phase = BattlePhase.PLAYER_TURN
+            self._sub_items.clear()  # clean up if needed
             return
+
         if key in (pygame.K_LEFT, pygame.K_UP):
             self._target_sel = max(0, self._target_sel - 1)
         elif key in (pygame.K_RIGHT, pygame.K_DOWN):
@@ -281,20 +321,20 @@ class BattleScene(Scene):
     # ── Action resolution ─────────────────────────────────────
 
     def _resolve_action(self) -> None:
-        action  = self._state.pending_action
+        action = self._state.pending_action
         if not action:
             return
-        source  = action.get("source")
+        source = action.get("source")
         targets = action.get("targets", [])
-        atype   = action.get("type", "attack")
+        atype = action.get("type", "attack")
 
         for target in targets:
             if atype == "attack":
-                dmg    = max(1, source.atk - target.def_)
+                dmg = max(1, source.atk - target.def_)
                 actual = target.apply_damage(dmg)
                 self._state.add_float(str(actual), *self._float_pos(target), C_DMG_PHYS)
             elif atype == "spell":
-                ab    = action.get("data", {})
+                ab = action.get("data", {})
                 coeff = ab.get("spell_coeff") or ab.get("heal_coeff") or 1.0
                 if source:
                     source.mp = max(0, source.mp - ab.get("mp_cost", 0))
@@ -303,25 +343,30 @@ class BattleScene(Scene):
                     actual = target.apply_heal(amount)
                     self._state.add_float(str(actual), *self._float_pos(target), C_HEAL)
                 else:
-                    dmg    = max(1, int(source.int_ * coeff) - target.mres) if source else 10
+                    dmg = max(1, int(source.int_ * coeff) - target.mres) if source else 10
                     actual = target.apply_damage(dmg)
                     self._state.add_float(str(actual), *self._float_pos(target), C_DMG_MAGIC)
             elif atype == "item":
-                actual = target.apply_heal(100)   # stub — Phase 6
+                actual = target.apply_heal(100)
                 self._state.add_float(str(actual), *self._float_pos(target), C_HEAL)
 
         self._state.pending_action = None
+
+        # Critical change: go to result check (which will handle enemy turn)
         self._check_result()
 
     def _check_result(self) -> None:
+        print(f"[DEBUG] _check_result called | phase={self._state.phase} | active={self._state.active.name if self._state.active else None}")
         if self._state.enemies_wiped:
             self._handle_victory()
             return
         if self._state.party_wiped:
             self._handle_defeat()
             return
+
         self._state.advance_turn()
         active = self._state.active
+
         if active and active.is_enemy:
             self._state.phase = BattlePhase.ENEMY_TURN
             self._resolve_enemy_turn()
@@ -330,16 +375,26 @@ class BattleScene(Scene):
             self._cmd_sel = 0
 
     def _resolve_enemy_turn(self) -> None:
-        """Stub — flat random attack. Full AI Phase 4 follow-up."""
-        import random
-        active  = self._state.active
+        active = self._state.active
+        if not active or not active.is_enemy:
+            self._check_result()
+            return
+
         targets = self._state.alive_party()
-        if active and targets:
-            target = random.choice(targets)
-            dmg    = max(1, active.atk - target.def_)
-            actual = target.apply_damage(dmg)
-            self._state.message = f"{active.name} attacks {target.name}!"
-            self._state.add_float(str(actual), *self._float_pos(target), C_DMG_PHYS)
+        if not targets:
+            self._check_result()
+            return
+
+        import random
+        target = random.choice(targets)
+
+        dmg = max(1, active.atk - target.def_)
+        actual = target.apply_damage(dmg)
+
+        self._state.message = f"{active.name} attacks {target.name}!"
+        self._state.add_float(str(actual), *self._float_pos(target), C_DMG_PHYS)
+
+        # After enemy attack, immediately go to next turn
         self._check_result()
 
     def _attempt_run(self) -> None:
@@ -403,6 +458,8 @@ class BattleScene(Scene):
 
     def update(self, delta: float) -> None:
         self._state.update_floats(delta)
+        if self._state.phase == BattlePhase.ENEMY_TURN:
+            self._resolve_enemy_turn()
 
     # ── Render ────────────────────────────────────────────────
 

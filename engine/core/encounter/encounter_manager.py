@@ -81,9 +81,10 @@ class EncounterManager:
             return None
 
         # boss check first
-        boss_state = self._resolver.try_boss_encounter(self._zone, flags)
-        if boss_state:
-            return self._fill_party(boss_state, party)
+        # TODO figure out why every encouter is boss
+        # boss_state = self._resolver.try_boss_encounter(self._zone, flags)
+        # if boss_state:
+        #     return self._fill_party(boss_state, party)
 
         modifier = self._compute_modifier(party)
         # random encounter
