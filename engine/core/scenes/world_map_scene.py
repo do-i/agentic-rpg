@@ -1,6 +1,9 @@
 # engine/core/scenes/world_map_scene.py
-# Change from previous version:
-#   - npc.render() now receives player_pos so NPC can face the player
+# Changes from previous version:
+#   - accepts encounter_manager parameter
+#   - calls encounter_manager.set_zone() on map load
+#   - calls encounter_manager.on_step() on each tile step
+#   - launches BattleScene on encounter trigger
 
 import pygame
 from engine.core.models.position import Position
@@ -13,6 +16,8 @@ from engine.core.state.game_state_manager import GameStateManager
 from engine.core.dialogue.dialogue_engine import DialogueEngine
 from engine.core.scenes.save_modal_scene import SaveModalScene
 from engine.core.scenes.dialogue_scene import DialogueScene
+from engine.core.scenes.battle_scene import BattleScene
+from engine.core.encounter.encounter_manager import EncounterManager
 from engine.data.loader import ManifestLoader
 from engine.world.tile_map import TileMap
 from engine.world.tile_map_factory import TileMapFactory
@@ -23,13 +28,12 @@ from engine.world.npc import Npc
 from engine.world.npc_loader import NpcLoader
 from engine.world.player import COLLISION_W, COLLISION_H
 
-FADE_SPEED = 300  # alpha units per second (0-255)
+FADE_SPEED = 300  # alpha units per second
 
 
 class WorldMapScene(Scene):
     """
-    Phase 3 — tile map + player sprite + camera + NPC interaction +
-               portal transitions + save modal.
+    Phase 4 — adds encounter trigger on tile step.
     """
 
     def __init__(
@@ -42,6 +46,7 @@ class WorldMapScene(Scene):
         game_state_manager: GameStateManager,
         dialogue_engine: DialogueEngine,
         npc_loader: NpcLoader,
+        encounter_manager: EncounterManager,
         text_speed: str = "fast",
     ) -> None:
         self._holder = holder
@@ -52,6 +57,7 @@ class WorldMapScene(Scene):
         self._game_state_manager = game_state_manager
         self._dialogue_engine = dialogue_engine
         self._npc_loader = npc_loader
+        self._encounter_manager = encounter_manager
         self._text_speed = text_speed
 
         self._tile_map: TileMap | None = None
@@ -59,14 +65,15 @@ class WorldMapScene(Scene):
         self._player: Player | None = None
         self._npcs: list[Npc] = []
 
-        # overlays (None = inactive)
         self._save_modal: SaveModalScene | None = None
         self._dialogue: DialogueScene | None = None
 
-        # fade state
-        self._fade_alpha: int = 255       # start fully black → fade in
-        self._fade_dir: int = -1          # -1 = fade in, +1 = fade out
+        self._fade_alpha: int = 255
+        self._fade_dir: int = -1
         self._pending_transition: dict | None = None
+
+        # encounter tracking
+        self._last_tile: Position | None = None   # detect tile step
 
     def _init(self) -> None:
         scenario_path = self._loader.scenario_path
@@ -79,7 +86,6 @@ class WorldMapScene(Scene):
         self._camera = Camera(self._tile_map.width_px, self._tile_map.height_px)
 
         sprite_sheet = self._load_protagonist_sprite(manifest, scenario_path)
-
         self._player = Player(
             start=state.map.position,
             map_width_px=self._tile_map.width_px,
@@ -89,6 +95,10 @@ class WorldMapScene(Scene):
 
         map_yaml = scenario_path / "data" / "maps" / f"{map_id}.yaml"
         self._npcs = self._npc_loader.load_from_map(map_yaml)
+
+        # set encounter zone matching current map id
+        self._encounter_manager.set_zone(map_id)
+        self._last_tile = self._player.tile_position
 
         self._fade_alpha = 255
         self._fade_dir = -1
@@ -177,11 +187,53 @@ class WorldMapScene(Scene):
         remaining = self._dialogue_engine.dispatch_on_complete(
             on_complete, state.flags, state.repository
         )
-        # stub — Phase 5: handle join_party
-        # stub — Phase 4: handle start_battle
         transition = remaining.get("transition")
         if transition:
             self._start_fade_out(transition)
+
+    # ── Encounter ─────────────────────────────────────────────
+
+    def _check_encounter(self) -> bool:
+        """
+        Called once per tile step. Returns True if a battle was triggered
+        (caller should skip portal check that frame).
+        """
+        state = self._holder.get()
+
+        # collect inventory item ids — stub: full item list from Phase 6
+        inventory_ids: set[str] = {
+            entry.id for entry in state.repository.items
+        }
+
+        battle_state = self._encounter_manager.on_step(
+            flags=state.flags,
+            party=state.party,
+            inventory_item_ids=inventory_ids,
+        )
+        if battle_state is None:
+            return False
+
+        self._launch_battle(battle_state)
+        return True
+
+    def _launch_battle(self, battle_state) -> None:
+        scene = BattleScene(
+            battle_state=battle_state,
+            scene_manager=self._scene_manager,
+            registry=self._registry,
+            scenario_path=str(self._loader.scenario_path),
+            on_victory=self._on_battle_victory,
+            on_defeat=self._on_battle_defeat,
+        )
+        self._scene_manager.switch(scene)
+
+    def _on_battle_victory(self) -> None:
+        # stub — Phase 4: show post-battle EXP screen then return here
+        self._scene_manager.switch(self._registry.get("world_map"))
+
+    def _on_battle_defeat(self) -> None:
+        # stub — Phase 4: show game over screen
+        self._scene_manager.switch(self._registry.get("world_map"))
 
     # ── Portal ────────────────────────────────────────────────
 
@@ -246,7 +298,15 @@ class WorldMapScene(Scene):
         frozen = self._fade_dir != 0
         self._player.update(keys, self._tile_map.collision_map, frozen)
         self._camera.update(self._player.pixel_position)
-        self._check_portals()
+
+        # tile step detection → encounter roll
+        current_tile = self._player.tile_position
+        if current_tile != self._last_tile:
+            self._last_tile = current_tile
+            if not self._check_encounter():
+                self._check_portals()
+        else:
+            self._check_portals()
 
     # ── Render ────────────────────────────────────────────────
 
@@ -268,7 +328,7 @@ class WorldMapScene(Scene):
                     self._camera.offset_x,
                     self._camera.offset_y,
                     near=near,
-                    player_pos=player_pos,   # ← new: NPC faces player
+                    player_pos=player_pos,
                 )
 
         self._player.render(screen, self._camera.offset_x, self._camera.offset_y)

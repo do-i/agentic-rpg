@@ -1,6 +1,8 @@
 # engine/core/app_module.py
-# Change from previous version:
-#   - registers "status" scene factory
+# Changes from previous version:
+#   - added EnemyLoader, EncounterResolver, EncounterManager providers
+#   - world_map factory passes encounter_manager
+#   - battle scene registered as factory
 
 from injector import Module, singleton, provider
 
@@ -20,6 +22,9 @@ from engine.core.scenes.status_scene import StatusScene
 from engine.core.state.game_state_holder import GameStateHolder
 from engine.core.state.game_state_manager import GameStateManager
 from engine.core.dialogue.dialogue_engine import DialogueEngine
+from engine.core.encounter.enemy_loader import EnemyLoader
+from engine.core.encounter.encounter_resolver import EncounterResolver
+from engine.core.encounter.encounter_manager import EncounterManager
 from engine.data.loader import ManifestLoader
 from engine.world.tile_map_factory import TileMapFactory
 from engine.world.npc_loader import NpcLoader
@@ -81,6 +86,28 @@ class AppModule(Module):
 
     @provider
     @singleton
+    def provide_enemy_loader(self, loader: ManifestLoader) -> EnemyLoader:
+        enemies_dir = loader.scenario_path / "data" / "enemies"
+        classes_dir = loader.scenario_path / "data" / "classes"
+        return EnemyLoader(enemies_dir=enemies_dir, classes_dir=classes_dir)
+
+    @provider
+    @singleton
+    def provide_encounter_resolver(self, enemy_loader: EnemyLoader) -> EncounterResolver:
+        return EncounterResolver(enemy_loader)
+
+    @provider
+    @singleton
+    def provide_encounter_manager(
+        self,
+        resolver: EncounterResolver,
+        loader: ManifestLoader,
+    ) -> EncounterManager:
+        encount_dir = loader.scenario_path / "data" / "encount"
+        return EncounterManager(resolver=resolver, encount_dir=encount_dir)
+
+    @provider
+    @singleton
     def provide_scene_registry(
         self,
         settings: EngineSettings,
@@ -91,6 +118,7 @@ class AppModule(Module):
         game_state_manager: GameStateManager,
         dialogue_engine: DialogueEngine,
         npc_loader: NpcLoader,
+        encounter_manager: EncounterManager,
     ) -> SceneRegistry:
         registry = SceneRegistry()
 
@@ -107,6 +135,7 @@ class AppModule(Module):
                 holder, loader, tile_map_factory,
                 scene_manager, registry,
                 game_state_manager, dialogue_engine, npc_loader,
+                encounter_manager=encounter_manager,
                 text_speed=settings.text_speed,
             ))
         registry.register_factory("status",
@@ -119,7 +148,7 @@ class AppModule(Module):
             ))
         registry.register_factory("items",
             lambda: ItemScene(holder, scene_manager, registry))
-            
+
         return registry
 
     @provider
