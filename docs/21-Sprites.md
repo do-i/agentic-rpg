@@ -9,10 +9,14 @@ https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generato
 ### Hob Goblin
 https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_brown&head=Human_Male_brown&expression=Angry_brown&shadow=Shadow_shadow&horns=Backwards_Horns_gray&wrinkes=Wrinkles_brown&legs=Shorts_forest&vest=Vest_open_leather&weapon=Mace_mace
 
-### Goblin 
+### Goblin
 https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_fur_grey&head=Human_Male_fur_grey&expression=Angry_fur_grey&shadow=Shadow_shadow&horns=Backwards_Horns_gray&wrinkes=Wrinkles_fur_grey&legs=Armour_silver&weapon=Flail_flail&armour=Leather_leather&shoes=Hoofs_lavender&ears=Big_ears_fur_grey&fins=Fin_fur_brown
 
 
+## Wolf
+
+### Wolf
+https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&expression=Neutral_brown&body=Body_Color_brown&head=Wolf_male_brown&legs=Fur_Pants_fur_gold&gloves=Gloves_copper&vest=Vest_open_rose
 
 ## Skeleton
 
