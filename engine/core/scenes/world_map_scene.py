@@ -293,7 +293,13 @@ class WorldMapScene(Scene):
 
         keys = pygame.key.get_pressed()
         frozen = self._fade_dir != 0
-        self._player.update(keys, self._tile_map.collision_map, frozen)
+        state = self._holder.get()
+        npc_rects = [
+            npc.collision_rect
+            for npc in self._npcs
+            if npc.is_present(state.flags)
+        ]
+        self._player.update(keys, self._tile_map.collision_map, frozen, npc_rects=npc_rects)
         self._camera.update(self._player.pixel_position)
 
         # tile step detection → encounter roll

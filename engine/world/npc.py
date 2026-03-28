@@ -14,6 +14,13 @@ INTERACTION_RANGE = Settings.TILE_SIZE * 1.5  # pixels
 
 FRAME_INDEX = 0  # always idle frame
 
+# Collision rect — same footprint convention as player
+# 20×18 centered horizontally, 5px from sprite bottom
+NPC_COLLISION_W = 20
+NPC_COLLISION_H = 18
+NPC_COLLISION_OFFSET_X = (NPC_SIZE - NPC_COLLISION_W) // 2   # 22
+NPC_COLLISION_OFFSET_Y = NPC_SIZE - NPC_COLLISION_H - 5      # 41
+
 _FACING_MAP = {
     "up":    Direction.UP,
     "down":  Direction.DOWN,
@@ -35,6 +42,7 @@ class Npc:
     """
     Represents a single NPC on the map.
     Presence is flag-gated. Interaction triggers dialogue.
+    Exposes a collision rect so the player cannot walk through.
     When player is nearby, NPC faces the player (4-way snap).
     Falls back to colored rect if no sprite is loaded.
     """
@@ -63,6 +71,16 @@ class Npc:
     def pixel_position(self) -> Position:
         return Position(self._px, self._py)
 
+    @property
+    def collision_rect(self) -> tuple[int, int, int, int]:
+        """Returns (x, y, w, h) of NPC collision box in world pixels."""
+        return (
+            self._px + NPC_COLLISION_OFFSET_X,
+            self._py + NPC_COLLISION_OFFSET_Y,
+            NPC_COLLISION_W,
+            NPC_COLLISION_H,
+        )
+
     def is_present(self, flags: FlagState) -> bool:
         return flags.has_all(self._present_requires) and flags.has_none(self._present_excludes)
 
@@ -90,7 +108,6 @@ class Npc:
         if self._sprite_sheet:
             direction = self._facing(player_pos, near)
             frame = self._sprite_sheet.get_frame(direction, FRAME_INDEX)
-            # scale 64x64 → 32x64 to match player rendering
             scaled = pygame.transform.scale(frame, (64, 64))
             screen.blit(scaled, (sx, sy))
         else:

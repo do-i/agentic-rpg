@@ -11,17 +11,16 @@ PLAYER_SPEED  = 5        # pixels per frame
 PLAYER_WIDTH  = 64       # sprite render width
 PLAYER_HEIGHT = 64       # sprite render height
 
-# Collision rect — 20×20, centered horizontally, 5px from bottom
+# Collision rect — 20×18, centered horizontally, 5px from bottom
 COLLISION_W = 20
 COLLISION_H = 18
 COLLISION_OFFSET_X = (PLAYER_WIDTH - COLLISION_W) // 2   # 22
-COLLISION_OFFSET_Y = PLAYER_HEIGHT - COLLISION_H - 5     # 39
+COLLISION_OFFSET_Y = PLAYER_HEIGHT - COLLISION_H - 5     # 41
 
-DEBUG_COLLISION = True  # toggle to show red collision rect
+DEBUG_COLLISION = True   # toggle to show red collision rect
 
-PLAYER_COLOR = (220, 80, 80)  # fallback placeholder color
+PLAYER_COLOR = (220, 80, 80)  # fallback placeholder
 
-# movement vectors — arrow keys only
 DIRECTION_MAP: dict[int, tuple[int, int]] = {
     pygame.K_UP:    (0, -1),
     pygame.K_DOWN:  (0,  1),
@@ -30,12 +29,22 @@ DIRECTION_MAP: dict[int, tuple[int, int]] = {
 }
 
 
+def _rects_overlap(ax: int, ay: int, aw: int, ah: int,
+                   bx: int, by: int, bw: int, bh: int) -> bool:
+    """AABB overlap check."""
+    return (ax < bx + bw and ax + aw > bx and
+            ay < by + bh and ay + ah > by)
+
+
 class Player:
     """
     Handles player input, position update, animation, and rendering.
     Pixel position = top-left of the 64×64 sprite.
-    Collision rect = 20×20 centered horizontally, 5px from sprite bottom.
+    Collision rect = 20×18 centered horizontally, 5px from sprite bottom.
     Spawn aligns collision rect center to tile center.
+
+    update() accepts optional npc_rects list for NPC collision.
+    Each entry is (x, y, w, h) in world pixel coords.
     """
 
     def __init__(
@@ -45,7 +54,6 @@ class Player:
         map_height_px: int,
         sprite_sheet: SpriteSheet | None = None,
     ) -> None:
-        # align collision rect center to tile center
         ts = Settings.TILE_SIZE
         self._x: float = float(
             start.x * ts + ts // 2 - COLLISION_OFFSET_X - COLLISION_W // 2
@@ -61,12 +69,10 @@ class Player:
 
     @property
     def pixel_position(self) -> Position:
-        """Top-left of sprite in pixel coords."""
         return Position(int(self._x), int(self._y))
 
     @property
     def collision_rect_position(self) -> Position:
-        """Top-left of collision rect in pixel coords."""
         return Position(
             int(self._x) + COLLISION_OFFSET_X,
             int(self._y) + COLLISION_OFFSET_Y,
@@ -74,7 +80,6 @@ class Player:
 
     @property
     def tile_position(self) -> Position:
-        """Tile coords derived from collision rect center."""
         cx = int(self._x) + COLLISION_OFFSET_X + COLLISION_W // 2
         cy = int(self._y) + COLLISION_OFFSET_Y + COLLISION_H // 2
         return Position(cx // Settings.TILE_SIZE, cy // Settings.TILE_SIZE)
@@ -84,11 +89,13 @@ class Player:
         keys: pygame.key.ScancodeWrapper,
         collision_map: CollisionMap | None = None,
         frozen: bool = False,
+        npc_rects: list[tuple[int, int, int, int]] | None = None,
     ) -> None:
         if frozen:
             if self._animation:
                 self._animation.update(1 / Settings.FPS, 0, 0)
             return
+
         dx, dy = 0, 0
         for key, (vx, vy) in DIRECTION_MAP.items():
             if keys[key]:
@@ -103,7 +110,7 @@ class Player:
 
         # normalise diagonal speed
         if dx != 0 and dy != 0:
-            factor = 0.7071  # 1 / sqrt(2)
+            factor = 0.7071
             dx_move = dx * factor * PLAYER_SPEED
             dy_move = dy * factor * PLAYER_SPEED
         else:
@@ -113,21 +120,27 @@ class Player:
         new_x = self._x + dx_move
         new_y = self._y + dy_move
 
-        # clamp to map bounds using collision rect edges
-        new_x = max(
-            float(-COLLISION_OFFSET_X),
-            min(new_x, float(self._map_w - COLLISION_OFFSET_X - COLLISION_W))
-        )
-        new_y = max(
-            float(-COLLISION_OFFSET_Y),
-            min(new_y, float(self._map_h - COLLISION_OFFSET_Y - COLLISION_H))
-        )
+        # clamp to map bounds
+        new_x = max(float(-COLLISION_OFFSET_X),
+                    min(new_x, float(self._map_w - COLLISION_OFFSET_X - COLLISION_W)))
+        new_y = max(float(-COLLISION_OFFSET_Y),
+                    min(new_y, float(self._map_h - COLLISION_OFFSET_Y - COLLISION_H)))
 
+        # tile collision
         if collision_map:
             col_x = int(new_x) + COLLISION_OFFSET_X
             col_y = int(new_y) + COLLISION_OFFSET_Y
             if collision_map.is_rect_blocked(col_x, col_y, COLLISION_W, COLLISION_H):
                 return
+
+        # NPC collision — block player if overlapping any NPC rect
+        if npc_rects:
+            col_x = int(new_x) + COLLISION_OFFSET_X
+            col_y = int(new_y) + COLLISION_OFFSET_Y
+            for (nx, ny, nw, nh) in npc_rects:
+                if _rects_overlap(col_x, col_y, COLLISION_W, COLLISION_H,
+                                   nx, ny, nw, nh):
+                    return
 
         self._x = new_x
         self._y = new_y
@@ -142,12 +155,12 @@ class Player:
             screen.blit(scaled, (screen_x, screen_y))
         else:
             pygame.draw.rect(
-                screen,
-                PLAYER_COLOR,
+                screen, PLAYER_COLOR,
                 (screen_x, screen_y, PLAYER_WIDTH, PLAYER_HEIGHT),
             )
 
         if DEBUG_COLLISION:
             col_x = int(self._x) + COLLISION_OFFSET_X - offset_x
             col_y = int(self._y) + COLLISION_OFFSET_Y - offset_y
-            pygame.draw.rect(screen, (255, 0, 0), (col_x, col_y, COLLISION_W, COLLISION_H), 2)
+            pygame.draw.rect(screen, (255, 0, 0),
+                             (col_x, col_y, COLLISION_W, COLLISION_H), 2)
