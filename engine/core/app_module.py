@@ -137,6 +137,7 @@ class AppModule(Module):
                 game_state_manager, dialogue_engine, npc_loader,
                 encounter_manager=encounter_manager,
                 text_speed=settings.text_speed,
+                smooth_collision=settings.smooth_collision,
             ))
         registry.register_factory("status",
             lambda: StatusScene(

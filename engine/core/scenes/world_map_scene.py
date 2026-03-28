@@ -48,7 +48,9 @@ class WorldMapScene(Scene):
         npc_loader: NpcLoader,
         encounter_manager: EncounterManager,
         text_speed: str = "fast",
+        smooth_collision: bool = True,
     ) -> None:
+        self._smooth_collision = smooth_collision
         self._holder = holder
         self._loader = loader
         self._tile_map_factory = tile_map_factory
@@ -91,6 +93,7 @@ class WorldMapScene(Scene):
             map_width_px=self._tile_map.width_px,
             map_height_px=self._tile_map.height_px,
             sprite_sheet=sprite_sheet,
+            smooth_collision=self._smooth_collision,
         )
 
         map_yaml = scenario_path / "data" / "maps" / f"{map_id}.yaml"

@@ -5,3 +5,6 @@ dialogue:
 
 saves:
   dir: ~/user_save_data
+
+movement:
+  smooth_collision: true   # axis-separation sliding on walls and NPCs

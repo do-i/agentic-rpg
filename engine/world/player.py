@@ -7,19 +7,17 @@ from engine.world.collision import CollisionMap
 from engine.world.sprite_sheet import SpriteSheet, Direction
 from engine.world.animation_controller import AnimationController
 
-PLAYER_SPEED  = 5        # pixels per frame
-PLAYER_WIDTH  = 64       # sprite render width
-PLAYER_HEIGHT = 64       # sprite render height
+PLAYER_SPEED  = 5
+PLAYER_WIDTH  = 64
+PLAYER_HEIGHT = 64
 
-# Collision rect — 20×18, centered horizontally, 5px from bottom
 COLLISION_W = 20
 COLLISION_H = 18
-COLLISION_OFFSET_X = (PLAYER_WIDTH - COLLISION_W) // 2   # 22
-COLLISION_OFFSET_Y = PLAYER_HEIGHT - COLLISION_H - 5     # 41
+COLLISION_OFFSET_X = (PLAYER_WIDTH  - COLLISION_W) // 2   # 22
+COLLISION_OFFSET_Y =  PLAYER_HEIGHT - COLLISION_H  - 5    # 41
 
-DEBUG_COLLISION = True   # toggle to show red collision rect
-
-PLAYER_COLOR = (220, 80, 80)  # fallback placeholder
+DEBUG_COLLISION = True
+PLAYER_COLOR    = (220, 80, 80)
 
 DIRECTION_MAP: dict[int, tuple[int, int]] = {
     pygame.K_UP:    (0, -1),
@@ -31,20 +29,37 @@ DIRECTION_MAP: dict[int, tuple[int, int]] = {
 
 def _rects_overlap(ax: int, ay: int, aw: int, ah: int,
                    bx: int, by: int, bw: int, bh: int) -> bool:
-    """AABB overlap check."""
     return (ax < bx + bw and ax + aw > bx and
             ay < by + bh and ay + ah > by)
 
 
+def _is_blocked(
+    px: float, py: float,
+    collision_map: CollisionMap | None,
+    npc_rects: list[tuple[int, int, int, int]],
+) -> bool:
+    """Return True if player rect at (px, py) overlaps any obstacle."""
+    cx = int(px) + COLLISION_OFFSET_X
+    cy = int(py) + COLLISION_OFFSET_Y
+    if collision_map and collision_map.is_rect_blocked(cx, cy, COLLISION_W, COLLISION_H):
+        return True
+    for (nx, ny, nw, nh) in npc_rects:
+        if _rects_overlap(cx, cy, COLLISION_W, COLLISION_H, nx, ny, nw, nh):
+            return True
+    return False
+
+
 class Player:
     """
-    Handles player input, position update, animation, and rendering.
-    Pixel position = top-left of the 64×64 sprite.
-    Collision rect = 20×18 centered horizontally, 5px from sprite bottom.
-    Spawn aligns collision rect center to tile center.
+    Handles player input, position, animation, and rendering.
 
-    update() accepts optional npc_rects list for NPC collision.
-    Each entry is (x, y, w, h) in world pixel coords.
+    smooth_collision=True  — axis-separation: try X then Y independently
+                             so the player slides along walls / NPCs.
+    smooth_collision=False — hard block: any overlap stops movement dead.
+
+    Controlled via engine/config/settings.yaml:
+        movement:
+          smooth_collision: true
     """
 
     def __init__(
@@ -53,6 +68,7 @@ class Player:
         map_width_px: int,
         map_height_px: int,
         sprite_sheet: SpriteSheet | None = None,
+        smooth_collision: bool = True,
     ) -> None:
         ts = Settings.TILE_SIZE
         self._x: float = float(
@@ -63,9 +79,12 @@ class Player:
         )
         self._map_w = map_width_px
         self._map_h = map_height_px
+        self._smooth = smooth_collision
         self._animation: AnimationController | None = (
             AnimationController(sprite_sheet) if sprite_sheet else None
         )
+
+    # ── Properties ────────────────────────────────────────────
 
     @property
     def pixel_position(self) -> Position:
@@ -73,16 +92,16 @@ class Player:
 
     @property
     def collision_rect_position(self) -> Position:
-        return Position(
-            int(self._x) + COLLISION_OFFSET_X,
-            int(self._y) + COLLISION_OFFSET_Y,
-        )
+        return Position(int(self._x) + COLLISION_OFFSET_X,
+                        int(self._y) + COLLISION_OFFSET_Y)
 
     @property
     def tile_position(self) -> Position:
         cx = int(self._x) + COLLISION_OFFSET_X + COLLISION_W // 2
         cy = int(self._y) + COLLISION_OFFSET_Y + COLLISION_H // 2
         return Position(cx // Settings.TILE_SIZE, cy // Settings.TILE_SIZE)
+
+    # ── Update ────────────────────────────────────────────────
 
     def update(
         self,
@@ -108,7 +127,6 @@ class Player:
         if dx == 0 and dy == 0:
             return
 
-        # normalise diagonal speed
         if dx != 0 and dy != 0:
             factor = 0.7071
             dx_move = dx * factor * PLAYER_SPEED
@@ -117,47 +135,70 @@ class Player:
             dx_move = dx * PLAYER_SPEED
             dy_move = dy * PLAYER_SPEED
 
-        new_x = self._x + dx_move
-        new_y = self._y + dy_move
+        rects = npc_rects or []
 
-        # clamp to map bounds
-        new_x = max(float(-COLLISION_OFFSET_X),
-                    min(new_x, float(self._map_w - COLLISION_OFFSET_X - COLLISION_W)))
-        new_y = max(float(-COLLISION_OFFSET_Y),
-                    min(new_y, float(self._map_h - COLLISION_OFFSET_Y - COLLISION_H)))
+        if self._smooth:
+            self._move_smooth(dx_move, dy_move, collision_map, rects)
+        else:
+            self._move_hard(dx_move, dy_move, collision_map, rects)
 
-        # tile collision
-        if collision_map:
-            col_x = int(new_x) + COLLISION_OFFSET_X
-            col_y = int(new_y) + COLLISION_OFFSET_Y
-            if collision_map.is_rect_blocked(col_x, col_y, COLLISION_W, COLLISION_H):
-                return
+    # ── Movement strategies ───────────────────────────────────
 
-        # NPC collision — block player if overlapping any NPC rect
-        if npc_rects:
-            col_x = int(new_x) + COLLISION_OFFSET_X
-            col_y = int(new_y) + COLLISION_OFFSET_Y
-            for (nx, ny, nw, nh) in npc_rects:
-                if _rects_overlap(col_x, col_y, COLLISION_W, COLLISION_H,
-                                   nx, ny, nw, nh):
-                    return
+    def _clamp(self, x: float, y: float) -> tuple[float, float]:
+        x = max(float(-COLLISION_OFFSET_X),
+                min(x, float(self._map_w - COLLISION_OFFSET_X - COLLISION_W)))
+        y = max(float(-COLLISION_OFFSET_Y),
+                min(y, float(self._map_h - COLLISION_OFFSET_Y - COLLISION_H)))
+        return x, y
 
-        self._x = new_x
-        self._y = new_y
+    def _move_hard(self, dx: float, dy: float,
+                   collision_map: CollisionMap | None, npc_rects: list) -> None:
+        """Classic hard block — stop dead on any overlap."""
+        new_x, new_y = self._clamp(self._x + dx, self._y + dy)
+        if not _is_blocked(new_x, new_y, collision_map, npc_rects):
+            self._x, self._y = new_x, new_y
+
+    def _move_smooth(self, dx: float, dy: float,
+                     collision_map: CollisionMap | None, npc_rects: list) -> None:
+        """
+        Axis-separation sliding:
+          1. Try full (dx, dy).
+          2. If blocked, try X-only (dx, 0).
+          3. If blocked, try Y-only (0, dy).
+          4. Both blocked — stay put.
+        """
+        # 1. Full move
+        new_x, new_y = self._clamp(self._x + dx, self._y + dy)
+        if not _is_blocked(new_x, new_y, collision_map, npc_rects):
+            self._x, self._y = new_x, new_y
+            return
+
+        # 2. X-only slide
+        new_x, new_y = self._clamp(self._x + dx, self._y)
+        if not _is_blocked(new_x, new_y, collision_map, npc_rects):
+            self._x, self._y = new_x, new_y
+            return
+
+        # 3. Y-only slide
+        new_x, new_y = self._clamp(self._x, self._y + dy)
+        if not _is_blocked(new_x, new_y, collision_map, npc_rects):
+            self._x, self._y = new_x, new_y
+
+        # 4. Stay put
+
+    # ── Render ────────────────────────────────────────────────
 
     def render(self, screen: pygame.Surface, offset_x: int, offset_y: int) -> None:
         screen_x = int(self._x) - offset_x
         screen_y = int(self._y) - offset_y
 
         if self._animation:
-            frame = self._animation.current_frame
+            frame  = self._animation.current_frame
             scaled = pygame.transform.scale(frame, (PLAYER_WIDTH, PLAYER_HEIGHT))
             screen.blit(scaled, (screen_x, screen_y))
         else:
-            pygame.draw.rect(
-                screen, PLAYER_COLOR,
-                (screen_x, screen_y, PLAYER_WIDTH, PLAYER_HEIGHT),
-            )
+            pygame.draw.rect(screen, PLAYER_COLOR,
+                             (screen_x, screen_y, PLAYER_WIDTH, PLAYER_HEIGHT))
 
         if DEBUG_COLLISION:
             col_x = int(self._x) + COLLISION_OFFSET_X - offset_x
