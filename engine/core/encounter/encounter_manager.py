@@ -146,10 +146,10 @@ class EncounterManager:
             hp_max=member.hp_max,
             mp=member.mp,
             mp_max=member.mp_max,
-            atk=getattr(member, "str_", 10),
-            def_=getattr(member, "con",  8),
-            mres=getattr(member, "int_", 6),
-            dex=getattr(member, "dex",  10),
+            atk=getattr(member, "str_", 1), # See engien/core/state/party_state.py for debug values
+            def_=getattr(member, "con",  1),
+            mres=getattr(member, "int_", 1),
+            dex=getattr(member, "dex",  1),
             is_enemy=False,
             portrait_path=portrait,
             abilities=[]   # stub — Phase 5 loads from class YAML

@@ -22,13 +22,13 @@ class MemberState:
         level: int = 1,
         exp: int = 0,
         exp_next: int = 100,
-        hp: int = 256,
+        hp: int = 308,
         hp_max: int = 308,
         mp: int = 10,
         mp_max: int = 10,
-        str_: int = 8,
-        dex: int = 7,
-        con: int = 8,
+        str_: int = 208, # Debug value
+        dex: int = 70,
+        con: int = 80,
         int_: int = 5,
         equipped: dict | None = None,
     ) -> None:
