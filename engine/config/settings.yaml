@@ -8,3 +8,6 @@ saves:
 
 movement:
   smooth_collision: true   # axis-separation sliding on walls and NPCs
+
+debug:
+  party: false   # true = add all party members at new game start

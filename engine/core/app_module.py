@@ -127,7 +127,8 @@ class AppModule(Module):
         registry.register_factory("title",
             lambda: TitleScene(loader, scene_manager, registry, game_state_manager))
         registry.register_factory("name_entry",
-            lambda: NameEntryScene(loader, scene_manager, registry, holder))
+            lambda: NameEntryScene(loader, scene_manager, registry, holder,
+                                   debug_party=settings.debug_party))
         registry.register_factory("load_game",
             lambda: LoadGameScene(game_state_manager, holder, scene_manager, registry))
         registry.register_factory("world_map",

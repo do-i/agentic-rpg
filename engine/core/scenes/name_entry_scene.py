@@ -17,6 +17,9 @@ class NameEntryScene(Scene):
     """
     Prompts the player to enter the protagonist's name.
     On confirm → bootstraps GameState → sets holder → switches to world_map.
+
+    If debug_party=True, all party members from party.yaml are added
+    immediately after bootstrap so every character is available from turn 1.
     """
 
     def __init__(
@@ -25,11 +28,14 @@ class NameEntryScene(Scene):
         scene_manager: SceneManager,
         registry: SceneRegistry,
         holder: GameStateHolder,
+        debug_party: bool = False,
     ) -> None:
         self._manifest = loader.load()
+        self._scenario_path = loader.scenario_path
         self._scene_manager = scene_manager
         self._registry = registry
         self._holder = holder
+        self._debug_party = debug_party
         self._name: str = self._manifest.get("protagonist", {}).get("name", "Hero")
         self._prompt_font = None
         self._input_font = None
@@ -55,7 +61,13 @@ class NameEntryScene(Scene):
 
     def _confirm(self) -> None:
         name = self._name.strip() or self._manifest.get("protagonist", {}).get("name", "Hero")
-        self._holder.set(GameState.from_new_game(self._manifest, name))
+        state = GameState.from_new_game(self._manifest, name)
+
+        if self._debug_party:
+            from engine.core.debug.debug_bootstrap import inject_full_party
+            inject_full_party(state, self._scenario_path)
+
+        self._holder.set(state)
         self._scene_manager.switch(self._registry.get("world_map"))
 
     # ── Render ────────────────────────────────────────────────
@@ -89,3 +101,8 @@ class NameEntryScene(Scene):
 
         hint = self._hint_font.render("ENTER to confirm", True, (120, 120, 100))
         screen.blit(hint, (cx - hint.get_width() // 2, cy + 80))
+
+        # debug indicator
+        if self._debug_party:
+            dbg = self._hint_font.render("[DEBUG] full party enabled", True, (180, 100, 100))
+            screen.blit(dbg, (cx - dbg.get_width() // 2, cy + 120))
