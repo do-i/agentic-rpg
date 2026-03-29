@@ -5,16 +5,28 @@ age: 18
 gender: female
 class: sorcerer
 row: back
-level: 8
-exp: 6080
-hp: 28
-hp_max: 28
-mp: 48
-mp_max: 48
-str: 6
-dex: 12
-con: 7
-int: 20
+level: 1
+exp: 0
+hp: 22
+hp_max: 22
+mp: 10
+mp_max: 10
+str: 8
+dex: 7
+con: 8
+int: 5
+
+
+# level: 8
+# exp: 6080
+# hp: 28
+# hp_max: 28
+# mp: 48
+# mp_max: 48
+# str: 6
+# dex: 12
+# con: 7
+# int: 20
 equipped:
   weapon: oak_staff
   shield: none

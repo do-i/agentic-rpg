@@ -11,9 +11,9 @@ hp: 18
 hp_max: 18
 mp: 18
 mp_max: 18
-str: 5
+str: 25
 dex: 6
-con: 7
+con: 27
 int: 9
 equipped:
   weapon: oak_staff

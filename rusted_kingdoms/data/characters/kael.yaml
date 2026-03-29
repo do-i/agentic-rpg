@@ -5,16 +5,28 @@ age: 20
 gender: male
 class: warrior
 row: front
-level: 20
-exp: 40000
-hp: 128
-hp_max: 128
-mp: 0
-mp_max: 0
-str: 28
-dex: 14
-con: 26
+level: 1
+exp: 0
+hp: 22
+hp_max: 22
+mp: 10
+mp_max: 10
+str: 38
+dex: 7
+con: 38
 int: 5
+
+
+# level: 20
+# exp: 40000
+# hp: 128
+# hp_max: 128
+# mp: 0
+# mp_max: 0
+# str: 28
+# dex: 14
+# con: 26
+# int: 5
 equipped:
   weapon: iron_sword
   shield: iron_shield

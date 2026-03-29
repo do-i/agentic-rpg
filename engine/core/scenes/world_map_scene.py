@@ -217,6 +217,7 @@ class WorldMapScene(Scene):
             return False
 
         boss_flag = getattr(battle_state, "boss_flag", "")
+        state.map.set_position(self._player.tile_position)
         self._launch_battle(battle_state, boss_flag=boss_flag)
         return True
 

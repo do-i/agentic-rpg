@@ -5,21 +5,42 @@ age: 15
 gender: male
 class: rogue
 row: back
-level: 14
-exp: 17606
-hp: 44
-hp_max: 44
-mp: 16
-mp_max: 16
-str: 16
-dex: 26
-con: 13
-int: 8
+level: 1
+exp: 0
+hp: 22
+hp_max: 22
+mp: 10
+mp_max: 10
+str: 18
+dex: 37
+con: 18
+int: 5
 equipped:
   weapon: dagger
   shield: buckler
   helmet: hood_leather
   body: leather_vest
   accessory: none
-abilities_unlocked: [steal, dual_strike, smoke_screen]
+abilities_unlocked: []
 status_effects: []
+
+
+
+# level: 14
+# exp: 17606
+# hp: 44
+# hp_max: 44
+# mp: 16
+# mp_max: 16
+# str: 16
+# dex: 26
+# con: 13
+# int: 8
+# equipped:
+#   weapon: dagger
+#   shield: buckler
+#   helmet: hood_leather
+#   body: leather_vest
+#   accessory: none
+# abilities_unlocked: [steal, dual_strike, smoke_screen]
+# status_effects: []

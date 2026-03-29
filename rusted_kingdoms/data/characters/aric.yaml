@@ -12,9 +12,9 @@ hp: 22
 hp_max: 22
 mp: 10
 mp_max: 10
-str: 8
+str: 28
 dex: 7
-con: 8
+con: 28
 int: 5
 equipped:
   weapon: short_sword
