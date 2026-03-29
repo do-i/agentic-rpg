@@ -4,7 +4,7 @@ import pygame
 from engine.core.models.position import Position
 from engine.core.settings import Settings
 from engine.world.collision import CollisionMap
-from engine.world.sprite_sheet import SpriteSheet, Direction
+from engine.world.sprite_sheet import SpriteSheet
 from engine.world.animation_controller import AnimationController
 
 PLAYER_SPEED  = 5
@@ -33,16 +33,21 @@ def _rects_overlap(ax: int, ay: int, aw: int, ah: int,
             ay < by + bh and ay + ah > by)
 
 
-def _is_blocked(
-    px: float, py: float,
-    collision_map: CollisionMap | None,
-    npc_rects: list[tuple[int, int, int, int]],
-) -> bool:
-    """Return True if player rect at (px, py) overlaps any obstacle."""
+def _tile_blocked(px: float, py: float,
+                  collision_map: CollisionMap | None) -> bool:
+    """True if player rect at (px, py) overlaps a tile collision."""
+    if collision_map is None:
+        return False
     cx = int(px) + COLLISION_OFFSET_X
     cy = int(py) + COLLISION_OFFSET_Y
-    if collision_map and collision_map.is_rect_blocked(cx, cy, COLLISION_W, COLLISION_H):
-        return True
+    return collision_map.is_rect_blocked(cx, cy, COLLISION_W, COLLISION_H)
+
+
+def _npc_blocked(px: float, py: float,
+                 npc_rects: list[tuple[int, int, int, int]]) -> bool:
+    """True if player rect at (px, py) overlaps any NPC collision rect."""
+    cx = int(px) + COLLISION_OFFSET_X
+    cy = int(py) + COLLISION_OFFSET_Y
     for (nx, ny, nw, nh) in npc_rects:
         if _rects_overlap(cx, cy, COLLISION_W, COLLISION_H, nx, ny, nw, nh):
             return True
@@ -51,11 +56,16 @@ def _is_blocked(
 
 class Player:
     """
-    Handles player input, position, animation, and rendering.
+    Wall collision — axis-separation sliding:
+      1. Try full move (dx, dy).
+      2. If tile-blocked, try X-only (dx, 0).
+      3. If tile-blocked, try Y-only (0, dy).
+      4. Both blocked — stay put.
 
-    smooth_collision=True  — axis-separation: try X then Y independently
-                             so the player slides along walls / NPCs.
-    smooth_collision=False — hard block: any overlap stops movement dead.
+    NPC collision — hard block applied on top of every candidate position.
+    NPC rects never slide; they always stop the player dead.
+
+    smooth_collision=False skips axis-separation; any tile block stops dead too.
 
     Controlled via engine/config/settings.yaml:
         movement:
@@ -127,6 +137,7 @@ class Player:
         if dx == 0 and dy == 0:
             return
 
+        # normalise diagonal speed
         if dx != 0 and dy != 0:
             factor = 0.7071
             dx_move = dx * factor * PLAYER_SPEED
@@ -135,12 +146,12 @@ class Player:
             dx_move = dx * PLAYER_SPEED
             dy_move = dy * PLAYER_SPEED
 
-        rects = npc_rects or []
+        npc_rects = npc_rects or []
 
         if self._smooth:
-            self._move_smooth(dx_move, dy_move, collision_map, rects)
+            self._move_smooth(dx_move, dy_move, collision_map, npc_rects)
         else:
-            self._move_hard(dx_move, dy_move, collision_map, rects)
+            self._move_hard(dx_move, dy_move, collision_map, npc_rects)
 
     # ── Movement strategies ───────────────────────────────────
 
@@ -152,39 +163,51 @@ class Player:
         return x, y
 
     def _move_hard(self, dx: float, dy: float,
-                   collision_map: CollisionMap | None, npc_rects: list) -> None:
-        """Classic hard block — stop dead on any overlap."""
+                   collision_map: CollisionMap | None,
+                   npc_rects: list) -> None:
+        """Hard block — stop dead on any tile or NPC overlap."""
         new_x, new_y = self._clamp(self._x + dx, self._y + dy)
-        if not _is_blocked(new_x, new_y, collision_map, npc_rects):
-            self._x, self._y = new_x, new_y
+        if _tile_blocked(new_x, new_y, collision_map):
+            return
+        if _npc_blocked(new_x, new_y, npc_rects):
+            return
+        self._x, self._y = new_x, new_y
 
     def _move_smooth(self, dx: float, dy: float,
-                     collision_map: CollisionMap | None, npc_rects: list) -> None:
+                     collision_map: CollisionMap | None,
+                     npc_rects: list) -> None:
         """
-        Axis-separation sliding:
-          1. Try full (dx, dy).
-          2. If blocked, try X-only (dx, 0).
-          3. If blocked, try Y-only (0, dy).
+        Axis-separation sliding against tile collisions.
+        NPC collision is always a hard block — no sliding around NPCs.
+
+        Order:
+          1. Try full (dx, dy)   — NPC hard block applied here too.
+          2. If tile-blocked, try X-only (dx, 0).
+          3. If tile-blocked, try Y-only (0, dy).
           4. Both blocked — stay put.
         """
-        # 1. Full move
+        # ── Attempt 1: full move ──────────────────────────────
         new_x, new_y = self._clamp(self._x + dx, self._y + dy)
-        if not _is_blocked(new_x, new_y, collision_map, npc_rects):
+        if _npc_blocked(new_x, new_y, npc_rects):
+            return   # NPC in the way — hard stop, no slide
+        if not _tile_blocked(new_x, new_y, collision_map):
             self._x, self._y = new_x, new_y
             return
 
-        # 2. X-only slide
+        # ── Attempt 2: X-only slide ───────────────────────────
         new_x, new_y = self._clamp(self._x + dx, self._y)
-        if not _is_blocked(new_x, new_y, collision_map, npc_rects):
+        if not _npc_blocked(new_x, new_y, npc_rects) and \
+           not _tile_blocked(new_x, new_y, collision_map):
             self._x, self._y = new_x, new_y
             return
 
-        # 3. Y-only slide
+        # ── Attempt 3: Y-only slide ───────────────────────────
         new_x, new_y = self._clamp(self._x, self._y + dy)
-        if not _is_blocked(new_x, new_y, collision_map, npc_rects):
+        if not _npc_blocked(new_x, new_y, npc_rects) and \
+           not _tile_blocked(new_x, new_y, collision_map):
             self._x, self._y = new_x, new_y
 
-        # 4. Stay put
+        # ── Attempt 4: stay put ───────────────────────────────
 
     # ── Render ────────────────────────────────────────────────
 
