@@ -1,16 +1,12 @@
 # engine/core/state/party_state.py
-#
-# Extended stub — adds display fields needed by StatusScene.
-# Full battle stats, formation, row logic added in Phase 4.
 
 from __future__ import annotations
-import math
 
 
 class MemberState:
     """
-    Holds all per-member state needed for display and battle (Phase 4).
-    Fields marked stub will be populated from character YAML in Phase 5.
+    Holds all per-member state for display, battle, and save/load.
+    All fields are real game values — no debug overrides here.
     """
 
     def __init__(
@@ -22,36 +18,35 @@ class MemberState:
         level: int = 1,
         exp: int = 0,
         exp_next: int = 100,
-        hp: int = 308,
-        hp_max: int = 308,
-        mp: int = 10,
-        mp_max: int = 10,
-        str_: int = 208, # Debug value
-        dex: int = 70,
-        con: int = 80,
-        int_: int = 5,
+        hp: int = 20,
+        hp_max: int = 20,
+        mp: int = 0,
+        mp_max: int = 0,
+        str_: int = 10,
+        dex: int = 10,
+        con: int = 10,
+        int_: int = 10,
         equipped: dict | None = None,
     ) -> None:
-        self.id         = member_id
-        self.name       = name
+        self.id          = member_id
+        self.name        = name
         self.protagonist = protagonist
-        self.class_name = class_name
-        self.level      = level
-        self.exp        = exp
-        self.exp_next   = exp_next
-        self.hp         = hp
-        self.hp_max     = hp_max
-        self.mp         = mp
-        self.mp_max     = mp_max
-        self.str_       = str_
-        self.dex        = dex
-        self.con        = con
-        self.int_       = int_
-        self.equipped: dict = equipped or {}   # {slot: item_name_str}
+        self.class_name  = class_name
+        self.level       = level
+        self.exp         = exp
+        self.exp_next    = exp_next
+        self.hp          = hp
+        self.hp_max      = hp_max
+        self.mp          = mp
+        self.mp_max      = mp_max
+        self.str_        = str_
+        self.dex         = dex
+        self.con         = con
+        self.int_        = int_
+        self.equipped: dict = equipped or {}
 
     @property
     def exp_pct(self) -> float:
-        """0.0 – 1.0 progress toward next level."""
         if self.exp_next <= 0:
             return 1.0
         return min(self.exp / self.exp_next, 1.0)
@@ -62,15 +57,10 @@ class MemberState:
 
 
 class PartyState:
-    """
-    Holds party member list.
-    Full logic (formation, row, exp, level-up) added in Phase 4.
-    """
+    """Holds the active party member list."""
 
     def __init__(self) -> None:
         self._members: list[MemberState] = []
-
-    # ── Mutation ──────────────────────────────────────────────
 
     def add_member(self, member: MemberState) -> None:
         self._members.append(member)
@@ -80,8 +70,6 @@ class PartyState:
             if m.protagonist:
                 m.name = name
                 return
-
-    # ── Query ─────────────────────────────────────────────────
 
     @property
     def members(self) -> list[MemberState]:
