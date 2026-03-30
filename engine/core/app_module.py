@@ -149,7 +149,7 @@ class AppModule(Module):
                 return_scene_name="world_map",
             ))
         registry.register_factory("items",
-            lambda: ItemScene(holder, scene_manager, registry))
+            lambda: ItemScene(holder, scene_manager, registry, settings.debug_items))
 
         return registry
 

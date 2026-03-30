@@ -11,3 +11,4 @@ movement:
 
 debug:
   party: true   # true = add all party members at new game start
+  items: false   # true = use debug item data instead of real repository

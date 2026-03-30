@@ -13,6 +13,7 @@ class EngineSettings:
     text_speed:       str
     smooth_collision: bool   # axis-separation sliding on walls and NPCs
     debug_party:      bool   # add all party members at new game start
+    debug_items:      bool
 
     @classmethod
     def load(cls, path: Path = SETTINGS_PATH) -> "EngineSettings":
@@ -23,6 +24,7 @@ class EngineSettings:
         text_speed  = (data.get("dialogue") or {}).get("text_speed")
         smooth      = (data.get("movement") or {}).get("smooth_collision", True)
         debug_party = (data.get("debug")    or {}).get("party", False)
+        debug_items = (data.get("debug")    or {}).get("items", False)
 
         missing = []
         if saves_dir is None:
@@ -39,4 +41,5 @@ class EngineSettings:
             text_speed=text_speed,
             smooth_collision=bool(smooth),
             debug_party=bool(debug_party),
+            debug_items=bool(debug_items),
         )

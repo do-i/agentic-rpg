@@ -131,6 +131,7 @@ class ItemScene(Scene):
         holder: GameStateHolder,
         scene_manager: SceneManager,
         registry: SceneRegistry,
+        debug_items: bool,
         return_scene_name: str = "world_map",
     ) -> None:
         self._holder = holder
@@ -147,6 +148,7 @@ class ItemScene(Scene):
 
         self._fonts_ready = False
         self._debug_repo = _make_debug_repository()
+        self._debug_items = debug_items
 
     # ── Font init ─────────────────────────────────────────────
 
@@ -165,8 +167,12 @@ class ItemScene(Scene):
     # ── Data helpers ──────────────────────────────────────────
 
     def _get_repo(self) -> RepositoryState:
-        # Use debug repo until Phase 6 wires real repository
-        return self._debug_repo
+        if self._debug_items:
+            return self._debug_repo
+        try:
+            return self._holder.get().repository
+        except RuntimeError:
+            return self._debug_repo
 
     def _filtered_items(self) -> list[ItemEntry]:
         repo = self._get_repo()
