@@ -142,28 +142,38 @@ class GameStateManager:
             return SaveSlot(slot_index=index, path=path, is_autosave=is_autosave)
 
     def _serialize(self, state: GameState, is_autosave: bool) -> dict:
-        now   = datetime.now()
-        proto = state.party.protagonist
+        now = datetime.now()
 
+        # ── Party — all members, not just protagonist ──────────
         party_data = []
-        if proto:
+        for m in state.party.members:
             party_data.append({
-                "id":          proto.id,
-                "name":        proto.name,
-                "protagonist": True,
-                "class":       proto.class_name,
-                "level":       proto.level,
-                "exp":         proto.exp,
-                "exp_next":    proto.exp_next,
-                "hp":          proto.hp,
-                "hp_max":      proto.hp_max,
-                "mp":          proto.mp,
-                "mp_max":      proto.mp_max,
-                "str":         proto.str_,
-                "dex":         proto.dex,
-                "con":         proto.con,
-                "int":         proto.int_,
-                "equipped":    proto.equipped,
+                "id":          m.id,
+                "name":        m.name,
+                "protagonist": m.protagonist,
+                "class":       m.class_name,
+                "level":       m.level,
+                "exp":         m.exp,
+                "exp_next":    m.exp_next,
+                "hp":          m.hp,
+                "hp_max":      m.hp_max,
+                "mp":          m.mp,
+                "mp_max":      m.mp_max,
+                "str":         m.str_,
+                "dex":         m.dex,
+                "con":         m.con,
+                "int":         m.int_,
+                "equipped":    m.equipped,
+            })
+
+        # ── Items — full repository contents ──────────────────
+        items_data = []
+        for entry in state.repository.items:
+            items_data.append({
+                "id":     entry.id,
+                "qty":    entry.qty,
+                "tags":   sorted(entry.tags),
+                "locked": entry.locked,
             })
 
         return {
@@ -176,7 +186,7 @@ class GameStateManager:
             "party": party_data,
             "party_repository": {
                 "gp":    state.repository.gp,
-                "items": [],   # stub — Phase 6
+                "items": items_data,
             },
             "flags": state.flags.to_list(),
             "map":   state.map.to_dict(),
