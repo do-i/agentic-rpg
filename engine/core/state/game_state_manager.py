@@ -147,18 +147,28 @@ class GameStateManager:
 
     def _serialize(self, state: GameState, is_autosave: bool) -> dict:
         now = datetime.now()
-        proto = state.party.protagonist
         map_state = state.map
         print(f"[DEBUG] party members={state.party.members}")
-        # stub — Phase 5: full party serialization
         party_data = []
-        if proto:
+        for member in state.party.members:
             party_data.append({
-                "id": proto.id,
-                "name": proto.name,
-                "protagonist": True,
-                "level": 1,  # stub — Phase 4
+                "id": member.id,
+                "name": member.name,
+                "protagonist": member.protagonist,
+                "class": member.class_name,
+                "level": member.level,
+                "exp": member.exp,
+                "hp": member.hp,
+                "hp_max": member.hp_max,
+                "mp": member.mp,
+                "mp_max": member.mp_max,
+                "str": member.str_,
+                "dex": member.dex,
+                "con": member.con,
+                "int": member.int_,
+                "equipped": member.equipped,
             })
+
 
         return {
             "meta": {
@@ -170,7 +180,15 @@ class GameStateManager:
             "party": party_data,
             "party_repository": {
                 "gp": state.repository.gp,
-                "items": [],  # stub — Phase 6
+                "items": [
+                    {
+                        "id": e.id,
+                        "qty": e.qty,
+                        "tags": sorted(e.tags),
+                        "locked": e.locked,
+                    }
+                    for e in state.repository.items
+                ],
             },
             "flags": state.flags.to_list(),
             "map": map_state.to_dict(),

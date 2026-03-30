@@ -11,9 +11,9 @@ hp: 22
 hp_max: 22
 mp: 10
 mp_max: 10
-str: 8
-dex: 7
-con: 8
+str: 18
+dex: 17
+con: 18
 int: 5
 
 

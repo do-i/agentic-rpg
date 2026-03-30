@@ -1,5 +1,14 @@
 # data/party.yaml
 party:
+  - id: aric
+    name: "Aric"
+    class: hero
+    protagonist: true
+    character: data/characters/aric.yaml
+    join_condition: story_quest_started
+    join_map: town_01_ardel
+    join_position: [12, 8]
+    
   - id: elise
     name: "Elise"
     class: cleric

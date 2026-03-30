@@ -61,7 +61,7 @@ class NameEntryScene(Scene):
 
     def _confirm(self) -> None:
         name = self._name.strip() or self._manifest.get("protagonist", {}).get("name", "Hero")
-        state = GameState.from_new_game(self._manifest, name)
+        state = GameState.from_new_game(self._manifest, name, self._scenario_path)
 
         if self._debug_party:
             from engine.core.debug.debug_bootstrap import inject_full_party

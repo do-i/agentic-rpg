@@ -10,10 +10,10 @@ level: 1
 exp: 0
 hp: 22
 hp_max: 22
-mp: 10
-mp_max: 10
+mp: 12
+mp_max: 12
 str: 28
-dex: 7
+dex: 17
 con: 28
 int: 5
 equipped:
