@@ -12,7 +12,7 @@ from engine.core.battle.combatant import Combatant
 from engine.core.state.flag_state import FlagState
 from engine.core.state.party_state import PartyState, MemberState
 
-ROGUE_BASE_REDUCTION = -0.15
+ROGUE_BASE_REDUCTION = -0.05
 
 
 class EncounterManager:
@@ -36,19 +36,17 @@ class EncounterManager:
     # ── Zone management ───────────────────────────────────────
 
     def set_zone(self, zone_id: str) -> None:
-        if zone_id == self._zone_id:
-            return
-        self._zone_id = zone_id
-        if zone_id in self._zone_cache:
-            self._zone = self._zone_cache[zone_id]
+
+        if zone_id == self._zone_id and self._zone is not None:
             return
         path = self._encount_dir / f"{zone_id}.yaml"
         if path.exists():
-            zone = load_encounter_zone(path)
-            self._zone_cache[zone_id] = zone
-            self._zone = zone
+            self._zone_id = zone_id
+            if zone_id not in self._zone_cache:
+                self._zone_cache[zone_id] = load_encounter_zone(path)
+            self._zone = self._zone_cache[zone_id]
         else:
-            self._zone = None
+            self._zone = None  # towns, inns — encounters disabled here
 
     # ── Step trigger ──────────────────────────────────────────
 

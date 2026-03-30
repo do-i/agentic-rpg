@@ -24,7 +24,7 @@ equipment_slots:
   accessory: [all]
 
 passive_bonuses:
-  encounter_rate_reduction: 0.15
+  encounter_rate_reduction: 0.05
   flee_success_bonus: 0.25
   chest_trap_detect: true
 
