@@ -17,9 +17,6 @@ class NameEntryScene(Scene):
     """
     Prompts the player to enter the protagonist's name.
     On confirm → bootstraps GameState → sets holder → switches to world_map.
-
-    If debug_party=True, all party members from party.yaml are added
-    immediately after bootstrap so every character is available from turn 1.
     """
 
     def __init__(
@@ -30,21 +27,22 @@ class NameEntryScene(Scene):
         holder: GameStateHolder,
         debug_party: bool = False,
     ) -> None:
-        self._manifest = loader.load()
+        self._manifest     = loader.load()
         self._scenario_path = loader.scenario_path
+        self._classes_dir  = loader.scenario_path / "data" / "classes"
         self._scene_manager = scene_manager
-        self._registry = registry
-        self._holder = holder
-        self._debug_party = debug_party
-        self._name: str = self._manifest.get("protagonist", {}).get("name", "Hero")
-        self._prompt_font = None
-        self._input_font = None
-        self._hint_font = None
+        self._registry     = registry
+        self._holder       = holder
+        self._debug_party  = debug_party
+        self._name: str    = self._manifest["protagonist"]["name"]
+        self._prompt_font  = None
+        self._input_font   = None
+        self._hint_font    = None
 
     def _init_fonts(self) -> None:
         self._prompt_font = pygame.font.SysFont("Arial", 36)
-        self._input_font = pygame.font.SysFont("Arial", 48, bold=True)
-        self._hint_font = pygame.font.SysFont("Arial", 24)
+        self._input_font  = pygame.font.SysFont("Arial", 48, bold=True)
+        self._hint_font   = pygame.font.SysFont("Arial", 24)
 
     # ── Events ────────────────────────────────────────────────
 
@@ -60,8 +58,8 @@ class NameEntryScene(Scene):
                     self._confirm()
 
     def _confirm(self) -> None:
-        name = self._name.strip() or self._manifest.get("protagonist", {}).get("name", "Hero")
-        state = GameState.from_new_game(self._manifest, name)
+        name  = self._name.strip() or self._manifest["protagonist"]["name"]
+        state = GameState.from_new_game(self._manifest, name, self._classes_dir)
 
         if self._debug_party:
             from engine.core.debug.debug_bootstrap import inject_full_party
@@ -78,7 +76,7 @@ class NameEntryScene(Scene):
             pygame.key.start_text_input()
 
         screen.fill((10, 10, 30))
-        cx = Settings.SCREEN_WIDTH // 2
+        cx = Settings.SCREEN_WIDTH  // 2
         cy = Settings.SCREEN_HEIGHT // 2
 
         prompt = self._prompt_font.render("Enter your name", True, (180, 180, 140))
@@ -87,10 +85,10 @@ class NameEntryScene(Scene):
         box_w, box_h = 320, 60
         box_x = cx - box_w // 2
         box_y = cy - box_h // 2
-        pygame.draw.rect(screen, (40, 40, 70), (box_x, box_y, box_w, box_h))
+        pygame.draw.rect(screen, (40, 40, 70),   (box_x, box_y, box_w, box_h))
         pygame.draw.rect(screen, (180, 180, 100), (box_x, box_y, box_w, box_h), 2)
 
-        display = self._name + "|"
+        display   = self._name + "|"
         name_surf = self._input_font.render(display, True, (255, 220, 80))
         screen.blit(name_surf, (cx - name_surf.get_width() // 2, box_y + 8))
 
@@ -102,7 +100,6 @@ class NameEntryScene(Scene):
         hint = self._hint_font.render("ENTER to confirm", True, (120, 120, 100))
         screen.blit(hint, (cx - hint.get_width() // 2, cy + 80))
 
-        # debug indicator
         if self._debug_party:
             dbg = self._hint_font.render("[DEBUG] full party enabled", True, (180, 100, 100))
             screen.blit(dbg, (cx - dbg.get_width() // 2, cy + 120))

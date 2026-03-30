@@ -11,10 +11,10 @@ from engine.core.models.save_slot import SaveSlot
 from engine.core.state.game_state import GameState
 from engine.core.state.playtime import Playtime
 
-AUTOSAVE_INDEX = 0
+AUTOSAVE_INDEX    = 0
 PLAYER_SLOT_COUNT = 100
-AUTOSAVE_PREFIX = "autosave"
-SAVE_PREFIX = "save"
+AUTOSAVE_PREFIX   = "autosave"
+SAVE_PREFIX       = "save"
 
 
 def _crc32(data: str) -> str:
@@ -27,51 +27,51 @@ def _make_filename(timestamp: str, prefix: str, slot_index: int) -> str:
 
 
 def _parse_timestamp(filename: str) -> str:
-    """Extract display timestamp from filename."""
     m = re.match(r"(\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2})", filename)
     if m:
         raw = m.group(1)
         return raw[:10] + " " + raw[11:].replace("-", ":")
     return ""
 
+
 def _slot_index_from_filename(filename: str) -> int:
     m = re.search(r"-(\d{3})-[0-9A-F]{8}\.yaml$", filename)
     return int(m.group(1)) if m else 0
 
+
 class GameStateManager:
     """
     Handles save/load slot management and GameState serialization.
-
-    Directory layout:
-        saves_dir/
-            autosave-<timestamp>-<crc>.yaml   ← slot 0
-            save-<timestamp>-<crc>.yaml       ← slots 1-100 (newest first)
+    classes_dir required to restore stat_growth on load.
     """
 
-    def __init__(self, saves_dir: str | Path = "~/user_save_data") -> None:
-        self._dir = Path(saves_dir).expanduser()
+    def __init__(
+        self,
+        saves_dir: str | Path,
+        classes_dir: Path,
+    ) -> None:
+        self._dir        = Path(saves_dir).expanduser()
+        self._classes_dir = classes_dir
         self._dir.mkdir(parents=True, exist_ok=True)
 
     # ── Save ──────────────────────────────────────────────────
 
-    def save(self, state: GameState, slot_index: int, overwrite_path: Path | None = None) -> Path:
-        """
-        Write GameState to disk.
-        slot_index=0 → autosave file (replaces previous autosave).
-        slot_index>0 → new timestamped file, or overwrite existing.
-        Returns path of written file.
-        """
+    def save(
+        self,
+        state: GameState,
+        slot_index: int,
+        overwrite_path: Path | None = None,
+    ) -> Path:
         state.playtime.commit_session()
 
-        now = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        now        = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         is_autosave = slot_index == AUTOSAVE_INDEX
-        prefix = AUTOSAVE_PREFIX if is_autosave else SAVE_PREFIX
+        prefix     = AUTOSAVE_PREFIX if is_autosave else SAVE_PREFIX
 
         if overwrite_path and overwrite_path.exists():
             path = overwrite_path
         else:
             if is_autosave:
-                # remove old autosave
                 for old in self._dir.glob(f"{AUTOSAVE_PREFIX}-*.yaml"):
                     old.unlink()
             path = self._dir / _make_filename(now, prefix, slot_index)
@@ -85,25 +85,22 @@ class GameStateManager:
     # ── Load ──────────────────────────────────────────────────
 
     def load(self, path: Path) -> GameState:
-        """Deserialize a save file into GameState."""
         with open(path, "r") as f:
             data = yaml.safe_load(f)
-        return GameState.from_save(data)
+        return GameState.from_save(data, self._classes_dir)
 
     # ── Slot list ─────────────────────────────────────────────
 
     def list_slots(self) -> list[SaveSlot]:
-        """
-        Returns slot list: index 0 = autosave, 1-N = player saves newest first.
-        Always returns autosave slot + up to PLAYER_SLOT_COUNT player slots.
-        Empty slots included at end if fewer than max.
-        """
-        autosave_files = sorted(self._dir.glob(f"{AUTOSAVE_PREFIX}-*.yaml"), reverse=True)
-        player_files = sorted(self._dir.glob(f"{SAVE_PREFIX}-*.yaml"), reverse=True)
+        autosave_files = sorted(
+            self._dir.glob(f"{AUTOSAVE_PREFIX}-*.yaml"), reverse=True
+        )
+        player_files = sorted(
+            self._dir.glob(f"{SAVE_PREFIX}-*.yaml"), reverse=True
+        )
 
         slots: list[SaveSlot] = []
 
-        # slot 0 — autosave
         if autosave_files:
             slots.append(self._slot_from_file(autosave_files[0], 0, is_autosave=True))
         else:
@@ -115,81 +112,72 @@ class GameStateManager:
             slot_map[idx] = self._slot_from_file(f, idx)
 
         for i in range(1, PLAYER_SLOT_COUNT + 1):
-            if i in slot_map:
-                slots.append(slot_map[i])
-            else:
-                slots.append(SaveSlot(slot_index=i, path=None))
-
+            slots.append(slot_map[i] if i in slot_map
+                         else SaveSlot(slot_index=i, path=None))
 
         return slots
 
     # ── Helpers ───────────────────────────────────────────────
 
-    def _slot_from_file(self, path: Path, index: int, is_autosave: bool = False) -> SaveSlot:
+    def _slot_from_file(
+        self, path: Path, index: int, is_autosave: bool = False
+    ) -> SaveSlot:
         try:
             with open(path, "r") as f:
                 data = yaml.safe_load(f)
-            meta = data.get("meta", {})
-            party = data.get("party", [{}])
-            proto = next((m for m in party if m.get("protagonist")), party[0] if party else {})
+            meta  = data["meta"]
+            party = data["party"]
+            proto = next((m for m in party if m.get("protagonist")), party[0])
             return SaveSlot(
                 slot_index=index,
                 path=path,
                 timestamp=_parse_timestamp(path.name),
-                playtime_display=Playtime.format(meta.get("playtime_seconds", 0)),
-                location=meta.get("location_display", ""),
-                protagonist_name=proto.get("name", ""),
-                level=proto.get("level", 1),
+                playtime_display=Playtime.format(meta["playtime_seconds"]),
+                location=meta["location_display"],
+                protagonist_name=proto["name"],
+                level=proto["level"],
                 is_autosave=is_autosave,
             )
         except Exception:
             return SaveSlot(slot_index=index, path=path, is_autosave=is_autosave)
 
     def _serialize(self, state: GameState, is_autosave: bool) -> dict:
-        now = datetime.now()
-        map_state = state.map
-        print(f"[DEBUG] party members={state.party.members}")
-        party_data = []
-        for member in state.party.members:
-            party_data.append({
-                "id": member.id,
-                "name": member.name,
-                "protagonist": member.protagonist,
-                "class": member.class_name,
-                "level": member.level,
-                "exp": member.exp,
-                "hp": member.hp,
-                "hp_max": member.hp_max,
-                "mp": member.mp,
-                "mp_max": member.mp_max,
-                "str": member.str_,
-                "dex": member.dex,
-                "con": member.con,
-                "int": member.int_,
-                "equipped": member.equipped,
-            })
+        now   = datetime.now()
+        proto = state.party.protagonist
 
+        party_data = []
+        if proto:
+            party_data.append({
+                "id":          proto.id,
+                "name":        proto.name,
+                "protagonist": True,
+                "class":       proto.class_name,
+                "level":       proto.level,
+                "exp":         proto.exp,
+                "exp_next":    proto.exp_next,
+                "hp":          proto.hp,
+                "hp_max":      proto.hp_max,
+                "mp":          proto.mp,
+                "mp_max":      proto.mp_max,
+                "str":         proto.str_,
+                "dex":         proto.dex,
+                "con":         proto.con,
+                "int":         proto.int_,
+                "equipped":    proto.equipped,
+            })
 
         return {
             "meta": {
-                "timestamp": now.strftime("%Y-%m-%d-%H-%M-%S"),
+                "timestamp":        now.strftime("%Y-%m-%d-%H-%M-%S"),
                 "playtime_seconds": state.playtime.to_seconds(),
-                "location_display": map_state.current,
-                "is_autosave": is_autosave,
+                "location_display": state.map.current,
+                "is_autosave":      is_autosave,
             },
             "party": party_data,
             "party_repository": {
-                "gp": state.repository.gp,
-                "items": [
-                    {
-                        "id": e.id,
-                        "qty": e.qty,
-                        "tags": sorted(e.tags),
-                        "locked": e.locked,
-                    }
-                    for e in state.repository.items
-                ],
+                "gp":    state.repository.gp,
+                "items": [],   # stub — Phase 6
             },
             "flags": state.flags.to_list(),
-            "map": map_state.to_dict(),
+            "map":   state.map.to_dict(),
         }

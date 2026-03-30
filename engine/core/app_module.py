@@ -1,8 +1,4 @@
 # engine/core/app_module.py
-# Changes from previous version:
-#   - added EnemyLoader, EncounterResolver, EncounterManager providers
-#   - world_map factory passes encounter_manager
-#   - battle scene registered as factory
 
 from injector import Module, singleton, provider
 
@@ -71,8 +67,16 @@ class AppModule(Module):
 
     @provider
     @singleton
-    def provide_game_state_manager(self, settings: EngineSettings) -> GameStateManager:
-        return GameStateManager(saves_dir=settings.saves_dir)
+    def provide_game_state_manager(
+        self,
+        settings: EngineSettings,
+        loader: ManifestLoader,
+    ) -> GameStateManager:
+        classes_dir = loader.scenario_path / "data" / "classes"
+        return GameStateManager(
+            saves_dir=settings.saves_dir,
+            classes_dir=classes_dir,
+        )
 
     @provider
     @singleton

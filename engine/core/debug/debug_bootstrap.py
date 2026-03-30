@@ -13,56 +13,56 @@ from engine.core.state.game_state import GameState
 from engine.core.state.party_state import MemberState
 
 
+def _load_class_data(scenario_path: Path, class_name: str) -> dict:
+    path = scenario_path / "data" / "classes" / f"{class_name}.yaml"
+    if not path.exists():
+        raise FileNotFoundError(f"Class YAML not found: {path}")
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+
 def inject_full_party(state: GameState, scenario_path: Path) -> None:
-    """
-    Reads data/party.yaml and data/characters/*.yaml from the scenario,
-    adds all non-protagonist members to GameState with their starting stats.
-    exp_next is auto-calculated from class_name + level by MemberState.
-    Safe to call even if party.yaml is missing — silently no-ops.
-    """
     party_path = scenario_path / "data" / "party.yaml"
     if not party_path.exists():
-        print("[DEBUG] party.yaml not found — skipping debug party inject")
-        return
+        raise FileNotFoundError(f"party.yaml not found: {party_path}")
 
     with open(party_path, "r") as f:
-        data = yaml.safe_load(f) or {}
+        data = yaml.safe_load(f)
 
     existing_ids = {m.id for m in state.party.members}
 
-    for entry in data.get("party", []):
-        member_id = entry.get("id")
-        if not member_id or member_id in existing_ids:
+    for entry in data["party"]:
+        member_id = entry["id"]
+        if member_id in existing_ids:
             continue
 
-        char_file = entry.get("character")
-        char_data = {}
-        if char_file:
-            char_path = scenario_path / char_file
-            if char_path.exists():
-                with open(char_path, "r") as f:
-                    char_data = yaml.safe_load(f) or {}
+        char_path = scenario_path / entry["character"]
+        if not char_path.exists():
+            raise FileNotFoundError(f"Character YAML not found: {char_path}")
+        with open(char_path, "r") as f:
+            char_data = yaml.safe_load(f)
 
-        class_name = char_data.get("class", entry.get("class", ""))
+        class_name = char_data["class"]
+        class_data = _load_class_data(scenario_path, class_name)
 
         member = MemberState(
             member_id=member_id,
-            name=char_data.get("name", entry.get("name", member_id)),
+            name=char_data["name"],
             protagonist=False,
             class_name=class_name,
-            level=char_data.get("level", 1),
-            exp=char_data.get("exp", 0),
-            # exp_next omitted → auto-calculated from class_name + level
-            hp=char_data.get("hp", 20),
-            hp_max=char_data.get("hp_max", char_data.get("hp", 20)),
-            mp=char_data.get("mp", 0),
-            mp_max=char_data.get("mp_max", char_data.get("mp", 0)),
-            str_=char_data.get("str", 10),
-            dex=char_data.get("dex", 10),
-            con=char_data.get("con", 10),
-            int_=char_data.get("int", 10),
-            equipped=char_data.get("equipped", {}),
+            level=char_data["level"],
+            exp=char_data["exp"],
+            hp=char_data["hp"],
+            hp_max=char_data["hp_max"],
+            mp=char_data["mp"],
+            mp_max=char_data["mp_max"],
+            str_=char_data["str"],
+            dex=char_data["dex"],
+            con=char_data["con"],
+            int_=char_data["int"],
+            equipped=char_data["equipped"],
         )
+        member.load_stat_growth(class_data)
         state.party.add_member(member)
-        print(f"[DEBUG] added party member: {member.name} ({member.class_name}) "
+        print(f"[DEBUG] added: {member.name} ({class_name}) "
               f"Lv{member.level} exp_next={member.exp_next}")
