@@ -8,7 +8,7 @@ import random
 from dataclasses import dataclass, field
 
 from engine.core.battle.combatant import Combatant
-from engine.core.state.party_state import PartyState, MemberState
+from engine.core.state.party_state import PartyState, MemberState, _calc_exp_next
 
 
 # ── EXP formula (docs/02-Characters.md) ──────────────────────
@@ -35,12 +35,12 @@ def exp_required(class_name: str, level: int) -> int:
 
 @dataclass
 class LevelUpResult:
-    member_id:  str
+    member_id:   str
     member_name: str
-    old_level:  int
-    new_level:  int
-    hp_gained:  int
-    mp_gained:  int
+    old_level:   int
+    new_level:   int
+    hp_gained:   int
+    mp_gained:   int
 
 
 @dataclass
@@ -119,9 +119,11 @@ class RewardCalculator:
         level_ups = []
 
         while member.level < LEVEL_CAP:
+            # threshold to reach the NEXT level
             needed = exp_required(member.class_name, member.level + 1)
             if member.exp < needed:
                 break
+
             old_level = member.level
             member.level += 1
             hp_gain, mp_gain = self._stat_gains(member)
@@ -129,6 +131,10 @@ class RewardCalculator:
             member.mp_max += mp_gain
             member.hp = member.hp_max   # full restore on level-up
             member.mp = member.mp_max
+
+            # keep stored exp_next in sync with new level
+            member.recalc_exp_next()
+
             level_ups.append(LevelUpResult(
                 member_id=member.id,
                 member_name=member.name,
@@ -141,11 +147,8 @@ class RewardCalculator:
         return level_ups
 
     def _stat_gains(self, member: MemberState) -> tuple[int, int]:
-        """
-        HP gain = CON + 6, MP gain = INT + 6  (docs/02-Characters.md).
-        Uses MemberState fields; full stat_growth table applied in Phase 5.
-        """
-        con = getattr(member, "con", 8)
+        """HP gain = CON + 6, MP gain = INT + 6  (docs/02-Characters.md)."""
+        con  = getattr(member, "con",  8)
         int_ = getattr(member, "int_", 6)
         return con + 6, int_ + 6
 
@@ -161,7 +164,7 @@ class RewardCalculator:
 
         for enemy in enemies:
             # MC drop — always guaranteed (docs/10-Enemy.md)
-            mc_drops.append({"size": "S", "qty": 1})   # stub — real tier from enemy YAML
+            mc_drops.append({"size": "S", "qty": 1})   # stub — Phase 4
 
         return LootResult(mc_drops=mc_drops, item_drops=item_drops)
 

@@ -1,12 +1,34 @@
 # engine/core/state/party_state.py
 
 from __future__ import annotations
+import math
+
+# EXP formula constants — mirrors battle_rewards.py
+# exp_required(level) = base * (level ^ 2.0)
+_CLASS_EXP_BASE: dict[str, int] = {
+    "hero":     100,
+    "warrior":  110,
+    "sorcerer":  95,
+    "cleric":    95,
+    "rogue":     90,
+}
+_EXP_FACTOR = 2.0
+LEVEL_CAP   = 100
+
+
+def _calc_exp_next(class_name: str, level: int) -> int:
+    """EXP required to reach level+1. Returns 0 at level cap."""
+    if level >= LEVEL_CAP:
+        return 0
+    base = _CLASS_EXP_BASE.get(class_name.lower(), 100)
+    return int(base * math.pow(level + 1, _EXP_FACTOR))
 
 
 class MemberState:
     """
     Holds all per-member state for display, battle, and save/load.
-    All fields are real game values — no debug overrides here.
+    exp_next is stored (matches save schema) and recalculated on init
+    and every level-up via recalc_exp_next().
     """
 
     def __init__(
@@ -17,7 +39,7 @@ class MemberState:
         class_name: str = "",
         level: int = 1,
         exp: int = 0,
-        exp_next: int = 100,
+        exp_next: int | None = None,   # None → auto-calculate from class+level
         hp: int = 20,
         hp_max: int = 20,
         mp: int = 0,
@@ -34,7 +56,6 @@ class MemberState:
         self.class_name  = class_name
         self.level       = level
         self.exp         = exp
-        self.exp_next    = exp_next
         self.hp          = hp
         self.hp_max      = hp_max
         self.mp          = mp
@@ -44,6 +65,16 @@ class MemberState:
         self.con         = con
         self.int_        = int_
         self.equipped: dict = equipped or {}
+
+        # stored field — recalculated whenever level or class changes
+        self.exp_next: int = (
+            exp_next if exp_next is not None
+            else _calc_exp_next(class_name, level)
+        )
+
+    def recalc_exp_next(self) -> None:
+        """Call after any level or class_name change."""
+        self.exp_next = _calc_exp_next(self.class_name, self.level)
 
     @property
     def exp_pct(self) -> float:
