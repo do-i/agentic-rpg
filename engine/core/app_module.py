@@ -143,6 +143,7 @@ class AppModule(Module):
                 encounter_manager=encounter_manager,
                 text_speed=settings.text_speed,
                 smooth_collision=settings.smooth_collision,
+                mc_exchange_confirm_large=settings.mc_exchange_confirm_large,
             ))
         registry.register_factory("status",
             lambda: StatusScene(

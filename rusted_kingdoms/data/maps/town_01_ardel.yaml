@@ -32,9 +32,14 @@ npcs:
     excuses: guide_excuses
     position: [5, 3]
     sprite: assets/sprites/npc/man_01.tsx
-    default_facing: down   # idle direction when player is far
+    default_facing: down
   - id: elder
     dialogue: elder_intro
     position: [12, 8]
     sprite: assets/sprites/npc/old_man_01.tsx
-    default_facing: down   # idle direction when player is far
+    default_facing: down
+  - id: mc_shop_keeper
+    dialogue: mc_shop_intro
+    position: [15, 6]
+    sprite: assets/sprites/npc/man_01.tsx
+    default_facing: down

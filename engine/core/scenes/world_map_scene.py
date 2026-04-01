@@ -1,9 +1,7 @@
 # engine/core/scenes/world_map_scene.py
 # Changes from previous version:
-#   - accepts encounter_manager parameter
-#   - calls encounter_manager.set_zone() on map load
-#   - calls encounter_manager.on_step() on each tile step
-#   - launches BattleScene on encounter trigger
+#   - handles open_shop: magic_core from dialogue on_complete
+#   - MagicCoreShopScene launched as overlay (same pattern as SaveModalScene)
 
 import pygame
 from engine.core.models.position import Position
@@ -17,6 +15,7 @@ from engine.core.dialogue.dialogue_engine import DialogueEngine
 from engine.core.scenes.save_modal_scene import SaveModalScene
 from engine.core.scenes.dialogue_scene import DialogueScene
 from engine.core.scenes.battle_scene import BattleScene
+from engine.core.scenes.magic_core_shop_scene import MagicCoreShopScene
 from engine.core.encounter.encounter_manager import EncounterManager
 from engine.data.loader import ManifestLoader
 from engine.world.tile_map import TileMap
@@ -33,7 +32,7 @@ FADE_SPEED = 300  # alpha units per second
 
 class WorldMapScene(Scene):
     """
-    Phase 4 — adds encounter trigger on tile step.
+    Phase 6 — adds Magic Core Shop overlay support.
     """
 
     def __init__(
@@ -49,6 +48,7 @@ class WorldMapScene(Scene):
         encounter_manager: EncounterManager,
         text_speed: str = "fast",
         smooth_collision: bool = True,
+        mc_exchange_confirm_large: bool = True,
     ) -> None:
         self._smooth_collision = smooth_collision
         self._holder = holder
@@ -61,6 +61,7 @@ class WorldMapScene(Scene):
         self._npc_loader = npc_loader
         self._encounter_manager = encounter_manager
         self._text_speed = text_speed
+        self._mc_exchange_confirm_large = mc_exchange_confirm_large
 
         self._tile_map: TileMap | None = None
         self._camera: Camera | None = None
@@ -69,13 +70,13 @@ class WorldMapScene(Scene):
 
         self._save_modal: SaveModalScene | None = None
         self._dialogue: DialogueScene | None = None
+        self._mc_shop: MagicCoreShopScene | None = None
 
         self._fade_alpha: int = 255
         self._fade_dir: int = -1
         self._pending_transition: dict | None = None
 
-        # encounter tracking
-        self._last_tile: Position | None = None   # detect tile step
+        self._last_tile: Position | None = None
 
     def _init(self) -> None:
         scenario_path = self._loader.scenario_path
@@ -99,7 +100,6 @@ class WorldMapScene(Scene):
         map_yaml = scenario_path / "data" / "maps" / f"{map_id}.yaml"
         self._npcs = self._npc_loader.load_from_map(map_yaml)
 
-        # set encounter zone matching current map id
         self._encounter_manager.set_zone(map_id)
         self._last_tile = self._player.tile_position
 
@@ -136,6 +136,9 @@ class WorldMapScene(Scene):
             return
         if self._save_modal:
             self._save_modal.handle_events(events)
+            return
+        if self._mc_shop:
+            self._mc_shop.handle_events(events)
             return
 
         for event in events:
@@ -190,24 +193,38 @@ class WorldMapScene(Scene):
         remaining = self._dialogue_engine.dispatch_on_complete(
             on_complete, state.flags, state.repository
         )
+
+        # open_shop
+        shop_type = remaining.get("open_shop")
+        if shop_type == "magic_core":
+            self._open_mc_shop()
+            return
+
         transition = remaining.get("transition")
         if transition:
             self._start_fade_out(transition)
 
+    # ── Magic Core Shop ───────────────────────────────────────
+
+    def _open_mc_shop(self) -> None:
+        self._mc_shop = MagicCoreShopScene(
+            holder=self._holder,
+            scene_manager=self._scene_manager,
+            registry=self._registry,
+            on_close=self._close_mc_shop,
+            confirm_large=self._mc_exchange_confirm_large,
+        )
+
+    def _close_mc_shop(self) -> None:
+        self._mc_shop = None
+
     # ── Encounter ─────────────────────────────────────────────
 
     def _check_encounter(self) -> bool:
-        """
-        Called once per tile step. Returns True if a battle was triggered
-        (caller should skip portal check that frame).
-        """
         state = self._holder.get()
-
-        # collect inventory item ids — stub: full item list from Phase 6
         inventory_ids: set[str] = {
             entry.id for entry in state.repository.items
         }
-
         battle_state = self._encounter_manager.on_step(
             flags=state.flags,
             party=state.party,
@@ -233,7 +250,6 @@ class WorldMapScene(Scene):
         self._scene_manager.switch(scene)
 
     def _on_battle_defeat(self) -> None:
-        # stub — Phase 4: show game over screen
         self._scene_manager.switch(self._registry.get("world_map"))
 
     # ── Portal ────────────────────────────────────────────────
@@ -292,6 +308,9 @@ class WorldMapScene(Scene):
         if self._save_modal:
             self._save_modal.update(delta)
             return
+        if self._mc_shop:
+            self._mc_shop.update(delta)
+            return
         if self._player is None:
             return
 
@@ -306,7 +325,6 @@ class WorldMapScene(Scene):
         self._player.update(keys, self._tile_map.collision_map, frozen, npc_rects=npc_rects)
         self._camera.update(self._player.pixel_position)
 
-        # tile step detection → encounter roll
         current_tile = self._player.tile_position
         if current_tile != self._last_tile:
             self._last_tile = current_tile
@@ -344,6 +362,8 @@ class WorldMapScene(Scene):
             self._save_modal.render(screen)
         if self._dialogue:
             self._dialogue.render(screen)
+        if self._mc_shop:
+            self._mc_shop.render(screen)
 
         if self._fade_alpha > 0:
             fade_surf = pygame.Surface(

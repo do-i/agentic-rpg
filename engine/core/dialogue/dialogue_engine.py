@@ -38,7 +38,7 @@ class DialogueEngine:
     Loads a dialogue YAML, evaluates conditions against FlagState,
     returns the first matching DialogueResult.
     Dispatches on_complete actions: set_flag, give_items.
-    join_party and transition are returned for the caller to handle.
+    join_party, transition, open_shop are returned for the caller to handle.
     """
 
     def __init__(self, dialogue_dir: Path) -> None:
@@ -81,7 +81,8 @@ class DialogueEngine:
     ) -> dict:
         """
         Execute side-effect actions that this layer can handle.
-        Returns remaining actions for caller (join_party, transition, start_battle).
+        Returns remaining actions for caller:
+          join_party, transition, start_battle, open_shop.
         """
         if not on_complete:
             return {}
@@ -103,7 +104,7 @@ class DialogueEngine:
                 repository.add_item(item_id, qty)
 
         # pass through to caller
-        for key in ("join_party", "transition", "start_battle"):
+        for key in ("join_party", "transition", "start_battle", "open_shop"):
             if key in on_complete:
                 remaining[key] = on_complete[key]
 

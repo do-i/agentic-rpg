@@ -9,22 +9,24 @@ SETTINGS_PATH = Path(__file__).parent.parent.parent / "config" / "settings.yaml"
 
 @dataclass(frozen=True)
 class EngineSettings:
-    saves_dir:        str
-    text_speed:       str
-    smooth_collision: bool   # axis-separation sliding on walls and NPCs
-    debug_party:      bool   # add all party members at new game start
-    debug_items:      bool
+    saves_dir:                 str
+    text_speed:                str
+    smooth_collision:          bool
+    mc_exchange_confirm_large: bool
+    debug_party:               bool
+    debug_items:               bool
 
     @classmethod
     def load(cls, path: Path = SETTINGS_PATH) -> "EngineSettings":
         with open(path, "r") as f:
             data = yaml.safe_load(f) or {}
 
-        saves_dir   = (data.get("saves")    or {}).get("dir")
-        text_speed  = (data.get("dialogue") or {}).get("text_speed")
-        smooth      = (data.get("movement") or {}).get("smooth_collision", True)
-        debug_party = (data.get("debug")    or {}).get("party", False)
-        debug_items = (data.get("debug")    or {}).get("items", False)
+        saves_dir    = (data.get("saves")    or {}).get("dir")
+        text_speed   = (data.get("dialogue") or {}).get("text_speed")
+        smooth       = (data.get("movement") or {}).get("smooth_collision", True)
+        confirm_large = (data.get("shop")    or {}).get("mc_exchange_confirm_large", True)
+        debug_party  = (data.get("debug")    or {}).get("party", False)
+        debug_items  = (data.get("debug")    or {}).get("items", False)
 
         missing = []
         if saves_dir is None:
@@ -40,6 +42,7 @@ class EngineSettings:
             saves_dir=saves_dir,
             text_speed=text_speed,
             smooth_collision=bool(smooth),
+            mc_exchange_confirm_large=bool(confirm_large),
             debug_party=bool(debug_party),
             debug_items=bool(debug_items),
         )
