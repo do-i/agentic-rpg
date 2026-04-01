@@ -1,6 +1,8 @@
+# data/items/key_items.yaml  (update existing entry)
 - id: phoenix_wing
   name: Phoenix Wing
-  type: key                 # permanent, never lost, never consumed
+  type: key
+  usable: true              # ← new flag
   use_context: [world_map]
   effect:
     revive_hp_pct: 0.30
@@ -11,6 +13,7 @@
 - id: sky_crystal
   name: Sky Crystal
   type: key
+  usable: false
   use_context: null         # triggers fly unlock via story script
   effect:
     unlock_flag: transport_fly_unlocked

@@ -1,6 +1,9 @@
 # V1 Deliverables
 
 ## Unstub
+- Use item
+- Add item shop
+- add inn
 - Player walk over NPC's head. Player sprite should go behind NPC's head.
 
 ## Feature
