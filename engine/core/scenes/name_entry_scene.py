@@ -8,6 +8,7 @@ from engine.core.settings import Settings
 from engine.core.state.game_state import GameState
 from engine.core.state.game_state_holder import GameStateHolder
 from engine.data.loader import ManifestLoader
+from engine.core.debug.debug_bootstrap import inject_full_party
 
 
 NAME_MAX_LENGTH = 12
@@ -62,7 +63,6 @@ class NameEntryScene(Scene):
         state = GameState.from_new_game(self._manifest, name, self._classes_dir, self._scenario_path)
 
         if self._debug_party:
-            from engine.core.debug.debug_bootstrap import inject_full_party
             inject_full_party(state, self._scenario_path)
 
         self._holder.set(state)

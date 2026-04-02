@@ -9,6 +9,8 @@
 
 from __future__ import annotations
 
+import random
+
 import pygame
 from pathlib import Path
 
@@ -20,6 +22,8 @@ from engine.core.battle.combatant import Combatant, StatusEffect
 from engine.core.battle.battle_state import BattleState, BattlePhase
 from engine.core.battle.battle_rewards import RewardCalculator
 from engine.core.state.game_state_holder import GameStateHolder
+from engine.core.encounter.encounter_manager import EncounterManager
+from engine.core.scenes.post_battle_scene import PostBattleScene
 
 # ── Layout ────────────────────────────────────────────────────
 ENEMY_AREA_H    = int(Settings.SCREEN_HEIGHT * 0.65)
@@ -385,7 +389,6 @@ class BattleScene(Scene):
             self._check_result()
             return
 
-        import random
         target = random.choice(targets)
 
         dmg = max(1, active.atk - target.def_)
@@ -422,11 +425,9 @@ class BattleScene(Scene):
         self._sync_party_state(game_state.party)
 
         # add MC drops to repository
-        from engine.core.encounter.encounter_manager import EncounterManager
         EncounterManager.add_mc_drops(game_state.repository, rewards.loot.mc_drops)
 
         # launch post-battle screen
-        from engine.core.scenes.post_battle_scene import PostBattleScene
         self._scene_manager.switch(PostBattleScene(
             rewards=rewards,
             scene_manager=self._scene_manager,
