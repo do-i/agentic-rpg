@@ -345,18 +345,26 @@ class WorldMapScene(Scene):
         state = self._holder.get()
         player_pos = self._player.pixel_position
 
-        for npc in self._npcs:
-            if npc.is_present(state.flags):
-                near = npc.is_near(player_pos) and self._dialogue is None
-                npc.render(
-                    screen,
-                    self._camera.offset_x,
-                    self._camera.offset_y,
-                    near=near,
-                    player_pos=player_pos,
-                )
+        visible_npcs = [npc for npc in self._npcs if npc.is_present(state.flags)]
 
-        self._player.render(screen, self._camera.offset_x, self._camera.offset_y)
+        def render_player():
+            self._player.render(screen, self._camera.offset_x, self._camera.offset_y)
+
+        def render_npc(npc):
+            near = npc.is_near(player_pos) and self._dialogue is None
+            npc.render(
+                screen,
+                self._camera.offset_x,
+                self._camera.offset_y,
+                near=near,
+                player_pos=player_pos,
+            )
+
+        drawables = [(player_pos.y, render_player)] + [
+            (npc._py, lambda n=npc: render_npc(n)) for npc in visible_npcs
+        ]
+        for _, draw in sorted(drawables, key=lambda d: d[0]):
+            draw()
 
         if self._save_modal:
             self._save_modal.render(screen)

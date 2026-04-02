@@ -71,7 +71,7 @@ Solution
 sudo pacman -S sdl2 sdl2_ttf sdl2_image sdl2_mixer
 pip uninstall pygame
 pip cache purge
-pip install -r requirements.txt
+pip install .
 ```
 ## Credits and Attribution
 
