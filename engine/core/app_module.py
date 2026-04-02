@@ -21,6 +21,7 @@ from engine.core.dialogue.dialogue_engine import DialogueEngine
 from engine.core.encounter.enemy_loader import EnemyLoader
 from engine.core.encounter.encounter_resolver import EncounterResolver
 from engine.core.encounter.encounter_manager import EncounterManager
+from engine.core.item.item_effect_handler import ItemEffectHandler
 from engine.data.loader import ManifestLoader
 from engine.world.tile_map_factory import TileMapFactory
 from engine.world.npc_loader import NpcLoader
@@ -112,6 +113,12 @@ class AppModule(Module):
 
     @provider
     @singleton
+    def provide_item_effect_handler(self, loader: ManifestLoader) -> ItemEffectHandler:
+        field_use_path = loader.scenario_path / "data" / "items" / "field_use.yaml"
+        return ItemEffectHandler(field_use_path)
+
+    @provider
+    @singleton
     def provide_scene_registry(
         self,
         settings: EngineSettings,
@@ -123,6 +130,7 @@ class AppModule(Module):
         dialogue_engine: DialogueEngine,
         npc_loader: NpcLoader,
         encounter_manager: EncounterManager,
+        effect_handler: ItemEffectHandler,
     ) -> SceneRegistry:
         registry = SceneRegistry()
 
@@ -154,7 +162,14 @@ class AppModule(Module):
                 return_scene_name="world_map",
             ))
         registry.register_factory("items",
-            lambda: ItemScene(holder, scene_manager, registry, settings.debug_items))
+            lambda: ItemScene(
+                holder=holder,
+                scene_manager=scene_manager,
+                registry=registry,
+                debug_items=settings.debug_items,
+                effect_handler=effect_handler,
+                use_aoe_confirm=settings.use_aoe_confirm,
+            ))
 
         return registry
 

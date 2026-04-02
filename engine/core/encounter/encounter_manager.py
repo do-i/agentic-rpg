@@ -1,6 +1,7 @@
 # engine/core/encounter/encounter_manager.py
 #
 # Phase 4 — Battle system
+# Phase 6 — magic_core tag added to MC drops
 
 from __future__ import annotations
 from pathlib import Path
@@ -11,8 +12,20 @@ from engine.core.battle.battle_state import BattleState
 from engine.core.battle.combatant import Combatant
 from engine.core.state.flag_state import FlagState
 from engine.core.state.party_state import PartyState, MemberState
+from engine.core.state.repository_state import RepositoryState
 
 ROGUE_BASE_REDUCTION = -0.05
+
+# MC item ids that get the magic_core tag
+MC_ITEM_IDS = {"mc_xs", "mc_s", "mc_m", "mc_l", "mc_xl"}
+
+
+def _add_mc(repository: RepositoryState, item_id: str, qty: int) -> None:
+    """Add a Magic Core item and ensure it carries the magic_core tag."""
+    repository.add_item(item_id, qty)
+    entry = repository.get_item(item_id)
+    if entry is not None:
+        entry.tags.add("magic_core")
 
 
 class EncounterManager:
@@ -36,7 +49,6 @@ class EncounterManager:
     # ── Zone management ───────────────────────────────────────
 
     def set_zone(self, zone_id: str) -> None:
-
         if zone_id == self._zone_id and self._zone is not None:
             return
         path = self._encount_dir / f"{zone_id}.yaml"
@@ -46,7 +58,7 @@ class EncounterManager:
                 self._zone_cache[zone_id] = load_encounter_zone(path)
             self._zone = self._zone_cache[zone_id]
         else:
-            self._zone = None  # towns, inns — encounters disabled here
+            self._zone = None  # towns, inns — encounters disabled
 
     # ── Step trigger ──────────────────────────────────────────
 
@@ -73,6 +85,21 @@ class EncounterManager:
 
         return None
 
+    # ── Post-battle MC tagging ────────────────────────────────
+
+    @staticmethod
+    def add_mc_drops(repository: RepositoryState, mc_drops: list[dict]) -> None:
+        """
+        Called by BattleScene after victory to add MC drops to the repository.
+        Ensures magic_core tag is set on every MC item.
+        size keys: XS, S, M, L, XL (uppercase from reward calc).
+        """
+        for mc in mc_drops:
+            size   = mc.get("size", "S").lower()
+            qty    = mc.get("qty", 1)
+            item_id = f"mc_{size}"
+            _add_mc(repository, item_id, qty)
+
     # ── Modifier ──────────────────────────────────────────────
 
     def _compute_modifier(self, party: PartyState) -> float:
@@ -98,15 +125,6 @@ class EncounterManager:
         return state
 
     def _member_to_combatant(self, member: MemberState) -> Combatant:
-        """
-        Maps MemberState → Combatant using real character stats.
-        Battle formula (docs/03-Battle.md):
-          physical damage = (str + weapon_atk) - enemy_def  → atk = str_
-          turn order      = dex descending                  → dex = dex
-          defense         = con                             → def_ = con
-          magic resist    = int                             → mres = int_
-        Equipment stat bonuses added in Phase 5.
-        """
         return Combatant(
             id=member.id,
             name=member.name,
@@ -120,5 +138,5 @@ class EncounterManager:
             dex=member.dex,
             is_enemy=False,
             portrait_path=f"assets/images/{member.id}_profile.png",
-            abilities=[],   # stub — Phase 5 loads from class YAML
+            abilities=[],
         )

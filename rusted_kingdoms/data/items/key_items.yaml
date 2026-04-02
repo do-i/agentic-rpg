@@ -1,8 +1,7 @@
-# data/items/key_items.yaml  (update existing entry)
 - id: phoenix_wing
   name: Phoenix Wing
   type: key
-  usable: true              # ← new flag
+  usable: true              # key item — usable in field, never consumed
   use_context: [world_map]
   effect:
     revive_hp_pct: 0.30

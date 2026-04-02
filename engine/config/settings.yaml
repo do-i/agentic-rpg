@@ -12,6 +12,9 @@ movement:
 shop:
   mc_exchange_confirm_large: true   # show confirm dialog for L and XL cores
 
+item:
+  use_aoe_confirm: true   # confirm before applying all_alive items (Tent, Rest Capsule)
+
 debug:
   party: true   # true = add all party members at new game start
   items: false   # true = use debug item data instead of real repository
