@@ -3,6 +3,8 @@
 #   - handles open_shop: magic_core from dialogue on_complete
 #   - MagicCoreShopScene launched as overlay (same pattern as SaveModalScene)
 
+import sys
+
 import pygame
 from engine.core.models.position import Position
 from engine.core.scene import Scene
@@ -71,6 +73,8 @@ class WorldMapScene(Scene):
         self._save_modal: SaveModalScene | None = None
         self._dialogue: DialogueScene | None = None
         self._mc_shop: MagicCoreShopScene | None = None
+        self._quit_confirm: bool = False
+        self._quit_font: pygame.font.Font | None = None
 
         self._fade_alpha: int = 255
         self._fade_dir: int = -1
@@ -140,10 +144,21 @@ class WorldMapScene(Scene):
         if self._mc_shop:
             self._mc_shop.handle_events(events)
             return
+        if self._quit_confirm:
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        pygame.quit()
+                        sys.exit(0)
+                    elif event.key == pygame.K_ESCAPE:
+                        self._quit_confirm = False
+            return
 
         for event in events:
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_F2:
+                if event.key == pygame.K_ESCAPE:
+                    self._quit_confirm = True
+                elif event.key == pygame.K_F2:
                     self._open_save_modal()
                 elif event.key == pygame.K_s:
                     self._scene_manager.switch(self._registry.get("status"))
@@ -311,6 +326,8 @@ class WorldMapScene(Scene):
         if self._mc_shop:
             self._mc_shop.update(delta)
             return
+        if self._quit_confirm:
+            return
         if self._player is None:
             return
 
@@ -332,6 +349,31 @@ class WorldMapScene(Scene):
                 self._check_portals()
         else:
             self._check_portals()
+
+    # ── Quit Confirm ──────────────────────────────────────────
+
+    def _render_quit_confirm(self, screen: pygame.Surface) -> None:
+        if self._quit_font is None:
+            self._quit_font = pygame.font.SysFont("Arial", 20, bold=True)
+        font = self._quit_font
+        hint_font = pygame.font.SysFont("Arial", 16)
+
+        w, h = 320, 110
+        x = (Settings.SCREEN_WIDTH - w) // 2
+        y = (Settings.SCREEN_HEIGHT - h) // 2
+
+        overlay = pygame.Surface((Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 160))
+        screen.blit(overlay, (0, 0))
+
+        pygame.draw.rect(screen, (20, 20, 45), (x, y, w, h))
+        pygame.draw.rect(screen, (160, 160, 100), (x, y, w, h), 2)
+
+        title = font.render("Quit Game?", True, (220, 220, 180))
+        screen.blit(title, (x + w // 2 - title.get_width() // 2, y + 18))
+
+        hint = hint_font.render("ENTER  confirm       ESC  cancel", True, (160, 160, 120))
+        screen.blit(hint, (x + w // 2 - hint.get_width() // 2, y + 68))
 
     # ── Render ────────────────────────────────────────────────
 
@@ -372,6 +414,8 @@ class WorldMapScene(Scene):
             self._dialogue.render(screen)
         if self._mc_shop:
             self._mc_shop.render(screen)
+        if self._quit_confirm:
+            self._render_quit_confirm(screen)
 
         if self._fade_alpha > 0:
             fade_surf = pygame.Surface(
