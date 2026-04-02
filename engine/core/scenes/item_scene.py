@@ -167,6 +167,7 @@ class ItemScene(Scene):
         self._list_sel:    int  = 0
         self._scroll:      int  = 0
         self._action_sel:  int  = 0
+        self._in_tab:      bool = True
         self._in_action:   bool = False
         self._confirm_discard: bool = False
 
@@ -286,12 +287,10 @@ class ItemScene(Scene):
                 self._handle_aoe_confirm(event.key)
                 return
 
-            if event.key in (pygame.K_i, pygame.K_ESCAPE):
+            if event.key == pygame.K_i:
                 self._close()
-            elif event.key == pygame.K_q:
-                self._change_tab(-1)
-            elif event.key == pygame.K_e:
-                self._change_tab(1)
+            elif self._in_tab:
+                self._handle_tab_key(event.key)
             elif not self._in_action:
                 self._handle_list_key(event.key)
             else:
@@ -300,13 +299,20 @@ class ItemScene(Scene):
     def _close(self) -> None:
         self._scene_manager.switch(self._registry.get(self._return_scene_name))
 
-    def _change_tab(self, delta: int) -> None:
-        self._tab_index = (self._tab_index + delta) % len(TABS)
-        self._list_sel  = 0
-        self._scroll    = 0
-        self._in_action = False
-        self._confirm_discard = False
-        self._aoe_confirm = False
+    def _handle_tab_key(self, key: int) -> None:
+        if key == pygame.K_LEFT:
+            self._tab_index = (self._tab_index - 1) % len(TABS)
+            self._list_sel = 0
+            self._scroll = 0
+        elif key == pygame.K_RIGHT:
+            self._tab_index = (self._tab_index + 1) % len(TABS)
+            self._list_sel = 0
+            self._scroll = 0
+        elif key == pygame.K_ESCAPE:
+            self._close()
+        elif key == pygame.K_RETURN:
+            if self._filtered_items():
+                self._in_tab = False
 
     def _handle_list_key(self, key: int) -> None:
         items = self._filtered_items()
@@ -318,9 +324,14 @@ class ItemScene(Scene):
         elif key == pygame.K_DOWN:
             self._list_sel = min(len(items) - 1, self._list_sel + 1)
             self._clamp_scroll()
-        elif key in (pygame.K_RETURN, pygame.K_RIGHT):
+        elif key == pygame.K_RETURN:
             self._in_action = True
             self._action_sel = 0
+        elif key == pygame.K_ESCAPE:
+            self._in_tab = True
+            self._in_action = False
+            self._confirm_discard = False
+            self._aoe_confirm = False
 
     def _handle_action_key(self, key: int) -> None:
         entry = self._selected_entry()
@@ -479,7 +490,7 @@ class ItemScene(Scene):
             surf   = self._font_tab.render(label, True, TEXT_PRIMARY)
             tw     = surf.get_width() + 24
             bg     = TAB_BG_ACT  if active else TAB_BG_NORM
-            bdr    = TAB_BORDER_ACT if active else TAB_BORDER_NORM
+            bdr    = (TAB_BORDER_ACT if self._in_tab else TAB_BORDER_NORM) if active else TAB_BORDER_NORM
             pygame.draw.rect(screen, bg,  (x, tab_y, tw, TAB_H), border_radius=4)
             pygame.draw.rect(screen, bdr, (x, tab_y, tw, TAB_H), 1, border_radius=4)
             col = HEADER_COLOR if active else TEXT_SECONDARY
