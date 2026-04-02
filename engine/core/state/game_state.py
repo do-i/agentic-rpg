@@ -140,6 +140,8 @@ class GameState:
                 if entry:
                     entry.tags   = tags
                     entry.locked = locked
+                    if item_id.startswith("mc_"):
+                        entry.tags.add("magic_core")
 
         return state
 

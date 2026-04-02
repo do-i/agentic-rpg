@@ -422,8 +422,8 @@ class BattleScene(Scene):
         self._sync_party_state(game_state.party)
 
         # add MC drops to repository
-        for mc in rewards.loot.mc_drops:
-            game_state.repository.add_item(f"mc_{mc['size'].lower()}", mc["qty"])
+        from engine.core.encounter.encounter_manager import EncounterManager
+        EncounterManager.add_mc_drops(game_state.repository, rewards.loot.mc_drops)
 
         # launch post-battle screen
         from engine.core.scenes.post_battle_scene import PostBattleScene
