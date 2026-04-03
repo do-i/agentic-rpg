@@ -49,24 +49,24 @@ npcs:
     default_facing: down
     animation:
       mode: wander
-      speed: 0.8
-      range: 3
+      speed: 1.8
+      range: 5
   - id: elder
     dialogue: elder_intro
     position: [12, 8]
     sprite: assets/sprites/npc/old_man_01.tsx
     default_facing: down
     animation:
-      mode: step
-      speed: 0.6
+      mode: still
   - id: mc_shop_keeper
     dialogue: mc_shop_intro
     position: [15, 6]
     sprite: assets/sprites/npc/male_blond_01.tsx
     default_facing: down
     animation:
-      mode: step
-      speed: 0.8
+      mode: wander
+      speed: 1.8
+      range: 13
   - id: inn_keeper
     dialogue: inn_ardel
     position: [8, 5]
@@ -81,5 +81,6 @@ npcs:
     sprite: assets/sprites/npc/teen_halfmessy_01.tsx
     default_facing: down
     animation:
-      mode: step
-      speed: 0.9
+      mode: wander
+      speed: 2.5
+      range: 8
