@@ -96,6 +96,7 @@ class MagicCoreShopScene(Scene):
         self._font_row    = pygame.font.SysFont("Arial", 18)
         self._font_gp     = pygame.font.SysFont("Arial", 18)
         self._font_qty    = pygame.font.SysFont("Arial", 22, bold=True)
+        self._font_arrow  = pygame.font.SysFont("Arial", 22)
         self._font_hint   = pygame.font.SysFont("Arial", 15)
         self._font_toast  = pygame.font.SysFont("Arial", 22, bold=True)
         self._font_confirm = pygame.font.SysFont("Arial", 17)
@@ -348,10 +349,16 @@ class MagicCoreShopScene(Scene):
         lbl = self._font_row.render(label, True, C_HEADER)
         screen.blit(lbl, (ox + 20, oy + 14))
 
-        # quantity selector
-        qty_str = str(self._qty)
-        qs = self._font_qty.render(f"◄  {qty_str}  ►", True, C_TEXT)
-        screen.blit(qs, (ox + ow // 2 - qs.get_width() // 2, oy + 44))
+        # quantity selector — arrows use non-bold font for glyph compatibility
+        left_s  = self._font_arrow.render("◀", True, C_TEXT)
+        num_s   = self._font_qty.render(f"  {self._qty}  ", True, C_TEXT)
+        right_s = self._font_arrow.render("▶", True, C_TEXT)
+        total_w = left_s.get_width() + num_s.get_width() + right_s.get_width()
+        cx = ox + ow // 2 - total_w // 2
+        cy = oy + 44
+        screen.blit(left_s,  (cx, cy))
+        screen.blit(num_s,   (cx + left_s.get_width(), cy))
+        screen.blit(right_s, (cx + left_s.get_width() + num_s.get_width(), cy))
 
         max_s = self._font_hint.render(f"max {max_qty}", True, C_DIM)
         screen.blit(max_s, (ox + ow - max_s.get_width() - 16, oy + 52))

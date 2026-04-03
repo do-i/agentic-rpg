@@ -85,6 +85,7 @@ class ItemShopScene(Scene):
         self._font_title  = pygame.font.SysFont("Arial", 22, bold=True)
         self._font_row    = pygame.font.SysFont("Arial", 16)
         self._font_qty    = pygame.font.SysFont("Arial", 20, bold=True)
+        self._font_arrow  = pygame.font.SysFont("Arial", 20)
         self._font_hint   = pygame.font.SysFont("Arial", 15)
         self._font_toast  = pygame.font.SysFont("Arial", 20, bold=True)
         self._fonts_ready = True
@@ -151,8 +152,10 @@ class ItemShopScene(Scene):
             self._list_sel = min(len(avail) - 1, self._list_sel + 1)
             self._clamp_scroll()
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-            self._qty   = 1
-            self._state = "qty"
+            sel = self._selected()
+            if sel and sel.get("buy_price", 0) <= self._holder.get().repository.gp:
+                self._qty   = 1
+                self._state = "qty"
         elif key == pygame.K_ESCAPE:
             self._on_close()
 
@@ -356,9 +359,16 @@ class ItemShopScene(Scene):
         lbl  = self._font_row.render(name, True, C_HEADER)
         screen.blit(lbl, (ox + 20, oy + 12))
 
-        # qty selector
-        qty_s = self._font_qty.render(f"◄  {self._qty}  ►", True, C_TEXT)
-        screen.blit(qty_s, (ox + ow // 2 - qty_s.get_width() // 2, oy + 38))
+        # qty selector — arrows use non-bold font for glyph compatibility
+        left_s  = self._font_arrow.render("◀", True, C_TEXT)
+        num_s   = self._font_qty.render(f"  {self._qty}  ", True, C_TEXT)
+        right_s = self._font_arrow.render("▶", True, C_TEXT)
+        total_w = left_s.get_width() + num_s.get_width() + right_s.get_width()
+        cx = ox + ow // 2 - total_w // 2
+        cy = oy + 38
+        screen.blit(left_s,  (cx, cy))
+        screen.blit(num_s,   (cx + left_s.get_width(), cy))
+        screen.blit(right_s, (cx + left_s.get_width() + num_s.get_width(), cy))
 
         # total price
         col = C_WARN if total > gp else C_GP
