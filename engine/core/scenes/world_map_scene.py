@@ -20,6 +20,7 @@ from engine.core.scenes.dialogue_scene import DialogueScene
 from engine.core.scenes.battle_scene import BattleScene
 from engine.core.scenes.magic_core_shop_scene import MagicCoreShopScene
 from engine.core.scenes.inn_scene import InnScene
+from engine.core.scenes.item_shop_scene import ItemShopScene
 from engine.core.encounter.encounter_manager import EncounterManager
 from engine.data.loader import ManifestLoader
 from engine.world.tile_map import TileMap
@@ -76,6 +77,7 @@ class WorldMapScene(Scene):
         self._dialogue: DialogueScene | None = None
         self._mc_shop: MagicCoreShopScene | None = None
         self._inn: InnScene | None = None
+        self._item_shop: ItemShopScene | None = None
         self._quit_confirm: bool = False
         self._quit_font: pygame.font.Font | None = None
 
@@ -150,6 +152,9 @@ class WorldMapScene(Scene):
         if self._inn:
             self._inn.handle_events(events)
             return
+        if self._item_shop:
+            self._item_shop.handle_events(events)
+            return
         if self._quit_confirm:
             for event in events:
                 if event.type == pygame.KEYDOWN:
@@ -220,6 +225,9 @@ class WorldMapScene(Scene):
         if shop_type == "magic_core":
             self._open_mc_shop()
             return
+        if shop_type == "item":
+            self._open_item_shop()
+            return
 
         # open_inn
         if remaining.get("open_inn"):
@@ -265,6 +273,28 @@ class WorldMapScene(Scene):
 
     def _close_inn(self) -> None:
         self._inn = None
+
+    # ── Item Shop ─────────────────────────────────────────────
+
+    def _open_item_shop(self) -> None:
+        state    = self._holder.get()
+        map_id   = state.map.current
+        map_yaml = self._loader.scenario_path / "data" / "maps" / f"{map_id}.yaml"
+        with open(map_yaml) as f:
+            map_data = yaml.safe_load(f)
+        shop_items  = map_data.get("shop", {}).get("items", [])
+        sprite_path = self._loader.scenario_path / "assets" / "sprites" / "npc" / "teen_halfmessy_01.tsx"
+        self._item_shop = ItemShopScene(
+            holder=self._holder,
+            scene_manager=self._scene_manager,
+            registry=self._registry,
+            on_close=self._close_item_shop,
+            shop_items=shop_items,
+            sprite_path=sprite_path,
+        )
+
+    def _close_item_shop(self) -> None:
+        self._item_shop = None
 
     # ── Encounter ─────────────────────────────────────────────
 
@@ -362,6 +392,9 @@ class WorldMapScene(Scene):
         if self._inn:
             self._inn.update(delta)
             return
+        if self._item_shop:
+            self._item_shop.update(delta)
+            return
         if self._quit_confirm:
             return
         if self._player is None:
@@ -452,6 +485,8 @@ class WorldMapScene(Scene):
             self._mc_shop.render(screen)
         if self._inn:
             self._inn.render(screen)
+        if self._item_shop:
+            self._item_shop.render(screen)
         if self._quit_confirm:
             self._render_quit_confirm(screen)
 

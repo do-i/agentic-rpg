@@ -13,6 +13,9 @@ magick full_sprite_sheet.png -crop 576x256+0+512 walk_only_sprite_sheet.png
 ### female_blue_01
 /#sex=female&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Long_straight_chestnut&vest=Bodice_navy&apron=Apron_blue&legs=Straight_skirt_blue
 
+### teen_halfmessy_01
+/#sex=teen&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&jacket=Tabard_navy&legs=Hose_forest&hair=Halfmessy_dark%20brown
+
 ## Goblin
 
 ### Goblin
