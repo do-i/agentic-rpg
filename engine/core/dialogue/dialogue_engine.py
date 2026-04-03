@@ -104,7 +104,7 @@ class DialogueEngine:
                 repository.add_item(item_id, qty)
 
         # pass through to caller
-        for key in ("join_party", "transition", "start_battle", "open_shop"):
+        for key in ("join_party", "transition", "start_battle", "open_shop", "open_inn"):
             if key in on_complete:
                 remaining[key] = on_complete[key]
 

@@ -1,0 +1,7 @@
+id: inn_ardel
+entries:
+  - lines:
+      - "Welcome to the Ardel Inn."
+      - "Rest here for 50 GP?"
+    on_complete:
+      open_inn: true

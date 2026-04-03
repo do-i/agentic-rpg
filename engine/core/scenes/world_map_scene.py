@@ -6,6 +6,7 @@
 import sys
 
 import pygame
+import yaml
 from engine.core.models.position import Position
 from engine.core.scene import Scene
 from engine.core.scene_manager import SceneManager
@@ -18,6 +19,7 @@ from engine.core.scenes.save_modal_scene import SaveModalScene
 from engine.core.scenes.dialogue_scene import DialogueScene
 from engine.core.scenes.battle_scene import BattleScene
 from engine.core.scenes.magic_core_shop_scene import MagicCoreShopScene
+from engine.core.scenes.inn_scene import InnScene
 from engine.core.encounter.encounter_manager import EncounterManager
 from engine.data.loader import ManifestLoader
 from engine.world.tile_map import TileMap
@@ -73,6 +75,7 @@ class WorldMapScene(Scene):
         self._save_modal: SaveModalScene | None = None
         self._dialogue: DialogueScene | None = None
         self._mc_shop: MagicCoreShopScene | None = None
+        self._inn: InnScene | None = None
         self._quit_confirm: bool = False
         self._quit_font: pygame.font.Font | None = None
 
@@ -143,6 +146,9 @@ class WorldMapScene(Scene):
             return
         if self._mc_shop:
             self._mc_shop.handle_events(events)
+            return
+        if self._inn:
+            self._inn.handle_events(events)
             return
         if self._quit_confirm:
             for event in events:
@@ -215,6 +221,11 @@ class WorldMapScene(Scene):
             self._open_mc_shop()
             return
 
+        # open_inn
+        if remaining.get("open_inn"):
+            self._open_inn()
+            return
+
         transition = remaining.get("transition")
         if transition:
             self._start_fade_out(transition)
@@ -232,6 +243,28 @@ class WorldMapScene(Scene):
 
     def _close_mc_shop(self) -> None:
         self._mc_shop = None
+
+    # ── Inn ───────────────────────────────────────────────────
+
+    def _open_inn(self) -> None:
+        state    = self._holder.get()
+        map_id   = state.map.current
+        map_yaml = self._loader.scenario_path / "data" / "maps" / f"{map_id}.yaml"
+        with open(map_yaml) as f:
+            map_data = yaml.safe_load(f)
+        cost        = map_data.get("inn", {}).get("cost", 50)
+        sprite_path = self._loader.scenario_path / "assets" / "sprites" / "npc" / "female_blue_01.tsx"
+        self._inn = InnScene(
+            holder=self._holder,
+            scene_manager=self._scene_manager,
+            registry=self._registry,
+            on_close=self._close_inn,
+            cost=cost,
+            sprite_path=sprite_path,
+        )
+
+    def _close_inn(self) -> None:
+        self._inn = None
 
     # ── Encounter ─────────────────────────────────────────────
 
@@ -326,6 +359,9 @@ class WorldMapScene(Scene):
         if self._mc_shop:
             self._mc_shop.update(delta)
             return
+        if self._inn:
+            self._inn.update(delta)
+            return
         if self._quit_confirm:
             return
         if self._player is None:
@@ -414,6 +450,8 @@ class WorldMapScene(Scene):
             self._dialogue.render(screen)
         if self._mc_shop:
             self._mc_shop.render(screen)
+        if self._inn:
+            self._inn.render(screen)
         if self._quit_confirm:
             self._render_quit_confirm(screen)
 

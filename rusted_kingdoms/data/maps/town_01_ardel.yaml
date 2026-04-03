@@ -41,5 +41,10 @@ npcs:
   - id: mc_shop_keeper
     dialogue: mc_shop_intro
     position: [15, 6]
-    sprite: assets/sprites/npc/man_01.tsx
+    sprite: assets/sprites/npc/male_blond_01.tsx
+    default_facing: down
+  - id: inn_keeper
+    dialogue: inn_ardel
+    position: [8, 5]
+    sprite: assets/sprites/npc/female_blue_01.tsx
     default_facing: down
