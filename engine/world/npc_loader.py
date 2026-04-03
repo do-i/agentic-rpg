@@ -37,6 +37,11 @@ class NpcLoader:
         default_facing = entry.get("default_facing", "down")
         sprite_tsx     = entry.get("sprite")
 
+        anim           = entry.get("animation", {}) or {}
+        anim_mode      = anim.get("mode", "still")
+        anim_speed     = anim.get("speed", 1.0)
+        wander_range   = anim.get("range", 2)
+
         sprite_sheet = self._load_sprite(sprite_tsx) if sprite_tsx else None
 
         return Npc(
@@ -48,6 +53,9 @@ class NpcLoader:
             present_excludes=present.get("excludes", []),
             sprite_sheet=sprite_sheet,
             default_facing=default_facing,
+            anim_mode=anim_mode,
+            anim_speed=anim_speed,
+            wander_range=wander_range,
         )
 
     def _load_sprite(self, sprite_path: str) -> SpriteSheet | None:

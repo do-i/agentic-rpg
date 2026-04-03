@@ -83,6 +83,7 @@ class TargetSelectOverlay:
     def _init_fonts(self) -> None:
         self._font_title  = pygame.font.SysFont("Arial", 18, bold=True)
         self._font_name   = pygame.font.SysFont("Arial", 16, bold=True)
+        self._font_arrow  = pygame.font.SysFont("Arial", 16)
         self._font_class  = pygame.font.SysFont("Arial", 13)
         self._font_stat   = pygame.font.SysFont("Arial", 13)
         self._font_hint   = pygame.font.SysFont("Arial", 14)
@@ -166,7 +167,7 @@ class TargetSelectOverlay:
         pygame.draw.rect(screen, bdr, (rx, y, rw, ROW_H), 1, border_radius=4)
 
         if selected:
-            cur = self._font_name.render("▶", True, C_HEADER)
+            cur = self._font_arrow.render("▶", True, C_HEADER)
             screen.blit(cur, (rx + 8, y + (ROW_H - cur.get_height()) // 2))
 
         # name + class

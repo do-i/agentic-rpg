@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 import pygame
+import yaml
 from engine.core.scene import Scene
 from engine.core.scene_manager import SceneManager
 from engine.core.scene_registry import SceneRegistry
 from engine.core.settings import Settings
 from engine.core.state.game_state_holder import GameStateHolder
 from engine.core.state.party_state import MemberState
+from engine.core.scenes.target_select_overlay import TargetSelectOverlay
 
 # ── Colors ────────────────────────────────────────────────────
 BG_COLOR        = (26, 26, 46)
@@ -27,6 +29,14 @@ HP_BAR_LOW      = (170, 74, 74)
 HP_TEXT_LOW     = (238, 106, 106)
 MP_BAR          = (74, 74, 238)
 EXP_BAR         = (106, 138, 238)
+
+C_SPELL_BG      = (22, 22, 44)
+C_SPELL_BDR     = (120, 110, 180)
+C_SPELL_SEL     = (45, 42, 75)
+C_SPELL_DIS     = (70, 70, 80)
+C_MP_COST       = (130, 130, 220)
+C_TOAST         = (100, 220, 130)
+C_WARN          = (220, 180, 80)
 
 HP_LOW_THRESHOLD = 0.35
 
@@ -46,12 +56,25 @@ COL_EXP_W   = 140
 COL_HPMP_W  = 195
 COL_STATS_W = 125
 
+# field-usable spell types (no offensive spells on world map)
+FIELD_SPELL_TYPES = {"heal", "utility", "buff"}
+
+TOAST_DUR = 1.2
+
+
+def _load_class_data(classes_dir: Path, class_name: str) -> dict:
+    path = classes_dir / f"{class_name}.yaml"
+    if not path.exists():
+        return {}
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
 
 class StatusScene(Scene):
     """
     Full-screen party status overview.
     Reads directly from GameState.party — no hardcoded data.
-    S / ESC to close.
+    S / ESC to close.  ENTER to open spell list for selected member.
     """
 
     def __init__(
@@ -70,6 +93,14 @@ class StatusScene(Scene):
         self._selected = 0
         self._fonts_ready = False
         self._portraits: dict[str, pygame.Surface] = {}
+
+        # spell sub-menu state
+        self._spell_list: list[dict] | None = None   # visible spell menu
+        self._spell_sel: int = 0
+        self._spell_caster: MemberState | None = None
+        self._target_overlay: TargetSelectOverlay | None = None
+        self._toast_text: str = ""
+        self._toast_timer: float = 0.0
 
     def _load_portrait(self, member_id: str) -> pygame.Surface | None:
         if member_id in self._portraits:
@@ -93,21 +124,172 @@ class StatusScene(Scene):
         self._font_stat  = pygame.font.SysFont("Arial", 14)
         self._font_hint  = pygame.font.SysFont("Arial", 14)
         self._font_gp    = pygame.font.SysFont("Arial", 17)
+        self._font_spell = pygame.font.SysFont("Arial", 15)
+        self._font_spell_title = pygame.font.SysFont("Arial", 16, bold=True)
+        self._font_toast = pygame.font.SysFont("Arial", 18, bold=True)
         self._fonts_ready = True
+
+    # ── Spell helpers ─────────────────────────────────────────
+
+    def _field_spells(self, member: MemberState) -> list[dict]:
+        """Load available field-usable spells for this member."""
+        classes_dir = Path(self._scenario_path) / "data" / "classes"
+        class_data = _load_class_data(classes_dir, member.class_name)
+        abilities = class_data.get("abilities", [])
+        result = []
+        for ab in abilities:
+            if ab.get("type") not in FIELD_SPELL_TYPES:
+                continue
+            if ab.get("unlock_level", 1) > member.level:
+                continue
+            result.append(ab)
+        return result
+
+    def _valid_targets(self, spell: dict) -> list[MemberState]:
+        members = self._holder.get().party.members
+        target = spell.get("target", "single_ally")
+        if target == "single_ko":
+            return [m for m in members if m.hp <= 0]
+        if spell.get("revive_hp_pct"):
+            return [m for m in members if m.hp <= 0]
+        return [m for m in members if m.hp > 0]
+
+    def _apply_spell(self, spell: dict, caster: MemberState, target: MemberState) -> str:
+        """Apply spell effect. Returns result message."""
+        caster.mp = max(0, caster.mp - spell.get("mp_cost", 0))
+        spell_type = spell.get("type")
+
+        if spell_type == "heal":
+            if spell.get("revive_hp_pct"):
+                pct = spell["revive_hp_pct"]
+                target.hp = max(1, int(target.hp_max * pct))
+                return f"{target.name} revived!"
+            coeff = spell.get("heal_coeff", 1.0)
+            amount = int(caster.int_ * coeff)
+            before = target.hp
+            target.hp = min(target.hp_max, target.hp + amount)
+            healed = target.hp - before
+            return f"{target.name} healed {healed} HP!"
+
+        if spell_type == "utility":
+            return f"{target.name} cured!"
+
+        if spell_type == "buff":
+            return f"{spell['name']} cast!"
+
+        return f"{spell['name']} used!"
+
+    def _apply_spell_all(self, spell: dict, caster: MemberState) -> str:
+        """Apply AoE heal to all alive members."""
+        caster.mp = max(0, caster.mp - spell.get("mp_cost", 0))
+        coeff = spell.get("heal_coeff", 1.0)
+        amount = int(caster.int_ * coeff)
+        members = self._holder.get().party.members
+        total = 0
+        for m in members:
+            if m.hp <= 0:
+                continue
+            before = m.hp
+            m.hp = min(m.hp_max, m.hp + amount)
+            total += m.hp - before
+        return f"Party healed {total} HP!"
 
     # ── Events ────────────────────────────────────────────────
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
+        if self._target_overlay:
+            self._target_overlay.handle_events(events)
+            return
+
+        if self._toast_timer > 0:
+            return
+
         members = self._holder.get().party.members
         for event in events:
             if event.type != pygame.KEYDOWN:
                 continue
+
+            if self._spell_list is not None:
+                self._handle_spell_key(event.key)
+                return
+
             if event.key in (pygame.K_s, pygame.K_ESCAPE):
                 self._scene_manager.switch(self._registry.get(self._return_scene_name))
             elif event.key == pygame.K_UP:
                 self._selected = max(0, self._selected - 1)
             elif event.key == pygame.K_DOWN:
                 self._selected = min(len(members) - 1, self._selected + 1)
+            elif event.key == pygame.K_RETURN:
+                self._open_spell_menu()
+
+    def _open_spell_menu(self) -> None:
+        members = self._holder.get().party.members
+        if not members:
+            return
+        member = members[self._selected]
+        spells = self._field_spells(member)
+        if not spells:
+            self._toast_text = f"{member.name} has no field spells."
+            self._toast_timer = TOAST_DUR
+            return
+        self._spell_caster = member
+        self._spell_list = spells
+        self._spell_sel = 0
+
+    def _handle_spell_key(self, key: int) -> None:
+        if key == pygame.K_ESCAPE:
+            self._spell_list = None
+            self._spell_caster = None
+            return
+
+        spells = self._spell_list
+        if key == pygame.K_UP:
+            self._spell_sel = max(0, self._spell_sel - 1)
+        elif key == pygame.K_DOWN:
+            self._spell_sel = min(len(spells) - 1, self._spell_sel + 1)
+        elif key == pygame.K_RETURN:
+            spell = spells[self._spell_sel]
+            cost = spell.get("mp_cost", 0)
+            if cost > self._spell_caster.mp:
+                return  # not enough MP
+            target_type = spell.get("target", "single_ally")
+            if target_type in ("all_allies", "party"):
+                msg = self._apply_spell_all(spell, self._spell_caster)
+                self._spell_list = None
+                self._toast_text = msg
+                self._toast_timer = TOAST_DUR
+            else:
+                targets = self._valid_targets(spell)
+                if not targets:
+                    self._toast_text = "No valid targets."
+                    self._toast_timer = TOAST_DUR
+                    self._spell_list = None
+                    return
+                pending_spell = spell
+                caster = self._spell_caster
+                self._target_overlay = TargetSelectOverlay(
+                    targets=targets,
+                    item_label=spell["name"],
+                    on_confirm=lambda t, s=pending_spell, c=caster: self._on_target_confirm(s, c, t),
+                    on_cancel=self._on_target_cancel,
+                )
+
+    def _on_target_confirm(self, spell: dict, caster: MemberState, target: MemberState) -> None:
+        msg = self._apply_spell(spell, caster, target)
+        self._target_overlay = None
+        self._spell_list = None
+        self._spell_caster = None
+        self._toast_text = msg
+        self._toast_timer = TOAST_DUR
+
+    def _on_target_cancel(self) -> None:
+        self._target_overlay = None
+
+    # ── Update ────────────────────────────────────────────────
+
+    def update(self, delta: float) -> None:
+        if self._toast_timer > 0:
+            self._toast_timer -= delta
 
     # ── Render ────────────────────────────────────────────────
 
@@ -133,6 +315,13 @@ class StatusScene(Scene):
             row_y += ROW_H + ROW_GAP
 
         self._draw_footer(screen)
+
+        if self._spell_list is not None:
+            self._draw_spell_menu(screen)
+        if self._target_overlay:
+            self._target_overlay.render(screen)
+        if self._toast_timer > 0:
+            self._draw_toast(screen)
 
     def _draw_header(self, screen: pygame.Surface, gp: int) -> None:
         screen.blit(self._font_title.render("STATUS", True, HEADER_COLOR), (PAD_X, PAD_Y))
@@ -261,9 +450,81 @@ class StatusScene(Scene):
             screen.blit(self._font_stat.render(
                 val or "—", True, TEXT_SECONDARY if val else TEXT_DIM), (x + 50, ry))
 
+    # ── Spell menu overlay ────────────────────────────────────
+
+    def _draw_spell_menu(self, screen: pygame.Surface) -> None:
+        spells = self._spell_list
+        caster = self._spell_caster
+        if not spells or not caster:
+            return
+
+        row_h  = 32
+        pad    = 16
+        w      = 340
+        h      = pad + 28 + len(spells) * row_h + pad + 20
+        x      = (Settings.SCREEN_WIDTH - w) // 2
+        y      = (Settings.SCREEN_HEIGHT - h) // 2
+
+        # dim
+        overlay = pygame.Surface(
+            (Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT), pygame.SRCALPHA
+        )
+        overlay.fill((0, 0, 0, 150))
+        screen.blit(overlay, (0, 0))
+
+        # box
+        pygame.draw.rect(screen, C_SPELL_BG,  (x, y, w, h), border_radius=6)
+        pygame.draw.rect(screen, C_SPELL_BDR, (x, y, w, h), 2, border_radius=6)
+
+        # title
+        title = self._font_spell_title.render(f"{caster.name} — Spells", True, HEADER_COLOR)
+        screen.blit(title, (x + pad, y + pad))
+
+        # MP display
+        mp_s = self._font_spell.render(f"MP {caster.mp}/{caster.mp_max}", True, C_MP_COST)
+        screen.blit(mp_s, (x + w - mp_s.get_width() - pad, y + pad))
+
+        # rows
+        ry = y + pad + 28
+        for i, spell in enumerate(spells):
+            sel      = (i == self._spell_sel)
+            cost     = spell.get("mp_cost", 0)
+            disabled = cost > caster.mp
+
+            if sel:
+                pygame.draw.rect(screen, C_SPELL_SEL, (x + 4, ry, w - 8, row_h), border_radius=3)
+                cur = self._font_spell.render("▶", True, HEADER_COLOR)
+                screen.blit(cur, (x + 10, ry + (row_h - cur.get_height()) // 2))
+
+            name_c = C_SPELL_DIS if disabled else (TEXT_PRIMARY if sel else TEXT_SECONDARY)
+            name_s = self._font_spell.render(spell["name"], True, name_c)
+            screen.blit(name_s, (x + 28, ry + (row_h - name_s.get_height()) // 2))
+
+            cost_c = C_SPELL_DIS if disabled else C_MP_COST
+            cost_s = self._font_spell.render(f"{cost} MP", True, cost_c)
+            screen.blit(cost_s, (x + w - cost_s.get_width() - pad,
+                                  ry + (row_h - cost_s.get_height()) // 2))
+            ry += row_h
+
+        # hint
+        hint = self._font_hint.render("ENTER cast · ESC back", True, MUTED)
+        screen.blit(hint, (x + pad, y + h - pad - hint.get_height() + 4))
+
+    # ── Toast ─────────────────────────────────────────────────
+
+    def _draw_toast(self, screen: pygame.Surface) -> None:
+        surf = self._font_toast.render(self._toast_text, True, C_TOAST)
+        tw, th = surf.get_size()
+        tx = (Settings.SCREEN_WIDTH - tw) // 2
+        ty = Settings.SCREEN_HEIGHT - 60
+        bg = pygame.Surface((tw + 24, th + 12), pygame.SRCALPHA)
+        bg.fill((0, 0, 0, 180))
+        screen.blit(bg, (tx - 12, ty - 6))
+        screen.blit(surf, (tx, ty))
+
     def _draw_footer(self, screen: pygame.Surface) -> None:
         fy = Settings.SCREEN_HEIGHT - FOOTER_H
         pygame.draw.line(screen, (51, 51, 51),
                          (PAD_X, fy), (Settings.SCREEN_WIDTH - PAD_X, fy))
-        hint = self._font_hint.render("↑↓ select · S close", True, MUTED)
+        hint = self._font_hint.render("↑↓ select · ENTER spells · S close", True, MUTED)
         screen.blit(hint, (PAD_X, fy + 8))
