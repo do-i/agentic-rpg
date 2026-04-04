@@ -118,6 +118,8 @@ class BattleScene(Scene):
         self._sub_sel: int = 0
         self._target_pool: list[Combatant] = []
         self._target_sel: int = 0
+        self._resolve_timer: float = 0.0
+        self._resolve_msg: str = ""
 
         self._state.build_turn_order()
         # for p in self._state.party:
@@ -203,6 +205,9 @@ class BattleScene(Scene):
                 self._handle_sub(event.key)
             elif phase == BattlePhase.SELECT_TARGET:
                 self._handle_target(event.key)
+            elif phase == BattlePhase.RESOLVE:
+                if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
+                    self._resolve_timer = 0.0
             elif phase in (BattlePhase.POST_BATTLE, BattlePhase.GAME_OVER):
                 if event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_ESCAPE):
                     if phase == BattlePhase.GAME_OVER:
@@ -360,53 +365,63 @@ class BattleScene(Scene):
         source = action.get("source")
         targets = action.get("targets", [])
         atype = action.get("type", "attack")
+        msg_parts: list[str] = []
 
         for target in targets:
             if atype == "attack":
                 dmg = max(1, source.atk - target.def_)
                 actual = target.apply_damage(dmg)
                 self._state.add_float(str(actual), *self._float_pos(target), C_DMG_PHYS)
+                msg_parts.append(f"{source.name} attacked {target.name} for {actual} damage!")
             elif atype == "spell":
                 ab = action.get("data", {})
                 spell_type = ab.get("type", "spell")
                 coeff = ab.get("spell_coeff") or ab.get("heal_coeff") or 1.0
+                spell_name = ab.get("name", "Spell")
 
-                # deduct MP once and set message (first target only)
+                # deduct MP once (first target only)
                 if source and target == targets[0]:
                     source.mp = max(0, source.mp - ab.get("mp_cost", 0))
-                    self._state.message = f"{source.name} casts {ab.get('name', 'Spell')}!"
 
                 if spell_type == "heal" and ab.get("revive_hp_pct"):
-                    # revive
                     if target.is_ko:
                         pct = ab["revive_hp_pct"]
                         target.hp = max(1, int(target.hp_max * pct))
                         target.is_ko = False
                         self._state.add_float("Revive", *self._float_pos(target), C_HEAL)
+                        msg_parts.append(f"{source.name} casts {spell_name}! {target.name} revived!")
                 elif spell_type == "heal":
                     amount = int(source.mres * coeff) if source else 10
                     actual = target.apply_heal(amount)
                     self._state.add_float(str(actual), *self._float_pos(target), C_HEAL)
+                    msg_parts.append(f"{source.name} casts {spell_name}! {target.name} healed {actual} HP!")
                 elif spell_type == "utility":
                     target.clear_all_status()
                     self._state.add_float("Cured", *self._float_pos(target), C_HEAL)
+                    msg_parts.append(f"{source.name} casts {spell_name}! {target.name} cured!")
                 elif spell_type == "buff":
                     self._state.add_float("Buff", *self._float_pos(target), C_HEAL)
+                    msg_parts.append(f"{source.name} casts {spell_name} on {target.name}!")
                 elif spell_type == "debuff":
                     self._state.add_float("Debuff", *self._float_pos(target), C_DMG_MAGIC)
+                    msg_parts.append(f"{source.name} casts {spell_name} on {target.name}!")
                 else:
-                    # offensive spell
                     dmg = max(1, int(source.mres * coeff) - target.def_) if source else 10
                     actual = target.apply_damage(dmg)
                     self._state.add_float(str(actual), *self._float_pos(target), C_DMG_MAGIC)
+                    msg_parts.append(f"{source.name} casts {spell_name}! {actual} damage to {target.name}!")
             elif atype == "item":
                 actual = target.apply_heal(100)
                 self._state.add_float(str(actual), *self._float_pos(target), C_HEAL)
+                msg_parts.append(f"{source.name} used item on {target.name}! Healed {actual} HP!")
 
         self._state.pending_action = None
+        self._enter_resolve(msg_parts[0] if msg_parts else "")
 
-        # Critical change: go to result check (which will handle enemy turn)
-        self._check_result()
+    def _enter_resolve(self, msg: str) -> None:
+        self._resolve_msg = msg
+        self._resolve_timer = 3.0
+        self._state.phase = BattlePhase.RESOLVE
 
     def _check_result(self) -> None:
         print(f"[DEBUG] _check_result called | phase={self._state.phase} | active={self._state.active.name if self._state.active else None}")
@@ -443,11 +458,8 @@ class BattleScene(Scene):
         dmg = max(1, active.atk - target.def_)
         actual = target.apply_damage(dmg)
 
-        self._state.message = f"{active.name} attacks {target.name}!"
         self._state.add_float(str(actual), *self._float_pos(target), C_DMG_PHYS)
-
-        # After enemy attack, immediately go to next turn
-        self._check_result()
+        self._enter_resolve(f"{active.name} attacked {target.name} for {actual} damage!")
 
     def _attempt_run(self) -> None:
         """Stub — always succeeds. Real flee formula Phase 4."""
@@ -508,7 +520,12 @@ class BattleScene(Scene):
 
     def update(self, delta: float) -> None:
         self._state.update_floats(delta)
-        if self._state.phase == BattlePhase.ENEMY_TURN:
+        if self._state.phase == BattlePhase.RESOLVE:
+            self._resolve_timer -= delta
+            if self._resolve_timer <= 0:
+                self._resolve_msg = ""
+                self._check_result()
+        elif self._state.phase == BattlePhase.ENEMY_TURN:
             self._resolve_enemy_turn()
 
     # ── Render ────────────────────────────────────────────────
@@ -518,8 +535,20 @@ class BattleScene(Scene):
             self._init_fonts()
         screen.fill(C_BG)
         self._draw_enemy_area(screen)
+        self._draw_action_message(screen)
         self._draw_bottom_panel(screen)
         self._draw_damage_floats(screen)
+
+    def _draw_action_message(self, screen: pygame.Surface) -> None:
+        if not self._resolve_msg:
+            return
+        msg_h = 28
+        msg_y = ENEMY_AREA_H - msg_h
+        bg = pygame.Surface((Settings.SCREEN_WIDTH, msg_h), pygame.SRCALPHA)
+        bg.fill((0, 0, 0, 180))
+        screen.blit(bg, (0, msg_y))
+        text = self._font_cmd.render(self._resolve_msg, True, C_TEXT)
+        screen.blit(text, (Settings.SCREEN_WIDTH // 2 - text.get_width() // 2, msg_y + 6))
 
     # ── Enemy area ────────────────────────────────────────────
 
@@ -680,10 +709,6 @@ class BattleScene(Scene):
                 (panel_x, ENEMY_AREA_H + 56))
         else:
             self._draw_main_cmd(screen, panel_x, ENEMY_AREA_H + 30, active)
-
-        if self._state.message:
-            screen.blit(self._font_msg.render(self._state.message, True, C_TEXT_MUT),
-                        (panel_x, Settings.SCREEN_HEIGHT - 20))
 
     def _draw_main_cmd(self, screen: pygame.Surface,
                        x: int, y: int, active: Combatant | None) -> None:
