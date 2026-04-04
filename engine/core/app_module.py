@@ -109,7 +109,8 @@ class AppModule(Module):
         loader: ManifestLoader,
     ) -> EncounterManager:
         encount_dir = loader.scenario_path / "data" / "encount"
-        return EncounterManager(resolver=resolver, encount_dir=encount_dir)
+        classes_dir = loader.scenario_path / "data" / "classes"
+        return EncounterManager(resolver=resolver, encount_dir=encount_dir, classes_dir=classes_dir)
 
     @provider
     @singleton

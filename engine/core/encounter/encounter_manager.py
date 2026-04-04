@@ -6,6 +6,8 @@
 from __future__ import annotations
 from pathlib import Path
 
+import yaml
+
 from engine.core.encounter.encounter_zone import EncounterZone, load_encounter_zone
 from engine.core.encounter.encounter_resolver import EncounterResolver
 from engine.core.battle.battle_state import BattleState
@@ -39,12 +41,15 @@ class EncounterManager:
         self,
         resolver: EncounterResolver,
         encount_dir: Path,
+        classes_dir: Path | None = None,
     ) -> None:
         self._resolver    = resolver
         self._encount_dir = encount_dir
+        self._classes_dir = classes_dir
         self._zone: EncounterZone | None = None
         self._zone_id: str = ""
         self._zone_cache: dict[str, EncounterZone] = {}
+        self._class_cache: dict[str, list[dict]] = {}
 
     # ── Zone management ───────────────────────────────────────
 
@@ -125,6 +130,7 @@ class EncounterManager:
         return state
 
     def _member_to_combatant(self, member: MemberState) -> Combatant:
+        abilities = self._load_class_abilities(member.class_name, member.level)
         return Combatant(
             id=member.id,
             name=member.name,
@@ -138,5 +144,21 @@ class EncounterManager:
             dex=member.dex,
             is_enemy=False,
             portrait_path=f"assets/images/{member.id}_profile.png",
-            abilities=[],
+            abilities=abilities,
         )
+
+    def _load_class_abilities(self, class_name: str, level: int) -> list[dict]:
+        """Load abilities from class YAML, filtered by unlock_level."""
+        if class_name in self._class_cache:
+            all_abs = self._class_cache[class_name]
+        else:
+            if not self._classes_dir:
+                return []
+            path = self._classes_dir / f"{class_name}.yaml"
+            if not path.exists():
+                return []
+            with open(path) as f:
+                data = yaml.safe_load(f)
+            all_abs = data.get("abilities", [])
+            self._class_cache[class_name] = all_abs
+        return [ab for ab in all_abs if ab.get("unlock_level", 1) <= level]

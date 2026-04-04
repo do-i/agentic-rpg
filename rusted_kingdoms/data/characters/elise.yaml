@@ -11,8 +11,8 @@ hp: 18
 hp_max: 18
 mp: 18
 mp_max: 18
-str: 25
-dex: 6
+str: 26
+dex: 26
 con: 27
 int: 9
 equipped:

@@ -104,3 +104,6 @@ class BattleState:
 
     def alive_party(self) -> list[Combatant]:
         return [p for p in self.party if p.is_alive]
+
+    def ko_party(self) -> list[Combatant]:
+        return [p for p in self.party if p.is_ko]

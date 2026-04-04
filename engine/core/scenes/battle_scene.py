@@ -176,8 +176,6 @@ class BattleScene(Scene):
         if not events:
             return
 
-        phase = self._state.phase
-
         for event in events:
             if event.type == pygame.QUIT:
                 # Let the main loop handle this if needed
@@ -185,6 +183,8 @@ class BattleScene(Scene):
 
             if event.type != pygame.KEYDOWN:
                 continue
+
+            phase = self._state.phase
 
             # Global escape handling
             if event.key == pygame.K_ESCAPE:
@@ -283,34 +283,63 @@ class BattleScene(Scene):
         ab_data = item.get("data", {})
         target  = ab_data.get("target", "single_enemy")
 
+        action_type = "spell" if phase == BattlePhase.SELECT_SPELL else "item"
+
+        # single-target: open target selector
         if target == "single_enemy":
             self._target_pool = self._state.alive_enemies()
             self._target_sel  = 0
             self._state.pending_action = {
-                "type": "spell" if phase == BattlePhase.SELECT_SPELL else "item",
-                "data": ab_data, "source": active,
+                "type": action_type, "data": ab_data, "source": active,
             }
             self._state.phase = BattlePhase.SELECT_TARGET
         elif target == "single_ally":
             self._target_pool = self._state.alive_party()
             self._target_sel  = 0
             self._state.pending_action = {
-                "type": "spell" if phase == BattlePhase.SELECT_SPELL else "item",
-                "data": ab_data, "source": active,
+                "type": action_type, "data": ab_data, "source": active,
             }
             self._state.phase = BattlePhase.SELECT_TARGET
+        elif target == "single_ko":
+            pool = self._state.ko_party()
+            if not pool:
+                return
+            self._target_pool = pool
+            self._target_sel  = 0
+            self._state.pending_action = {
+                "type": action_type, "data": ab_data, "source": active,
+            }
+            self._state.phase = BattlePhase.SELECT_TARGET
+        # AoE: resolve immediately
+        elif target in ("all_allies", "party"):
+            self._state.pending_action = {
+                "type": action_type, "data": ab_data, "source": active,
+                "targets": self._state.alive_party(),
+            }
+            self._resolve_action()
+        elif target in ("all_enemies", "group_enemies"):
+            self._state.pending_action = {
+                "type": action_type, "data": ab_data, "source": active,
+                "targets": self._state.alive_enemies(),
+            }
+            self._resolve_action()
+        elif target == "self":
+            self._state.pending_action = {
+                "type": action_type, "data": ab_data, "source": active,
+                "targets": [active],
+            }
+            self._resolve_action()
         else:
             self._state.pending_action = {
-                "type": "spell" if phase == BattlePhase.SELECT_SPELL else "item",
-                "data": ab_data, "source": active,
+                "type": action_type, "data": ab_data, "source": active,
                 "targets": self._state.alive_enemies(),
             }
             self._resolve_action()
 
     def _handle_target(self, key: int) -> None:
-        if key in (pygame.K_ESCAPE, pygame.K_LEFT):
+        if key == pygame.K_ESCAPE:
             self._state.phase = BattlePhase.PLAYER_TURN
-            self._sub_items.clear()  # clean up if needed
+            self._sub_items.clear()
             return
 
         if key in (pygame.K_LEFT, pygame.K_UP):
@@ -339,15 +368,35 @@ class BattleScene(Scene):
                 self._state.add_float(str(actual), *self._float_pos(target), C_DMG_PHYS)
             elif atype == "spell":
                 ab = action.get("data", {})
+                spell_type = ab.get("type", "spell")
                 coeff = ab.get("spell_coeff") or ab.get("heal_coeff") or 1.0
-                if source:
+
+                # deduct MP once and set message (first target only)
+                if source and target == targets[0]:
                     source.mp = max(0, source.mp - ab.get("mp_cost", 0))
-                if ab.get("type") == "heal":
-                    amount = int(source.int_ * coeff) if source else 10
+                    self._state.message = f"{source.name} casts {ab.get('name', 'Spell')}!"
+
+                if spell_type == "heal" and ab.get("revive_hp_pct"):
+                    # revive
+                    if target.is_ko:
+                        pct = ab["revive_hp_pct"]
+                        target.hp = max(1, int(target.hp_max * pct))
+                        target.is_ko = False
+                        self._state.add_float("Revive", *self._float_pos(target), C_HEAL)
+                elif spell_type == "heal":
+                    amount = int(source.mres * coeff) if source else 10
                     actual = target.apply_heal(amount)
                     self._state.add_float(str(actual), *self._float_pos(target), C_HEAL)
+                elif spell_type == "utility":
+                    target.clear_all_status()
+                    self._state.add_float("Cured", *self._float_pos(target), C_HEAL)
+                elif spell_type == "buff":
+                    self._state.add_float("Buff", *self._float_pos(target), C_HEAL)
+                elif spell_type == "debuff":
+                    self._state.add_float("Debuff", *self._float_pos(target), C_DMG_MAGIC)
                 else:
-                    dmg = max(1, int(source.int_ * coeff) - target.mres) if source else 10
+                    # offensive spell
+                    dmg = max(1, int(source.mres * coeff) - target.def_) if source else 10
                     actual = target.apply_damage(dmg)
                     self._state.add_float(str(actual), *self._float_pos(target), C_DMG_MAGIC)
             elif atype == "item":
@@ -538,12 +587,19 @@ class BattleScene(Scene):
                         member: Combatant, y: int) -> None:
         active    = self._state.active
         is_active = active is not None and active is member and not member.is_enemy
+        is_target = (self._state.phase == BattlePhase.SELECT_TARGET
+                     and self._target_pool
+                     and self._target_sel < len(self._target_pool)
+                     and self._target_pool[self._target_sel] is member)
         bg  = C_ROW_ACTIVE if is_active else C_ROW_NORMAL
         bdr = C_BORDER_ACT if is_active else C_BORDER_NORM
 
         rx, rw = ROW_PAD, PARTY_W - ROW_PAD * 2
         pygame.draw.rect(screen, bg,  (rx, y, rw, ROW_H - 2), border_radius=4)
         pygame.draw.rect(screen, bdr, (rx, y, rw, ROW_H - 2), 1, border_radius=4)
+        if is_target:
+            pygame.draw.rect(screen, (204, 170, 255),
+                             (rx - 2, y - 2, rw + 4, ROW_H + 2), 2, border_radius=5)
 
         px = rx + 6
         py = y + (ROW_H - 2 - PORTRAIT_SIZE) // 2
@@ -613,6 +669,15 @@ class BattleScene(Scene):
 
         if phase in (BattlePhase.SELECT_SPELL, BattlePhase.SELECT_ITEM):
             self._draw_submenu(screen, panel_x, ENEMY_AREA_H + 30)
+        elif phase == BattlePhase.SELECT_TARGET:
+            action = self._state.pending_action
+            label = action.get("data", {}).get("name", "Attack") if action else "Attack"
+            screen.blit(self._font_name.render(
+                f"Select target for {label}", True, (204, 170, 255)),
+                (panel_x, ENEMY_AREA_H + 34))
+            screen.blit(self._font_stat.render(
+                "↑↓ choose · ENTER confirm · ESC cancel", True, C_TEXT_MUT),
+                (panel_x, ENEMY_AREA_H + 56))
         else:
             self._draw_main_cmd(screen, panel_x, ENEMY_AREA_H + 30, active)
 
