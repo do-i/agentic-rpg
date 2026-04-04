@@ -152,7 +152,7 @@ class TestMemberState:
         assert m.equipped.get("accessory") is None
 
     def test_warrior_mp_max_zero(self):
-        m = MemberState("kael", "Kael", mp=0, mp_max=0)
+        m = make_member(name="Kael", mp=0, mp_max=0)
         assert m.mp_max == 0
 
 
@@ -176,10 +176,9 @@ class TestRender:
             make_member("Elise", class_name="Cleric",   mp_max=140, hp=180, hp_max=180),
             make_member("Reiya", class_name="Sorcerer",  hp=11,  hp_max=28),
             make_member("Jep",   class_name="Rogue",     mp_max=16),
-            MemberState("kael", "Kael", class_name="Warrior",
+            make_member("Kael", class_name="Warrior",
                         hp=128, hp_max=128, mp=0, mp_max=0,
-                        str_=28, dex=14, con=26, int_=5, level=20,
-                        exp=40000, exp_next=44721),
+                        level=20, exp=40000, exp_next=44721),
         ]
         scene, _ = make_scene(members)
         screen = pygame.Surface((1280, 720))

@@ -2,15 +2,32 @@
 
 import pytest
 from pathlib import Path
-from datetime import datetime
+from unittest.mock import patch
+
+import yaml
 
 from engine.core.state.game_state_manager import GameStateManager
 from engine.core.state.game_state import GameState
 
 MANIFEST_STUB = {
-    "protagonist": {"id": "aric", "name": "Aric"},
+    "protagonist": {
+        "id": "aric",
+        "name": "Aric",
+        "class": "hero",
+        "character": "data/characters/aric.yaml",
+    },
     "start": {"map": "town_01_ardel", "position": [12, 8]},
     "bootstrap_flags": ["story_quest_started"],
+}
+
+FAKE_CLASS_DATA = {
+    "stat_growth": {"hp": [10], "mp": [5], "str": [2], "dex": [2], "con": [2], "int": [2]},
+}
+
+FAKE_CHAR_DATA = {
+    "hp_max": 50, "mp_max": 20,
+    "str": 10, "dex": 8, "con": 9, "int": 6,
+    "equipped": {},
 }
 
 
@@ -20,13 +37,27 @@ def saves_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def manager(saves_dir: Path) -> GameStateManager:
-    return GameStateManager(saves_dir=saves_dir)
+def classes_dir(tmp_path: Path) -> Path:
+    d = tmp_path / "classes"
+    d.mkdir()
+    (d / "hero.yaml").write_text(yaml.dump(FAKE_CLASS_DATA))
+    return d
+
+
+@pytest.fixture
+def manager(saves_dir: Path, classes_dir: Path) -> GameStateManager:
+    return GameStateManager(saves_dir=saves_dir, classes_dir=classes_dir)
 
 
 @pytest.fixture
 def state() -> GameState:
-    return GameState.from_new_game(MANIFEST_STUB, "Aric")
+    with patch("engine.core.state.game_state._load_class_data", return_value=FAKE_CLASS_DATA), \
+         patch("engine.core.state.game_state._load_character_data", return_value=FAKE_CHAR_DATA):
+        return GameState.from_new_game(
+            MANIFEST_STUB, "Aric",
+            classes_dir=Path("/fake/classes"),
+            scenario_path=Path("/fake/scenario"),
+        )
 
 
 # ── save ──────────────────────────────────────────────────────
