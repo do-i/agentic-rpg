@@ -1,7 +1,5 @@
 # engine/core/scenes/world_map_scene.py
-# Changes from previous version:
-#   - handles open_shop: magic_core from dialogue on_complete
-#   - MagicCoreShopScene launched as overlay (same pattern as SaveModalScene)
+# Thin orchestrator: delegates logic to world_map_logic.
 
 import sys
 
@@ -22,6 +20,11 @@ from engine.core.scenes.magic_core_shop_scene import MagicCoreShopScene
 from engine.core.scenes.inn_scene import InnScene
 from engine.core.scenes.item_shop_scene import ItemShopScene
 from engine.core.encounter.encounter_manager import EncounterManager
+from engine.core.scenes.world_map_logic import (
+    FADE_SPEED, try_interact, dispatch_dialogue_result,
+    check_encounter, check_portals, apply_transition,
+    load_inn_cost, load_shop_items,
+)
 from engine.data.loader import ManifestLoader
 from engine.world.tile_map import TileMap
 from engine.world.tile_map_factory import TileMapFactory
@@ -30,9 +33,6 @@ from engine.world.player import Player
 from engine.world.sprite_sheet import SpriteSheet
 from engine.world.npc import Npc
 from engine.world.npc_loader import NpcLoader
-from engine.world.player import COLLISION_W, COLLISION_H
-
-FADE_SPEED = 300  # alpha units per second
 
 
 class WorldMapScene(Scene):
@@ -191,36 +191,26 @@ class WorldMapScene(Scene):
         self._save_modal = None
 
     def _try_interact(self) -> None:
-        if self._player is None:
-            return
         state = self._holder.get()
-        flags = state.flags
-        player_pos = self._player.pixel_position
-
-        for npc in self._npcs:
-            if not npc.is_present(flags):
-                continue
-            if not npc.is_near(player_pos):
-                continue
-            result = self._dialogue_engine.resolve(npc.dialogue_id, flags)
-            if result:
-                self._dialogue = DialogueScene(
-                    result=result,
-                    on_complete=self._on_dialogue_complete,
-                    text_speed=self._text_speed,
-                )
-            break
+        result, _npc = try_interact(
+            self._player, self._npcs, state.flags, self._dialogue_engine,
+        )
+        if result:
+            self._dialogue = DialogueScene(
+                result=result,
+                on_complete=self._on_dialogue_complete,
+                text_speed=self._text_speed,
+            )
 
     def _on_dialogue_complete(self, on_complete: dict) -> None:
         self._dialogue = None
         if not on_complete:
             return
         state = self._holder.get()
-        remaining = self._dialogue_engine.dispatch_on_complete(
-            on_complete, state.flags, state.repository
+        remaining = dispatch_dialogue_result(
+            on_complete, state.flags, state.repository, self._dialogue_engine,
         )
 
-        # open_shop
         shop_type = remaining.get("open_shop")
         if shop_type == "magic_core":
             self._open_mc_shop()
@@ -229,7 +219,6 @@ class WorldMapScene(Scene):
             self._open_item_shop()
             return
 
-        # open_inn
         if remaining.get("open_inn"):
             self._open_inn()
             return
@@ -257,10 +246,7 @@ class WorldMapScene(Scene):
     def _open_inn(self) -> None:
         state    = self._holder.get()
         map_id   = state.map.current
-        map_yaml = self._loader.scenario_path / "data" / "maps" / f"{map_id}.yaml"
-        with open(map_yaml) as f:
-            map_data = yaml.safe_load(f)
-        cost        = map_data.get("inn", {}).get("cost", 50)
+        cost = load_inn_cost(self._loader.scenario_path, map_id)
         sprite_path = self._loader.scenario_path / "assets" / "sprites" / "npc" / "female_blue_01.tsx"
         self._inn = InnScene(
             holder=self._holder,
@@ -279,10 +265,7 @@ class WorldMapScene(Scene):
     def _open_item_shop(self) -> None:
         state    = self._holder.get()
         map_id   = state.map.current
-        map_yaml = self._loader.scenario_path / "data" / "maps" / f"{map_id}.yaml"
-        with open(map_yaml) as f:
-            map_data = yaml.safe_load(f)
-        shop_items  = map_data.get("shop", {}).get("items", [])
+        shop_items = load_shop_items(self._loader.scenario_path, map_id)
         sprite_path = self._loader.scenario_path / "assets" / "sprites" / "npc" / "teen_halfmessy_01.tsx"
         self._item_shop = ItemShopScene(
             holder=self._holder,
@@ -299,20 +282,11 @@ class WorldMapScene(Scene):
     # ── Encounter ─────────────────────────────────────────────
 
     def _check_encounter(self) -> bool:
-        state = self._holder.get()
-        inventory_ids: set[str] = {
-            entry.id for entry in state.repository.items
-        }
-        battle_state = self._encounter_manager.on_step(
-            flags=state.flags,
-            party=state.party,
-            inventory_item_ids=inventory_ids,
+        battle_state, boss_flag = check_encounter(
+            self._holder, self._encounter_manager, self._player,
         )
         if battle_state is None:
             return False
-
-        boss_flag = getattr(battle_state, "boss_flag", "")
-        state.map.set_position(self._player.tile_position)
         self._launch_battle(battle_state, boss_flag=boss_flag)
         return True
 
@@ -333,16 +307,9 @@ class WorldMapScene(Scene):
     # ── Portal ────────────────────────────────────────────────
 
     def _check_portals(self) -> None:
-        if self._tile_map is None or self._player is None:
-            return
-        col = self._player.collision_rect_position
-        for portal in self._tile_map.portals:
-            if portal.is_triggered_by(col.x, col.y, COLLISION_W, COLLISION_H):
-                self._start_fade_out({
-                    "map": portal.target_map,
-                    "position": [portal.target_position.x, portal.target_position.y],
-                })
-                break
+        transition = check_portals(self._tile_map, self._player)
+        if transition:
+            self._start_fade_out(transition)
 
     # ── Fade & Transition ─────────────────────────────────────
 
@@ -354,15 +321,10 @@ class WorldMapScene(Scene):
         self._fade_alpha = 0
 
     def _apply_transition(self) -> None:
-        state = self._holder.get()
-        state.map.set_position(self._player.tile_position)
-        self._game_state_manager.save(state, slot_index=0)
-
-        transition = self._pending_transition
-        new_map = transition.get("map", state.map.current)
-        pos = transition.get("position", [0, 0])
-        state.map.move_to(new_map, Position.from_list(pos))
-
+        apply_transition(
+            self._holder, self._game_state_manager,
+            self._player, self._pending_transition,
+        )
         self._tile_map = None
         self._player = None
 

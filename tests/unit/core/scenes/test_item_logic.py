@@ -1,0 +1,227 @@
+# tests/unit/core/scenes/test_item_logic.py
+
+import pytest
+from unittest.mock import MagicMock
+
+from engine.core.state.repository_state import ItemEntry, RepositoryState
+from engine.core.scenes.item_logic import (
+    TABS, item_tab, filtered_items, is_usable, actions_for,
+    display_name, discard_item, clamp_scroll, MC_LABELS,
+)
+
+
+def make_entry(item_id="potion", qty=5, tags=None, locked=False) -> ItemEntry:
+    return ItemEntry(item_id=item_id, qty=qty, tags=tags or set(), locked=locked)
+
+
+def make_repo_with_items(items: list[tuple[str, int, set]]) -> RepositoryState:
+    repo = RepositoryState(gp=1000)
+    for item_id, qty, tags in items:
+        repo.add_item(item_id, qty)
+        entry = repo.get_item(item_id)
+        entry.tags = tags
+    return repo
+
+
+# ── item_tab ──────────────────────────────────────────────────
+
+class TestItemTab:
+    def test_key_item(self):
+        assert item_tab(make_entry(tags={"key"})) == "Key"
+
+    def test_magic_core(self):
+        assert item_tab(make_entry(tags={"magic_core"})) == "Magic Core"
+
+    def test_material(self):
+        assert item_tab(make_entry(tags={"material"})) == "Material"
+
+    def test_battle(self):
+        assert item_tab(make_entry(tags={"battle"})) == "Battle"
+
+    def test_status(self):
+        assert item_tab(make_entry(tags={"status"})) == "Status"
+
+    def test_consumable_recovery(self):
+        assert item_tab(make_entry(tags={"consumable", "recovery"})) == "Recovery"
+
+    def test_consumable_only(self):
+        assert item_tab(make_entry(tags={"consumable"})) == "Recovery"
+
+    def test_fallback_to_all(self):
+        assert item_tab(make_entry(tags=set())) == "All"
+
+    def test_battle_consumable_goes_to_battle(self):
+        # "battle" without "consumable" -> Battle
+        assert item_tab(make_entry(tags={"battle"})) == "Battle"
+
+
+# ── filtered_items ────────────────────────────────────────────
+
+class TestFilteredItems:
+    def test_all_tab_sorted(self):
+        repo = make_repo_with_items([
+            ("zzz_item", 1, {"consumable"}),
+            ("aaa_item", 1, {"consumable"}),
+        ])
+        result = filtered_items(repo, TABS.index("All"))
+        assert [e.id for e in result] == ["aaa_item", "zzz_item"]
+
+    def test_new_tab_reversed(self):
+        repo = make_repo_with_items([
+            ("first", 1, {"consumable"}),
+            ("second", 1, {"consumable"}),
+        ])
+        result = filtered_items(repo, TABS.index("New"))
+        assert [e.id for e in result] == ["second", "first"]
+
+    def test_recovery_tab_filters(self):
+        repo = make_repo_with_items([
+            ("potion", 5, {"consumable", "recovery"}),
+            ("wolf_fang", 3, {"material"}),
+        ])
+        result = filtered_items(repo, TABS.index("Recovery"))
+        assert len(result) == 1
+        assert result[0].id == "potion"
+
+    def test_magic_core_tab_ordered(self):
+        repo = make_repo_with_items([
+            ("mc_s", 10, {"magic_core"}),
+            ("mc_xl", 1, {"magic_core"}),
+            ("mc_m", 5, {"magic_core"}),
+        ])
+        result = filtered_items(repo, TABS.index("Magic Core"))
+        assert [e.id for e in result] == ["mc_xl", "mc_m", "mc_s"]
+
+    def test_material_excludes_magic_core(self):
+        repo = make_repo_with_items([
+            ("wolf_fang", 3, {"material"}),
+            ("mc_s", 10, {"material", "magic_core"}),
+        ])
+        result = filtered_items(repo, TABS.index("Material"))
+        assert len(result) == 1
+        assert result[0].id == "wolf_fang"
+
+    def test_key_tab(self):
+        repo = make_repo_with_items([
+            ("phoenix_wing", 1, {"key"}),
+            ("potion", 5, {"consumable"}),
+        ])
+        result = filtered_items(repo, TABS.index("Key"))
+        assert len(result) == 1
+        assert result[0].id == "phoenix_wing"
+
+    def test_status_tab(self):
+        repo = make_repo_with_items([
+            ("antidote", 3, {"consumable", "status"}),
+            ("potion", 5, {"consumable", "recovery"}),
+        ])
+        result = filtered_items(repo, TABS.index("Status"))
+        assert len(result) == 1
+        assert result[0].id == "antidote"
+
+    def test_battle_tab(self):
+        repo = make_repo_with_items([
+            ("fire_vial", 2, {"battle"}),
+            ("potion", 5, {"consumable", "recovery"}),
+        ])
+        result = filtered_items(repo, TABS.index("Battle"))
+        assert len(result) == 1
+        assert result[0].id == "fire_vial"
+
+
+# ── is_usable ─────────────────────────────────────────────────
+
+class TestIsUsable:
+    def test_key_item_not_usable_by_default(self):
+        handler = MagicMock()
+        entry = make_entry(tags={"key"})
+        assert not is_usable(entry, handler)
+
+    def test_key_item_usable_when_flagged(self):
+        handler = MagicMock()
+        entry = make_entry(tags={"key"})
+        entry.usable = True
+        assert is_usable(entry, handler)
+
+    def test_material_never_usable(self):
+        handler = MagicMock()
+        entry = make_entry(tags={"material"})
+        assert not is_usable(entry, handler)
+
+    def test_magic_core_never_usable(self):
+        handler = MagicMock()
+        entry = make_entry(tags={"magic_core"})
+        assert not is_usable(entry, handler)
+
+    def test_consumable_delegates_to_handler(self):
+        handler = MagicMock()
+        handler.is_field_usable.return_value = True
+        entry = make_entry(tags={"consumable"})
+        assert is_usable(entry, handler)
+        handler.is_field_usable.assert_called_with("potion")
+
+
+# ── actions_for ───────────────────────────────────────────────
+
+class TestActionsFor:
+    def test_usable_unlocked_item(self):
+        handler = MagicMock()
+        handler.is_field_usable.return_value = True
+        entry = make_entry(tags={"consumable"}, locked=False)
+        assert actions_for(entry, handler) == ["Use", "Discard"]
+
+    def test_locked_item_no_discard(self):
+        handler = MagicMock()
+        handler.is_field_usable.return_value = True
+        entry = make_entry(tags={"consumable"}, locked=True)
+        assert actions_for(entry, handler) == ["Use"]
+
+    def test_non_usable_unlocked(self):
+        handler = MagicMock()
+        handler.is_field_usable.return_value = False
+        entry = make_entry(tags={"material"}, locked=False)
+        assert actions_for(entry, handler) == ["Discard"]
+
+    def test_non_usable_locked_shows_dash(self):
+        handler = MagicMock()
+        entry = make_entry(tags={"material"}, locked=True)
+        assert actions_for(entry, handler) == ["\u2014"]
+
+
+# ── display_name ──────────────────────────────────────────────
+
+class TestDisplayName:
+    def test_magic_core_uses_label(self):
+        entry = make_entry("mc_xl", tags={"magic_core"})
+        assert display_name(entry) == "Magic Core (XL)"
+
+    def test_regular_item_title_cased(self):
+        entry = make_entry("hi_potion", tags={"consumable"})
+        assert display_name(entry) == "Hi Potion"
+
+
+# ── discard_item ──────────────────────────────────────────────
+
+class TestDiscardItem:
+    def test_removes_item_from_repo(self):
+        repo = make_repo_with_items([("potion", 5, {"consumable"})])
+        entry = repo.get_item("potion")
+        discard_item(repo, entry)
+        assert repo.get_item("potion") is None
+
+
+# ── clamp_scroll ──────────────────────────────────────────────
+
+class TestClampScroll:
+    def test_no_change_when_visible(self):
+        assert clamp_scroll(3, 0, 14) == 0
+
+    def test_scrolls_up_when_above(self):
+        assert clamp_scroll(2, 5, 14) == 2
+
+    def test_scrolls_down_when_below(self):
+        assert clamp_scroll(20, 0, 14) == 7  # 20 - 14 + 1
+
+    def test_boundary_exact(self):
+        assert clamp_scroll(13, 0, 14) == 0  # still visible at index 13
+        assert clamp_scroll(14, 0, 14) == 1  # needs scroll
