@@ -414,7 +414,8 @@ class WorldMapScene(Scene):
         player_pos = self._player.pixel_position
         for npc in self._npcs:
             if npc.is_present(state.flags):
-                npc.update(delta, near=npc.is_near(player_pos))
+                npc.update(delta, near=npc.is_near(player_pos),
+                           collision_map=self._tile_map.collision_map)
 
         current_tile = self._player.tile_position
         if current_tile != self._last_tile:

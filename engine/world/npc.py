@@ -1,5 +1,7 @@
 # engine/world/npc.py
 
+from __future__ import annotations
+
 import random
 import pygame
 from pathlib import Path
@@ -7,6 +9,10 @@ from engine.core.models.position import Position
 from engine.core.state.flag_state import FlagState
 from engine.core.settings import Settings
 from engine.world.sprite_sheet import SpriteSheet, Direction
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from engine.world.collision import CollisionMap
 
 NPC_SIZE = 64
 NPC_COLOR = (80, 160, 220)
@@ -132,7 +138,8 @@ class Npc:
 
     # ── Update ────────────────────────────────────────────────
 
-    def update(self, delta: float, near: bool = False) -> None:
+    def update(self, delta: float, near: bool = False,
+               collision_map: CollisionMap | None = None) -> None:
         """Call each frame. Advances animation and wander movement."""
         if self._anim_mode == "still":
             return
@@ -147,22 +154,25 @@ class Npc:
         if self._anim_mode == "step":
             self._update_step(delta)
         elif self._anim_mode == "wander":
-            self._update_wander(delta)
+            self._update_wander(delta, collision_map)
 
     def _update_step(self, delta: float) -> None:
         """Cycle walk frames in place."""
         self._advance_frame(delta)
 
-    def _update_wander(self, delta: float) -> None:
+    def _update_wander(self, delta: float,
+                       collision_map: CollisionMap | None = None) -> None:
         """Move randomly within range, then pause."""
         if not self._wander_moving:
             self._wander_pause -= delta
-            # step in place while paused
             self._frame_index = IDLE_FRAME
             self._facing_dir = self._default_facing
             if self._wander_pause <= 0:
-                self._pick_wander_target()
-                self._wander_moving = True
+                if self._pick_wander_target(collision_map):
+                    self._wander_moving = True
+                else:
+                    # no valid target found, retry later
+                    self._wander_pause = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
             return
 
         # move toward target
@@ -187,21 +197,44 @@ class Npc:
         else:
             self._facing_dir = Direction.UP if dy < 0 else Direction.DOWN
 
-        # move
+        # move — check collision before committing
         move = speed * delta
-        if dx != 0:
-            self._px += int(move * (1 if dx > 0 else -1))
-        if dy != 0:
-            self._py += int(move * (1 if dy > 0 else -1))
+        new_px = self._px + (int(move * (1 if dx > 0 else -1)) if dx != 0 else 0)
+        new_py = self._py + (int(move * (1 if dy > 0 else -1)) if dy != 0 else 0)
 
+        if collision_map and collision_map.is_rect_blocked(
+            new_px + NPC_COLLISION_OFFSET_X,
+            new_py + NPC_COLLISION_OFFSET_Y,
+            NPC_COLLISION_W, NPC_COLLISION_H,
+        ):
+            # hit a wall — stop this wander
+            self._wander_moving = False
+            self._wander_pause = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
+            self._frame_index = IDLE_FRAME
+            return
+
+        self._px = new_px
+        self._py = new_py
         self._advance_frame(delta)
 
-    def _pick_wander_target(self) -> None:
-        """Choose a random tile within wander_range of origin."""
+    def _pick_wander_target(self, collision_map: CollisionMap | None = None) -> bool:
+        """Choose a random tile within wander_range of origin.
+        Returns False if no passable target found after a few tries."""
         tile_size = Settings.TILE_SIZE
         max_offset = self._wander_range * tile_size
-        self._wander_target_px = self._origin_px + random.randint(-max_offset, max_offset)
-        self._wander_target_py = self._origin_py + random.randint(-max_offset, max_offset)
+        for _ in range(8):
+            tx = self._origin_px + random.randint(-max_offset, max_offset)
+            ty = self._origin_py + random.randint(-max_offset, max_offset)
+            if collision_map and collision_map.is_rect_blocked(
+                tx + NPC_COLLISION_OFFSET_X,
+                ty + NPC_COLLISION_OFFSET_Y,
+                NPC_COLLISION_W, NPC_COLLISION_H,
+            ):
+                continue
+            self._wander_target_px = tx
+            self._wander_target_py = ty
+            return True
+        return False
 
     def _advance_frame(self, delta: float) -> None:
         """Cycle through walk frames."""
