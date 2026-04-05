@@ -13,7 +13,7 @@
 - ~~**Items always heal 100 HP** — ✅ `resolve_action()` item branch now uses `ItemEffectHandler._apply_to_member()` for correct effects (restore_hp, restore_mp, restore_full, cure, revive)~~
 
 ### Battle — Flee
-- **Run always succeeds** — `battle_scene.py:290` `_attempt_run()` immediately switches to world map with no flee formula (DEX check, boss block, etc.)
+- ~~**Run always succeeds** — ✅ `attempt_flee()` in `battle_logic.py` now uses flee formula (base 30% + 2% per Rogue DEX), boss battles block flee, failed flee consumes the turn~~
 
 ### Battle — Game Over
 - **No Game Over screen** — `battle_scene.py:31` on defeat, silently returns to world map; should show a Game Over scene with restart/load/quit options

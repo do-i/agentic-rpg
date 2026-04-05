@@ -224,6 +224,36 @@ def check_result(state: BattleState) -> str:
     return "continue"
 
 
+# ── Flee ─────────────────────────────────────────────────────
+FLEE_BASE_CHANCE = 0.30
+FLEE_ROGUE_DEX_BONUS = 0.02
+
+
+def attempt_flee(state: BattleState, holder) -> tuple[bool, str]:
+    """Attempt to flee from battle.
+
+    Returns (success, message).
+    Boss battles always block flee.
+    Formula: 30% base + 2% per Rogue DEX in the party.
+    """
+    # Boss battles: cannot flee
+    if any(e.boss for e in state.enemies):
+        return False, "Can't escape from a boss!"
+
+    # Calculate flee chance
+    chance = FLEE_BASE_CHANCE
+    party = holder.get().party
+    for member in party.members:
+        if member.class_name.lower() == "rogue":
+            chance += FLEE_ROGUE_DEX_BONUS * member.dex
+
+    chance = min(chance, 1.0)
+
+    if random.random() < chance:
+        return True, "Got away safely!"
+    return False, "Couldn't escape!"
+
+
 def advance_to_next_turn(state: BattleState) -> None:
     """Advance to the next turn and set the phase accordingly."""
     state.advance_turn()

@@ -19,7 +19,7 @@ from engine.core.state.game_state_holder import GameStateHolder
 from engine.core.scenes.post_battle_scene import PostBattleScene
 from engine.core.scenes.battle_logic import (
     resolve_action, resolve_enemy_turn, handle_victory, handle_defeat,
-    check_result, advance_to_next_turn,
+    check_result, advance_to_next_turn, attempt_flee,
 )
 from engine.core.scenes.battle_renderer import BattleRenderer
 from engine.core.item.item_effect_handler import ItemEffectHandler
@@ -306,7 +306,11 @@ class BattleScene(Scene):
             self._cmd_sel = 0
 
     def _attempt_run(self) -> None:
-        self._scene_manager.switch(self._registry.get("world_map"))
+        success, msg = attempt_flee(self._state, self._holder)
+        if success:
+            self._scene_manager.switch(self._registry.get("world_map"))
+        else:
+            self._enter_resolve(msg)
 
     def _return_to_world_map(self) -> None:
         self._scene_manager.switch(self._registry.get("world_map"))

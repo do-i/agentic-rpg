@@ -12,6 +12,7 @@ from engine.core.scenes.battle_logic import (
     resolve_action, resolve_enemy_turn, handle_victory, handle_defeat,
     check_result, advance_to_next_turn, sync_party_state,
     float_pos, enemy_rect_size, ENEMY_SIZES,
+    attempt_flee, FLEE_BASE_CHANCE, FLEE_ROGUE_DEX_BONUS,
 )
 
 
@@ -556,3 +557,97 @@ class TestResolveActionItems:
 
         assert repo.get_item("potion") is None
         assert len(repo.items) == 0
+
+
+# ── attempt_flee ─────────────────────────────────────────────
+
+def _make_holder_with_party(members):
+    """Create a mock holder whose .get().party.members returns the given list."""
+    holder = MagicMock()
+    holder.get.return_value.party.members = members
+    return holder
+
+
+def _make_member(class_name="warrior", dex=10):
+    m = MagicMock()
+    m.class_name = class_name
+    m.dex = dex
+    return m
+
+
+class TestAttemptFlee:
+    def test_boss_always_blocks_flee(self):
+        boss = make_combatant("Dragon", is_enemy=True, boss=True)
+        state = make_battle_state([make_combatant("Hero")], [boss])
+        holder = _make_holder_with_party([_make_member()])
+
+        success, msg = attempt_flee(state, holder)
+
+        assert not success
+        assert "boss" in msg.lower()
+
+    def test_success_when_roll_below_chance(self):
+        state = make_battle_state()
+        holder = _make_holder_with_party([_make_member("warrior", dex=10)])
+
+        with patch("engine.core.scenes.battle_logic.random.random", return_value=0.0):
+            success, msg = attempt_flee(state, holder)
+
+        assert success
+        assert "safely" in msg.lower()
+
+    def test_failure_when_roll_above_chance(self):
+        state = make_battle_state()
+        holder = _make_holder_with_party([_make_member("warrior", dex=10)])
+
+        with patch("engine.core.scenes.battle_logic.random.random", return_value=0.99):
+            success, msg = attempt_flee(state, holder)
+
+        assert not success
+        assert "escape" in msg.lower()
+
+    def test_rogue_dex_increases_chance(self):
+        """With a rogue at DEX 20, chance = 0.30 + 0.02*20 = 0.70."""
+        state = make_battle_state()
+        holder = _make_holder_with_party([_make_member("rogue", dex=20)])
+
+        # Roll at 0.65 — should succeed with rogue bonus (0.70) but fail without
+        with patch("engine.core.scenes.battle_logic.random.random", return_value=0.65):
+            success, _ = attempt_flee(state, holder)
+
+        assert success
+
+    def test_no_rogue_base_chance_only(self):
+        """Without a rogue, chance is base 30%."""
+        state = make_battle_state()
+        holder = _make_holder_with_party([_make_member("warrior", dex=20)])
+
+        # Roll at 0.35 — should fail with only base 30%
+        with patch("engine.core.scenes.battle_logic.random.random", return_value=0.35):
+            success, _ = attempt_flee(state, holder)
+
+        assert not success
+
+    def test_chance_capped_at_one(self):
+        """Even with absurd DEX, chance never exceeds 1.0."""
+        state = make_battle_state()
+        holder = _make_holder_with_party([_make_member("rogue", dex=100)])
+
+        with patch("engine.core.scenes.battle_logic.random.random", return_value=0.99):
+            success, _ = attempt_flee(state, holder)
+
+        assert success
+
+    def test_multiple_rogues_stack(self):
+        """Multiple rogues' DEX bonuses stack."""
+        state = make_battle_state()
+        holder = _make_holder_with_party([
+            _make_member("rogue", dex=10),
+            _make_member("rogue", dex=10),
+        ])
+
+        # chance = 0.30 + 0.02*10 + 0.02*10 = 0.70
+        with patch("engine.core.scenes.battle_logic.random.random", return_value=0.65):
+            success, _ = attempt_flee(state, holder)
+
+        assert success
