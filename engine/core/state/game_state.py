@@ -9,6 +9,10 @@ from engine.core.state.map_state import MapState
 from engine.core.state.playtime import Playtime
 from engine.core.state.party_state import PartyState, MemberState
 from engine.core.state.repository_state import RepositoryState
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from engine.core.item.item_catalog import ItemCatalog
 from engine.core.models.position import Position
 
 
@@ -48,8 +52,10 @@ class GameState:
         protagonist_name: str,
         classes_dir: Path,
         scenario_path: Path,
+        item_catalog: ItemCatalog | None = None,
     ) -> "GameState":
         state = cls()
+        state.repository.catalog = item_catalog
 
         bootstrap_flags = manifest.get("bootstrap_flags", [])
         state.flags.add_flags(bootstrap_flags)
@@ -91,8 +97,14 @@ class GameState:
     # ── Factory: Load Game ────────────────────────────────────
 
     @classmethod
-    def from_save(cls, save: dict, classes_dir: Path) -> "GameState":
+    def from_save(
+        cls,
+        save: dict,
+        classes_dir: Path,
+        item_catalog: ItemCatalog | None = None,
+    ) -> "GameState":
         state = cls()
+        state.repository.catalog = item_catalog
         state.flags    = FlagState.from_set(set(save["flags"]))
         state.map      = MapState.from_dict(save["map"])
         state.playtime = Playtime.from_seconds(save["meta"]["playtime_seconds"])
@@ -135,13 +147,12 @@ class GameState:
             tags    = set(item.get("tags", []))
             locked  = item.get("locked", False)
             if item_id:
-                state.repository.add_item(item_id, qty)
-                entry = state.repository.get_item(item_id)
-                if entry:
-                    entry.tags   = tags
-                    entry.locked = locked
-                    if item_id.startswith("mc_"):
-                        entry.tags.add("magic_core")
+                entry = state.repository.add_item(item_id, qty)
+                # Saved tags override catalog defaults (player may have edited)
+                entry.tags   = tags
+                entry.locked = locked
+                if item_id.startswith("mc_"):
+                    entry.tags.add("magic_core")
 
         return state
 

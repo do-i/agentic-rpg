@@ -24,10 +24,8 @@ MC_ITEM_IDS = {"mc_xs", "mc_s", "mc_m", "mc_l", "mc_xl"}
 
 def _add_mc(repository: RepositoryState, item_id: str, qty: int) -> None:
     """Add a Magic Core item and ensure it carries the magic_core tag."""
-    repository.add_item(item_id, qty)
-    entry = repository.get_item(item_id)
-    if entry is not None:
-        entry.tags.add("magic_core")
+    entry = repository.add_item(item_id, qty)
+    entry.tags.add("magic_core")
 
 
 class EncounterManager:

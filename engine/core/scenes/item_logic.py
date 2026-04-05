@@ -122,12 +122,12 @@ def display_name(entry: ItemEntry, mc_catalog: MCCatalog | None = None) -> str:
     """Human-readable name for an item entry."""
     if "magic_core" in entry.tags and mc_catalog and entry.id in mc_catalog.labels:
         return mc_catalog.labels[entry.id]
-    return entry.id.replace("_", " ").title()
+    return entry.name or entry.id.replace("_", " ").title()
 
 
 def discard_item(repo: RepositoryState, entry: ItemEntry) -> None:
     """Remove an item entirely from the repository."""
-    repo._items.pop(entry.id, None)
+    repo.remove_item(entry.id)
 
 
 def clamp_scroll(list_sel: int, scroll: int, visible_rows: int) -> int:

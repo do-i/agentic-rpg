@@ -147,11 +147,7 @@ def resolve_action(state: BattleState, effect_handler=None, repository=None) -> 
         item_id = action.get("data", {}).get("id", "")
         defn = effect_handler.get_def(item_id)
         if defn and defn.consumable:
-            entry = repository.get_item(item_id)
-            if entry:
-                entry.qty -= 1
-                if entry.qty <= 0:
-                    repository._items.pop(item_id, None)
+            repository.remove_item(item_id, 1)
 
     state.pending_action = None
     return msg_parts[0] if msg_parts else ""

@@ -21,41 +21,6 @@ from engine.core.scenes.item_logic import (
 from engine.core.scenes.item_renderer import ItemRenderer, VISIBLE_ROWS
 
 
-# ── Debug stub data ───────────────────────────────────────────
-def _make_debug_repository() -> RepositoryState:
-    r = RepositoryState(gp=3200)
-    items = [
-        ("potion",       5,  {"consumable", "recovery"},  "Restores 100 HP to one ally.",                   False),
-        ("hi_potion",    3,  {"consumable", "recovery"},  "Restores 500 HP to one ally.",                   False),
-        ("elixir",       1,  {"consumable", "recovery"},  "Fully restores HP and MP of one ally.",          True),
-        ("ether",        2,  {"consumable", "recovery"},  "Restores 50 MP to one ally.",                    False),
-        ("antidote",     4,  {"consumable", "status"},    "Cures poison from one ally.",                    False),
-        ("echo_herb",    2,  {"consumable", "status"},    "Cures silence from one ally.",                   False),
-        ("remedy",       1,  {"consumable", "status"},    "Cures poison, silence, and sleep.",              False),
-        ("fire_vial",    3,  {"battle"},                  "Deals 150 fire damage to one enemy.",            False),
-        ("holy_water",   2,  {"battle"},                  "Deals 200 holy damage. Bonus vs undead/demon.",  False),
-        ("tent",         2,  {"consumable", "recovery"},  "Restores HP and MP of all allies on world map.", False),
-        ("wolf_fang",    6,  {"material"},                "A sharp fang. Used in crafting.",                False),
-        ("spider_silk",  4,  {"material"},                "Fine silk thread. Used in crafting.",            False),
-        ("venom_sac",    3,  {"material"},                "A sac filled with venom. Used in crafting.",     False),
-        ("rare_herb",    2,  {"material"},                "A rare medicinal herb. Used in crafting.",       False),
-        ("mc_xl",        1,  {"magic_core"},              "A huge Magic Core. High crafting value.",        False),
-        ("mc_l",         3,  {"magic_core"},              "A large Magic Core.",                            False),
-        ("mc_m",         8,  {"magic_core"},              "A medium Magic Core.",                           False),
-        ("mc_s",        15,  {"magic_core"},              "A small Magic Core.",                            False),
-        ("mc_xs",       42,  {"magic_core"},              "A tiny Magic Core. Exchange for GP in bulk.",    False),
-        ("phoenix_wing", 1,  {"key"},                     "Revives a fallen ally on the world map. Never consumed.", True),
-        ("veil_breaker", 1,  {"consumable", "battle"},    "Allows attacks to reach barrier-type enemies.",  False),
-    ]
-    for item_id, qty, tags, desc, locked in items:
-        r.add_item(item_id, qty)
-        entry = r.get_item(item_id)
-        entry.tags = tags
-        entry.locked = locked
-        entry.description = desc  # type: ignore[attr-defined]
-    return r
-
-
 class ItemScene(Scene):
     """
     Party repository item screen.
@@ -68,7 +33,6 @@ class ItemScene(Scene):
         holder: GameStateHolder,
         scene_manager: SceneManager,
         registry: SceneRegistry,
-        debug_items: bool,
         effect_handler: ItemEffectHandler,
         mc_catalog: MCCatalog | None = None,
         use_aoe_confirm: bool = True,
@@ -95,18 +59,11 @@ class ItemScene(Scene):
         self._aoe_confirm:    bool = False
 
         self._renderer = ItemRenderer(effect_handler, mc_catalog)
-        self._debug_repo  = _make_debug_repository()
-        self._debug_items = debug_items
 
     # ── Data helpers ──────────────────────────────────────────
 
     def _get_repo(self) -> RepositoryState:
-        if self._debug_items:
-            return self._debug_repo
-        try:
-            return self._holder.get().repository
-        except RuntimeError:
-            return self._debug_repo
+        return self._holder.get().repository
 
     def _get_party(self):
         try:

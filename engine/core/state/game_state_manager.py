@@ -4,12 +4,16 @@ import binascii
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import yaml
 
 from engine.core.models.save_slot import SaveSlot
 from engine.core.state.game_state import GameState
 from engine.core.state.playtime import Playtime
+
+if TYPE_CHECKING:
+    from engine.core.item.item_catalog import ItemCatalog
 
 AUTOSAVE_INDEX    = 0
 PLAYER_SLOT_COUNT = 100
@@ -49,9 +53,11 @@ class GameStateManager:
         self,
         saves_dir: str | Path,
         classes_dir: Path,
+        item_catalog: ItemCatalog | None = None,
     ) -> None:
         self._dir        = Path(saves_dir).expanduser()
         self._classes_dir = classes_dir
+        self._item_catalog = item_catalog
         self._dir.mkdir(parents=True, exist_ok=True)
 
     # ── Save ──────────────────────────────────────────────────
@@ -87,7 +93,7 @@ class GameStateManager:
     def load(self, path: Path) -> GameState:
         with open(path, "r") as f:
             data = yaml.safe_load(f)
-        return GameState.from_save(data, self._classes_dir)
+        return GameState.from_save(data, self._classes_dir, self._item_catalog)
 
     # ── Slot list ─────────────────────────────────────────────
 

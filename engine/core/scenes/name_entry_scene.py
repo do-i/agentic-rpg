@@ -5,6 +5,7 @@ from engine.core.scene import Scene
 from engine.core.scene_manager import SceneManager
 from engine.core.scene_registry import SceneRegistry
 from engine.core.settings import Settings
+from engine.core.item.item_catalog import ItemCatalog
 from engine.core.state.game_state import GameState
 from engine.core.state.game_state_holder import GameStateHolder
 from engine.data.loader import ManifestLoader
@@ -26,6 +27,7 @@ class NameEntryScene(Scene):
         scene_manager: SceneManager,
         registry: SceneRegistry,
         holder: GameStateHolder,
+        item_catalog: ItemCatalog | None = None,
         debug_party: bool = False,
     ) -> None:
         self._manifest     = loader.load()
@@ -34,6 +36,7 @@ class NameEntryScene(Scene):
         self._scene_manager = scene_manager
         self._registry     = registry
         self._holder       = holder
+        self._item_catalog = item_catalog
         self._debug_party  = debug_party
         self._name: str    = self._manifest["protagonist"]["name"]
         self._prompt_font  = None
@@ -60,7 +63,10 @@ class NameEntryScene(Scene):
 
     def _confirm(self) -> None:
         name  = self._name.strip() or self._manifest["protagonist"]["name"]
-        state = GameState.from_new_game(self._manifest, name, self._classes_dir, self._scenario_path)
+        state = GameState.from_new_game(
+            self._manifest, name, self._classes_dir, self._scenario_path,
+            item_catalog=self._item_catalog,
+        )
 
         if self._debug_party:
             inject_full_party(state, self._scenario_path)

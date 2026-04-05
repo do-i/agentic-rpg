@@ -206,10 +206,7 @@ class MagicCoreShopScene(Scene):
         if entry is None or entry.qty < qty:
             return
 
-        entry.qty -= qty
-        if entry.qty == 0:
-            repo._items.pop(item_id, None)
-
+        repo.remove_item(item_id, qty)
         repo.add_gp(total)
 
         self._toast_text  = f"Exchanged {qty} × {label}  →  +{total:,} GP"

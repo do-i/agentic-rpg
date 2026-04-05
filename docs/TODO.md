@@ -32,8 +32,8 @@
 - **Portrait placeholder** — `dialogue_scene.py:125` draws a colored rect instead of loading character portrait sprites
 
 ### Repository / Items
-- **Repository is a stub** — `repository_state.py:12,32` basic item stack + GP pool only; no sell, no tag editing, no advanced filtering
-- **Debug item repository** — `item_scene.py:24` `_make_debug_repository()` hardcodes 21 items as fallback; should be removed once real data loading is complete
+- ~~**Repository is a stub** — ✅ `RepositoryState` now supports sell, tag editing (add/remove with max-5 guardrail), lock/unlock, `items_by_tag()` filtering, and `remove_item()`. `ItemCatalog` loads all scenario YAML and auto-populates metadata on `add_item()`.~~
+- ~~**Debug item repository** — ✅ `_make_debug_repository()` removed; `ItemScene` always uses real repository from `GameStateHolder`. `debug_items` setting removed.~~
 
 ### Magic Core Shop
 - ~~**Hardcoded exchange rates** — `magic_core_shop_scene.py:16` `MC_SIZES` list with hardcoded GP-per-unit rates; should load from scenario YAML~~ ✓ loaded from `magic_cores.yaml`

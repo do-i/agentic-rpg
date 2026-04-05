@@ -21,6 +21,7 @@ from engine.core.dialogue.dialogue_engine import DialogueEngine
 from engine.core.encounter.enemy_loader import EnemyLoader
 from engine.core.encounter.encounter_resolver import EncounterResolver
 from engine.core.encounter.encounter_manager import EncounterManager
+from engine.core.item.item_catalog import ItemCatalog
 from engine.core.item.item_effect_handler import ItemEffectHandler
 from engine.core.scenes.item_logic import build_mc_catalog
 from engine.core.scenes.world_map_logic import load_magic_cores
@@ -74,11 +75,13 @@ class AppModule(Module):
         self,
         settings: EngineSettings,
         loader: ManifestLoader,
+        item_catalog: ItemCatalog,
     ) -> GameStateManager:
         classes_dir = loader.scenario_path / "data" / "classes"
         return GameStateManager(
             saves_dir=settings.saves_dir,
             classes_dir=classes_dir,
+            item_catalog=item_catalog,
         )
 
     @provider
@@ -116,6 +119,12 @@ class AppModule(Module):
 
     @provider
     @singleton
+    def provide_item_catalog(self, loader: ManifestLoader) -> ItemCatalog:
+        items_dir = loader.scenario_path / "data" / "items"
+        return ItemCatalog(items_dir)
+
+    @provider
+    @singleton
     def provide_item_effect_handler(self, loader: ManifestLoader) -> ItemEffectHandler:
         field_use_path = loader.scenario_path / "data" / "items" / "field_use.yaml"
         return ItemEffectHandler(field_use_path)
@@ -133,6 +142,7 @@ class AppModule(Module):
         dialogue_engine: DialogueEngine,
         npc_loader: NpcLoader,
         encounter_manager: EncounterManager,
+        item_catalog: ItemCatalog,
         effect_handler: ItemEffectHandler,
     ) -> SceneRegistry:
         registry = SceneRegistry()
@@ -144,6 +154,7 @@ class AppModule(Module):
             lambda: TitleScene(loader, scene_manager, registry, game_state_manager))
         registry.register_factory("name_entry",
             lambda: NameEntryScene(loader, scene_manager, registry, holder,
+                                   item_catalog=item_catalog,
                                    debug_party=settings.debug_party))
         registry.register_factory("load_game",
             lambda: LoadGameScene(game_state_manager, holder, scene_manager, registry))
@@ -172,7 +183,6 @@ class AppModule(Module):
                 holder=holder,
                 scene_manager=scene_manager,
                 registry=registry,
-                debug_items=settings.debug_items,
                 effect_handler=effect_handler,
                 mc_catalog=mc_catalog,
                 use_aoe_confirm=settings.use_aoe_confirm,

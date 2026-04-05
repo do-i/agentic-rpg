@@ -240,7 +240,7 @@ class ItemRenderer:
         pygame.draw.line(screen, DIVIDER, (cx, cy), (x + w - 16, cy))
         cy += 12
 
-        desc = getattr(entry, "description", "No description available.")
+        desc = entry.description or "No description available."
         cy   = self._draw_wrapped(screen, desc, cx, cy, w - 32, TEXT_PRIMARY)
         cy  += 20
 

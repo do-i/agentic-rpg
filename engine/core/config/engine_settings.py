@@ -15,7 +15,6 @@ class EngineSettings:
     mc_exchange_confirm_large: bool
     use_aoe_confirm:           bool
     debug_party:               bool
-    debug_items:               bool
 
     @classmethod
     def load(cls, path: Path = SETTINGS_PATH) -> "EngineSettings":
@@ -28,7 +27,6 @@ class EngineSettings:
         confirm_large = (data.get("shop")     or {}).get("mc_exchange_confirm_large", True)
         use_aoe       = (data.get("item")     or {}).get("use_aoe_confirm", True)
         debug_party   = (data.get("debug")    or {}).get("party", False)
-        debug_items   = (data.get("debug")    or {}).get("items", False)
 
         missing = []
         if saves_dir is None:
@@ -47,5 +45,4 @@ class EngineSettings:
             mc_exchange_confirm_large=bool(confirm_large),
             use_aoe_confirm=bool(use_aoe),
             debug_party=bool(debug_party),
-            debug_items=bool(debug_items),
         )

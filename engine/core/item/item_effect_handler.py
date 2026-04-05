@@ -121,11 +121,7 @@ class ItemEffectHandler:
 
         # decrement qty if consumable
         if defn.consumable:
-            entry = repository.get_item(item_id)
-            if entry:
-                entry.qty -= 1
-                if entry.qty <= 0:
-                    repository._items.pop(item_id, None)
+            repository.remove_item(item_id, 1)
 
         warning_str = "  ".join(warnings) if warnings else ""
         return UseResult(success=True, warning=warning_str, messages=messages)
