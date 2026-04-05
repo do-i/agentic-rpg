@@ -150,6 +150,7 @@ class AppModule(Module):
                 scene_manager, registry,
                 game_state_manager, dialogue_engine, npc_loader,
                 encounter_manager=encounter_manager,
+                effect_handler=effect_handler,
                 text_speed=settings.text_speed,
                 smooth_collision=settings.smooth_collision,
                 mc_exchange_confirm_large=settings.mc_exchange_confirm_large,

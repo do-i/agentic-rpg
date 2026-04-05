@@ -61,7 +61,7 @@ def float_pos(state: BattleState, combatant: Combatant) -> tuple[int, int]:
         return PARTY_W - 60, ENEMY_AREA_H + 8 + idx * (ROW_H + 2) + 5
 
 
-def resolve_action(state: BattleState) -> str:
+def resolve_action(state: BattleState, effect_handler=None, repository=None) -> str:
     """Execute the pending action. Returns the message to display."""
     action = state.pending_action
     if not action:
@@ -114,9 +114,44 @@ def resolve_action(state: BattleState) -> str:
                 state.add_float(str(actual), *float_pos(state, target), C_DMG_MAGIC)
                 msg_parts.append(f"{source.name} casts {spell_name}! {actual} damage to {target.name}!")
         elif atype == "item":
-            actual = target.apply_heal(100)
-            state.add_float(str(actual), *float_pos(state, target), C_HEAL)
-            msg_parts.append(f"{source.name} used item on {target.name}! Healed {actual} HP!")
+            item_id = action.get("data", {}).get("id", "")
+            item_label = item_id.replace("_", " ").title()
+            defn = effect_handler.get_def(item_id) if effect_handler else None
+            if defn:
+                defn_effect = defn.effect
+                effect_handler._apply_to_member(defn, target)
+                # revive: clear is_ko on combatant
+                if defn_effect == "revive" and target.hp > 0:
+                    target.is_ko = False
+                # generate float + message
+                if defn_effect in ("restore_hp", "restore_mp", "restore_full"):
+                    state.add_float(str(defn.amount) if defn.amount else "Full", *float_pos(state, target), C_HEAL)
+                    msg_parts.append(f"{source.name} used {item_label} on {target.name}!")
+                elif defn_effect == "revive":
+                    state.add_float("Revive", *float_pos(state, target), C_HEAL)
+                    msg_parts.append(f"{source.name} used {item_label}! {target.name} revived!")
+                elif defn_effect == "cure":
+                    state.add_float("Cured", *float_pos(state, target), C_HEAL)
+                    msg_parts.append(f"{source.name} used {item_label} on {target.name}!")
+                else:
+                    state.add_float("Used", *float_pos(state, target), C_HEAL)
+                    msg_parts.append(f"{source.name} used {item_label} on {target.name}!")
+            else:
+                # fallback for unknown items
+                actual = target.apply_heal(100)
+                state.add_float(str(actual), *float_pos(state, target), C_HEAL)
+                msg_parts.append(f"{source.name} used item on {target.name}! Healed {actual} HP!")
+
+    # decrement item qty after all targets resolved
+    if atype == "item" and effect_handler and repository:
+        item_id = action.get("data", {}).get("id", "")
+        defn = effect_handler.get_def(item_id)
+        if defn and defn.consumable:
+            entry = repository.get_item(item_id)
+            if entry:
+                entry.qty -= 1
+                if entry.qty <= 0:
+                    repository._items.pop(item_id, None)
 
     state.pending_action = None
     return msg_parts[0] if msg_parts else ""

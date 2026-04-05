@@ -6,6 +6,8 @@ from unittest.mock import MagicMock, patch
 from engine.core.battle.combatant import Combatant, StatusEffect
 from engine.core.battle.battle_state import BattleState, BattlePhase
 from engine.core.battle.battle_rewards import RewardCalculator
+from engine.core.item.item_effect_handler import ItemEffectHandler, FieldItemDef
+from engine.core.state.repository_state import RepositoryState
 from engine.core.scenes.battle_logic import (
     resolve_action, resolve_enemy_turn, handle_victory, handle_defeat,
     check_result, advance_to_next_turn, sync_party_state,
@@ -117,7 +119,8 @@ class TestResolveAction:
         # dmg = max(1, int(15 * 2.0) - 3) = 27
         assert goblin.hp == 23
 
-    def test_item_heals_100(self):
+    def test_item_fallback_heals_100_without_handler(self):
+        """Without effect_handler, items fall back to hardcoded 100 HP heal."""
         hero = make_combatant("Hero")
         ally = make_combatant("Ally", hp=50, hp_max=200)
         state = make_battle_state([hero, ally], [make_combatant("Goblin", is_enemy=True)])
@@ -380,3 +383,176 @@ class TestFloatPos:
 
         assert isinstance(x, int)
         assert isinstance(y, int)
+
+
+# ── Item resolution with effect_handler ──────────────────────
+
+def _make_handler_with(*defs: FieldItemDef) -> ItemEffectHandler:
+    """Create an ItemEffectHandler pre-loaded with given defs (no YAML)."""
+    from pathlib import Path
+    handler = ItemEffectHandler.__new__(ItemEffectHandler)
+    handler._defs = {d.id: d for d in defs}
+    return handler
+
+
+class TestResolveActionItems:
+    def test_potion_heals_correct_amount(self):
+        handler = _make_handler_with(
+            FieldItemDef(id="potion", effect="restore_hp", target="single_alive", amount=100),
+        )
+        repo = RepositoryState()
+        repo.add_item("potion", 5)
+
+        hero = make_combatant("Hero")
+        ally = make_combatant("Ally", hp=50, hp_max=200)
+        state = make_battle_state([hero, ally], [make_combatant("Goblin", is_enemy=True)])
+        state.pending_action = {
+            "type": "item", "data": {"id": "potion"}, "source": hero, "targets": [ally],
+        }
+
+        msg = resolve_action(state, effect_handler=handler, repository=repo)
+
+        assert ally.hp == 150
+        assert "Potion" in msg
+        assert repo.get_item("potion").qty == 4
+
+    def test_hi_potion_heals_500(self):
+        handler = _make_handler_with(
+            FieldItemDef(id="hi_potion", effect="restore_hp", target="single_alive", amount=500),
+        )
+        repo = RepositoryState()
+        repo.add_item("hi_potion", 3)
+
+        hero = make_combatant("Hero")
+        ally = make_combatant("Ally", hp=100, hp_max=300)
+        state = make_battle_state([hero, ally], [make_combatant("Goblin", is_enemy=True)])
+        state.pending_action = {
+            "type": "item", "data": {"id": "hi_potion"}, "source": hero, "targets": [ally],
+        }
+
+        resolve_action(state, effect_handler=handler, repository=repo)
+
+        assert ally.hp == 300  # capped at max
+        assert repo.get_item("hi_potion").qty == 2
+
+    def test_antidote_cures_poison(self):
+        handler = _make_handler_with(
+            FieldItemDef(id="antidote", effect="cure", target="single_alive", cures=["poison"]),
+        )
+        repo = RepositoryState()
+        repo.add_item("antidote", 2)
+
+        hero = make_combatant("Hero")
+        ally = make_combatant("Ally", hp=80, hp_max=100)
+        ally.add_status(StatusEffect.POISON)
+        state = make_battle_state([hero, ally], [make_combatant("Goblin", is_enemy=True)])
+        state.pending_action = {
+            "type": "item", "data": {"id": "antidote"}, "source": hero, "targets": [ally],
+        }
+
+        msg = resolve_action(state, effect_handler=handler, repository=repo)
+
+        assert not ally.has_status(StatusEffect.POISON)
+        assert "Cured" in msg or "Antidote" in msg
+        assert repo.get_item("antidote").qty == 1
+
+    def test_revive_item_restores_ko(self):
+        handler = _make_handler_with(
+            FieldItemDef(id="life_crystal", effect="revive", target="single_ko", revive_hp_pct=1.0),
+        )
+        repo = RepositoryState()
+        repo.add_item("life_crystal", 1)
+
+        hero = make_combatant("Hero")
+        dead = make_combatant("Dead", hp=0, hp_max=200)
+        dead.is_ko = True
+        state = make_battle_state([hero, dead], [make_combatant("Goblin", is_enemy=True)])
+        state.pending_action = {
+            "type": "item", "data": {"id": "life_crystal"}, "source": hero, "targets": [dead],
+        }
+
+        msg = resolve_action(state, effect_handler=handler, repository=repo)
+
+        assert dead.hp == 200  # 100% of hp_max
+        assert not dead.is_ko
+        assert "revived" in msg.lower()
+        # consumable, qty was 1 → removed from repo
+        assert repo.get_item("life_crystal") is None
+
+    def test_non_consumable_item_not_decremented(self):
+        handler = _make_handler_with(
+            FieldItemDef(id="phoenix_wing", effect="revive", target="single_ko",
+                         revive_hp_pct=0.30, consumable=False),
+        )
+        repo = RepositoryState()
+        repo.add_item("phoenix_wing", 1)
+
+        hero = make_combatant("Hero")
+        dead = make_combatant("Dead", hp=0, hp_max=100)
+        dead.is_ko = True
+        state = make_battle_state([hero, dead], [make_combatant("Goblin", is_enemy=True)])
+        state.pending_action = {
+            "type": "item", "data": {"id": "phoenix_wing"}, "source": hero, "targets": [dead],
+        }
+
+        resolve_action(state, effect_handler=handler, repository=repo)
+
+        assert dead.hp == 30  # 30% of 100
+        assert not dead.is_ko
+        assert repo.get_item("phoenix_wing").qty == 1  # not decremented
+
+    def test_ether_restores_mp(self):
+        handler = _make_handler_with(
+            FieldItemDef(id="ether", effect="restore_mp", target="single_alive", amount=50),
+        )
+        repo = RepositoryState()
+        repo.add_item("ether", 2)
+
+        hero = make_combatant("Hero", mp=10, mp_max=80)
+        state = make_battle_state([hero], [make_combatant("Goblin", is_enemy=True)])
+        state.pending_action = {
+            "type": "item", "data": {"id": "ether"}, "source": hero, "targets": [hero],
+        }
+
+        resolve_action(state, effect_handler=handler, repository=repo)
+
+        assert hero.mp == 60
+        assert repo.get_item("ether").qty == 1
+
+    def test_elixir_restores_full(self):
+        handler = _make_handler_with(
+            FieldItemDef(id="elixir", effect="restore_full", target="single_alive"),
+        )
+        repo = RepositoryState()
+        repo.add_item("elixir", 1)
+
+        hero = make_combatant("Hero", hp=30, hp_max=100, mp=5, mp_max=50)
+        state = make_battle_state([hero], [make_combatant("Goblin", is_enemy=True)])
+        state.pending_action = {
+            "type": "item", "data": {"id": "elixir"}, "source": hero, "targets": [hero],
+        }
+
+        resolve_action(state, effect_handler=handler, repository=repo)
+
+        assert hero.hp == 100
+        assert hero.mp == 50
+        assert repo.get_item("elixir") is None  # qty 1 → removed
+
+    def test_last_item_removed_from_repo(self):
+        handler = _make_handler_with(
+            FieldItemDef(id="potion", effect="restore_hp", target="single_alive", amount=100),
+        )
+        repo = RepositoryState()
+        repo.add_item("potion", 1)
+
+        hero = make_combatant("Hero")
+        ally = make_combatant("Ally", hp=50, hp_max=200)
+        state = make_battle_state([hero, ally], [make_combatant("Goblin", is_enemy=True)])
+        state.pending_action = {
+            "type": "item", "data": {"id": "potion"}, "source": hero, "targets": [ally],
+        }
+
+        resolve_action(state, effect_handler=handler, repository=repo)
+
+        assert repo.get_item("potion") is None
+        assert len(repo.items) == 0

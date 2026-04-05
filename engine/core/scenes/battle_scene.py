@@ -22,6 +22,7 @@ from engine.core.scenes.battle_logic import (
     check_result, advance_to_next_turn,
 )
 from engine.core.scenes.battle_renderer import BattleRenderer
+from engine.core.item.item_effect_handler import ItemEffectHandler
 
 
 class BattleScene(Scene):
@@ -39,12 +40,14 @@ class BattleScene(Scene):
         holder: GameStateHolder,
         scenario_path: str = "",
         boss_flag: str = "",
+        effect_handler: ItemEffectHandler | None = None,
     ) -> None:
         self._state = battle_state
         self._scene_manager = scene_manager
         self._registry = registry
         self._holder = holder
         self._boss_flag = boss_flag
+        self._effect_handler = effect_handler
         self._reward_calc = RewardCalculator()
         self._renderer = BattleRenderer(Path(scenario_path))
 
@@ -148,11 +151,25 @@ class BattleScene(Scene):
         self._state.phase = BattlePhase.SELECT_SPELL
 
     def _open_item_menu(self) -> None:
-        self._sub_items = [
-            {"label": "Potion",    "qty": 5, "data": {"id": "potion"},    "disabled": False},
-            {"label": "Hi-Potion", "qty": 3, "data": {"id": "hi_potion"}, "disabled": False},
-            {"label": "Antidote",  "qty": 2, "data": {"id": "antidote"},  "disabled": False},
-        ]
+        TARGET_MAP = {
+            "single_alive": "single_ally",
+            "single_ko": "single_ko",
+            "all_alive": "all_allies",
+        }
+        repo = self._holder.get().repository
+        self._sub_items = []
+        for entry in repo.items:
+            defn = self._effect_handler.get_def(entry.id) if self._effect_handler else None
+            if not defn:
+                continue
+            target = TARGET_MAP.get(defn.target, "single_ally")
+            label = entry.id.replace("_", " ").title()
+            self._sub_items.append({
+                "label": label,
+                "qty": entry.qty,
+                "data": {"id": entry.id, "target": target},
+                "disabled": False,
+            })
         self._sub_sel = 0
         self._state.phase = BattlePhase.SELECT_ITEM
 
@@ -247,7 +264,8 @@ class BattleScene(Scene):
     # ── Action resolution (delegates to battle_logic) ─────────
 
     def _do_resolve(self) -> None:
-        msg = resolve_action(self._state)
+        repo = self._holder.get().repository
+        msg = resolve_action(self._state, self._effect_handler, repo)
         self._enter_resolve(msg)
 
     def _enter_resolve(self, msg: str) -> None:
