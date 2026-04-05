@@ -12,18 +12,8 @@ from engine.core.settings import Settings
 from engine.core.state.game_state_holder import GameStateHolder
 from engine.core.state.repository_state import RepositoryState
 
-# ── MC catalog ────────────────────────────────────────────────
-MC_SIZES: list[tuple[str, str, int]] = [
-    # (item_id, display_label, gp_per_unit)
-    ("mc_xl", "Magic Core (XL)", 10_000),
-    ("mc_l",  "Magic Core (L)",   1_000),
-    ("mc_m",  "Magic Core (M)",     100),
-    ("mc_s",  "Magic Core (S)",      10),
-    ("mc_xs", "Magic Core (XS)",      1),
-]
-
-# Sizes that show a confirm dialog (when flag enabled in settings)
-LARGE_SIZES = {"mc_xl", "mc_l"}
+# Confirm dialog threshold — rates at or above this trigger confirmation
+LARGE_RATE_THRESHOLD = 1_000
 
 # ── Colors ────────────────────────────────────────────────────
 C_BG          = (18, 18, 35)
@@ -72,6 +62,7 @@ class MagicCoreShopScene(Scene):
         scene_manager: SceneManager,
         registry: SceneRegistry,
         on_close: callable,
+        mc_sizes: list[tuple[str, str, int]],
         confirm_large: bool = True,
         return_scene_name: str = "world_map",
     ) -> None:
@@ -79,6 +70,7 @@ class MagicCoreShopScene(Scene):
         self._scene_manager = scene_manager
         self._registry     = registry
         self._on_close     = on_close
+        self._mc_sizes     = mc_sizes
         self._confirm_large = confirm_large
         self._return_scene_name = return_scene_name
 
@@ -111,7 +103,7 @@ class MagicCoreShopScene(Scene):
         """Returns list of (item_id, label, rate, qty) for owned MC sizes."""
         repo = self._repo()
         result = []
-        for item_id, label, rate in MC_SIZES:
+        for item_id, label, rate in self._mc_sizes:
             entry = repo.get_item(item_id)
             if entry and entry.qty > 0:
                 result.append((item_id, label, rate, entry.qty))
@@ -187,8 +179,8 @@ class MagicCoreShopScene(Scene):
         elif key == pygame.K_DOWN:
             self._qty_loop(QTY_STEP_LARGE, max_qty)
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-            item_id = sel[0]
-            if self._confirm_large and item_id in LARGE_SIZES:
+            _, _, rate, _ = sel
+            if self._confirm_large and rate >= LARGE_RATE_THRESHOLD:
                 self._state = "confirm"
             else:
                 self._do_exchange()

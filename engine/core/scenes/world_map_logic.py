@@ -107,3 +107,17 @@ def load_shop_items(scenario_path: Path, map_id: str) -> list[dict]:
     with open(map_yaml) as f:
         map_data = yaml.safe_load(f)
     return map_data.get("shop", {}).get("items", [])
+
+
+def load_magic_cores(scenario_path: Path) -> list[dict]:
+    """Load magic core definitions from scenario item data.
+
+    Returns list of dicts with keys: id, name, exchange_rate.
+    Ordered by exchange_rate descending (XL first).
+    """
+    mc_path = scenario_path / "data" / "items" / "magic_cores.yaml"
+    if not mc_path.exists():
+        return []
+    with open(mc_path) as f:
+        items = yaml.safe_load(f) or []
+    return sorted(items, key=lambda d: d.get("exchange_rate", 0), reverse=True)

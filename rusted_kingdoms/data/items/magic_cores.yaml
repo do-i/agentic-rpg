@@ -1,0 +1,29 @@
+- id: mc_xl
+  name: "Magic Core (XL)"
+  type: magic_core
+  tags: [magic_core]
+  exchange_rate: 10000
+
+- id: mc_l
+  name: "Magic Core (L)"
+  type: magic_core
+  tags: [magic_core]
+  exchange_rate: 1000
+
+- id: mc_m
+  name: "Magic Core (M)"
+  type: magic_core
+  tags: [magic_core]
+  exchange_rate: 100
+
+- id: mc_s
+  name: "Magic Core (S)"
+  type: magic_core
+  tags: [magic_core]
+  exchange_rate: 10
+
+- id: mc_xs
+  name: "Magic Core (XS)"
+  type: magic_core
+  tags: [magic_core]
+  exchange_rate: 1

@@ -15,8 +15,8 @@ from engine.core.state.repository_state import ItemEntry, RepositoryState
 from engine.core.item.item_effect_handler import ItemEffectHandler
 from engine.core.scenes.target_select_overlay import TargetSelectOverlay
 from engine.core.scenes.item_logic import (
-    TABS, filtered_items, actions_for, is_usable, discard_item, clamp_scroll,
-    display_name,
+    TABS, MCCatalog, filtered_items, actions_for, is_usable, discard_item,
+    clamp_scroll, display_name,
 )
 from engine.core.scenes.item_renderer import ItemRenderer, VISIBLE_ROWS
 
@@ -70,6 +70,7 @@ class ItemScene(Scene):
         registry: SceneRegistry,
         debug_items: bool,
         effect_handler: ItemEffectHandler,
+        mc_catalog: MCCatalog | None = None,
         use_aoe_confirm: bool = True,
         return_scene_name: str = "world_map",
     ) -> None:
@@ -78,6 +79,7 @@ class ItemScene(Scene):
         self._registry     = registry
         self._return_scene_name = return_scene_name
         self._effect_handler = effect_handler
+        self._mc_catalog = mc_catalog
         self._use_aoe_confirm = use_aoe_confirm
 
         self._tab_index:   int  = 0
@@ -92,7 +94,7 @@ class ItemScene(Scene):
         self._target_overlay: TargetSelectOverlay | None = None
         self._aoe_confirm:    bool = False
 
-        self._renderer = ItemRenderer(effect_handler)
+        self._renderer = ItemRenderer(effect_handler, mc_catalog)
         self._debug_repo  = _make_debug_repository()
         self._debug_items = debug_items
 
@@ -113,7 +115,7 @@ class ItemScene(Scene):
             return None
 
     def _filtered_items(self) -> list[ItemEntry]:
-        return filtered_items(self._get_repo(), self._tab_index)
+        return filtered_items(self._get_repo(), self._tab_index, self._mc_catalog)
 
     def _selected_entry(self) -> ItemEntry | None:
         items = self._filtered_items()

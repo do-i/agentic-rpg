@@ -21,6 +21,7 @@ from engine.core.scenes.inn_scene import InnScene
 from engine.core.scenes.item_shop_scene import ItemShopScene
 from engine.core.encounter.encounter_manager import EncounterManager
 from engine.core.item.item_effect_handler import ItemEffectHandler
+from engine.core.scenes.item_logic import MCCatalog
 from engine.core.scenes.world_map_logic import (
     FADE_SPEED, try_interact, dispatch_dialogue_result,
     check_encounter, check_portals, apply_transition,
@@ -53,6 +54,7 @@ class WorldMapScene(Scene):
         npc_loader: NpcLoader,
         encounter_manager: EncounterManager,
         effect_handler: ItemEffectHandler | None = None,
+        mc_catalog: MCCatalog | None = None,
         text_speed: str = "fast",
         smooth_collision: bool = True,
         mc_exchange_confirm_large: bool = True,
@@ -70,6 +72,7 @@ class WorldMapScene(Scene):
         self._effect_handler = effect_handler
         self._text_speed = text_speed
         self._mc_exchange_confirm_large = mc_exchange_confirm_large
+        self._mc_catalog = mc_catalog or MCCatalog()
 
         self._tile_map: TileMap | None = None
         self._camera: Camera | None = None
@@ -238,6 +241,7 @@ class WorldMapScene(Scene):
             scene_manager=self._scene_manager,
             registry=self._registry,
             on_close=self._close_mc_shop,
+            mc_sizes=self._mc_catalog.sizes,
             confirm_large=self._mc_exchange_confirm_large,
         )
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 import pygame
 from engine.core.settings import Settings
 from engine.core.state.repository_state import ItemEntry
-from engine.core.scenes.item_logic import TABS, MC_LABELS, actions_for, display_name
+from engine.core.scenes.item_logic import TABS, MCCatalog, actions_for, display_name
 from engine.core.item.item_effect_handler import ItemEffectHandler
 
 # ── Colors ────────────────────────────────────────────────────
@@ -67,8 +67,10 @@ BTN_GAP         = 10
 class ItemRenderer:
     """Handles all rendering for the item scene."""
 
-    def __init__(self, effect_handler: ItemEffectHandler) -> None:
+    def __init__(self, effect_handler: ItemEffectHandler,
+                 mc_catalog: MCCatalog | None = None) -> None:
         self._effect_handler = effect_handler
+        self._mc_catalog = mc_catalog
         self._fonts_ready = False
 
     def _init_fonts(self) -> None:
@@ -193,7 +195,7 @@ class ItemRenderer:
                 screen.blit(badge, (badge_x, row_y + (ITEM_ROW_H - badge.get_height()) // 2))
                 badge_x += badge.get_width() + 6
 
-            name = display_name(entry)
+            name = display_name(entry, self._mc_catalog)
             locked_marker = " \U0001f512" if entry.locked else ""
             name_col  = TEXT_DIM if entry.locked else (TEXT_PRIMARY if sel else TEXT_SECONDARY)
             name_surf = self._font_item.render(name + locked_marker, True, name_col)
@@ -227,7 +229,7 @@ class ItemRenderer:
 
         cx, cy = x + 16, y + 16
 
-        name = display_name(entry)
+        name = display_name(entry, self._mc_catalog)
         screen.blit(self._font_title.render(name, True, HEADER_COLOR), (cx, cy))
         cy += self._font_title.get_height() + 4
 

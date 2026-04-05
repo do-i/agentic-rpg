@@ -22,6 +22,8 @@ from engine.core.encounter.enemy_loader import EnemyLoader
 from engine.core.encounter.encounter_resolver import EncounterResolver
 from engine.core.encounter.encounter_manager import EncounterManager
 from engine.core.item.item_effect_handler import ItemEffectHandler
+from engine.core.scenes.item_logic import build_mc_catalog
+from engine.core.scenes.world_map_logic import load_magic_cores
 from engine.data.loader import ManifestLoader
 from engine.world.tile_map_factory import TileMapFactory
 from engine.world.npc_loader import NpcLoader
@@ -134,6 +136,7 @@ class AppModule(Module):
         effect_handler: ItemEffectHandler,
     ) -> SceneRegistry:
         registry = SceneRegistry()
+        mc_catalog = build_mc_catalog(load_magic_cores(loader.scenario_path))
 
         registry.register_singleton("boot", BootScene(scene_manager, loader, registry))
 
@@ -151,6 +154,7 @@ class AppModule(Module):
                 game_state_manager, dialogue_engine, npc_loader,
                 encounter_manager=encounter_manager,
                 effect_handler=effect_handler,
+                mc_catalog=mc_catalog,
                 text_speed=settings.text_speed,
                 smooth_collision=settings.smooth_collision,
                 mc_exchange_confirm_large=settings.mc_exchange_confirm_large,
@@ -170,6 +174,7 @@ class AppModule(Module):
                 registry=registry,
                 debug_items=settings.debug_items,
                 effect_handler=effect_handler,
+                mc_catalog=mc_catalog,
                 use_aoe_confirm=settings.use_aoe_confirm,
             ))
 

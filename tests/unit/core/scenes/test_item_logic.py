@@ -5,13 +5,23 @@ from unittest.mock import MagicMock
 
 from engine.core.state.repository_state import ItemEntry, RepositoryState
 from engine.core.scenes.item_logic import (
-    TABS, item_tab, filtered_items, is_usable, actions_for,
-    display_name, discard_item, clamp_scroll, MC_LABELS,
+    TABS, MCCatalog, build_mc_catalog, item_tab, filtered_items, is_usable,
+    actions_for, display_name, discard_item, clamp_scroll,
 )
 
 
 def make_entry(item_id="potion", qty=5, tags=None, locked=False) -> ItemEntry:
     return ItemEntry(item_id=item_id, qty=qty, tags=tags or set(), locked=locked)
+
+
+MC_TEST_DATA = [
+    {"id": "mc_xl", "name": "Magic Core (XL)", "exchange_rate": 10_000},
+    {"id": "mc_l",  "name": "Magic Core (L)",  "exchange_rate": 1_000},
+    {"id": "mc_m",  "name": "Magic Core (M)",  "exchange_rate": 100},
+    {"id": "mc_s",  "name": "Magic Core (S)",  "exchange_rate": 10},
+    {"id": "mc_xs", "name": "Magic Core (XS)", "exchange_rate": 1},
+]
+TEST_MC_CATALOG = build_mc_catalog(MC_TEST_DATA)
 
 
 def make_repo_with_items(items: list[tuple[str, int, set]]) -> RepositoryState:
@@ -89,7 +99,7 @@ class TestFilteredItems:
             ("mc_xl", 1, {"magic_core"}),
             ("mc_m", 5, {"magic_core"}),
         ])
-        result = filtered_items(repo, TABS.index("Magic Core"))
+        result = filtered_items(repo, TABS.index("Magic Core"), TEST_MC_CATALOG)
         assert [e.id for e in result] == ["mc_xl", "mc_m", "mc_s"]
 
     def test_material_excludes_magic_core(self):
@@ -193,7 +203,11 @@ class TestActionsFor:
 class TestDisplayName:
     def test_magic_core_uses_label(self):
         entry = make_entry("mc_xl", tags={"magic_core"})
-        assert display_name(entry) == "Magic Core (XL)"
+        assert display_name(entry, TEST_MC_CATALOG) == "Magic Core (XL)"
+
+    def test_magic_core_without_catalog_falls_back(self):
+        entry = make_entry("mc_xl", tags={"magic_core"})
+        assert display_name(entry) == "Mc Xl"
 
     def test_regular_item_title_cased(self):
         entry = make_entry("hi_potion", tags={"consumable"})
@@ -225,3 +239,32 @@ class TestClampScroll:
     def test_boundary_exact(self):
         assert clamp_scroll(13, 0, 14) == 0  # still visible at index 13
         assert clamp_scroll(14, 0, 14) == 1  # needs scroll
+
+
+# ── build_mc_catalog ─────────────────────────────────────────
+
+class TestBuildMcCatalog:
+    def test_builds_ids(self):
+        cat = build_mc_catalog(MC_TEST_DATA)
+        assert cat.ids == {"mc_xl", "mc_l", "mc_m", "mc_s", "mc_xs"}
+
+    def test_preserves_order(self):
+        cat = build_mc_catalog(MC_TEST_DATA)
+        assert cat.order == ["mc_xl", "mc_l", "mc_m", "mc_s", "mc_xs"]
+
+    def test_labels(self):
+        cat = build_mc_catalog(MC_TEST_DATA)
+        assert cat.labels["mc_xl"] == "Magic Core (XL)"
+        assert cat.labels["mc_xs"] == "Magic Core (XS)"
+
+    def test_sizes_tuples(self):
+        cat = build_mc_catalog(MC_TEST_DATA)
+        assert cat.sizes[0] == ("mc_xl", "Magic Core (XL)", 10_000)
+        assert cat.sizes[-1] == ("mc_xs", "Magic Core (XS)", 1)
+
+    def test_empty_input(self):
+        cat = build_mc_catalog([])
+        assert cat.ids == set()
+        assert cat.order == []
+        assert cat.labels == {}
+        assert cat.sizes == []

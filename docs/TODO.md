@@ -3,14 +3,14 @@
 ## Bugs
 
 ### Inn
-Ater woke up player position is not on the same tile as before.
-
+- Ater woke up player position is not on the same tile as before.
+- NPC close to each other: when player is in a proximity of two NPC, dialogue starts on unexpected NPC. Expected behavior, select NPC closest to the player starts dialogue. if both NPC are in same distance, then pick one facing player is picked. Is there a better solution?
 
 ## Unstub
 
 ### Battle — Items
-- ~~**Hardcoded item menu**~~ — ✅ `_open_item_menu()` now reads real items from party repository via `ItemEffectHandler`
-- ~~**Items always heal 100 HP**~~ — ✅ `resolve_action()` item branch now uses `ItemEffectHandler._apply_to_member()` for correct effects (restore_hp, restore_mp, restore_full, cure, revive)
+- ~~**Hardcoded item menu** — ✅ `_open_item_menu()` now reads real items from party repository via `ItemEffectHandler`~~
+- ~~**Items always heal 100 HP** — ✅ `resolve_action()` item branch now uses `ItemEffectHandler._apply_to_member()` for correct effects (restore_hp, restore_mp, restore_full, cure, revive)~~
 
 ### Battle — Flee
 - **Run always succeeds** — `battle_scene.py:290` `_attempt_run()` immediately switches to world map with no flee formula (DEX check, boss block, etc.)
@@ -36,10 +36,11 @@ Ater woke up player position is not on the same tile as before.
 - **Debug item repository** — `item_scene.py:24` `_make_debug_repository()` hardcodes 21 items as fallback; should be removed once real data loading is complete
 
 ### Magic Core Shop
-- **Hardcoded exchange rates** — `magic_core_shop_scene.py:16` `MC_SIZES` list with hardcoded GP-per-unit rates; should load from scenario YAML
-- **Hardcoded MC labels/order** — `item_logic.py:14` `MC_IDS`, `MC_ORDER`, `MC_LABELS` are hardcoded; should derive from item data
+- ~~**Hardcoded exchange rates** — `magic_core_shop_scene.py:16` `MC_SIZES` list with hardcoded GP-per-unit rates; should load from scenario YAML~~ ✓ loaded from `magic_cores.yaml`
+- ~~**Hardcoded MC labels/order** — `item_logic.py:14` `MC_IDS`, `MC_ORDER`, `MC_LABELS` are hardcoded; should derive from item data~~ ✓ replaced with data-driven `MCCatalog`
 
 ## Feature
+- Use sprite head as protrait in a NPC dialogue
 - Party join flow | Full party
 - Shop + Apothecary | Buy/craft
 - Boss encounters + story act transitions | Story progression
