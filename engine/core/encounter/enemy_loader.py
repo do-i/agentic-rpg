@@ -78,6 +78,7 @@ class EnemyLoader:
             sprite_id=enemy_id,
             exp_yield=data.get("exp", 0),
             abilities=abilities,
+            drops=data.get("drops", {}),
         )
 
     # ── Class abilities ───────────────────────────────────────

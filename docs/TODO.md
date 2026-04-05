@@ -19,7 +19,7 @@
 - **No Game Over screen** — `battle_scene.py:31` on defeat, silently returns to world map; should show a Game Over scene with restart/load/quit options
 
 ### Battle — Loot
-- **Loot table stub** — `battle_rewards.py:54,165` `LootResult` and `_roll_loot()` always drop 1x Magic Core (S) per enemy; should use weighted loot tables from enemy YAML definitions
+- ~~**Loot table stub** — ✅ `_resolve_loot()` now reads `drops.mc` (guaranteed magic cores, aggregated by size) and `drops.loot` (weighted item pools via `_weighted_pick()`) from enemy YAML; item drops added to repository on victory~~
 
 ### Battle — Enemy AI
 - **Enemy abilities not loaded** — `enemy_loader.py:91` `_load_class_abilities()` returns `[]`; enemies only use basic attacks. Should resolve abilities from `ai:` block in enemy YAML

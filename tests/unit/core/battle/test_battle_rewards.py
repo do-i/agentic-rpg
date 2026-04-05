@@ -1,9 +1,10 @@
 # tests/unit/core/battle/test_battle_rewards.py
 
 import pytest
+from unittest.mock import patch
 from engine.core.battle.battle_rewards import (
     RewardCalculator, exp_required, LevelUpResult,
-    EXP_CAP, LEVEL_CAP,
+    EXP_CAP, LEVEL_CAP, _weighted_pick,
 )
 from engine.core.battle.combatant import Combatant
 from engine.core.state.party_state import PartyState, MemberState
@@ -136,10 +137,132 @@ class TestLevelUp:
         assert m.level == LEVEL_CAP
 
 
+def _make_enemy_with_drops(exp_yield=100, drops=None) -> Combatant:
+    return Combatant(
+        id="slime_01", name="Slime", is_enemy=True,
+        hp=10, hp_max=10, mp=0, mp_max=0,
+        atk=5, def_=3, mres=2, dex=3,
+        exp_yield=exp_yield,
+        drops=drops or {},
+    )
+
+
 class TestLoot:
-    def test_mc_drops_per_enemy(self):
+    def test_no_drops_returns_empty(self):
         calc = RewardCalculator()
-        enemies = [_make_enemy(), _make_enemy(), _make_enemy()]
+        enemies = [_make_enemy()]
         party = _party_with([_make_member()])
         rewards = calc.calculate(enemies, party)
-        assert len(rewards.loot.mc_drops) == 3
+        assert rewards.loot.mc_drops == []
+        assert rewards.loot.item_drops == []
+
+    def test_mc_drops_from_enemy_yaml(self):
+        calc = RewardCalculator()
+        drops = {"mc": [{"size": "S", "qty": 2}]}
+        enemies = [_make_enemy_with_drops(drops=drops)]
+        party = _party_with([_make_member()])
+        rewards = calc.calculate(enemies, party)
+        assert len(rewards.loot.mc_drops) == 1
+        assert rewards.loot.mc_drops[0] == {"size": "S", "qty": 2}
+
+    def test_mc_drops_aggregate_same_size(self):
+        calc = RewardCalculator()
+        drops = {"mc": [{"size": "S", "qty": 1}]}
+        enemies = [_make_enemy_with_drops(drops=drops), _make_enemy_with_drops(drops=drops)]
+        party = _party_with([_make_member()])
+        rewards = calc.calculate(enemies, party)
+        assert len(rewards.loot.mc_drops) == 1
+        assert rewards.loot.mc_drops[0] == {"size": "S", "qty": 2}
+
+    def test_mc_drops_different_sizes(self):
+        calc = RewardCalculator()
+        e1 = _make_enemy_with_drops(drops={"mc": [{"size": "S", "qty": 1}]})
+        e2 = _make_enemy_with_drops(drops={"mc": [{"size": "M", "qty": 1}]})
+        party = _party_with([_make_member()])
+        rewards = calc.calculate([e1, e2], party)
+        sizes = {d["size"] for d in rewards.loot.mc_drops}
+        assert sizes == {"S", "M"}
+
+    def test_mc_multiple_entries_per_enemy(self):
+        calc = RewardCalculator()
+        drops = {"mc": [{"size": "L", "qty": 2}, {"size": "XL", "qty": 1}]}
+        enemies = [_make_enemy_with_drops(drops=drops)]
+        party = _party_with([_make_member()])
+        rewards = calc.calculate(enemies, party)
+        mc_map = {d["size"]: d["qty"] for d in rewards.loot.mc_drops}
+        assert mc_map == {"L": 2, "XL": 1}
+
+    def test_loot_pool_rolls_item(self):
+        calc = RewardCalculator()
+        drops = {"loot": [{"pool": [
+            {"item": "rat_tail", "weight": 80},
+            {"item": "rat_hide", "weight": 20},
+        ]}]}
+        enemies = [_make_enemy_with_drops(drops=drops)]
+        party = _party_with([_make_member()])
+
+        with patch("engine.core.battle.battle_rewards.random.choices",
+                   return_value=["rat_tail"]):
+            rewards = calc.calculate(enemies, party)
+
+        assert len(rewards.loot.item_drops) == 1
+        assert rewards.loot.item_drops[0]["id"] == "rat_tail"
+        assert rewards.loot.item_drops[0]["qty"] == 1
+        assert rewards.loot.item_drops[0]["name"] == "Rat Tail"
+
+    def test_loot_duplicate_items_aggregate(self):
+        calc = RewardCalculator()
+        drops = {"loot": [
+            {"pool": [{"item": "bat_wing", "weight": 100}]},
+        ]}
+        # Two enemies both drop bat_wing
+        enemies = [
+            _make_enemy_with_drops(drops=drops),
+            _make_enemy_with_drops(drops=drops),
+        ]
+        party = _party_with([_make_member()])
+        rewards = calc.calculate(enemies, party)
+        assert len(rewards.loot.item_drops) == 1
+        assert rewards.loot.item_drops[0]["id"] == "bat_wing"
+        assert rewards.loot.item_drops[0]["qty"] == 2
+
+    def test_empty_loot_pool_no_item(self):
+        calc = RewardCalculator()
+        drops = {"loot": [{"pool": []}]}
+        enemies = [_make_enemy_with_drops(drops=drops)]
+        party = _party_with([_make_member()])
+        rewards = calc.calculate(enemies, party)
+        assert rewards.loot.item_drops == []
+
+    def test_combined_mc_and_loot(self):
+        calc = RewardCalculator()
+        drops = {
+            "mc": [{"size": "XS", "qty": 3}],
+            "loot": [{"pool": [{"item": "golem_core", "weight": 100}]}],
+        }
+        enemies = [_make_enemy_with_drops(drops=drops)]
+        party = _party_with([_make_member()])
+        rewards = calc.calculate(enemies, party)
+        assert len(rewards.loot.mc_drops) == 1
+        assert rewards.loot.mc_drops[0] == {"size": "XS", "qty": 3}
+        assert len(rewards.loot.item_drops) == 1
+        assert rewards.loot.item_drops[0]["id"] == "golem_core"
+
+
+class TestWeightedPick:
+    def test_empty_pool_returns_none(self):
+        assert _weighted_pick([]) is None
+
+    def test_single_item_always_picked(self):
+        pool = [{"item": "only_one", "weight": 50}]
+        assert _weighted_pick(pool) == "only_one"
+
+    def test_respects_weights(self):
+        pool = [
+            {"item": "common", "weight": 90},
+            {"item": "rare", "weight": 10},
+        ]
+        results = [_weighted_pick(pool) for _ in range(200)]
+        assert "common" in results
+        # rare should appear at least once in 200 draws with 10% chance
+        assert "rare" in results

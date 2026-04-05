@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 import math
+import random
 from dataclasses import dataclass, field
 
 from engine.core.battle.combatant import Combatant
@@ -51,9 +52,8 @@ class MemberExpResult:
 
 @dataclass
 class LootResult:
-    """Stub — full loot table resolution in Phase 4 follow-up."""
-    mc_drops:   list[dict] = field(default_factory=list)
-    item_drops: list[dict] = field(default_factory=list)
+    mc_drops:   list[dict] = field(default_factory=list)   # [{"size": "S", "qty": 1}, ...]
+    item_drops: list[dict] = field(default_factory=list)   # [{"id": "rat_tail", "name": "Rat Tail", "qty": 1}, ...]
     gp_gained:  int = 0
 
 
@@ -162,10 +162,52 @@ class RewardCalculator:
     # ── Loot ─────────────────────────────────────────────────
 
     def _resolve_loot(self, enemies: list[Combatant]) -> LootResult:
-        """Stub — full weighted loot table in Phase 4 follow-up."""
-        mc_drops = [{"size": "S", "qty": 1} for _ in enemies]
-        return LootResult(mc_drops=mc_drops)
+        """Resolve loot from enemy drop tables.
+
+        Each enemy may define drops.mc (guaranteed magic cores) and
+        drops.loot (weighted item pools — one roll per pool).
+        """
+        # Aggregate MC drops by size
+        mc_totals: dict[str, int] = {}
+        item_totals: dict[str, int] = {}
+
+        for enemy in enemies:
+            drops = enemy.drops
+            if not drops:
+                continue
+
+            # MC drops — guaranteed
+            for mc in drops.get("mc", []):
+                size = mc.get("size", "S")
+                qty = mc.get("qty", 1)
+                mc_totals[size] = mc_totals.get(size, 0) + qty
+
+            # Loot pools — one weighted roll per pool
+            for pool_entry in drops.get("loot", []):
+                pool = pool_entry.get("pool", [])
+                if not pool:
+                    continue
+                item_id = _weighted_pick(pool)
+                if item_id:
+                    item_totals[item_id] = item_totals.get(item_id, 0) + 1
+
+        mc_drops = [{"size": s, "qty": q} for s, q in mc_totals.items()]
+        item_drops = [
+            {"id": iid, "name": iid.replace("_", " ").title(), "qty": q}
+            for iid, q in item_totals.items()
+        ]
+
+        return LootResult(mc_drops=mc_drops, item_drops=item_drops)
 
     @staticmethod
     def _is_ko(member: MemberState) -> bool:
         return getattr(member, "hp", 1) <= 0
+
+
+def _weighted_pick(pool: list[dict]) -> str | None:
+    """Pick one item id from a weighted pool. Returns None if pool is empty."""
+    if not pool:
+        return None
+    items = [entry.get("item", "") for entry in pool]
+    weights = [entry.get("weight", 1) for entry in pool]
+    return random.choices(items, weights=weights, k=1)[0]
