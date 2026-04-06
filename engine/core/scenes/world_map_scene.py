@@ -25,7 +25,7 @@ from engine.core.scenes.item_logic import MCCatalog
 from engine.core.scenes.world_map_logic import (
     FADE_SPEED, try_interact, dispatch_dialogue_result,
     check_encounter, check_portals, apply_transition,
-    load_inn_cost, load_shop_items,
+    load_inn_cost, load_shop_items, _is_player_facing,
 )
 from engine.data.loader import ManifestLoader
 from engine.world.tile_map import TileMap
@@ -386,7 +386,10 @@ class WorldMapScene(Scene):
         visible_npcs = [n for n in self._npcs if n.is_present(state.flags)]
         for npc in visible_npcs:
             other_rects = [n.collision_rect for n in visible_npcs if n is not npc]
-            npc.update(delta, near=npc.is_near(player_pos),
+            notices = (npc.is_near(player_pos)
+                       and npc.is_facing_toward(player_pos)
+                       and _is_player_facing(self._player, npc.pixel_position))
+            npc.update(delta, near=notices,
                        collision_map=self._tile_map.collision_map,
                        npc_rects=other_rects)
 
@@ -441,7 +444,10 @@ class WorldMapScene(Scene):
             self._player.render(screen, self._camera.offset_x, self._camera.offset_y)
 
         def render_npc(npc):
-            near = npc.is_near(player_pos) and self._dialogue is None
+            near = (npc.is_near(player_pos)
+                    and npc.is_facing_toward(player_pos)
+                    and _is_player_facing(self._player, npc.pixel_position)
+                    and self._dialogue is None)
             npc.render(
                 screen,
                 self._camera.offset_x,

@@ -89,6 +89,45 @@ class TestIsNear:
         assert not npc.is_near(pos)
 
 
+# ── is_facing_toward ──────────────────────────────────────────
+
+class TestIsFacingToward:
+    def test_facing_down_target_below(self):
+        npc = make_npc(tile_x=5, tile_y=5, default_facing="down")
+        target = Position(5 * Settings.TILE_SIZE, 6 * Settings.TILE_SIZE)
+        assert npc.is_facing_toward(target)
+
+    def test_facing_down_target_above(self):
+        npc = make_npc(tile_x=5, tile_y=5, default_facing="down")
+        target = Position(5 * Settings.TILE_SIZE, 4 * Settings.TILE_SIZE)
+        assert not npc.is_facing_toward(target)
+
+    def test_facing_up_target_above(self):
+        npc = make_npc(tile_x=5, tile_y=5, default_facing="up")
+        target = Position(5 * Settings.TILE_SIZE, 4 * Settings.TILE_SIZE)
+        assert npc.is_facing_toward(target)
+
+    def test_facing_left_target_left(self):
+        npc = make_npc(tile_x=5, tile_y=5, default_facing="left")
+        target = Position(4 * Settings.TILE_SIZE, 5 * Settings.TILE_SIZE)
+        assert npc.is_facing_toward(target)
+
+    def test_facing_right_target_right(self):
+        npc = make_npc(tile_x=5, tile_y=5, default_facing="right")
+        target = Position(6 * Settings.TILE_SIZE, 5 * Settings.TILE_SIZE)
+        assert npc.is_facing_toward(target)
+
+    def test_facing_right_target_left(self):
+        npc = make_npc(tile_x=5, tile_y=5, default_facing="right")
+        target = Position(4 * Settings.TILE_SIZE, 5 * Settings.TILE_SIZE)
+        assert not npc.is_facing_toward(target)
+
+    def test_same_position_returns_false(self):
+        npc = make_npc(tile_x=5, tile_y=5, default_facing="down")
+        target = Position(5 * Settings.TILE_SIZE, 5 * Settings.TILE_SIZE)
+        assert not npc.is_facing_toward(target)
+
+
 # ── _direction_toward ─────────────────────────────────────────
 
 class TestDirectionToward:

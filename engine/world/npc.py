@@ -131,6 +131,12 @@ class Npc:
         dy = abs(self._py - player_px.y)
         return dx <= INTERACTION_RANGE and dy <= INTERACTION_RANGE
 
+    def is_facing_toward(self, target: Position) -> bool:
+        """True if the NPC's current facing direction points toward *target*."""
+        dx = target.x - self._px
+        dy = target.y - self._py
+        return dx * _DIR_DX[self._facing_dir] + dy * _DIR_DY[self._facing_dir] > 0
+
     def _facing(self, player_pos: Position | None, near: bool) -> Direction:
         if near and player_pos is not None:
             return _direction_toward(self._px, self._py, player_pos)

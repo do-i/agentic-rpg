@@ -4,7 +4,7 @@ import pygame
 from engine.core.models.position import Position
 from engine.core.settings import Settings
 from engine.world.collision import CollisionMap
-from engine.world.sprite_sheet import SpriteSheet
+from engine.world.sprite_sheet import Direction, SpriteSheet
 from engine.world.animation_controller import AnimationController
 
 PLAYER_SPEED  = 5
@@ -104,6 +104,12 @@ class Player:
     def collision_rect_position(self) -> Position:
         return Position(int(self._x) + COLLISION_OFFSET_X,
                         int(self._y) + COLLISION_OFFSET_Y)
+
+    @property
+    def facing_direction(self) -> Direction:
+        if self._animation:
+            return self._animation.direction
+        return Direction.DOWN
 
     @property
     def tile_position(self) -> Position:

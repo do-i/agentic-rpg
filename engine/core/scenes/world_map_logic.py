@@ -15,26 +15,57 @@ from engine.core.dialogue.dialogue_engine import DialogueEngine
 from engine.core.encounter.encounter_manager import EncounterManager
 from engine.world.npc import Npc
 from engine.world.player import Player, COLLISION_W, COLLISION_H
+from engine.world.sprite_sheet import Direction
 from engine.world.tile_map import TileMap
 
 FADE_SPEED = 300
 
+# Direction → unit vector for "player is facing toward NPC" check.
+_DIR_DX = {Direction.LEFT: -1, Direction.RIGHT: 1, Direction.UP: 0, Direction.DOWN: 0}
+_DIR_DY = {Direction.UP: -1, Direction.DOWN: 1, Direction.LEFT: 0, Direction.RIGHT: 0}
+
+
+def _is_player_facing(player: Player, npc_pos) -> bool:
+    """True if the NPC is roughly in the direction the player faces."""
+    pp = player.pixel_position
+    dx = npc_pos.x - pp.x
+    dy = npc_pos.y - pp.y
+    facing = player.facing_direction
+    return dx * _DIR_DX[facing] + dy * _DIR_DY[facing] > 0
+
 
 def try_interact(player: Player, npcs: list[Npc], flags, dialogue_engine: DialogueEngine):
-    """Try to interact with a nearby NPC. Returns (dialogue_result, npc) or (None, None)."""
+    """Try to interact with a nearby NPC. Returns (dialogue_result, npc) or (None, None).
+
+    When multiple NPCs are in range, picks the closest one.
+    Ties are broken by whether the player is facing the NPC.
+    """
     if player is None:
         return None, None
     player_pos = player.pixel_position
 
+    # Collect all nearby, present NPCs.
+    candidates: list[Npc] = []
     for npc in npcs:
-        if not npc.is_present(flags):
-            continue
-        if not npc.is_near(player_pos):
-            continue
+        if npc.is_present(flags) and npc.is_near(player_pos):
+            candidates.append(npc)
+
+    if not candidates:
+        return None, None
+
+    # Sort: closest first, then prefer NPC the player is facing.
+    def _sort_key(npc: Npc):
+        np = npc.pixel_position
+        dist_sq = (np.x - player_pos.x) ** 2 + (np.y - player_pos.y) ** 2
+        facing = 0 if _is_player_facing(player, np) else 1
+        return (dist_sq, facing)
+
+    candidates.sort(key=_sort_key)
+
+    for npc in candidates:
         result = dialogue_engine.resolve(npc.dialogue_id, flags)
         if result:
             return result, npc
-        break
     return None, None
 
 
