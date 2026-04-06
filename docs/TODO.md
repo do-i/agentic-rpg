@@ -3,7 +3,7 @@
 ## Bugs
 
 ### Inn
-- Ater woke up player position is not on the same tile as before.
+- ~~After resting at Inn, player position is not on the same tile as before. — ✅ `_open_inn()` now calls `state.map.set_position()` before opening the overlay, matching the pattern used by save modal and portal transitions.~~
 - NPC close to each other: when player is in a proximity of two NPC, dialogue starts on unexpected NPC. Expected behavior, select NPC closest to the player starts dialogue. if both NPC are in same distance, then pick one facing player is picked. Is there a better solution?
 
 ## Unstub

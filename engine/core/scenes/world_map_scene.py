@@ -252,6 +252,7 @@ class WorldMapScene(Scene):
 
     def _open_inn(self) -> None:
         state    = self._holder.get()
+        state.map.set_position(self._player.tile_position)
         map_id   = state.map.current
         cost = load_inn_cost(self._loader.scenario_path, map_id)
         sprite_path = self._loader.scenario_path / "assets" / "sprites" / "npc" / "female_blue_01.tsx"
