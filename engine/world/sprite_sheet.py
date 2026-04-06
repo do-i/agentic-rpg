@@ -59,6 +59,15 @@ class SpriteSheet:
                 frame = sheet.subsurface(pygame.Rect(x, y, FRAME_WIDTH, FRAME_HEIGHT))
                 self._frames[(direction, col)] = frame
 
+    def get_portrait(self, direction: Direction = Direction.DOWN) -> pygame.Surface:
+        """Return the head region of the idle frame, suitable for dialogue portraits."""
+        idle = self.get_frame(direction, 0)
+        # Top 50 % of the 64 px frame captures the head/shoulders.
+        crop_h = int(FRAME_HEIGHT * 0.5)
+        crop_w = int(FRAME_WIDTH * 0.5)
+        head = idle.subsurface(pygame.Rect(16, 10, crop_w, crop_h))
+        return head
+
     def get_frame(self, direction: Direction, frame_index: int) -> pygame.Surface:
         """Returns the surface for the given direction and frame index."""
         key = (direction, frame_index % FRAMES_PER_ROW)

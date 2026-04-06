@@ -123,6 +123,13 @@ class Npc:
             NPC_COLLISION_H,
         )
 
+    @property
+    def portrait(self) -> pygame.Surface | None:
+        """Head crop from the idle DOWN frame, or None if no sprite sheet."""
+        if self._sprite_sheet is None:
+            return None
+        return self._sprite_sheet.get_portrait()
+
     def is_present(self, flags: FlagState) -> bool:
         return flags.has_all(self._present_requires) and flags.has_none(self._present_excludes)
 

@@ -34,11 +34,13 @@ class DialogueScene(Scene):
         result: DialogueResult,
         on_complete: callable,
         text_speed: str = "fast",
+        portrait: pygame.Surface | None = None,
     ) -> None:
         self._lines = result.lines
         self._on_complete_cb = on_complete
         self._on_complete_data = result.on_complete
         self._speed = TEXT_SPEEDS.get(text_speed, TEXT_SPEEDS["fast"])
+        self._portrait = portrait
         self._instant = (self._speed == 0)
 
         self._line_index = 0
@@ -122,18 +124,14 @@ class DialogueScene(Scene):
         screen.blit(box_surf, (BOX_MARGIN, box_y))
         pygame.draw.rect(screen, (160, 160, 100), (BOX_MARGIN, box_y, box_w, BOX_H), 2)
 
-        # portrait placeholder (colored rect — Phase 2 sprite integration)
-        pygame.draw.rect(
-            screen,
-            (50, 50, 80),
-            (BOX_MARGIN + BOX_PAD, box_y + BOX_PAD, PORTRAIT_SIZE, PORTRAIT_SIZE),
-        )
-        pygame.draw.rect(
-            screen,
-            (120, 120, 90),
-            (BOX_MARGIN + BOX_PAD, box_y + BOX_PAD, PORTRAIT_SIZE, PORTRAIT_SIZE),
-            1,
-        )
+        # portrait
+        px = BOX_MARGIN + BOX_PAD
+        py = box_y + BOX_PAD
+        pygame.draw.rect(screen, (50, 50, 80), (px, py, PORTRAIT_SIZE, PORTRAIT_SIZE))
+        if self._portrait is not None:
+            scaled = pygame.transform.scale(self._portrait, (PORTRAIT_SIZE, PORTRAIT_SIZE))
+            screen.blit(scaled, (px, py))
+        pygame.draw.rect(screen, (120, 120, 90), (px, py, PORTRAIT_SIZE, PORTRAIT_SIZE), 1)
 
         # dialogue text — word-wrapped
         text_x = BOX_MARGIN + TEXT_X_OFFSET

@@ -198,7 +198,7 @@ class WorldMapScene(Scene):
 
     def _try_interact(self) -> None:
         state = self._holder.get()
-        result, _npc = try_interact(
+        result, npc = try_interact(
             self._player, self._npcs, state.flags, self._dialogue_engine,
         )
         if result:
@@ -206,6 +206,7 @@ class WorldMapScene(Scene):
                 result=result,
                 on_complete=self._on_dialogue_complete,
                 text_speed=self._text_speed,
+                portrait=npc.portrait if npc else None,
             )
 
     def _on_dialogue_complete(self, on_complete: dict) -> None:
