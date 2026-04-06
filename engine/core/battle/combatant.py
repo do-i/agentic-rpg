@@ -48,6 +48,9 @@ class Combatant:
     # drop table from enemy YAML — {mc: [...], loot: [...]}
     drops: dict = field(default_factory=dict)
 
+    # AI data from enemy YAML — {ai: {pattern, moves}, targeting: {default, overrides}}
+    ai_data: dict = field(default_factory=dict)
+
     @property
     def hp_pct(self) -> float:
         return self.hp / self.hp_max if self.hp_max > 0 else 0.0

@@ -22,8 +22,8 @@
 - ~~**Loot table stub** — ✅ `_resolve_loot()` now reads `drops.mc` (guaranteed magic cores, aggregated by size) and `drops.loot` (weighted item pools via `_weighted_pick()`) from enemy YAML; item drops added to repository on victory~~
 
 ### Battle — Enemy AI
-- **Enemy abilities not loaded** — `enemy_loader.py:91` `_load_class_abilities()` returns `[]`; enemies only use basic attacks. Should resolve abilities from `ai:` block in enemy YAML
-- **Barrier blocked message not shown** — `encounter_resolver.py:125` barrier filtering works but the `blocked_message` is never surfaced in battle UI
+- ~~**Enemy abilities not loaded** — ✅ `EnemyLoader` now loads inline `ai:`/`targeting:` blocks and external `ai_ref:` files into `Combatant.ai_data`. `pick_enemy_action()` supports random and conditional patterns (hp_pct_below, turn_mod). `resolve_enemy_turn()` uses weighted action selection and targeting (random_alive, lowest_hp, highest_hp, all_party, self).~~
+- ~~**Barrier blocked message not shown** — ✅ `encounter_resolver._build_enemies()` now collects `barrier_messages` onto `BattleState`; `BattleScene` displays the first barrier message at battle start.~~
 
 ### Battle — Enemy Sprites
 - **Enemy sprite_id placeholder** — `combatant.py:36` `sprite_id` defaults to empty string; enemies render as colored rectangles, not sprites

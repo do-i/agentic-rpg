@@ -54,13 +54,15 @@ class EncounterResolver:
         if not formation:
             return None
 
-        enemies = self._build_enemies(
+        enemies, barrier_messages = self._build_enemies(
             formation, zone, inventory_item_ids
         )
         if not enemies:
             return None
 
-        return BattleState(party=[], enemies=enemies)   # party filled by caller
+        state = BattleState(party=[], enemies=enemies)
+        state.barrier_messages = barrier_messages
+        return state
 
     def try_boss_encounter(
         self,
@@ -115,16 +117,16 @@ class EncounterResolver:
         formation: Formation,
         zone: EncounterZone,
         inventory_item_ids: set[str],
-    ) -> list[Combatant]:
+    ) -> tuple[list[Combatant], list[str]]:
         barrier_map = {b.enemy_id: b for b in zone.barrier_enemies}
         result = []
+        barrier_messages = []
         for enemy_id in formation.enemy_ids:
             barrier = barrier_map.get(enemy_id)
             if barrier and barrier.requires_item not in inventory_item_ids:
-                # barrier enemy present but player lacks required item — skip it
-                # the blocked_message is surfaced by BattleScene stub — Phase 4
+                barrier_messages.append(barrier.blocked_message)
                 continue
             combatant = self._enemy_loader.load(enemy_id)
             if combatant:
                 result.append(combatant)
-        return result
+        return result, barrier_messages

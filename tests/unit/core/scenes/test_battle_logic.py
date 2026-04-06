@@ -13,18 +13,21 @@ from engine.core.scenes.battle_logic import (
     check_result, advance_to_next_turn, sync_party_state,
     float_pos, enemy_rect_size, ENEMY_SIZES,
     attempt_flee, FLEE_BASE_CHANCE, FLEE_ROGUE_DEX_BONUS,
+    pick_enemy_action, resolve_targeting,
+    _check_condition, _weighted_pick_move,
 )
 
 
 def make_combatant(name="Hero", hp=100, hp_max=100, mp=50, mp_max=50,
                    atk=20, def_=5, mres=10, dex=10, is_enemy=False,
-                   boss=False, abilities=None) -> Combatant:
+                   boss=False, abilities=None, ai_data=None) -> Combatant:
     return Combatant(
         id=name.lower(), name=name,
         hp=hp, hp_max=hp_max, mp=mp, mp_max=mp_max,
         atk=atk, def_=def_, mres=mres, dex=dex,
         is_enemy=is_enemy, boss=boss,
         abilities=abilities or [],
+        ai_data=ai_data or {},
     )
 
 
@@ -651,3 +654,259 @@ class TestAttemptFlee:
             success, _ = attempt_flee(state, holder)
 
         assert success
+
+
+# ── pick_enemy_action ────────────────────────────────────────
+
+class TestPickEnemyAction:
+    def test_no_ai_data_returns_attack(self):
+        enemy = make_combatant("Goblin", is_enemy=True)
+        state = make_battle_state([make_combatant("Hero")], [enemy])
+
+        action = pick_enemy_action(enemy, state)
+
+        assert action["action"] == "attack"
+
+    def test_random_pattern_picks_from_moves(self):
+        ai_data = {"ai": {"pattern": "random", "moves": [
+            {"action": "attack", "weight": 70},
+            {"action": "ability", "id": "scratch", "weight": 30},
+        ]}}
+        enemy = make_combatant("Goblin", is_enemy=True, ai_data=ai_data)
+        state = make_battle_state([make_combatant("Hero")], [enemy])
+
+        with patch("engine.core.scenes.battle_logic.random.choices",
+                   return_value=[ai_data["ai"]["moves"][1]]):
+            action = pick_enemy_action(enemy, state)
+
+        assert action["action"] == "ability"
+        assert action["id"] == "scratch"
+
+    def test_conditional_filters_by_hp(self):
+        ai_data = {"ai": {"pattern": "conditional", "moves": [
+            {"condition": {"hp_pct_below": 1.0}, "action": "attack", "weight": 50},
+            {"condition": {"hp_pct_below": 0.5}, "action": "ability", "id": "enrage", "weight": 100},
+        ]}}
+        # enemy at full HP — only the first move is eligible
+        enemy = make_combatant("Boss", hp=100, hp_max=100, is_enemy=True, ai_data=ai_data)
+        state = make_battle_state([make_combatant("Hero")], [enemy])
+
+        action = pick_enemy_action(enemy, state)
+
+        assert action["action"] == "attack"
+
+    def test_conditional_unlocks_low_hp_move(self):
+        ai_data = {"ai": {"pattern": "conditional", "moves": [
+            {"condition": {"hp_pct_below": 1.0}, "action": "attack", "weight": 1},
+            {"condition": {"hp_pct_below": 0.5}, "action": "ability", "id": "enrage", "weight": 999},
+        ]}}
+        # enemy at 30% HP — both moves eligible, enrage heavily weighted
+        enemy = make_combatant("Boss", hp=30, hp_max=100, is_enemy=True, ai_data=ai_data)
+        state = make_battle_state([make_combatant("Hero")], [enemy])
+
+        with patch("engine.core.scenes.battle_logic.random.choices",
+                   return_value=[ai_data["ai"]["moves"][1]]):
+            action = pick_enemy_action(enemy, state)
+
+        assert action["id"] == "enrage"
+
+    def test_conditional_turn_mod(self):
+        ai_data = {"ai": {"pattern": "conditional", "moves": [
+            {"condition": {"hp_pct_below": 1.0}, "action": "attack", "weight": 50},
+            {"condition": {"turn_mod": {"every": 4}}, "action": "ability", "id": "special", "weight": 100},
+        ]}}
+        enemy = make_combatant("Boss", is_enemy=True, ai_data=ai_data)
+        state = make_battle_state([make_combatant("Hero")], [enemy])
+
+        # Turn 3 — special not eligible
+        state.turn_count = 3
+        action = pick_enemy_action(enemy, state)
+        assert action["action"] == "attack"
+
+        # Turn 4 — special eligible and heavily weighted
+        state.turn_count = 4
+        with patch("engine.core.scenes.battle_logic.random.choices",
+                   return_value=[ai_data["ai"]["moves"][1]]):
+            action = pick_enemy_action(enemy, state)
+        assert action["id"] == "special"
+
+    def test_conditional_no_eligible_falls_back_to_attack(self):
+        ai_data = {"ai": {"pattern": "conditional", "moves": [
+            {"condition": {"hp_pct_below": 0.1}, "action": "ability", "id": "desperation", "weight": 100},
+        ]}}
+        enemy = make_combatant("Boss", hp=100, hp_max=100, is_enemy=True, ai_data=ai_data)
+        state = make_battle_state([make_combatant("Hero")], [enemy])
+
+        action = pick_enemy_action(enemy, state)
+
+        assert action["action"] == "attack"
+
+
+# ── resolve_targeting ────────────────────────────────────────
+
+class TestResolveTargeting:
+    def test_random_alive_default(self):
+        enemy = make_combatant("Goblin", is_enemy=True)
+        hero = make_combatant("Hero")
+        state = make_battle_state([hero], [enemy])
+
+        targets = resolve_targeting(enemy, state, "")
+
+        assert targets == [hero]
+
+    def test_lowest_hp(self):
+        ai_data = {"targeting": {"default": "lowest_hp"}}
+        enemy = make_combatant("Goblin", is_enemy=True, ai_data=ai_data)
+        hero1 = make_combatant("Hero", hp=80, hp_max=100)
+        hero2 = make_combatant("Ally", hp=30, hp_max=100)
+        state = make_battle_state([hero1, hero2], [enemy])
+
+        targets = resolve_targeting(enemy, state, "")
+
+        assert targets == [hero2]
+
+    def test_highest_hp(self):
+        ai_data = {"targeting": {"default": "highest_hp"}}
+        enemy = make_combatant("Goblin", is_enemy=True, ai_data=ai_data)
+        hero1 = make_combatant("Hero", hp=80, hp_max=100)
+        hero2 = make_combatant("Ally", hp=30, hp_max=100)
+        state = make_battle_state([hero1, hero2], [enemy])
+
+        targets = resolve_targeting(enemy, state, "")
+
+        assert targets == [hero1]
+
+    def test_all_party(self):
+        ai_data = {"targeting": {"default": "random_alive", "overrides": [
+            {"ability": "breath", "target": "all_party"},
+        ]}}
+        enemy = make_combatant("Dragon", is_enemy=True, ai_data=ai_data)
+        hero1 = make_combatant("Hero", hp=100)
+        hero2 = make_combatant("Ally", hp=100)
+        state = make_battle_state([hero1, hero2], [enemy])
+
+        targets = resolve_targeting(enemy, state, "breath")
+
+        assert len(targets) == 2
+        assert hero1 in targets
+        assert hero2 in targets
+
+    def test_self_targeting(self):
+        ai_data = {"targeting": {"default": "random_alive", "overrides": [
+            {"ability": "iron_shell", "target": "self"},
+        ]}}
+        enemy = make_combatant("Crab", is_enemy=True, ai_data=ai_data)
+        state = make_battle_state([make_combatant("Hero")], [enemy])
+
+        targets = resolve_targeting(enemy, state, "iron_shell")
+
+        assert targets == [enemy]
+
+    def test_override_only_for_matching_ability(self):
+        ai_data = {"targeting": {"default": "random_alive", "overrides": [
+            {"ability": "iron_shell", "target": "self"},
+        ]}}
+        enemy = make_combatant("Crab", is_enemy=True, ai_data=ai_data)
+        hero = make_combatant("Hero")
+        state = make_battle_state([hero], [enemy])
+
+        # Non-matching ability uses default
+        targets = resolve_targeting(enemy, state, "claw_crush")
+
+        assert targets == [hero]
+
+
+# ── resolve_enemy_turn with AI ───────────────────────────────
+
+class TestResolveEnemyTurnWithAI:
+    def test_ability_shows_ability_name(self):
+        ai_data = {"ai": {"pattern": "random", "moves": [
+            {"action": "ability", "id": "fire_bolt", "weight": 100},
+        ]}, "targeting": {"default": "random_alive"}}
+        enemy = make_combatant("Mage", atk=15, is_enemy=True, ai_data=ai_data)
+        hero = make_combatant("Hero", hp=100, hp_max=100, def_=5)
+        state = make_battle_state([hero], [enemy])
+        state.build_turn_order()
+        state.active_index = state.turn_order.index(enemy)
+
+        msg = resolve_enemy_turn(state)
+
+        assert "Fire Bolt" in msg
+        assert hero.hp < 100
+
+    def test_ability_all_party_hits_everyone(self):
+        ai_data = {"ai": {"pattern": "random", "moves": [
+            {"action": "ability", "id": "breath", "weight": 100},
+        ]}, "targeting": {"default": "random_alive", "overrides": [
+            {"ability": "breath", "target": "all_party"},
+        ]}}
+        enemy = make_combatant("Dragon", atk=20, is_enemy=True, ai_data=ai_data)
+        hero1 = make_combatant("Hero", hp=100, hp_max=100, def_=5)
+        hero2 = make_combatant("Ally", hp=100, hp_max=100, def_=5)
+        state = make_battle_state([hero1, hero2], [enemy])
+        state.build_turn_order()
+        state.active_index = state.turn_order.index(enemy)
+
+        msg = resolve_enemy_turn(state)
+
+        assert hero1.hp < 100
+        assert hero2.hp < 100
+        assert "Breath" in msg
+
+    def test_no_ai_still_does_basic_attack(self):
+        enemy = make_combatant("Goblin", atk=15, is_enemy=True)
+        hero = make_combatant("Hero", hp=100, hp_max=100, def_=5)
+        state = make_battle_state([hero], [enemy])
+        state.build_turn_order()
+        state.active_index = state.turn_order.index(enemy)
+
+        msg = resolve_enemy_turn(state)
+
+        assert hero.hp == 90
+        assert "attacked" in msg
+
+
+# ── _check_condition ─────────────────────────────────────────
+
+class TestCheckCondition:
+    def test_no_condition_always_true(self):
+        enemy = make_combatant("E", is_enemy=True)
+        state = make_battle_state()
+        assert _check_condition({}, enemy, state) is True
+
+    def test_hp_pct_below_pass(self):
+        enemy = make_combatant("E", hp=30, hp_max=100, is_enemy=True)
+        state = make_battle_state()
+        assert _check_condition({"condition": {"hp_pct_below": 0.5}}, enemy, state) is True
+
+    def test_hp_pct_below_fail(self):
+        enemy = make_combatant("E", hp=80, hp_max=100, is_enemy=True)
+        state = make_battle_state()
+        assert _check_condition({"condition": {"hp_pct_below": 0.5}}, enemy, state) is False
+
+    def test_turn_mod_pass(self):
+        enemy = make_combatant("E", is_enemy=True)
+        state = make_battle_state()
+        state.turn_count = 8
+        assert _check_condition({"condition": {"turn_mod": {"every": 4}}}, enemy, state) is True
+
+    def test_turn_mod_fail(self):
+        enemy = make_combatant("E", is_enemy=True)
+        state = make_battle_state()
+        state.turn_count = 7
+        assert _check_condition({"condition": {"turn_mod": {"every": 4}}}, enemy, state) is False
+
+    def test_combined_conditions(self):
+        enemy = make_combatant("E", hp=30, hp_max=100, is_enemy=True)
+        state = make_battle_state()
+        state.turn_count = 4
+        # Both must pass
+        move = {"condition": {"hp_pct_below": 0.5, "turn_mod": {"every": 4}}}
+        assert _check_condition(move, enemy, state) is True
+
+    def test_combined_conditions_one_fails(self):
+        enemy = make_combatant("E", hp=80, hp_max=100, is_enemy=True)
+        state = make_battle_state()
+        state.turn_count = 4
+        move = {"condition": {"hp_pct_below": 0.5, "turn_mod": {"every": 4}}}
+        assert _check_condition(move, enemy, state) is False

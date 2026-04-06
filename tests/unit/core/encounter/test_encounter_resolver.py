@@ -166,6 +166,27 @@ class TestTryRandomEncounter:
         assert result is not None
         assert len(result.enemies) == 1
 
+    def test_barrier_message_surfaced_on_state(self):
+        zone = make_zone(rate=1.0, with_barrier=True)
+        # formation with ghost (barrier) + wolf (normal)
+        zone.set_a = EncounterSet([Formation(["ghost", "wolf"], 100)])
+        zone.set_b = EncounterSet([Formation(["ghost", "wolf"], 100)])
+        resolver = make_resolver("ghost", "wolf")
+        result = resolver.try_random_encounter(zone, 0.0, FlagState(), set())
+        # ghost filtered out, but wolf remains
+        assert result is not None
+        assert len(result.enemies) == 1
+        assert result.enemies[0].id == "wolf"
+        assert len(result.barrier_messages) == 1
+        assert "blocks your attack" in result.barrier_messages[0]
+
+    def test_no_barrier_messages_without_barrier(self):
+        zone = make_zone(rate=1.0, with_barrier=False)
+        resolver = make_resolver("wolf", "bat", "spider")
+        result = resolver.try_random_encounter(zone, 0.0, FlagState(), set())
+        assert result is not None
+        assert result.barrier_messages == []
+
 
 # ── EncounterResolver.try_boss_encounter ──────────────────────
 

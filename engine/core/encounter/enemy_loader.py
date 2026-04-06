@@ -60,7 +60,7 @@ class EnemyLoader:
 
     def _build(self, data: dict) -> Combatant:
         enemy_id = data["id"]
-        abilities = self._load_class_abilities(data.get("class"))
+        ai_data = self._load_ai_data(data)
 
         return Combatant(
             id=enemy_id,
@@ -77,19 +77,32 @@ class EnemyLoader:
             boss=data.get("boss", False),
             sprite_id=enemy_id,
             exp_yield=data.get("exp", 0),
-            abilities=abilities,
             drops=data.get("drops", {}),
+            ai_data=ai_data,
         )
 
-    # ── Class abilities ───────────────────────────────────────
+    # ── AI loading ────────────────────────────────────────────
 
-    def _load_class_abilities(self, class_name: str | None) -> list[dict]:
-        """
-        Enemies don't have classes — returns empty list.
-        Ability list for enemies comes from their inline ai: block,
-        resolved by EnemyAI in Phase 4 follow-up.
-        """
-        return []   # stub — Phase 4
+    def _load_ai_data(self, data: dict) -> dict:
+        """Load AI + targeting from inline ai: block or external ai_ref: file."""
+        ai_ref = data.get("ai_ref")
+        if ai_ref and self._enemies_dir:
+            ref_path = self._enemies_dir / ai_ref
+            if ref_path.exists():
+                try:
+                    with open(ref_path, "r") as f:
+                        ref_data = yaml.safe_load(f)
+                    return {
+                        "ai": ref_data.get("ai", {}),
+                        "targeting": ref_data.get("targeting", {}),
+                    }
+                except Exception:
+                    pass
+
+        return {
+            "ai": data.get("ai", {}),
+            "targeting": data.get("targeting", {}),
+        }
 
     # ── Registry query ────────────────────────────────────────
 

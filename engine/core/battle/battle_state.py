@@ -62,6 +62,12 @@ class BattleState:
     # boss metadata — set by EncounterManager when a boss battle is triggered
     boss_flag:     str = ""               # flag to set on victory
 
+    # round counter — incremented each full turn cycle, used by conditional AI
+    turn_count:    int = 1
+
+    # barrier messages — shown to player when barrier enemies are filtered out
+    barrier_messages: list[str] = field(default_factory=list)
+
     def build_turn_order(self) -> None:
         """Sort all alive combatants by DEX descending. Party wins ties."""
         alive = [c for c in self.party + self.enemies if c.is_alive]
@@ -79,7 +85,10 @@ class BattleState:
     def advance_turn(self) -> None:
         """Move to next alive combatant in turn order."""
         for _ in range(len(self.turn_order)):
+            prev = self.active_index
             self.active_index = (self.active_index + 1) % len(self.turn_order)
+            if self.active_index <= prev:
+                self.turn_count += 1
             if self.turn_order[self.active_index].is_alive:
                 return
 
