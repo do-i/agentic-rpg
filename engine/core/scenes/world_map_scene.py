@@ -334,6 +334,7 @@ class WorldMapScene(Scene):
             scenario_path=str(self._loader.scenario_path),
             boss_flag=boss_flag,
             effect_handler=self._effect_handler,
+            game_state_manager=self._game_state_manager,
         )
         self._scene_manager.switch(scene)
 

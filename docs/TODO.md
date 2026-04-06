@@ -16,7 +16,7 @@
 - ~~**Run always succeeds** — ✅ `attempt_flee()` in `battle_logic.py` now uses flee formula (base 30% + 2% per Rogue DEX), boss battles block flee, failed flee consumes the turn~~
 
 ### Battle — Game Over
-- **No Game Over screen** — `battle_scene.py:31` on defeat, silently returns to world map; should show a Game Over scene with restart/load/quit options
+- ~~**No Game Over screen** — ✅ `GameOverScene` now shows on party wipe with fade-in, "Game Over" title, and menu options: Load Game (if saves exist), Title Screen, Quit. `BattleScene` passes `GameStateManager` to construct the scene on defeat.~~
 
 ### Battle — Loot
 - ~~**Loot table stub** — ✅ `_resolve_loot()` now reads `drops.mc` (guaranteed magic cores, aggregated by size) and `drops.loot` (weighted item pools via `_weighted_pick()`) from enemy YAML; item drops added to repository on victory~~
@@ -40,7 +40,6 @@
 - ~~**Hardcoded MC labels/order** — `item_logic.py:14` `MC_IDS`, `MC_ORDER`, `MC_LABELS` are hardcoded; should derive from item data~~ ✓ replaced with data-driven `MCCatalog`
 
 ## Feature
-- Shop + Apothecary | Buy/craft
 - Boss encounters + story act transitions | Story progression
 - Party join flow | Full party
 - Full playthrough pass | End-to-end

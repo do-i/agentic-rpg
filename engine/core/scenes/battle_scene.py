@@ -17,19 +17,21 @@ from engine.core.battle.battle_state import BattleState, BattlePhase
 from engine.core.battle.battle_rewards import RewardCalculator
 from engine.core.state.game_state_holder import GameStateHolder
 from engine.core.scenes.post_battle_scene import PostBattleScene
+from engine.core.scenes.game_over_scene import GameOverScene
 from engine.core.scenes.battle_logic import (
     resolve_action, resolve_enemy_turn, handle_victory, handle_defeat,
     check_result, advance_to_next_turn, attempt_flee,
 )
 from engine.core.scenes.battle_renderer import BattleRenderer
 from engine.core.item.item_effect_handler import ItemEffectHandler
+from engine.core.state.game_state_manager import GameStateManager
 
 
 class BattleScene(Scene):
     """
-    Phase 4 — battle screen.
+    Battle screen.
     On victory: calculates rewards, syncs party state, launches PostBattleScene.
-    On defeat: returns to world map (Game Over stub — Phase 4).
+    On defeat: launches GameOverScene with load/title/quit options.
     """
 
     def __init__(
@@ -41,6 +43,7 @@ class BattleScene(Scene):
         scenario_path: str = "",
         boss_flag: str = "",
         effect_handler: ItemEffectHandler | None = None,
+        game_state_manager: GameStateManager | None = None,
     ) -> None:
         self._state = battle_state
         self._scene_manager = scene_manager
@@ -48,6 +51,7 @@ class BattleScene(Scene):
         self._holder = holder
         self._boss_flag = boss_flag
         self._effect_handler = effect_handler
+        self._game_state_manager = game_state_manager
         self._reward_calc = RewardCalculator()
         self._renderer = BattleRenderer(Path(scenario_path))
 
@@ -298,7 +302,12 @@ class BattleScene(Scene):
             return
         if result == "defeat":
             handle_defeat(self._state)
-            self._scene_manager.switch(self._registry.get("world_map"))
+            self._scene_manager.switch(GameOverScene(
+                scene_manager=self._scene_manager,
+                registry=self._registry,
+                holder=self._holder,
+                game_state_manager=self._game_state_manager,
+            ))
             return
 
         advance_to_next_turn(self._state)
