@@ -19,13 +19,14 @@ from engine.core.scenes.battle_scene import BattleScene
 from engine.core.scenes.magic_core_shop_scene import MagicCoreShopScene
 from engine.core.scenes.inn_scene import InnScene
 from engine.core.scenes.item_shop_scene import ItemShopScene
+from engine.core.scenes.apothecary_scene import ApothecaryScene
 from engine.core.encounter.encounter_manager import EncounterManager
 from engine.core.item.item_effect_handler import ItemEffectHandler
 from engine.core.scenes.item_logic import MCCatalog
 from engine.core.scenes.world_map_logic import (
     FADE_SPEED, try_interact, dispatch_dialogue_result,
     check_encounter, check_portals, apply_transition,
-    load_inn_cost, load_shop_items, _is_player_facing,
+    load_inn_cost, load_shop_items, load_recipes, _is_player_facing,
 )
 from engine.data.loader import ManifestLoader
 from engine.world.tile_map import TileMap
@@ -84,6 +85,7 @@ class WorldMapScene(Scene):
         self._mc_shop: MagicCoreShopScene | None = None
         self._inn: InnScene | None = None
         self._item_shop: ItemShopScene | None = None
+        self._apothecary: ApothecaryScene | None = None
         self._quit_confirm: bool = False
         self._quit_font: pygame.font.Font | None = None
 
@@ -161,6 +163,9 @@ class WorldMapScene(Scene):
         if self._item_shop:
             self._item_shop.handle_events(events)
             return
+        if self._apothecary:
+            self._apothecary.handle_events(events)
+            return
         if self._quit_confirm:
             for event in events:
                 if event.type == pygame.KEYDOWN:
@@ -226,6 +231,10 @@ class WorldMapScene(Scene):
             self._open_item_shop()
             return
 
+        if remaining.get("open_apothecary"):
+            self._open_apothecary()
+            return
+
         if remaining.get("open_inn"):
             self._open_inn()
             return
@@ -287,6 +296,23 @@ class WorldMapScene(Scene):
 
     def _close_item_shop(self) -> None:
         self._item_shop = None
+
+    # ── Apothecary ────────────────────────────────────────────
+
+    def _open_apothecary(self) -> None:
+        recipes = load_recipes(self._loader.scenario_path)
+        sprite_path = self._loader.scenario_path / "assets" / "sprites" / "npc" / "female_wiz_01.tsx"
+        self._apothecary = ApothecaryScene(
+            holder=self._holder,
+            scene_manager=self._scene_manager,
+            registry=self._registry,
+            on_close=self._close_apothecary,
+            recipes=recipes,
+            sprite_path=sprite_path,
+        )
+
+    def _close_apothecary(self) -> None:
+        self._apothecary = None
 
     # ── Encounter ─────────────────────────────────────────────
 
@@ -366,6 +392,9 @@ class WorldMapScene(Scene):
             return
         if self._item_shop:
             self._item_shop.update(delta)
+            return
+        if self._apothecary:
+            self._apothecary.update(delta)
             return
         if self._quit_confirm:
             return
@@ -473,6 +502,8 @@ class WorldMapScene(Scene):
             self._inn.render(screen)
         if self._item_shop:
             self._item_shop.render(screen)
+        if self._apothecary:
+            self._apothecary.render(screen)
         if self._quit_confirm:
             self._render_quit_confirm(screen)
 

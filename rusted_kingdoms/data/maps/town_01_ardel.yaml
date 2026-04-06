@@ -45,7 +45,7 @@ npcs:
     dialogue: guide_ardel
     excuses: guide_excuses
     position: [5, 3]
-    sprite: assets/sprites/npc/man_01.tsx
+    sprite: assets/sprites/npc/teen_wiz_01.tsx
     default_facing: down
     animation:
       mode: wander
@@ -54,7 +54,7 @@ npcs:
   - id: elder
     dialogue: elder_intro
     position: [12, 8]
-    sprite: assets/sprites/npc/old_man_01.tsx
+    sprite: assets/sprites/npc/male_old_02.tsx
     default_facing: down
     animation:
       mode: still
@@ -84,3 +84,11 @@ npcs:
       mode: wander
       speed: 2.5
       range: 8
+  - id: apothecary
+    dialogue: apothecary_ardel
+    position: [13, 4]
+    sprite: assets/sprites/npc/female_wiz_01.tsx
+    default_facing: down
+    animation:
+      mode: step
+      speed: 0.7

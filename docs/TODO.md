@@ -29,7 +29,7 @@
 - **Enemy sprite_id placeholder** — `combatant.py:36` `sprite_id` defaults to empty string; enemies render as colored rectangles, not sprites
 
 ### Dialogue
-- **Portrait placeholder** — `dialogue_scene.py:125` draws a colored rect instead of loading character portrait sprites
+- ~~**Portrait placeholder** — ✅ `dialogue_scene.py:125` draws a colored rect instead of loading character portrait sprites~~
 
 ### Repository / Items
 - ~~**Repository is a stub** — ✅ `RepositoryState` now supports sell, tag editing (add/remove with max-5 guardrail), lock/unlock, `items_by_tag()` filtering, and `remove_item()`. `ItemCatalog` loads all scenario YAML and auto-populates metadata on `add_item()`.~~
@@ -40,8 +40,7 @@
 - ~~**Hardcoded MC labels/order** — `item_logic.py:14` `MC_IDS`, `MC_ORDER`, `MC_LABELS` are hardcoded; should derive from item data~~ ✓ replaced with data-driven `MCCatalog`
 
 ## Feature
-- Use sprite head as protrait in a NPC dialogue
-- Party join flow | Full party
 - Shop + Apothecary | Buy/craft
 - Boss encounters + story act transitions | Story progression
+- Party join flow | Full party
 - Full playthrough pass | End-to-end

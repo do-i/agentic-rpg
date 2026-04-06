@@ -140,6 +140,15 @@ def load_shop_items(scenario_path: Path, map_id: str) -> list[dict]:
     return map_data.get("shop", {}).get("items", [])
 
 
+def load_recipes(scenario_path: Path) -> list[dict]:
+    """Load apothecary recipes from scenario data."""
+    recipe_path = scenario_path / "data" / "recipe" / "all_recipe.yaml"
+    if not recipe_path.exists():
+        return []
+    with open(recipe_path) as f:
+        return yaml.safe_load(f) or []
+
+
 def load_magic_cores(scenario_path: Path) -> list[dict]:
     """Load magic core definitions from scenario item data.
 
