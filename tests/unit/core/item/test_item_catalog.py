@@ -2,7 +2,7 @@
 
 import pytest
 from pathlib import Path
-from engine.core.item.item_catalog import ItemCatalog, ItemDef
+from engine.io.item_catalog import ItemCatalog, ItemDef
 
 
 @pytest.fixture

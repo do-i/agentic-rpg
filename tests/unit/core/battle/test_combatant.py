@@ -1,8 +1,8 @@
 # tests/unit/core/battle/test_combatant.py
 
 import pytest
-from engine.core.battle.combatant import Combatant, StatusEffect
-from engine.core.battle.battle_state import BattleState, BattlePhase
+from engine.battle.combatant import Combatant, StatusEffect
+from engine.battle.battle_state import BattleState, BattlePhase
 
 
 def make_combatant(name="Aric", hp=100, mp=40, atk=20, def_=10,

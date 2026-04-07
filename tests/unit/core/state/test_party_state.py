@@ -1,7 +1,7 @@
 # tests/unit/core/state/test_party_state.py
 
 import pytest
-from engine.core.state.party_state import (
+from engine.state.party_state import (
     MemberState, PartyState, _calc_exp_next, LEVEL_CAP,
 )
 

@@ -4,9 +4,9 @@ import pytest
 from pathlib import Path
 import yaml
 
-from engine.core.dialogue.dialogue_engine import DialogueEngine
-from engine.core.state.flag_state import FlagState
-from engine.core.state.repository_state import RepositoryState
+from engine.dialogue.dialogue_engine import DialogueEngine
+from engine.state.flag_state import FlagState
+from engine.state.repository_state import RepositoryState
 
 
 @pytest.fixture

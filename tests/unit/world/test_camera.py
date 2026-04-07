@@ -2,8 +2,8 @@
 
 import pytest
 from engine.world.camera import Camera
-from engine.core.models.position import Position
-from engine.core.settings import Settings
+from engine.dto.position import Position
+from engine.settings import Settings
 
 
 # ── Helpers ───────────────────────────────────────────────────

@@ -2,8 +2,8 @@
 
 from datetime import datetime
 import pytest
-from engine.core.models.clock import FakeClock
-from engine.core.state.playtime import Playtime
+from engine.util.clock import FakeClock
+from engine.util.playtime import Playtime
 
 
 # ── Construction ──────────────────────────────────────────────

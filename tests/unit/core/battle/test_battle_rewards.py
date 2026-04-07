@@ -2,12 +2,12 @@
 
 import pytest
 from unittest.mock import patch
-from engine.core.battle.battle_rewards import (
+from engine.battle.battle_rewards import (
     RewardCalculator, exp_required, LevelUpResult,
     EXP_CAP, LEVEL_CAP, _weighted_pick,
 )
-from engine.core.battle.combatant import Combatant
-from engine.core.state.party_state import PartyState, MemberState
+from engine.battle.combatant import Combatant
+from engine.state.party_state import PartyState, MemberState
 
 
 STAT_GROWTH = {
@@ -201,7 +201,7 @@ class TestLoot:
         enemies = [_make_enemy_with_drops(drops=drops)]
         party = _party_with([_make_member()])
 
-        with patch("engine.core.battle.battle_rewards.random.choices",
+        with patch("engine.battle.battle_rewards.random.choices",
                    return_value=["rat_tail"]):
             rewards = calc.calculate(enemies, party)
 

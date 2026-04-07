@@ -5,14 +5,14 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 import yaml
 
-from engine.core.encounter.encounter_zone import (
+from engine.encounter.encounter_zone import (
     EncounterZone, EncounterSet, Formation, BossConfig, BarrierEnemy,
     load_encounter_zone,
 )
-from engine.core.encounter.encounter_resolver import EncounterResolver
-from engine.core.encounter.enemy_loader import EnemyLoader
-from engine.core.battle.combatant import Combatant
-from engine.core.state.flag_state import FlagState
+from engine.encounter.encounter_resolver import EncounterResolver
+from engine.io.enemy_loader import EnemyLoader
+from engine.battle.combatant import Combatant
+from engine.state.flag_state import FlagState
 
 
 # ── Helpers ───────────────────────────────────────────────────

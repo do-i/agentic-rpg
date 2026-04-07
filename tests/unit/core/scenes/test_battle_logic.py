@@ -3,12 +3,12 @@
 import pytest
 from unittest.mock import MagicMock, patch
 
-from engine.core.battle.combatant import Combatant, StatusEffect
-from engine.core.battle.battle_state import BattleState, BattlePhase
-from engine.core.battle.battle_rewards import RewardCalculator
-from engine.core.item.item_effect_handler import ItemEffectHandler, FieldItemDef
-from engine.core.state.repository_state import RepositoryState
-from engine.core.scenes.battle_logic import (
+from engine.battle.combatant import Combatant, StatusEffect
+from engine.battle.battle_state import BattleState, BattlePhase
+from engine.battle.battle_rewards import RewardCalculator
+from engine.item.item_effect_handler import ItemEffectHandler, FieldItemDef
+from engine.state.repository_state import RepositoryState
+from engine.battle.battle_logic import (
     resolve_action, resolve_enemy_turn, handle_victory, handle_defeat,
     check_result, advance_to_next_turn, sync_party_state,
     float_pos, enemy_rect_size, ENEMY_SIZES,
@@ -593,7 +593,7 @@ class TestAttemptFlee:
         state = make_battle_state()
         holder = _make_holder_with_party([_make_member("warrior", dex=10)])
 
-        with patch("engine.core.scenes.battle_logic.random.random", return_value=0.0):
+        with patch("engine.battle.battle_logic.random.random", return_value=0.0):
             success, msg = attempt_flee(state, holder)
 
         assert success
@@ -603,7 +603,7 @@ class TestAttemptFlee:
         state = make_battle_state()
         holder = _make_holder_with_party([_make_member("warrior", dex=10)])
 
-        with patch("engine.core.scenes.battle_logic.random.random", return_value=0.99):
+        with patch("engine.battle.battle_logic.random.random", return_value=0.99):
             success, msg = attempt_flee(state, holder)
 
         assert not success
@@ -615,7 +615,7 @@ class TestAttemptFlee:
         holder = _make_holder_with_party([_make_member("rogue", dex=20)])
 
         # Roll at 0.65 — should succeed with rogue bonus (0.70) but fail without
-        with patch("engine.core.scenes.battle_logic.random.random", return_value=0.65):
+        with patch("engine.battle.battle_logic.random.random", return_value=0.65):
             success, _ = attempt_flee(state, holder)
 
         assert success
@@ -626,7 +626,7 @@ class TestAttemptFlee:
         holder = _make_holder_with_party([_make_member("warrior", dex=20)])
 
         # Roll at 0.35 — should fail with only base 30%
-        with patch("engine.core.scenes.battle_logic.random.random", return_value=0.35):
+        with patch("engine.battle.battle_logic.random.random", return_value=0.35):
             success, _ = attempt_flee(state, holder)
 
         assert not success
@@ -636,7 +636,7 @@ class TestAttemptFlee:
         state = make_battle_state()
         holder = _make_holder_with_party([_make_member("rogue", dex=100)])
 
-        with patch("engine.core.scenes.battle_logic.random.random", return_value=0.99):
+        with patch("engine.battle.battle_logic.random.random", return_value=0.99):
             success, _ = attempt_flee(state, holder)
 
         assert success
@@ -650,7 +650,7 @@ class TestAttemptFlee:
         ])
 
         # chance = 0.30 + 0.02*10 + 0.02*10 = 0.70
-        with patch("engine.core.scenes.battle_logic.random.random", return_value=0.65):
+        with patch("engine.battle.battle_logic.random.random", return_value=0.65):
             success, _ = attempt_flee(state, holder)
 
         assert success
@@ -675,7 +675,7 @@ class TestPickEnemyAction:
         enemy = make_combatant("Goblin", is_enemy=True, ai_data=ai_data)
         state = make_battle_state([make_combatant("Hero")], [enemy])
 
-        with patch("engine.core.scenes.battle_logic.random.choices",
+        with patch("engine.battle.battle_logic.random.choices",
                    return_value=[ai_data["ai"]["moves"][1]]):
             action = pick_enemy_action(enemy, state)
 
@@ -704,7 +704,7 @@ class TestPickEnemyAction:
         enemy = make_combatant("Boss", hp=30, hp_max=100, is_enemy=True, ai_data=ai_data)
         state = make_battle_state([make_combatant("Hero")], [enemy])
 
-        with patch("engine.core.scenes.battle_logic.random.choices",
+        with patch("engine.battle.battle_logic.random.choices",
                    return_value=[ai_data["ai"]["moves"][1]]):
             action = pick_enemy_action(enemy, state)
 
@@ -725,7 +725,7 @@ class TestPickEnemyAction:
 
         # Turn 4 — special eligible and heavily weighted
         state.turn_count = 4
-        with patch("engine.core.scenes.battle_logic.random.choices",
+        with patch("engine.battle.battle_logic.random.choices",
                    return_value=[ai_data["ai"]["moves"][1]]):
             action = pick_enemy_action(enemy, state)
         assert action["id"] == "special"

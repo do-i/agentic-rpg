@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytmx
 
 from engine.world.collision import CollisionMap
-from engine.core.settings import Settings
+from engine.settings import Settings
 
 
 # ── Helpers ───────────────────────────────────────────────────

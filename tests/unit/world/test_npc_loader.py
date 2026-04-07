@@ -4,7 +4,7 @@ import pytest
 import yaml
 from pathlib import Path
 from unittest.mock import patch, MagicMock
-from engine.world.npc_loader import NpcLoader
+from engine.io.npc_loader import NpcLoader
 from engine.world.npc import Npc
 from engine.world.sprite_sheet import Direction
 
@@ -67,7 +67,7 @@ class TestNpcLoader:
                 }
             }]
         })
-        from engine.core.state.flag_state import FlagState
+        from engine.state.flag_state import FlagState
         npcs = loader.load_from_map(p)
         npc = npcs[0]
         assert npc.is_present(FlagState({"flag_a"}))
@@ -75,7 +75,7 @@ class TestNpcLoader:
         assert not npc.is_present(FlagState())
 
     def test_npc_position_translated_to_pixels(self, loader, tmp_path):
-        from engine.core.settings import Settings
+        from engine.settings import Settings
         p = write_map(tmp_path, {
             "npcs": [{"id": "n", "dialogue": "d", "position": [3, 7]}]
         })

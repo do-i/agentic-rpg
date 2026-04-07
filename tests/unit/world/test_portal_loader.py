@@ -4,9 +4,9 @@ import pytest
 from unittest.mock import MagicMock
 import pytmx
 
-from engine.world.portal_loader import PortalLoader
-from engine.world.portal import Portal
-from engine.core.models.position import Position
+from engine.io.portal_loader import PortalLoader
+from engine.dto.portal import Portal
+from engine.dto.position import Position
 
 
 def make_tmx(objects: list[dict]) -> pytmx.TiledMap:

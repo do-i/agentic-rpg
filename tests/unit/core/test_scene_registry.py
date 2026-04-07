@@ -1,8 +1,8 @@
 # tests/unit/core/test_scene_registry.py
 
 import pytest
-from engine.core.scene_registry import SceneRegistry
-from engine.core.scene import Scene
+from engine.scenes.scene_registry import SceneRegistry
+from engine.scenes.scene import Scene
 
 
 # ── Minimal stub scene for testing ───────────────────────────

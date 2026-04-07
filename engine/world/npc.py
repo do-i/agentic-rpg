@@ -5,9 +5,9 @@ from __future__ import annotations
 import random
 import pygame
 from pathlib import Path
-from engine.core.models.position import Position
-from engine.core.state.flag_state import FlagState
-from engine.core.settings import Settings
+from engine.dto.position import Position
+from engine.state.flag_state import FlagState
+from engine.settings import Settings
 from engine.world.sprite_sheet import SpriteSheet, Direction
 
 from typing import TYPE_CHECKING

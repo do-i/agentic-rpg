@@ -2,7 +2,7 @@
 
 import math
 import pytest
-from engine.core.models.position import Position
+from engine.dto.position import Position
 
 
 # ── Construction ──────────────────────────────────────────────

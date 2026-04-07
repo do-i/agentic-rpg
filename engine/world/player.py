@@ -1,8 +1,8 @@
 # engine/world/player.py
 
 import pygame
-from engine.core.models.position import Position
-from engine.core.settings import Settings
+from engine.dto.position import Position
+from engine.settings import Settings
 from engine.world.collision import CollisionMap
 from engine.world.sprite_sheet import Direction, SpriteSheet
 from engine.world.animation_controller import AnimationController

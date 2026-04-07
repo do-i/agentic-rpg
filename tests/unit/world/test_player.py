@@ -4,8 +4,8 @@ import math
 import pytest
 import pygame
 from engine.world.player import Player, PLAYER_SPEED, PLAYER_WIDTH, PLAYER_HEIGHT, COLLISION_W, COLLISION_H, COLLISION_OFFSET_X, COLLISION_OFFSET_Y
-from engine.core.models.position import Position
-from engine.core.settings import Settings
+from engine.dto.position import Position
+from engine.settings import Settings
 
 
 # ── Helpers ───────────────────────────────────────────────────

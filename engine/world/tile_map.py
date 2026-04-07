@@ -2,10 +2,10 @@
 
 import pytmx
 import pygame
-from engine.core.settings import Settings
+from engine.settings import Settings
 from engine.world.collision import CollisionMap
-from engine.world.portal import Portal
-from engine.world.portal_loader import PortalLoader
+from engine.dto.portal import Portal
+from engine.io.portal_loader import PortalLoader
 
 
 class TileMap:

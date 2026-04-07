@@ -4,12 +4,12 @@ import pytest
 import pygame
 from unittest.mock import MagicMock
 
-from engine.core.scenes.status_scene import StatusScene
-from engine.core.state.game_state_holder import GameStateHolder
-from engine.core.state.game_state import GameState
-from engine.core.state.party_state import MemberState, PartyState
-from engine.core.scene_manager import SceneManager
-from engine.core.scene_registry import SceneRegistry
+from engine.scenes.status_scene import StatusScene
+from engine.state.game_state_holder import GameStateHolder
+from engine.state.game_state import GameState
+from engine.state.party_state import MemberState, PartyState
+from engine.scenes.scene_manager import SceneManager
+from engine.scenes.scene_registry import SceneRegistry
 
 
 @pytest.fixture(autouse=True)

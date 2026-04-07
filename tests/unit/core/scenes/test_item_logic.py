@@ -3,8 +3,8 @@
 import pytest
 from unittest.mock import MagicMock
 
-from engine.core.state.repository_state import ItemEntry, RepositoryState
-from engine.core.scenes.item_logic import (
+from engine.state.repository_state import ItemEntry, RepositoryState
+from engine.item.item_logic import (
     TABS, MCCatalog, build_mc_catalog, item_tab, filtered_items, is_usable,
     actions_for, display_name, discard_item, clamp_scroll,
 )

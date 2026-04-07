@@ -1,7 +1,7 @@
 # engine/ui/menu.py
 
 import pygame
-from engine.core.settings import Settings
+from engine.settings import Settings
 
 
 class Menu:

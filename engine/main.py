@@ -2,8 +2,8 @@
 
 import argparse
 from injector import Injector
-from engine.core.app_module import AppModule
-from engine.core.game import Game
+from engine.app_module import AppModule
+from engine.game import Game
 
 
 def parse_args():

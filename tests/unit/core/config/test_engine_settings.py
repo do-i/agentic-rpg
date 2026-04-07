@@ -3,7 +3,7 @@
 import pytest
 import yaml
 from pathlib import Path
-from engine.core.config.engine_settings import EngineSettings
+from engine.settings import EngineSettings
 
 
 def write_settings(tmp_path: Path, data: dict) -> Path:

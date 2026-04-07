@@ -38,25 +38,25 @@ Pytest is configured in `pyproject.toml` with `-v -x` (verbose, stop on first fa
 
 ### Engine (`engine/`)
 - **`main.py`** — Entry point. Parses `--scenario` arg, creates `Injector` with `AppModule`, runs `Game`.
-- **`core/app_module.py`** — Central DI wiring. All singletons (scenes, state, loaders) are registered here via `injector` `@provider` methods. This is the first place to look when adding a new system or understanding how components connect.
-- **`core/game.py`** — Main game loop (Display, FrameClock, SceneManager).
-- **`core/scene_manager.py` / `scene_registry.py`** — Scene lifecycle. Scenes are registered by string name (e.g., `"world_map"`, `"title"`, `"battle"`). Registry supports both singletons and factories (lambda-created per use).
-- **`core/scenes/`** — Individual scene implementations (world map, battle, dialogue, shops, title, etc.). Each scene handles its own input, update, and draw.
-- **`core/state/`** — Game state: `GameStateHolder` holds current state, `GameStateManager` handles save/load. State is split into `MapState`, `PartyState`, `FlagState`, etc.
-- **`core/battle/`** — Battle system (combatants, battle state, rewards).
-- **`core/dialogue/`** — Dialogue engine, loads YAML dialogue trees.
-- **`core/encounter/`** — Random encounter system (enemy loading, encounter resolution).
-- **`core/item/`** — Item effect handling.
-- **`core/models/`** — Shared data models (Position, SaveSlot, Clock).
-
-### World (`engine/world/`)
-- Tile maps via `pytmx` (.tmx format from Tiled editor), player movement, NPC loading/behavior, camera, collision detection, portals, sprite sheets.
+- **`app_module.py`** — Central DI wiring. All singletons (scenes, state, loaders) are registered here via `injector` `@provider` methods. This is the first place to look when adding a new system or understanding how components connect.
+- **`game.py`** — Main game loop (Display, FrameClock, SceneManager).
+- **`settings.py`** — `Settings` (compile-time constants: screen size, FPS, tile size, layers) and `EngineSettings` (runtime config loaded from `config/settings.yaml`).
+- **`scenes/`** — Scene base class, `SceneManager`, `SceneRegistry`, and all scene implementations (world map, battle, dialogue, shops, title, etc.). Each scene handles its own input, update, and draw.
+- **`battle/`** — Battle system (combatants, battle state, battle logic, reward calculation).
+- **`dialogue/`** — Dialogue engine, loads YAML dialogue trees.
+- **`encounter/`** — Random encounter system (encounter manager, encounter resolution).
+- **`item/`** — Item effect handling and item logic.
+- **`state/`** — Game state: `GameStateHolder` holds current state. State is split into `MapState`, `PartyState`, `FlagState`, `RepositoryState`, etc.
+- **`dto/`** — Immutable data transfer objects: `Position`, `SaveSlot`, `Portal`, `EncounterZone` DTOs, `BattleRewards` DTOs, `FieldItemDef`, `UseResult`.
+- **`util/`** — Small utilities: `Clock` protocol + implementations, `FrameClock` (pygame timing), `Playtime` (session time accumulator).
+- **`io/`** — All file I/O: `ManifestLoader`, `SaveManager`, `EnemyLoader`, `ItemCatalog`, `NpcLoader`, `PortalLoader`, `EncounterZoneLoader`.
+- **`debug/`** — Debug bootstrapping.
 
 ### UI (`engine/ui/`)
-- Menu rendering system.
+- Display management, menu rendering, and all scene renderers (battle, item, status) and overlays (target select).
 
-### Data Loading (`engine/data/`)
-- `ManifestLoader` reads `manifest.yaml` from the scenario and provides paths to all scenario data directories.
+### World (`engine/world/`)
+- Tile maps via `pytmx` (.tmx format from Tiled editor), player movement, NPC behavior, camera, collision detection, sprite sheets, world map logic.
 
 ### Scenario (`rusted_kingdoms/`)
 - `manifest.yaml` — Scenario entry point defining protagonist, start position, flags, and refs to all data directories.
@@ -64,7 +64,7 @@ Pytest is configured in `pyproject.toml` with `-v -x` (verbose, stop on first fa
 - `assets/` — Sprites, map tilesets (.tmx/.tsx), audio.
 
 ### Tests (`tests/`)
-- Unit tests mirror the engine structure under `tests/unit/core/` and `tests/unit/world/`.
+- Unit tests under `tests/unit/`. Legacy path `tests/unit/core/` still exists pending test directory reorganization.
 - Shared fixtures in `tests/conftest.py`.
 
 ## Key Patterns

@@ -3,7 +3,7 @@
 import yaml
 from pathlib import Path
 
-from engine.core.scenes.world_map_logic import load_magic_cores
+from engine.world.world_map_logic import load_magic_cores
 
 
 class TestLoadMagicCores:

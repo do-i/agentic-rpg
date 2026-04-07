@@ -1,8 +1,8 @@
 # tests/conftest.py
 
 import pytest
-from engine.core.models.position import Position
-from engine.core.state.map_state import MapState
+from engine.dto.position import Position
+from engine.state.map_state import MapState
 
 
 @pytest.fixture
