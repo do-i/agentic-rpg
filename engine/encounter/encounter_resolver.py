@@ -10,7 +10,7 @@ from engine.encounter.encounter_zone import EncounterZone, Formation
 from engine.io.enemy_loader import EnemyLoader
 from engine.battle.combatant import Combatant
 from engine.battle.battle_state import BattleState
-from engine.state.flag_state import FlagState
+from engine.dto.flag_state import FlagState
 
 
 class EncounterResolver:

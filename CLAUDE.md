@@ -46,10 +46,10 @@ Pytest is configured in `pyproject.toml` with `-v -x` (verbose, stop on first fa
 - **`dialogue/`** — Dialogue engine, loads YAML dialogue trees.
 - **`encounter/`** — Random encounter system (encounter manager, encounter resolution).
 - **`item/`** — Item effect handling and item logic.
-- **`state/`** — Game state: `GameStateHolder` holds current state. State is split into `MapState`, `PartyState`, `FlagState`, `RepositoryState`, etc.
-- **`dto/`** — Immutable data transfer objects: `Position`, `SaveSlot`, `Portal`, `EncounterZone` DTOs, `BattleRewards` DTOs, `FieldItemDef`, `UseResult`.
+- **`service/`** — Business logic services: `RepositoryState` (inventory management, GP caps, sell validation), stat calculation helpers (`calc_exp_next`, `stat_gain_at`, `recalc_exp_next`), `StatusLogic` (spell application).
+- **`dto/`** — Data containers: `Position`, `SaveSlot`, `Portal`, `EncounterZone`, `BattleRewards`, `FieldItemDef`, `UseResult`, `FlagState`, `MapState`, `GameState`, `GameStateHolder`, `PartyState`, `MemberState`, `ItemEntry`.
 - **`util/`** — Small utilities: `Clock` protocol + implementations, `FrameClock` (pygame timing), `Playtime` (session time accumulator).
-- **`io/`** — All file I/O: `ManifestLoader`, `SaveManager`, `EnemyLoader`, `ItemCatalog`, `NpcLoader`, `PortalLoader`, `EncounterZoneLoader`.
+- **`io/`** — All file I/O: `ManifestLoader`, `SaveManager`, `EnemyLoader`, `ItemCatalog`, `NpcLoader`, `PortalLoader`, `EncounterZoneLoader`, `GameStateLoader` (new-game/save factories).
 - **`debug/`** — Debug bootstrapping.
 
 ### UI (`engine/ui/`)
@@ -72,7 +72,7 @@ Pytest is configured in `pyproject.toml` with `-v -x` (verbose, stop on first fa
 - **Dependency Injection**: All major components are wired through `AppModule`. To add a new system, add a `@provider` method there and inject it where needed.
 - **Scene-based architecture**: Game flow is controlled by switching scenes via `SceneManager`. Each scene is self-contained with input/update/draw methods.
 - **Engine/Scenario separation**: The engine never hardcodes scenario data. Everything is loaded from the scenario path via `ManifestLoader` and YAML files.
-- **State management**: Game state flows through `GameStateHolder` (current runtime state) and `GameStateManager` (persistence to YAML save files).
+- **State management**: Game state flows through `GameStateHolder` (dto, current runtime state) and `GameStateManager` (io, persistence to YAML save files). Data containers live in `dto/`, business logic in `service/`, and factory/persistence in `io/`.
 
 ## Design Documentation
 

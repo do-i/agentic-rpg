@@ -8,10 +8,10 @@ import pygame
 from engine.scenes.scene import Scene
 from engine.scenes.scene_manager import SceneManager
 from engine.scenes.scene_registry import SceneRegistry
-from engine.state.game_state_holder import GameStateHolder
-from engine.state.party_state import MemberState
+from engine.dto.game_state_holder import GameStateHolder
+from engine.dto.member_state import MemberState
 from engine.ui.target_select_overlay import TargetSelectOverlay
-from engine.state.status_logic import (
+from engine.service.status_logic import (
     field_spells, valid_targets, apply_spell, apply_spell_all,
 )
 from engine.ui.status_renderer import StatusRenderer

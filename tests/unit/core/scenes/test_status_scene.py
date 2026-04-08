@@ -5,9 +5,11 @@ import pygame
 from unittest.mock import MagicMock
 
 from engine.scenes.status_scene import StatusScene
-from engine.state.game_state_holder import GameStateHolder
-from engine.state.game_state import GameState
-from engine.state.party_state import MemberState, PartyState
+from engine.dto.game_state_holder import GameStateHolder
+from engine.dto.game_state import GameState
+from engine.dto.member_state import MemberState
+from engine.dto.party_state import PartyState
+from engine.service.party_state import exp_pct
 from engine.scenes.scene_manager import SceneManager
 from engine.scenes.scene_registry import SceneRegistry
 
@@ -136,15 +138,15 @@ class TestNavigation:
 class TestMemberState:
     def test_exp_pct_normal(self):
         m = make_member(exp=500, exp_next=1000)
-        assert m.exp_pct == 0.5
+        assert exp_pct(m) == 0.5
 
     def test_exp_pct_capped_at_one(self):
         m = make_member(exp=2000, exp_next=1000)
-        assert m.exp_pct == 1.0
+        assert exp_pct(m) == 1.0
 
     def test_exp_pct_zero_exp_next(self):
         m = make_member(exp=100, exp_next=0)
-        assert m.exp_pct == 1.0
+        assert exp_pct(m) == 1.0
 
     def test_equipped_slot_access(self):
         m = make_member()

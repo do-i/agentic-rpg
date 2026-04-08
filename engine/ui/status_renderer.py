@@ -9,7 +9,8 @@ from pathlib import Path
 import pygame
 
 from engine.settings import Settings
-from engine.state.party_state import MemberState
+from engine.dto.member_state import MemberState
+from engine.service.party_state import exp_pct
 
 # ── Colors ────────────────────────────────────────────────────
 BG_COLOR        = (26, 26, 46)
@@ -186,7 +187,7 @@ class StatusRenderer:
         bar_y = cy + line_h + 10
         pygame.draw.rect(screen, (17, 17, 46), (x, bar_y, bar_w, BAR_H), border_radius=3)
         pygame.draw.rect(screen, EXP_BAR,
-                         (x, bar_y, int(bar_w * m.exp_pct), BAR_H), border_radius=3)
+                         (x, bar_y, int(bar_w * exp_pct(m)), BAR_H), border_radius=3)
         screen.blit(self._font_stat.render(f"{m.exp}/{m.exp_next}", True, TEXT_SECONDARY),
                     (x, cy + line_h + 25))
         return x + COL_EXP_W + 12

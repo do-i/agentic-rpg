@@ -1,8 +1,10 @@
 # tests/unit/core/state/test_party_state.py
 
 import pytest
-from engine.state.party_state import (
-    MemberState, PartyState, _calc_exp_next, LEVEL_CAP,
+from engine.dto.member_state import MemberState
+from engine.dto.party_state import PartyState
+from engine.service.party_state import (
+    calc_exp_next, stat_gain_at, recalc_exp_next, exp_pct, LEVEL_CAP,
 )
 
 
@@ -25,45 +27,45 @@ def _make_member(name="Aric", protagonist=True, class_name="hero", level=1) -> M
     )
 
 
-# ── _calc_exp_next ────────────────────────────────────────────
+# -- calc_exp_next --
 
 class TestCalcExpNext:
     def test_returns_positive_for_low_level(self):
-        assert _calc_exp_next("hero", 1) > 0
+        assert calc_exp_next("hero", 1) > 0
 
     def test_returns_zero_at_cap(self):
-        assert _calc_exp_next("hero", LEVEL_CAP) == 0
+        assert calc_exp_next("hero", LEVEL_CAP) == 0
 
     def test_increases_with_level(self):
-        assert _calc_exp_next("hero", 10) > _calc_exp_next("hero", 5)
+        assert calc_exp_next("hero", 10) > calc_exp_next("hero", 5)
 
     def test_different_classes_differ(self):
-        assert _calc_exp_next("warrior", 5) != _calc_exp_next("rogue", 5)
+        assert calc_exp_next("warrior", 5) != calc_exp_next("rogue", 5)
 
 
-# ── MemberState ───────────────────────────────────────────────
+# -- MemberState --
 
 class TestMemberStateStatGrowth:
     def test_stat_gain_returns_zero_without_load(self):
         m = _make_member()
-        assert m.stat_gain_at("str", 1) == 0
+        assert stat_gain_at(m, "str", 1) == 0
 
     def test_stat_gain_after_load(self):
         m = _make_member()
         m.load_stat_growth(STAT_GROWTH)
-        assert m.stat_gain_at("str", 1) == 3  # index 0
+        assert stat_gain_at(m, "str", 1) == 3  # index 0
 
     def test_stat_gain_cycles_modulo(self):
         m = _make_member()
         m.load_stat_growth(STAT_GROWTH)
-        # level 11 → index (11-1) % 10 = 0 → same as level 1
-        assert m.stat_gain_at("str", 11) == m.stat_gain_at("str", 1)
+        # level 11 -> index (11-1) % 10 = 0 -> same as level 1
+        assert stat_gain_at(m, "str", 11) == stat_gain_at(m, "str", 1)
 
     def test_recalc_exp_next(self):
         m = _make_member(level=1)
         old = m.exp_next
         m.level = 5
-        m.recalc_exp_next()
+        recalc_exp_next(m)
         assert m.exp_next > old
 
     def test_repr_includes_protagonist_tag(self):
@@ -75,7 +77,7 @@ class TestMemberStateStatGrowth:
         assert "[protagonist]" not in repr(m)
 
 
-# ── PartyState ────────────────────────────────────────────────
+# -- PartyState --
 
 class TestPartyState:
     def test_starts_empty(self):

@@ -7,8 +7,9 @@ from pathlib import Path
 from typing import Callable
 import yaml
 
-from engine.state.party_state import MemberState, PartyState
-from engine.state.repository_state import RepositoryState
+from engine.dto.member_state import MemberState
+from engine.dto.party_state import PartyState
+from engine.service.repository_state import RepositoryState
 from engine.dto.item_defs import FieldItemDef, UseResult
 
 # Re-export so existing imports keep working

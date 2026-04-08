@@ -2,7 +2,7 @@
 
 import pytest
 from engine.dto.position import Position
-from engine.state.map_state import MapState
+from engine.dto.map_state import MapState
 
 
 # ── Construction ──────────────────────────────────────────────

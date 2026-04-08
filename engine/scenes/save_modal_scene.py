@@ -4,7 +4,7 @@ import pygame
 from engine.scenes.scene import Scene
 from engine.settings import Settings
 from engine.io.save_manager import GameStateManager
-from engine.state.game_state import GameState
+from engine.dto.game_state import GameState
 from engine.dto.save_slot import SaveSlot
 
 MODAL_W = 700

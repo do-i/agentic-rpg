@@ -15,7 +15,7 @@ from engine.scenes.scene_registry import SceneRegistry
 from engine.battle.combatant import Combatant
 from engine.battle.battle_state import BattleState, BattlePhase
 from engine.battle.battle_rewards import RewardCalculator
-from engine.state.game_state_holder import GameStateHolder
+from engine.dto.game_state_holder import GameStateHolder
 from engine.scenes.post_battle_scene import PostBattleScene
 from engine.scenes.game_over_scene import GameOverScene
 from engine.battle.battle_logic import (

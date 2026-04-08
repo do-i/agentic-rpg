@@ -1,8 +1,8 @@
 # tests/unit/core/state/test_repository_state.py
 
 import pytest
-from engine.state.repository_state import (
-    ItemEntry,
+from engine.dto.item_entry import ItemEntry
+from engine.service.repository_state import (
     RepositoryState,
     GP_CAP,
     ITEM_QTY_CAP,

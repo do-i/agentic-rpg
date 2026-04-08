@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pygame
 from engine.settings import Settings
-from engine.state.repository_state import ItemEntry
+from engine.dto.item_entry import ItemEntry
 from engine.item.item_logic import TABS, MCCatalog, actions_for, display_name
 from engine.item.item_effect_handler import ItemEffectHandler
 

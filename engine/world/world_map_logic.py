@@ -9,7 +9,7 @@ import yaml
 from pathlib import Path
 
 from engine.dto.position import Position
-from engine.state.game_state_holder import GameStateHolder
+from engine.dto.game_state_holder import GameStateHolder
 from engine.io.save_manager import GameStateManager
 from engine.dialogue.dialogue_engine import DialogueEngine
 from engine.encounter.encounter_manager import EncounterManager

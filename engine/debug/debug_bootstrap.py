@@ -9,8 +9,9 @@ from __future__ import annotations
 from pathlib import Path
 import yaml
 
-from engine.state.game_state import GameState
-from engine.state.party_state import MemberState
+from engine.dto.game_state import GameState
+from engine.dto.member_state import MemberState
+from engine.service.party_state import calc_exp_next
 
 
 def _load_class_data(scenario_path: Path, class_name: str) -> dict:
@@ -61,6 +62,7 @@ def inject_full_party(state: GameState, scenario_path: Path) -> None:
             con=char_data["con"],
             int_=char_data["int"],
             equipped=char_data["equipped"],
+            exp_next=calc_exp_next(class_name, char_data["level"]),
         )
         member.load_stat_growth(class_data)
         state.party.add_member(member)

@@ -1,4 +1,4 @@
-# engine/state/map_state.py
+# engine/dto/map_state.py
 
 from engine.dto.position import Position
 
@@ -18,7 +18,7 @@ class MapState:
         self.position: Position = position if position is not None else Position(0, 0)
         self._visited: set[str] = set(visited) if visited is not None else set()
 
-    # ── Mutation ──────────────────────────────────────────────
+    # -- Mutation --
 
     def move_to(self, map_id: str, position: Position) -> None:
         """Switch to a new map and record previous as visited."""
@@ -31,7 +31,7 @@ class MapState:
         """Update position within the current map."""
         self.position = position
 
-    # ── Query ─────────────────────────────────────────────────
+    # -- Query --
 
     def has_visited(self, map_id: str) -> bool:
         return map_id in self._visited
@@ -40,7 +40,7 @@ class MapState:
     def visited(self) -> list[str]:
         return sorted(self._visited)
 
-    # ── Serialization ─────────────────────────────────────────
+    # -- Serialization --
 
     def to_dict(self) -> dict:
         return {

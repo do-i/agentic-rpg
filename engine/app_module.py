@@ -15,7 +15,7 @@ from engine.scenes.name_entry_scene import NameEntryScene
 from engine.scenes.world_map_scene import WorldMapScene
 from engine.scenes.load_game_scene import LoadGameScene
 from engine.scenes.status_scene import StatusScene
-from engine.state.game_state_holder import GameStateHolder
+from engine.dto.game_state_holder import GameStateHolder
 from engine.io.save_manager import GameStateManager
 from engine.dialogue.dialogue_engine import DialogueEngine
 from engine.io.enemy_loader import EnemyLoader

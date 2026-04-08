@@ -12,9 +12,10 @@ from engine.encounter.encounter_zone import EncounterZone, load_encounter_zone
 from engine.encounter.encounter_resolver import EncounterResolver
 from engine.battle.battle_state import BattleState
 from engine.battle.combatant import Combatant
-from engine.state.flag_state import FlagState
-from engine.state.party_state import PartyState, MemberState
-from engine.state.repository_state import RepositoryState
+from engine.dto.flag_state import FlagState
+from engine.dto.party_state import PartyState
+from engine.dto.member_state import MemberState
+from engine.service.repository_state import RepositoryState
 
 ROGUE_BASE_REDUCTION = -0.05
 

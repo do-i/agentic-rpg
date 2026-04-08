@@ -67,7 +67,7 @@ class TestNpcLoader:
                 }
             }]
         })
-        from engine.state.flag_state import FlagState
+        from engine.dto.flag_state import FlagState
         npcs = loader.load_from_map(p)
         npc = npcs[0]
         assert npc.is_present(FlagState({"flag_a"}))

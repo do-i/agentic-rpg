@@ -12,7 +12,7 @@ from engine.encounter.encounter_zone import (
 from engine.encounter.encounter_resolver import EncounterResolver
 from engine.io.enemy_loader import EnemyLoader
 from engine.battle.combatant import Combatant
-from engine.state.flag_state import FlagState
+from engine.dto.flag_state import FlagState
 
 
 # ── Helpers ───────────────────────────────────────────────────

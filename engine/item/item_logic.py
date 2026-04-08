@@ -7,7 +7,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from engine.state.repository_state import ItemEntry, RepositoryState
+from engine.dto.item_entry import ItemEntry
+from engine.service.repository_state import RepositoryState
 from engine.item.item_effect_handler import ItemEffectHandler
 
 # ── Tabs — Magic Core inserted between Material and Key ───────

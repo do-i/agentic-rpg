@@ -7,7 +7,8 @@ from engine.battle.battle_rewards import (
     EXP_CAP, LEVEL_CAP, _weighted_pick,
 )
 from engine.battle.combatant import Combatant
-from engine.state.party_state import PartyState, MemberState
+from engine.dto.party_state import PartyState
+from engine.dto.member_state import MemberState
 
 
 STAT_GROWTH = {

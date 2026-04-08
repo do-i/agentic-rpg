@@ -6,7 +6,7 @@ from engine.scenes.scene_manager import SceneManager
 from engine.scenes.scene_registry import SceneRegistry
 from engine.settings import Settings
 from engine.io.save_manager import GameStateManager
-from engine.state.game_state_holder import GameStateHolder
+from engine.dto.game_state_holder import GameStateHolder
 from engine.dto.save_slot import SaveSlot
 
 SLOT_HEIGHT = 44

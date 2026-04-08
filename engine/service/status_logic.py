@@ -1,4 +1,4 @@
-# engine/state/status_logic.py
+# engine/service/status_logic.py
 #
 # Status scene logic — spell filtering, validation, application.
 # Extracted from status_scene.py to separate game logic from rendering.
@@ -8,7 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 import yaml
 
-from engine.state.party_state import MemberState
+from engine.dto.member_state import MemberState
 
 # field-usable spell types (no offensive spells on world map)
 FIELD_SPELL_TYPES = {"heal", "utility", "buff"}

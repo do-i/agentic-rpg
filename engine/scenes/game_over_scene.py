@@ -10,7 +10,7 @@ from engine.scenes.scene import Scene
 from engine.scenes.scene_manager import SceneManager
 from engine.scenes.scene_registry import SceneRegistry
 from engine.settings import Settings
-from engine.state.game_state_holder import GameStateHolder
+from engine.dto.game_state_holder import GameStateHolder
 from engine.io.save_manager import GameStateManager
 
 # ── Colors ────────────────────────────────────────────────────

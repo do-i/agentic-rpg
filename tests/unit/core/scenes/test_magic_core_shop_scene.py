@@ -2,8 +2,8 @@
 
 from unittest.mock import MagicMock
 
-from engine.state.repository_state import RepositoryState
-from engine.state.game_state_holder import GameStateHolder
+from engine.service.repository_state import RepositoryState
+from engine.dto.game_state_holder import GameStateHolder
 from engine.scenes.magic_core_shop_scene import (
     MagicCoreShopScene, LARGE_RATE_THRESHOLD,
 )

@@ -1,4 +1,4 @@
-# engine/state/flag_state.py
+# engine/dto/flag_state.py
 
 
 class FlagState:
@@ -12,7 +12,7 @@ class FlagState:
     def __init__(self, flags: set[str] | None = None) -> None:
         self._flags: set[str] = set(flags) if flags else set()
 
-    # ── Mutation ──────────────────────────────────────────────
+    # -- Mutation --
 
     def add_flag(self, flag: str) -> None:
         self._flags.add(flag)
@@ -21,7 +21,7 @@ class FlagState:
         for flag in flags:
             self._flags.add(flag)
 
-    # ── Query ─────────────────────────────────────────────────
+    # -- Query --
 
     def has_flag(self, flag: str) -> bool:
         return flag in self._flags
@@ -38,7 +38,7 @@ class FlagState:
         """True if NONE of the flags are set (excludes check)."""
         return not any(f in self._flags for f in flags)
 
-    # ── Serialization ─────────────────────────────────────────
+    # -- Serialization --
 
     def to_list(self) -> list[str]:
         return sorted(self._flags)

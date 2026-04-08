@@ -1,6 +1,11 @@
-# engine/state/game_state_holder.py
+# engine/dto/game_state_holder.py
 
-from engine.state.game_state import GameState
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from engine.dto.game_state import GameState
 
 
 class GameStateHolder:

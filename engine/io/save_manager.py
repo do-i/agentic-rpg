@@ -9,7 +9,8 @@ from typing import TYPE_CHECKING
 import yaml
 
 from engine.dto.save_slot import SaveSlot
-from engine.state.game_state import GameState
+from engine.dto.game_state import GameState
+from engine.io.game_state_loader import from_save
 from engine.util.playtime import Playtime
 
 if TYPE_CHECKING:
@@ -93,7 +94,7 @@ class GameStateManager:
     def load(self, path: Path) -> GameState:
         with open(path, "r") as f:
             data = yaml.safe_load(f)
-        return GameState.from_save(data, self._classes_dir, self._item_catalog)
+        return from_save(data, self._classes_dir, self._item_catalog)
 
     # ── Slot list ─────────────────────────────────────────────
 

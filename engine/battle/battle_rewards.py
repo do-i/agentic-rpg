@@ -8,7 +8,9 @@ import math
 import random
 
 from engine.battle.combatant import Combatant
-from engine.state.party_state import PartyState, MemberState, _calc_exp_next
+from engine.dto.party_state import PartyState
+from engine.dto.member_state import MemberState
+from engine.service.party_state import calc_exp_next, stat_gain_at, recalc_exp_next
 from engine.dto.battle_rewards import (
     LevelUpResult,
     MemberExpResult,
@@ -102,10 +104,10 @@ class RewardCalculator:
             new_level = member.level
 
             # stat growth — modulo cycles the 10-entry table
-            str_gain = member.stat_gain_at("str", new_level)
-            dex_gain = member.stat_gain_at("dex", new_level)
-            con_gain = member.stat_gain_at("con", new_level)
-            int_gain = member.stat_gain_at("int", new_level)
+            str_gain = stat_gain_at(member, "str", new_level)
+            dex_gain = stat_gain_at(member, "dex", new_level)
+            con_gain = stat_gain_at(member, "con", new_level)
+            int_gain = stat_gain_at(member, "int", new_level)
 
             member.str_ += str_gain
             member.dex  += dex_gain
@@ -121,7 +123,7 @@ class RewardCalculator:
             member.hp = member.hp_max   # full restore on level-up
             member.mp = member.mp_max
 
-            member.recalc_exp_next()
+            recalc_exp_next(member)
 
             level_ups.append(LevelUpResult(
                 member_id=member.id,

@@ -7,7 +7,7 @@ from engine.battle.combatant import Combatant, StatusEffect
 from engine.battle.battle_state import BattleState, BattlePhase
 from engine.battle.battle_rewards import RewardCalculator
 from engine.item.item_effect_handler import ItemEffectHandler, FieldItemDef
-from engine.state.repository_state import RepositoryState
+from engine.service.repository_state import RepositoryState
 from engine.battle.battle_logic import (
     resolve_action, resolve_enemy_turn, handle_victory, handle_defeat,
     check_result, advance_to_next_turn, sync_party_state,

@@ -6,8 +6,8 @@ from engine.scenes.scene_manager import SceneManager
 from engine.scenes.scene_registry import SceneRegistry
 from engine.settings import Settings
 from engine.io.item_catalog import ItemCatalog
-from engine.state.game_state import GameState
-from engine.state.game_state_holder import GameStateHolder
+from engine.dto.game_state_holder import GameStateHolder
+from engine.io.game_state_loader import from_new_game
 from engine.io.manifest_loader import ManifestLoader
 from engine.debug.debug_bootstrap import inject_full_party
 
@@ -63,7 +63,7 @@ class NameEntryScene(Scene):
 
     def _confirm(self) -> None:
         name  = self._name.strip() or self._manifest["protagonist"]["name"]
-        state = GameState.from_new_game(
+        state = from_new_game(
             self._manifest, name, self._classes_dir, self._scenario_path,
             item_catalog=self._item_catalog,
         )

@@ -163,11 +163,94 @@ engine/
     world_map_logic.py
 ```
 
-### Execution notes
-- Step 1 (flatten `core/`) touches the most imports — do it first, run tests.
-- Then do remaining steps one at a time, updating imports and `app_module.py` after each.
-- Run `python -m pytest` after each step to catch broken imports.
-- For DTO splits (step 3), keep re-exports in the original module temporarily if needed to avoid a big-bang import change.
+### ✅ Steps 1–8 completed.
+
+### ✅ Step 9 completed.
+
+---
+
+### 9. Split `state/` data vs logic, rename `state/` → `service/`
+
+After steps 1–8, `engine/state/` contains a mix of pure data containers and business logic. Split data into `dto/`, keep logic in place, then rename `state/` → `service/`.
+
+#### 9a. Move pure data to `dto/`
+
+These are data containers with trivial accessors (no business logic):
+
+- `state/flag_state.py` → `dto/flag_state.py`
+  - `FlagState` — `set[str]` wrapper with query helpers (`has_flag`, `has_all`, `has_none`). Write-once semantics are a data invariant, not logic.
+
+- `state/game_state_holder.py` → `dto/game_state_holder.py`
+  - `GameStateHolder` — nullable wrapper around `GameState` with `get()`/`set()`.
+
+- `state/map_state.py` → `dto/map_state.py`
+  - `MapState` — holds current map name, `Position`, and visited set. `move_to()` is a simple mutation (update fields + record visited), not business logic.
+
+- `state/repository_state.py` → split:
+  - `ItemEntry` dataclass → `dto/item_entry.py` (pure data, name auto-populated from id)
+  - `RepositoryState` stays in `service/` — has business logic: GP caps, sell validation, tag cap enforcement, catalog integration.
+
+- `state/party_state.py` → split:
+  - `MemberState` data fields → `dto/member_state.py` (id, name, class_name, level, exp, hp/mp, stats, equipped, stat_growth, exp_next)
+  - Stat calculation logic (`stat_gain_at()`, `recalc_exp_next()`, `exp_pct`, `_calc_exp_next()`, constants) → `service/party_state.py` as helper functions or a service class operating on `MemberState`
+  - `PartyState` container → `dto/party_state.py` (member list with add/query — light container logic)
+
+#### 9b. Move `GameState` factory methods to `io/`
+
+`GameState` in `state/game_state.py` is 80% factory logic:
+- `from_new_game()` — loads YAML (characters, classes, party config), constructs all sub-state objects
+- `from_save()` — loads save dict, reconstructs state from serialized data
+
+Split:
+- `GameState` aggregator (just holds `flags`, `map`, `playtime`, `party`, `repository`) → `dto/game_state.py`
+- `from_new_game()` and `from_save()` factory functions → `io/game_state_loader.py`
+- `_load_class_data()` and `_load_character_data()` helpers move with the factories
+
+#### 9c. Rename `state/` → `service/`
+
+After extracting data, what remains in `state/` is pure business logic:
+- `service/repository_state.py` — inventory management (GP caps, sell validation, tag caps)
+- `service/party_state.py` — stat calculation helpers (`stat_gain_at`, `recalc_exp_next`, EXP constants)
+- `service/status_logic.py` — spell application functions (load class data, validate targets, apply effects)
+
+Rename directory `state/` → `service/`, update all `engine.state.` imports → `engine.service.`.
+
+#### Resulting `dto/` additions
+
+```
+dto/
+  ... (existing: position, save_slot, portal, encounter_zone, battle_rewards, item_defs)
+  flag_state.py          # FlagState
+  game_state.py          # GameState aggregator (fields only)
+  game_state_holder.py   # GameStateHolder
+  map_state.py           # MapState
+  member_state.py        # MemberState (data fields only)
+  party_state.py         # PartyState (member list container)
+  item_entry.py          # ItemEntry
+```
+
+#### Resulting `service/`
+
+```
+service/
+  repository_state.py    # RepositoryState (GP/item/tag logic)
+  party_state.py         # stat calc helpers for MemberState
+  status_logic.py        # spell application functions
+```
+
+#### Resulting `io/` addition
+
+```
+io/
+  ... (existing)
+  game_state_loader.py   # from_new_game(), from_save(), YAML helpers
+```
+
+#### Execution notes
+- Do 9a first (move pure data to dto/), run tests after each file.
+- Then 9b (split GameState), run tests.
+- Then 9c (rename state/ → service/), bulk update imports, run tests.
+- Keep re-exports in original locations temporarily if needed during migration.
 - Update `CLAUDE.md` architecture section when done.
 
 ## Bugs

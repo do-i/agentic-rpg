@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pygame
 from engine.settings import Settings
-from engine.state.party_state import MemberState
+from engine.dto.member_state import MemberState
 
 # ── Colors ────────────────────────────────────────────────────
 C_BG          = (20, 20, 42)
