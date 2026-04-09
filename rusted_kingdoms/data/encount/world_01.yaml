@@ -23,14 +23,18 @@ set_a:
 
 set_b:
   entries:
+    - formation: [goblin]
+      weight: 30
+    - formation: [goblin_warrier]
+      weight: 30
     - formation: [venom_bat, venom_bat]
-      weight: 30
+      weight: 5
     - formation: [forest_spider]
-      weight: 30
+      weight: 5
     - formation: [venom_bat, forest_spider]
-      weight: 15
-    - formation: [wild_wolf]
       weight: 10
+    - formation: [wild_wolf]
+      weight: 5
     - formation: [cave_bat]
       weight: 10
     - formation: [treant]

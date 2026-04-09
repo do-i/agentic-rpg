@@ -34,6 +34,7 @@ class Combatant:
     boss:      bool = False
     portrait_path: str = ""     # party members only — assets/images/{id}_profile.png
     sprite_id: str = ""         # enemies — placeholder label for now
+    sprite_scale: int = 100     # enemies — enlarge sprite by this %, 100 = no change
 
     # battle-only state
     status_effects: list[StatusEffect] = field(default_factory=list)

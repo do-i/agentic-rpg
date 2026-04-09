@@ -110,9 +110,12 @@ class BattleRenderer:
         if enemy.id in self._enemy_size:
             return self._enemy_size[enemy.id]
         if enemy.boss:
-            return ENEMY_SIZES["large"]
-        idx = len(enemy.name) % 3
-        return [ENEMY_SIZES["medium"], ENEMY_SIZES["small"], ENEMY_SIZES["medium"]][idx]
+            base = ENEMY_SIZES["large"]
+        else:
+            idx = len(enemy.name) % 3
+            base = [ENEMY_SIZES["medium"], ENEMY_SIZES["small"], ENEMY_SIZES["medium"]][idx]
+        scale = enemy.sprite_scale / 100.0
+        return (int(base[0] * scale), int(base[1] * scale))
 
     def _load_enemy_sprite(self, enemy: Combatant) -> pygame.Surface | None:
         sprite_id = enemy.sprite_id or enemy.id
