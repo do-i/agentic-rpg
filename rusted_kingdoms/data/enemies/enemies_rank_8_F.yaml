@@ -199,3 +199,69 @@ ai:
       weight: 40
 targeting:
   default: random_alive
+
+---
+id: goblin
+name: Goblin
+type: humanoid
+rank: F
+hp: 25
+atk: 9
+def: 3
+mres: 2
+dex: 12
+exp: 24
+drops:
+  mc:
+    - size: XS
+      qty: 3
+  loot:
+    - pool:
+        - item: goblin_fang
+          weight: 70
+        - item: goblin_ear
+          weight: 30
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: scratch             # 90% physical, single target
+      weight: 30
+targeting:
+  default: random_alive
+
+---
+id: goblin_warrier
+name: Goblin Warrier
+type: humanoid
+rank: F
+hp: 35
+atk: 11
+def: 5
+mres: 3
+dex: 10
+exp: 34
+drops:
+  mc:
+    - size: XS
+      qty: 3
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: rusty_blade
+          weight: 60
+        - item: goblin_shield
+          weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: shield_bash          # stun single target, 1 turn
+      weight: 40
+targeting:
+  default: random_alive

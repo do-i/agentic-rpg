@@ -12,6 +12,7 @@ import pygame
 from engine.battle.combatant import Combatant, StatusEffect
 from engine.battle.battle_state import BattleState, BattlePhase
 from engine.settings import Settings
+from engine.world.sprite_sheet import SpriteSheet, Direction
 
 # ── Layout ────────────────────────────────────────────────────
 ENEMY_AREA_H    = int(Settings.SCREEN_HEIGHT * 0.65)
@@ -77,6 +78,7 @@ class BattleRenderer:
         self._fonts_ready = False
         self._portraits: dict[str, pygame.Surface] = {}
         self._enemy_size: dict[str, tuple] = {}
+        self._enemy_sprites: dict[str, pygame.Surface | None] = {}
 
     def _init_fonts(self) -> None:
         self._font_name  = pygame.font.SysFont("Arial", 14, bold=True)
@@ -111,6 +113,25 @@ class BattleRenderer:
             return ENEMY_SIZES["large"]
         idx = len(enemy.name) % 3
         return [ENEMY_SIZES["medium"], ENEMY_SIZES["small"], ENEMY_SIZES["medium"]][idx]
+
+    def _load_enemy_sprite(self, enemy: Combatant) -> pygame.Surface | None:
+        sprite_id = enemy.sprite_id or enemy.id
+        if sprite_id in self._enemy_sprites:
+            return self._enemy_sprites[sprite_id]
+        tsx_path = self._scenario_path / "assets" / "sprites" / "enemies" / f"{sprite_id}.tsx"
+        if not tsx_path.exists():
+            self._enemy_sprites[sprite_id] = None
+            return None
+        try:
+            sheet = SpriteSheet(tsx_path)
+            frame = sheet.get_frame(Direction.DOWN, 0)
+            w, h = self._enemy_rect_size(enemy)
+            scaled = pygame.transform.scale(frame, (w, h))
+            self._enemy_sprites[sprite_id] = scaled
+            return scaled
+        except Exception:
+            self._enemy_sprites[sprite_id] = None
+            return None
 
     # ── Main render ───────────────────────────────────────────
 
@@ -166,10 +187,18 @@ class BattleRenderer:
         w, h = self._enemy_rect_size(enemy)
         rx, ry = cx - w // 2, cy - h // 2
 
-        base_col = (30, 30, 40) if enemy.is_ko else (42, 58, 90)
-        bdr_col  = (50, 50, 60) if enemy.is_ko else (74, 106, 154)
-        pygame.draw.rect(screen, base_col, (rx, ry, w, h), border_radius=4)
-        pygame.draw.rect(screen, bdr_col,  (rx, ry, w, h), 1, border_radius=4)
+        sprite = self._load_enemy_sprite(enemy)
+        if sprite is not None:
+            img = sprite
+            if enemy.is_ko:
+                img = img.copy()
+                img.set_alpha(80)
+            screen.blit(img, (rx, ry))
+        else:
+            base_col = (30, 30, 40) if enemy.is_ko else (42, 58, 90)
+            bdr_col  = (50, 50, 60) if enemy.is_ko else (74, 106, 154)
+            pygame.draw.rect(screen, base_col, (rx, ry, w, h), border_radius=4)
+            pygame.draw.rect(screen, bdr_col,  (rx, ry, w, h), 1, border_radius=4)
 
         name_surf = self._font_enemy.render(enemy.name, True, C_TEXT_MUT)
         screen.blit(name_surf, (cx - name_surf.get_width() // 2, ry + h + 4))
