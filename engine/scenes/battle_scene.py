@@ -55,7 +55,7 @@ class BattleScene(Scene):
         self._reward_calc = RewardCalculator()
         self._renderer = BattleRenderer(Path(scenario_path))
 
-        self._cmd_items: list[str] = ["Attack", "Spell", "Item", "Run"]
+        self._cmd_items: list[str] = ["Attack", "Defend", "Spell", "Item", "Run"]
         self._cmd_sel: int = 0
         self._sub_items: list[dict] = []
         self._sub_sel: int = 0
@@ -134,6 +134,11 @@ class BattleScene(Scene):
             self._target_sel  = 0
             self._state.pending_action = {"type": "attack", "source": active}
             self._state.phase = BattlePhase.SELECT_TARGET
+        elif label == "Defend":
+            self._state.pending_action = {
+                "type": "defend", "source": active, "targets": [active],
+            }
+            self._do_resolve()
         elif label == "Spell":
             if active and active.mp_max > 0:
                 self._open_spell_menu(active)

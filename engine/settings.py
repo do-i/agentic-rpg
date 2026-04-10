@@ -8,7 +8,7 @@ import yaml
 class Settings:
     # Display
     SCREEN_WIDTH: int = 1280
-    SCREEN_HEIGHT: int = 720
+    SCREEN_HEIGHT: int = 766
     FPS: int = 60
     WINDOW_TITLE: str = "Rusted Kingdoms"
 

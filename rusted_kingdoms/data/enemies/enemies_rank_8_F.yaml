@@ -4,7 +4,7 @@ id: giant_rat
 name: Giant Rat
 type: beast
 rank: F
-sprite_scale: 110
+sprite_scale: 210
 hp: 22
 atk: 8
 def: 3
@@ -37,7 +37,7 @@ id: cave_bat
 name: Cave Bat
 type: beast
 rank: F
-sprite_scale: 100
+sprite_scale: 200
 hp: 20
 atk: 8
 def: 3
@@ -70,7 +70,7 @@ id: cave_spider
 name: Cave Spider
 type: beast
 rank: F
-sprite_scale: 110
+sprite_scale: 210
 hp: 24
 atk: 10
 def: 4
@@ -103,7 +103,7 @@ id: wild_wolf
 name: Wild Wolf
 type: beast
 rank: F
-sprite_scale: 120
+sprite_scale: 220
 hp: 28
 atk: 9
 def: 4
@@ -138,7 +138,7 @@ id: treant
 name: Treant
 type: beast
 rank: F
-sprite_scale: 150
+sprite_scale: 250
 hp: 40
 atk: 11
 def: 6
@@ -176,7 +176,7 @@ id: venom_bat
 name: Venom Bat
 type: beast
 rank: F
-sprite_scale: 110
+sprite_scale: 210
 hp: 33
 atk: 11
 def: 4
@@ -211,7 +211,7 @@ id: goblin
 name: Goblin
 type: humanoid
 rank: F
-sprite_scale: 115
+sprite_scale: 215
 hp: 25
 atk: 9
 def: 3
@@ -244,7 +244,7 @@ id: goblin_warrier
 name: Goblin Warrier
 type: humanoid
 rank: F
-sprite_scale: 130
+sprite_scale: 230
 hp: 35
 atk: 11
 def: 5

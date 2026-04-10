@@ -15,7 +15,7 @@ from engine.settings import Settings
 from engine.world.sprite_sheet import SpriteSheet, Direction
 
 # ── Layout ────────────────────────────────────────────────────
-ENEMY_AREA_H    = int(Settings.SCREEN_HEIGHT * 0.65)
+ENEMY_AREA_H    = 468
 BOTTOM_H        = Settings.SCREEN_HEIGHT - ENEMY_AREA_H
 PARTY_W         = int(Settings.SCREEN_WIDTH * 0.25)
 CMD_W           = int(Settings.SCREEN_WIDTH * 0.30)
@@ -23,7 +23,7 @@ MSG_X           = PARTY_W + CMD_W
 MSG_W           = Settings.SCREEN_WIDTH - MSG_X
 
 PORTRAIT_SIZE   = 36
-ROW_H           = 44
+ROW_H           = 56
 ROW_PAD         = 8
 BAR_H           = 6
 
@@ -40,7 +40,7 @@ C_FLOOR        = (17,  17,  40)
 C_PANEL_LINE   = (51,  51,  51)
 C_ROW_ACTIVE   = (42,  26,  26)
 C_ROW_NORMAL   = (26,  26,  42)
-C_BORDER_ACT   = (204, 68,  68)
+C_BORDER_ACT   = (255, 220, 60)
 C_BORDER_NORM  = (51,  51,  68)
 C_CMD_SEL_BG   = (42,  32,  64)
 C_CMD_SEL_BDR  = (119, 85,  204)
@@ -92,7 +92,7 @@ class BattleRenderer:
         self._font_sub   = pygame.font.SysFont("Arial", 14)
         self._font_turn  = pygame.font.SysFont("Arial", 13)
         self._font_msg   = pygame.font.SysFont("Arial", 18)
-        self._font_dmg   = pygame.font.SysFont("Arial", 18, bold=True)
+        self._font_dmg   = pygame.font.SysFont("Arial", 26, bold=True)
         self._font_enemy = pygame.font.SysFont("Arial", 11)
         self._font_badge = pygame.font.SysFont("Arial", 9,  bold=True)
         self._fonts_ready = True
@@ -236,11 +236,17 @@ class BattleRenderer:
         bar_w = w
         bar_x = cx - bar_w // 2
         bar_y = ry + h + 4 + name_surf.get_height() + 3
-        pygame.draw.rect(screen, (42, 42, 42), (bar_x, bar_y, bar_w, 5), border_radius=2)
+        bar_h = 13
+        # outer border – dark
+        pygame.draw.rect(screen, (40, 40, 40), (bar_x - 3, bar_y - 3, bar_w + 6, bar_h + 6), 2, border_radius=6)
+        # inner border – light
+        pygame.draw.rect(screen, (200, 200, 200), (bar_x - 1, bar_y - 1, bar_w + 2, bar_h + 2), 2, border_radius=4)
+        # bar background
+        pygame.draw.rect(screen, (42, 42, 42), (bar_x, bar_y, bar_w, bar_h), border_radius=3)
         hp_fill = int(bar_w * enemy.hp_pct)
         hp_col  = C_HP_OK if enemy.hp_pct > HP_LOW_THRESHOLD else C_HP_LOW
         if hp_fill > 0 and not enemy.is_ko:
-            pygame.draw.rect(screen, hp_col, (bar_x, bar_y, hp_fill, 5), border_radius=2)
+            pygame.draw.rect(screen, hp_col, (bar_x, bar_y, hp_fill, bar_h), border_radius=3)
 
         if (state.phase == BattlePhase.SELECT_TARGET
                 and target_pool
@@ -290,7 +296,8 @@ class BattleRenderer:
 
         rx, rw = ROW_PAD, PARTY_W - ROW_PAD * 2
         pygame.draw.rect(screen, bg,  (rx, y, rw, ROW_H - 2), border_radius=4)
-        pygame.draw.rect(screen, bdr, (rx, y, rw, ROW_H - 2), 1, border_radius=4)
+        bdr_w = 2 if is_active else 1
+        pygame.draw.rect(screen, bdr, (rx, y, rw, ROW_H - 2), bdr_w, border_radius=4)
         if is_target:
             pygame.draw.rect(screen, (204, 170, 255),
                              (rx - 2, y - 2, rw + 4, ROW_H + 2), 2, border_radius=5)
@@ -326,29 +333,56 @@ class BattleRenderer:
 
         sx = px + PORTRAIT_SIZE + 8
         sw = rw - PORTRAIT_SIZE - 20
-        bx = sx + 22
-        bw = sw - 22 - 50
+        bar_h = BAR_H * 2 + 4
+        bar_gap = 6
+        bar_y = y + 22
 
-        screen.blit(self._font_name.render(
-            member.name, True, C_TEXT if not member.is_ko else C_TEXT_DIM), (sx, y + 5))
+        # ── Row 1: Name ──
+        name_col = C_TEXT if not member.is_ko else C_TEXT_DIM
+        screen.blit(self._font_name.render(member.name, True, name_col), (sx, y + 4))
 
         hp_pct  = member.hp_pct
         hp_col  = C_HP_LOW  if hp_pct <= HP_LOW_THRESHOLD else C_HP_OK
         hp_lcol = C_HP_LABEL_LOW if hp_pct <= HP_LOW_THRESHOLD else C_HP_LABEL_OK
-        screen.blit(self._font_stat.render("HP", True, hp_lcol), (sx, y + 20))
-        pygame.draw.rect(screen, (42, 42, 42), (bx, y + 20, bw, BAR_H), border_radius=2)
-        if not member.is_ko:
-            pygame.draw.rect(screen, hp_col, (bx, y + 20, int(bw * hp_pct), BAR_H), border_radius=2)
-        screen.blit(self._font_stat.render(f"{member.hp}/{member.hp_max}", True, hp_lcol),
-                    (bx + bw + 4, y + 19))
 
+        hp_label = self._font_stat.render("HP", True, hp_lcol)
+        hp_lw = hp_label.get_width()
+
+        # ── Row 2: HP [bar]  <space>  MP [bar] ──
+        if member.mp_max > 0:
+            mp_label = self._font_stat.render("MP", True, C_MP_LABEL)
+            mp_lw = mp_label.get_width()
+            # split remaining width after both labels and gaps
+            avail = sw - hp_lw - mp_lw - bar_gap * 3
+            hp_bw = avail // 2
+            mp_bw = avail - hp_bw
+            hp_bx = sx + hp_lw + bar_gap
+            mp_lx = hp_bx + hp_bw + bar_gap
+            mp_bx = mp_lx + mp_lw + bar_gap
+        else:
+            hp_bw = sw - hp_lw - bar_gap
+            hp_bx = sx + hp_lw + bar_gap
+            mp_bw = 0
+            mp_bx = 0
+
+        # HP label + bar
+        screen.blit(hp_label, (sx, bar_y + bar_h // 2 - hp_label.get_height() // 2))
+        pygame.draw.rect(screen, (42, 42, 42), (hp_bx, bar_y, hp_bw, bar_h), border_radius=3)
+        if not member.is_ko:
+            pygame.draw.rect(screen, hp_col, (hp_bx, bar_y, int(hp_bw * hp_pct), bar_h), border_radius=3)
+        hp_txt = self._font_stat.render(f"{member.hp}/{member.hp_max}", True, (255, 255, 255))
+        screen.blit(hp_txt, (hp_bx + hp_bw // 2 - hp_txt.get_width() // 2,
+                             bar_y + bar_h // 2 - hp_txt.get_height() // 2))
+
+        # MP label + bar
         if member.mp_max > 0:
             mp_pct = member.mp / member.mp_max
-            screen.blit(self._font_stat.render("MP", True, C_MP_LABEL), (sx, y + 32))
-            pygame.draw.rect(screen, (42, 42, 42), (bx, y + 32, bw, BAR_H), border_radius=2)
-            pygame.draw.rect(screen, C_MP, (bx, y + 32, int(bw * mp_pct), BAR_H), border_radius=2)
-            screen.blit(self._font_stat.render(f"{member.mp}/{member.mp_max}", True, C_MP_LABEL),
-                        (bx + bw + 4, y + 31))
+            screen.blit(mp_label, (mp_lx, bar_y + bar_h // 2 - mp_label.get_height() // 2))
+            pygame.draw.rect(screen, (42, 42, 42), (mp_bx, bar_y, mp_bw, bar_h), border_radius=3)
+            pygame.draw.rect(screen, C_MP, (mp_bx, bar_y, int(mp_bw * mp_pct), bar_h), border_radius=3)
+            mp_txt = self._font_stat.render(f"{member.mp}/{member.mp_max}", True, (255, 255, 255))
+            screen.blit(mp_txt, (mp_bx + mp_bw // 2 - mp_txt.get_width() // 2,
+                                 bar_y + bar_h // 2 - mp_txt.get_height() // 2))
 
     # ── Command panel ─────────────────────────────────────────
 
@@ -438,6 +472,10 @@ class BattleRenderer:
 
     def _draw_damage_floats(self, screen: pygame.Surface, state: BattleState) -> None:
         for f in state.damage_floats:
+            shadow = self._font_dmg.render(f.text, True, (0, 0, 0))
+            shadow.set_alpha(f.alpha)
+            for ox, oy in ((-1, -1), (1, -1), (-1, 1), (1, 1), (0, 2)):
+                screen.blit(shadow, (f.x + ox, f.y + oy))
             surf = self._font_dmg.render(f.text, True, f.color)
             surf.set_alpha(f.alpha)
             screen.blit(surf, (f.x, f.y))

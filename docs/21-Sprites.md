@@ -25,6 +25,9 @@ body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&mustache=Mu
 ### teen_wiz_01
 body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hat_trim=Elf_Trim_forest&hat=Celestial_Wizard_Hat_blue&hair=Long_center_part_carrot&dress=Kimono_teal&dress_trim=Kimono_Trim_sky&dress_sleeves=Kimono_Sleeves_sky&socks=Tabi_Socks_sky
 
+### female_rose_01
+body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&apron=Apron_white&hair=Lob_rose&legs=Belle_skirt_pink&headcover=Thick_Headband_teal
+
 ## Goblin
 
 ### Goblin
@@ -55,3 +58,8 @@ body=Skeleton_skeleton&head=Skeleton_skeleton&expression=Neutral_lavender&vest=V
 
 ### Skeleton General
 body=Skeleton_skeleton&head=Skeleton_skeleton&expression=Neutral_lavender&vest=Vest_open_rose&weapon=Longsword_longsword&cape=Solid_maroon&hat=Cavalier_black&hat_trim=Celestial_Wizard_Hat_Second_Color_gray&shoulders=Legion_steel
+
+## Wing
+
+### Gargoyle Skeleton
+body=Skeleton_skeleton&expression=Neutral_blue&wings=Bat_Wings_white&head=Goblin_blue

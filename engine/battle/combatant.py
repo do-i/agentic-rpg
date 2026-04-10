@@ -3,6 +3,7 @@
 # Phase 4 — Battle system
 
 from __future__ import annotations
+import random
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
@@ -39,6 +40,7 @@ class Combatant:
     # battle-only state
     status_effects: list[StatusEffect] = field(default_factory=list)
     is_ko:     bool = False
+    defending: bool = False
 
     # reward stats — enemies only
     exp_yield: int = 0
@@ -61,7 +63,13 @@ class Combatant:
         return not self.is_ko and self.hp > 0
 
     def apply_damage(self, amount: int) -> int:
-        """Clamps to 0, sets KO flag. Returns actual damage dealt."""
+        """Clamps to 0, sets KO flag. Returns actual damage dealt.
+
+        If the combatant is defending, damage is reduced by 25-30%.
+        """
+        if self.defending:
+            reduction = random.uniform(0.25, 0.30)
+            amount = max(1, int(amount * (1 - reduction)))
         actual = min(amount, self.hp)
         self.hp = max(0, self.hp - amount)
         if self.hp == 0:

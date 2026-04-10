@@ -14,9 +14,9 @@ from engine.encounter.encounter_manager import EncounterManager
 from engine.settings import Settings
 
 # ── Layout constants needed for float positioning ─────────────
-ENEMY_AREA_H = int(Settings.SCREEN_HEIGHT * 0.65)
+ENEMY_AREA_H = 468
 PARTY_W = Settings.SCREEN_WIDTH // 2
-ROW_H = 44
+ROW_H = 56
 
 ENEMY_LAYOUTS = {
     1: [(0,   0)],
@@ -37,6 +37,7 @@ ENEMY_SIZES = {
 C_DMG_PHYS  = (255, 180, 80)
 C_DMG_MAGIC = (140, 180, 255)
 C_HEAL      = (100, 220, 100)
+C_DEFEND    = (180, 180, 255)
 
 
 def enemy_rect_size(enemy: Combatant) -> tuple[int, int]:
@@ -70,6 +71,12 @@ def resolve_action(state: BattleState, effect_handler=None, repository=None) -> 
     targets = action.get("targets", [])
     atype = action.get("type", "attack")
     msg_parts: list[str] = []
+
+    if atype == "defend":
+        source.defending = True
+        state.add_float("Defend", *float_pos(state, source), C_DEFEND)
+        state.pending_action = None
+        return f"{source.name} is defending!"
 
     for target in targets:
         if atype == "attack":
@@ -367,6 +374,8 @@ def advance_to_next_turn(state: BattleState) -> None:
     """Advance to the next turn and set the phase accordingly."""
     state.advance_turn()
     active = state.active
+    if active:
+        active.defending = False
     if active and active.is_enemy:
         state.phase = BattlePhase.ENEMY_TURN
     else:
