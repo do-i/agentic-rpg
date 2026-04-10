@@ -53,6 +53,8 @@ C_MP           = (68,  102, 204)
 C_HP_LABEL_OK  = (136, 204, 136)
 C_HP_LABEL_LOW = (204, 136, 136)
 C_MP_LABEL     = (136, 136, 204)
+C_MSG_ENEMY    = (255, 170, 50)
+C_MSG_PARTY    = (100, 200, 255)
 
 HP_LOW_THRESHOLD = 0.35
 
@@ -89,7 +91,7 @@ class BattleRenderer:
         self._font_cmd   = pygame.font.SysFont("Arial", 16)
         self._font_sub   = pygame.font.SysFont("Arial", 14)
         self._font_turn  = pygame.font.SysFont("Arial", 13)
-        self._font_msg   = pygame.font.SysFont("Arial", 13)
+        self._font_msg   = pygame.font.SysFont("Arial", 18)
         self._font_dmg   = pygame.font.SysFont("Arial", 18, bold=True)
         self._font_enemy = pygame.font.SysFont("Arial", 11)
         self._font_badge = pygame.font.SysFont("Arial", 9,  bold=True)
@@ -158,7 +160,8 @@ class BattleRenderer:
                cmd_items: list[str], cmd_sel: int,
                sub_items: list[dict], sub_sel: int,
                target_pool: list[Combatant], target_sel: int,
-               resolve_msg: str) -> None:
+               resolve_msg: str,
+               resolve_is_enemy: bool = False) -> None:
         if not self._fonts_ready:
             self._init_fonts()
 
@@ -172,14 +175,16 @@ class BattleRenderer:
         self._draw_enemy_area(screen, state, target_pool, target_sel, has_bg=bg is not None)
         self._draw_bottom_panel(screen, state, cmd_items, cmd_sel,
                                 sub_items, sub_sel, target_pool, target_sel,
-                                resolve_msg)
+                                resolve_msg, resolve_is_enemy)
         self._draw_damage_floats(screen, state)
 
-    def _draw_message_panel(self, screen: pygame.Surface, resolve_msg: str) -> None:
+    def _draw_message_panel(self, screen: pygame.Surface, resolve_msg: str,
+                            is_enemy: bool = False) -> None:
         if not resolve_msg:
             return
-        text = self._font_msg.render(resolve_msg, True, C_TEXT)
-        tx = MSG_X + (MSG_W - text.get_width()) // 2
+        color = C_MSG_ENEMY if is_enemy else C_MSG_PARTY
+        text = self._font_msg.render(resolve_msg, True, color)
+        tx = MSG_X + 10
         ty = ENEMY_AREA_H + 10
         screen.blit(text, (tx, ty))
 
@@ -250,7 +255,8 @@ class BattleRenderer:
                            cmd_items: list[str], cmd_sel: int,
                            sub_items: list[dict], sub_sel: int,
                            target_pool: list[Combatant], target_sel: int,
-                           resolve_msg: str) -> None:
+                           resolve_msg: str,
+                           resolve_is_enemy: bool = False) -> None:
         pygame.draw.line(screen, C_PANEL_LINE,
                          (0, ENEMY_AREA_H), (Settings.SCREEN_WIDTH, ENEMY_AREA_H))
         pygame.draw.line(screen, C_PANEL_LINE,
@@ -260,7 +266,7 @@ class BattleRenderer:
         self._draw_party_panel(screen, state, target_pool, target_sel)
         self._draw_command_panel(screen, state, cmd_items, cmd_sel,
                                 sub_items, sub_sel)
-        self._draw_message_panel(screen, resolve_msg)
+        self._draw_message_panel(screen, resolve_msg, resolve_is_enemy)
 
     def _draw_party_panel(self, screen: pygame.Surface, state: BattleState,
                           target_pool: list[Combatant], target_sel: int) -> None:

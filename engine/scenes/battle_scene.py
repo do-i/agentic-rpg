@@ -61,8 +61,8 @@ class BattleScene(Scene):
         self._sub_sel: int = 0
         self._target_pool: list[Combatant] = []
         self._target_sel: int = 0
-        self._resolve_timer: float = 0.0
         self._resolve_msg: str = ""
+        self._resolve_is_enemy: bool = False
 
         self._state.build_turn_order()
         active = self._state.active
@@ -107,8 +107,9 @@ class BattleScene(Scene):
             elif phase == BattlePhase.SELECT_TARGET:
                 self._handle_target(event.key)
             elif phase == BattlePhase.RESOLVE:
-                if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
-                    self._resolve_timer = 0.0
+                if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    self._resolve_msg = ""
+                    self._check_result()
             elif phase in (BattlePhase.POST_BATTLE, BattlePhase.GAME_OVER):
                 if event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_ESCAPE):
                     if phase == BattlePhase.GAME_OVER:
@@ -274,15 +275,15 @@ class BattleScene(Scene):
         msg = resolve_action(self._state, self._effect_handler, repo)
         self._enter_resolve(msg)
 
-    def _enter_resolve(self, msg: str) -> None:
+    def _enter_resolve(self, msg: str, is_enemy: bool = False) -> None:
         self._resolve_msg = msg
-        self._resolve_timer = 3.0
+        self._resolve_is_enemy = is_enemy
         self._state.phase = BattlePhase.RESOLVE
 
     def _do_enemy_turn(self) -> None:
         msg = resolve_enemy_turn(self._state)
         if msg:
-            self._enter_resolve(msg)
+            self._enter_resolve(msg, is_enemy=True)
         else:
             self._check_result()
 
@@ -330,12 +331,7 @@ class BattleScene(Scene):
 
     def update(self, delta: float) -> None:
         self._state.update_floats(delta)
-        if self._state.phase == BattlePhase.RESOLVE:
-            self._resolve_timer -= delta
-            if self._resolve_timer <= 0:
-                self._resolve_msg = ""
-                self._check_result()
-        elif self._state.phase == BattlePhase.ENEMY_TURN:
+        if self._state.phase == BattlePhase.ENEMY_TURN:
             self._do_enemy_turn()
 
     # ── Render (delegates to BattleRenderer) ──────────────────
@@ -347,4 +343,5 @@ class BattleScene(Scene):
             self._sub_items, self._sub_sel,
             self._target_pool, self._target_sel,
             self._resolve_msg,
+            self._resolve_is_enemy,
         )
