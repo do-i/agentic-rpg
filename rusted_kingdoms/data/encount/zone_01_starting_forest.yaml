@@ -1,32 +1,41 @@
 id: zone_01_starting_forest
 name: Starting Forest
-encounter_rate: 0.10
+encounter_rate: 0.50 # TODO lower it to 0.10 to 0.13 after testing is done
+background: world1-bg-1280x468
 
 set_a:
   entries:
-    - formation: [cave_spider, cave_spider]
+    - formation: [goblin]
       weight: 30
+    - formation: [goblin_warrier]
+      weight: 30
+    - formation: [cave_spider, cave_spider]
+      weight: 5
     - formation: [giant_rat, giant_rat]
-      weight: 25
+      weight: 5
     - formation: [wild_wolf, cave_spider]
-      weight: 20
+      weight: 10
     - formation: [wild_wolf]
       weight: 10
     - formation: [cave_bat]
-      weight: 10
+      weight: 5
     - formation: [treant]
       weight: 5
 
 set_b:
   entries:
+    - formation: [goblin]
+      weight: 30
+    - formation: [goblin_warrier]
+      weight: 30
     - formation: [venom_bat, venom_bat]
-      weight: 30
+      weight: 5
     - formation: [forest_spider]
-      weight: 30
+      weight: 5
     - formation: [venom_bat, forest_spider]
-      weight: 15
-    - formation: [wild_wolf]
       weight: 10
+    - formation: [wild_wolf]
+      weight: 5
     - formation: [cave_bat]
       weight: 10
     - formation: [treant]

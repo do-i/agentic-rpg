@@ -1,4 +1,6 @@
 # data/maps/world.yaml
+bgm: Whispers_of_the_Alpine_Stream.mp3
+
 transport:
   sail:
     unlock_flag: transport_sail_unlocked

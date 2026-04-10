@@ -36,6 +36,7 @@ from engine.world.player import Player
 from engine.world.sprite_sheet import SpriteSheet
 from engine.world.npc import Npc
 from engine.io.npc_loader import NpcLoader
+from engine.audio.bgm_manager import BgmManager
 
 
 class WorldMapScene(Scene):
@@ -59,6 +60,7 @@ class WorldMapScene(Scene):
         text_speed: str = "fast",
         smooth_collision: bool = True,
         mc_exchange_confirm_large: bool = True,
+        bgm_manager: BgmManager | None = None,
     ) -> None:
         self._smooth_collision = smooth_collision
         self._holder = holder
@@ -74,6 +76,7 @@ class WorldMapScene(Scene):
         self._text_speed = text_speed
         self._mc_exchange_confirm_large = mc_exchange_confirm_large
         self._mc_catalog = mc_catalog or MCCatalog()
+        self._bgm_manager = bgm_manager
 
         self._tile_map: TileMap | None = None
         self._camera: Camera | None = None
@@ -116,6 +119,16 @@ class WorldMapScene(Scene):
 
         map_yaml = scenario_path / "data" / "maps" / f"{map_id}.yaml"
         self._npcs = self._npc_loader.load_from_map(map_yaml)
+
+        # Start background music for this map
+        if self._bgm_manager and map_yaml.exists():
+            with open(map_yaml) as f:
+                map_data = yaml.safe_load(f) or {}
+            bgm_file = map_data.get("bgm")
+            if bgm_file:
+                bgm_path = scenario_path / "assets" / "audio" / bgm_file
+                if bgm_path.exists():
+                    self._bgm_manager.play(bgm_path)
 
         self._encounter_manager.set_zone(map_id)
         self._last_tile = self._player.tile_position
@@ -335,6 +348,7 @@ class WorldMapScene(Scene):
             boss_flag=boss_flag,
             effect_handler=self._effect_handler,
             game_state_manager=self._game_state_manager,
+            bgm_manager=self._bgm_manager,
         )
         self._scene_manager.switch(scene)
 

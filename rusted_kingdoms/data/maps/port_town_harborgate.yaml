@@ -1,5 +1,6 @@
 id: port_town_harborgate
 name: Harborgate
+bgm: Whiteveil_Streets.mp3
 
 shop:
   items:

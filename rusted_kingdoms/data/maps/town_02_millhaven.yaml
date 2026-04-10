@@ -1,5 +1,6 @@
 id: town_02_millhaven
 name: Millhaven
+bgm: Whispers_of_the_Bamboo_Grove.mp3
 inn:
   cost: 120
   position: [8, 5]

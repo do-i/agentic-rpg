@@ -1,5 +1,6 @@
 id: town_03_ruinwatch
 name: Ruinwatch
+bgm: Whiteveil_Streets.mp3
 inn:
   cost: 250
   position: [8, 5]

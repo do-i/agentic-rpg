@@ -25,6 +25,7 @@ from engine.battle.battle_logic import (
 from engine.ui.battle_renderer import BattleRenderer
 from engine.item.item_effect_handler import ItemEffectHandler
 from engine.io.save_manager import GameStateManager
+from engine.audio.bgm_manager import BgmManager
 
 
 class BattleScene(Scene):
@@ -44,6 +45,7 @@ class BattleScene(Scene):
         boss_flag: str = "",
         effect_handler: ItemEffectHandler | None = None,
         game_state_manager: GameStateManager | None = None,
+        bgm_manager: BgmManager | None = None,
     ) -> None:
         self._state = battle_state
         self._scene_manager = scene_manager
@@ -54,6 +56,17 @@ class BattleScene(Scene):
         self._game_state_manager = game_state_manager
         self._reward_calc = RewardCalculator()
         self._renderer = BattleRenderer(Path(scenario_path))
+        self._bgm_manager = bgm_manager
+        self._bgm_started = False
+
+        # Resolve battle BGM path (played lazily on first render)
+        self._bgm_path: Path | None = None
+        if scenario_path:
+            boss = any(e.boss for e in battle_state.enemies)
+            bgm_file = "Crimson_Storm_s_Echo.mp3" if boss else "Pixelated_Crusade.mp3"
+            p = Path(scenario_path) / "assets" / "audio" / bgm_file
+            if p.exists():
+                self._bgm_path = p
 
         self._cmd_items: list[str] = ["Attack", "Defend", "Spell", "Item", "Run"]
         self._cmd_sel: int = 0
@@ -342,6 +355,9 @@ class BattleScene(Scene):
     # ── Render (delegates to BattleRenderer) ──────────────────
 
     def render(self, screen: pygame.Surface) -> None:
+        if not self._bgm_started and self._bgm_manager and self._bgm_path:
+            self._bgm_started = True
+            self._bgm_manager.play(self._bgm_path)
         self._renderer.render(
             screen, self._state,
             self._cmd_items, self._cmd_sel,

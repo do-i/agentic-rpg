@@ -28,6 +28,7 @@ from engine.world.world_map_logic import load_magic_cores
 from engine.io.manifest_loader import ManifestLoader
 from engine.world.tile_map_factory import TileMapFactory
 from engine.io.npc_loader import NpcLoader
+from engine.audio.bgm_manager import BgmManager
 
 
 class AppModule(Module):
@@ -56,8 +57,8 @@ class AppModule(Module):
 
     @provider
     @singleton
-    def provide_scene_manager(self) -> SceneManager:
-        return SceneManager()
+    def provide_scene_manager(self, bgm_manager: BgmManager) -> SceneManager:
+        return SceneManager(bgm_manager=bgm_manager)
 
     @provider
     @singleton
@@ -131,6 +132,11 @@ class AppModule(Module):
 
     @provider
     @singleton
+    def provide_bgm_manager(self) -> BgmManager:
+        return BgmManager()
+
+    @provider
+    @singleton
     def provide_scene_registry(
         self,
         settings: EngineSettings,
@@ -144,6 +150,7 @@ class AppModule(Module):
         encounter_manager: EncounterManager,
         item_catalog: ItemCatalog,
         effect_handler: ItemEffectHandler,
+        bgm_manager: BgmManager,
     ) -> SceneRegistry:
         registry = SceneRegistry()
         mc_catalog = build_mc_catalog(load_magic_cores(loader.scenario_path))
@@ -169,6 +176,7 @@ class AppModule(Module):
                 text_speed=settings.text_speed,
                 smooth_collision=settings.smooth_collision,
                 mc_exchange_confirm_large=settings.mc_exchange_confirm_large,
+                bgm_manager=bgm_manager,
             ))
         registry.register_factory("status",
             lambda: StatusScene(
