@@ -47,3 +47,4 @@ class EncounterZone:
     set_b:          EncounterSet
     boss:           BossConfig | None = None
     barrier_enemies: list[BarrierEnemy] = field(default_factory=list)
+    background:     str = ""

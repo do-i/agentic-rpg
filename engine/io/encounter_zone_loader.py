@@ -58,4 +58,5 @@ def load_encounter_zone(path: Path) -> EncounterZone:
         set_b=parse_set(data.get("set_b")),
         boss=boss,
         barrier_enemies=barriers,
+        background=data.get("background", ""),
     )

@@ -62,6 +62,9 @@ class BattleState:
     # boss metadata — set by EncounterManager when a boss battle is triggered
     boss_flag:     str = ""               # flag to set on victory
 
+    # background image ID — set from EncounterZone.background
+    background:    str = ""
+
     # round counter — incremented each full turn cycle, used by conditional AI
     turn_count:    int = 1
 

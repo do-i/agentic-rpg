@@ -79,6 +79,7 @@ class BattleRenderer:
         self._portraits: dict[str, pygame.Surface] = {}
         self._enemy_size: dict[str, tuple] = {}
         self._enemy_sprites: dict[str, pygame.Surface | None] = {}
+        self._bg_cache: dict[str, pygame.Surface | None] = {}
 
     def _init_fonts(self) -> None:
         self._font_name  = pygame.font.SysFont("Arial", 14, bold=True)
@@ -136,6 +137,19 @@ class BattleRenderer:
             self._enemy_sprites[sprite_id] = None
             return None
 
+    def _load_background(self, bg_id: str) -> pygame.Surface | None:
+        if bg_id in self._bg_cache:
+            return self._bg_cache[bg_id]
+        path = self._scenario_path / "assets" / "images" / "battle_bg" / f"{bg_id}.webp"
+        if path.exists():
+            try:
+                self._bg_cache[bg_id] = pygame.image.load(str(path)).convert()
+                return self._bg_cache[bg_id]
+            except Exception:
+                pass
+        self._bg_cache[bg_id] = None
+        return None
+
     # ── Main render ───────────────────────────────────────────
 
     def render(self, screen: pygame.Surface, state: BattleState,
@@ -145,8 +159,15 @@ class BattleRenderer:
                resolve_msg: str) -> None:
         if not self._fonts_ready:
             self._init_fonts()
-        screen.fill(C_BG)
-        self._draw_enemy_area(screen, state, target_pool, target_sel)
+
+        bg = self._load_background(state.background) if state.background else None
+        if bg is not None:
+            screen.blit(bg, (0, 0), area=(0, 0, Settings.SCREEN_WIDTH, ENEMY_AREA_H))
+            screen.fill(C_BG, (0, ENEMY_AREA_H, Settings.SCREEN_WIDTH, BOTTOM_H))
+        else:
+            screen.fill(C_BG)
+
+        self._draw_enemy_area(screen, state, target_pool, target_sel, has_bg=bg is not None)
         self._draw_action_message(screen, resolve_msg)
         self._draw_bottom_panel(screen, state, cmd_items, cmd_sel,
                                 sub_items, sub_sel, target_pool, target_sel)
@@ -166,11 +187,13 @@ class BattleRenderer:
     # ── Enemy area ────────────────────────────────────────────
 
     def _draw_enemy_area(self, screen: pygame.Surface, state: BattleState,
-                         target_pool: list[Combatant], target_sel: int) -> None:
-        pygame.draw.rect(screen, C_FLOOR,
-                         (0, ENEMY_AREA_H - 60, Settings.SCREEN_WIDTH, 60))
-        pygame.draw.line(screen, (42, 42, 68),
-                         (0, ENEMY_AREA_H - 60), (Settings.SCREEN_WIDTH, ENEMY_AREA_H - 60))
+                         target_pool: list[Combatant], target_sel: int,
+                         has_bg: bool = False) -> None:
+        if not has_bg:
+            pygame.draw.rect(screen, C_FLOOR,
+                             (0, ENEMY_AREA_H - 60, Settings.SCREEN_WIDTH, 60))
+            pygame.draw.line(screen, (42, 42, 68),
+                             (0, ENEMY_AREA_H - 60), (Settings.SCREEN_WIDTH, ENEMY_AREA_H - 60))
 
         enemies = state.enemies
         n = len(enemies)

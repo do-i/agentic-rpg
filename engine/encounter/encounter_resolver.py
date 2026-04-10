@@ -62,6 +62,7 @@ class EncounterResolver:
 
         state = BattleState(party=[], enemies=enemies)
         state.barrier_messages = barrier_messages
+        state.background = zone.background
         return state
 
     def try_boss_encounter(
@@ -85,6 +86,7 @@ class EncounterResolver:
 
         state = BattleState(party=[], enemies=[enemy])
         state.boss_flag = boss.flag_set
+        state.background = zone.background
         return state
 
     # ── Formation selection ───────────────────────────────────

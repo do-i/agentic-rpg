@@ -1,6 +1,7 @@
 id: zone_01_starting_forest
 name: Starting Forest
 encounter_rate: 0.50 # TODO lower it to 0.10 to 0.13 after testing is done
+background: world1-bg-1280x468
 
 set_a:
   entries:
