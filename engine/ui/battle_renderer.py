@@ -17,8 +17,10 @@ from engine.world.sprite_sheet import SpriteSheet, Direction
 # ── Layout ────────────────────────────────────────────────────
 ENEMY_AREA_H    = int(Settings.SCREEN_HEIGHT * 0.65)
 BOTTOM_H        = Settings.SCREEN_HEIGHT - ENEMY_AREA_H
-PARTY_W         = Settings.SCREEN_WIDTH // 2
-CMD_W           = Settings.SCREEN_WIDTH - PARTY_W
+PARTY_W         = int(Settings.SCREEN_WIDTH * 0.25)
+CMD_W           = int(Settings.SCREEN_WIDTH * 0.30)
+MSG_X           = PARTY_W + CMD_W
+MSG_W           = Settings.SCREEN_WIDTH - MSG_X
 
 PORTRAIT_SIZE   = 36
 ROW_H           = 44
@@ -168,21 +170,18 @@ class BattleRenderer:
             screen.fill(C_BG)
 
         self._draw_enemy_area(screen, state, target_pool, target_sel, has_bg=bg is not None)
-        self._draw_action_message(screen, resolve_msg)
         self._draw_bottom_panel(screen, state, cmd_items, cmd_sel,
-                                sub_items, sub_sel, target_pool, target_sel)
+                                sub_items, sub_sel, target_pool, target_sel,
+                                resolve_msg)
         self._draw_damage_floats(screen, state)
 
-    def _draw_action_message(self, screen: pygame.Surface, resolve_msg: str) -> None:
+    def _draw_message_panel(self, screen: pygame.Surface, resolve_msg: str) -> None:
         if not resolve_msg:
             return
-        msg_h = 28
-        msg_y = ENEMY_AREA_H - msg_h
-        bg = pygame.Surface((Settings.SCREEN_WIDTH, msg_h), pygame.SRCALPHA)
-        bg.fill((0, 0, 0, 180))
-        screen.blit(bg, (0, msg_y))
-        text = self._font_cmd.render(resolve_msg, True, C_TEXT)
-        screen.blit(text, (Settings.SCREEN_WIDTH // 2 - text.get_width() // 2, msg_y + 6))
+        text = self._font_msg.render(resolve_msg, True, C_TEXT)
+        tx = MSG_X + (MSG_W - text.get_width()) // 2
+        ty = ENEMY_AREA_H + 10
+        screen.blit(text, (tx, ty))
 
     # ── Enemy area ────────────────────────────────────────────
 
@@ -250,14 +249,18 @@ class BattleRenderer:
     def _draw_bottom_panel(self, screen: pygame.Surface, state: BattleState,
                            cmd_items: list[str], cmd_sel: int,
                            sub_items: list[dict], sub_sel: int,
-                           target_pool: list[Combatant], target_sel: int) -> None:
+                           target_pool: list[Combatant], target_sel: int,
+                           resolve_msg: str) -> None:
         pygame.draw.line(screen, C_PANEL_LINE,
                          (0, ENEMY_AREA_H), (Settings.SCREEN_WIDTH, ENEMY_AREA_H))
         pygame.draw.line(screen, C_PANEL_LINE,
                          (PARTY_W, ENEMY_AREA_H), (PARTY_W, Settings.SCREEN_HEIGHT))
+        pygame.draw.line(screen, C_PANEL_LINE,
+                         (MSG_X, ENEMY_AREA_H), (MSG_X, Settings.SCREEN_HEIGHT))
         self._draw_party_panel(screen, state, target_pool, target_sel)
         self._draw_command_panel(screen, state, cmd_items, cmd_sel,
                                 sub_items, sub_sel)
+        self._draw_message_panel(screen, resolve_msg)
 
     def _draw_party_panel(self, screen: pygame.Surface, state: BattleState,
                           target_pool: list[Combatant], target_sel: int) -> None:
