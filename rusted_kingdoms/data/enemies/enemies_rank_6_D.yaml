@@ -137,7 +137,7 @@ targeting:
 
 ---
 id: forest_spider_giant
-name: Forest Spider (Giant)
+name: Giant Spider
 type: beast
 rank: D
 boss: true
