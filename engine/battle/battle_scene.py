@@ -137,10 +137,18 @@ class BattleScene(Scene):
         if active is None or active.is_enemy:
             return
         if key == pygame.K_UP:
-            self._cmd_sel = max(0, self._cmd_sel - 1)
+            new_sel = max(0, self._cmd_sel - 1)
+            if new_sel != self._cmd_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._cmd_sel = new_sel
         elif key == pygame.K_DOWN:
-            self._cmd_sel = min(len(self._cmd_items) - 1, self._cmd_sel + 1)
+            new_sel = min(len(self._cmd_items) - 1, self._cmd_sel + 1)
+            if new_sel != self._cmd_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._cmd_sel = new_sel
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_RIGHT):
+            if self._sfx_manager:
+                self._sfx_manager.play("confirm")
             self._confirm_cmd()
 
     def _confirm_cmd(self) -> None:
@@ -204,13 +212,23 @@ class BattleScene(Scene):
 
     def _handle_sub(self, key: int) -> None:
         if key in (pygame.K_ESCAPE, pygame.K_LEFT):
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
             self._state.phase = BattlePhase.PLAYER_TURN
             return
         if key == pygame.K_UP:
-            self._sub_sel = max(0, self._sub_sel - 1)
+            new_sel = max(0, self._sub_sel - 1)
+            if new_sel != self._sub_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._sub_sel = new_sel
         elif key == pygame.K_DOWN:
-            self._sub_sel = min(len(self._sub_items) - 1, self._sub_sel + 1)
+            new_sel = min(len(self._sub_items) - 1, self._sub_sel + 1)
+            if new_sel != self._sub_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._sub_sel = new_sel
         elif key in (pygame.K_RETURN, pygame.K_RIGHT):
+            if self._sfx_manager:
+                self._sfx_manager.play("confirm")
             self._confirm_sub()
 
     def _confirm_sub(self) -> None:
@@ -277,16 +295,26 @@ class BattleScene(Scene):
 
     def _handle_target(self, key: int) -> None:
         if key == pygame.K_ESCAPE:
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
             self._state.phase = BattlePhase.PLAYER_TURN
             self._sub_items.clear()
             return
 
         if key in (pygame.K_LEFT, pygame.K_UP):
-            self._target_sel = max(0, self._target_sel - 1)
+            new_sel = max(0, self._target_sel - 1)
+            if new_sel != self._target_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._target_sel = new_sel
         elif key in (pygame.K_RIGHT, pygame.K_DOWN):
-            self._target_sel = min(len(self._target_pool) - 1, self._target_sel + 1)
+            new_sel = min(len(self._target_pool) - 1, self._target_sel + 1)
+            if new_sel != self._target_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._target_sel = new_sel
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             if self._target_pool:
+                if self._sfx_manager:
+                    self._sfx_manager.play("confirm")
                 self._state.pending_action["targets"] = [self._target_pool[self._target_sel]]
                 self._do_resolve()
 

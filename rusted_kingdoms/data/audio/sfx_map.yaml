@@ -18,5 +18,8 @@ battle:
   spell_wind:     sfx/atk_magic/25_Wind_01.mp3
   spell_earth:    sfx/atk_magic/30_Earth_02.mp3
 ui:
+  hover:          sfx/ui_menu/001_Hover_01.mp3
+  confirm:        sfx/ui_menu/013_Confirm_03.mp3
+  cancel:         sfx/ui_menu/029_Decline_09.mp3
   denied:         sfx/ui_menu/033_Denied_03.mp3
   use_item:       sfx/ui_menu/051_use_item_01.mp3
