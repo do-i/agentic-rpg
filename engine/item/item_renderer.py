@@ -29,6 +29,8 @@ LIST_BG         = (30, 30, 50)
 LIST_SEL_BG     = (50, 50, 85)
 LIST_SEL_BDR    = (212, 200, 138)
 LIST_NORM_BDR   = (45, 45, 68)
+LIST_PRE_BG     = (38, 38, 62)
+LIST_PRE_BDR    = (100, 95, 130)
 
 DETAIL_BG       = (32, 32, 54)
 DETAIL_BDR      = (55, 55, 80)
@@ -111,7 +113,7 @@ class ItemRenderer:
         det_w  = Settings.SCREEN_WIDTH - det_x - PAD
 
         self._draw_list_panel(screen, list_x, panel_top, LIST_W, panel_h,
-                              items, list_sel, scroll, tab_index, in_action)
+                              items, list_sel, scroll, tab_index, in_tab, in_action)
         self._draw_detail_panel(screen, det_x, panel_top, det_w, panel_h,
                                 selected_entry, in_action, action_sel)
         self._draw_footer(screen)
@@ -160,7 +162,7 @@ class ItemRenderer:
     def _draw_list_panel(self, screen: pygame.Surface,
                          x: int, y: int, w: int, h: int,
                          items: list[ItemEntry], list_sel: int, scroll: int,
-                         tab_index: int, in_action: bool) -> None:
+                         tab_index: int, in_tab: bool, in_action: bool) -> None:
         pygame.draw.rect(screen, LIST_BG, (x, y, w, h), border_radius=6)
         pygame.draw.rect(screen, DIVIDER, (x, y, w, h), 1, border_radius=6)
 
@@ -180,12 +182,19 @@ class ItemRenderer:
             sel    = (idx == list_sel)
             rx, rw = x + 6, w - 12
 
-            bg  = LIST_SEL_BG  if sel else LIST_BG
-            bdr = LIST_SEL_BDR if sel else LIST_NORM_BDR
+            if sel and in_tab:
+                bg  = LIST_PRE_BG
+                bdr = LIST_PRE_BDR
+            elif sel:
+                bg  = LIST_SEL_BG
+                bdr = LIST_SEL_BDR
+            else:
+                bg  = LIST_BG
+                bdr = LIST_NORM_BDR
             pygame.draw.rect(screen, bg,  (rx, row_y, rw, ITEM_ROW_H), border_radius=4)
             pygame.draw.rect(screen, bdr, (rx, row_y, rw, ITEM_ROW_H), 1, border_radius=4)
 
-            if sel and not in_action:
+            if sel and not in_action and not in_tab:
                 cur = self._font_item.render("\u25b6", True, HEADER_COLOR)
                 screen.blit(cur, (rx + 4, row_y + (ITEM_ROW_H - cur.get_height()) // 2))
 
@@ -197,12 +206,12 @@ class ItemRenderer:
 
             name = display_name(entry, self._mc_catalog)
             locked_marker = " \U0001f512" if entry.locked else ""
-            name_col  = TEXT_DIM if entry.locked else (TEXT_PRIMARY if sel else TEXT_SECONDARY)
+            name_col  = TEXT_DIM if entry.locked else (TEXT_PRIMARY if (sel and not in_tab) else TEXT_SECONDARY)
             name_surf = self._font_item.render(name + locked_marker, True, name_col)
             screen.blit(name_surf, (badge_x, row_y + (ITEM_ROW_H - name_surf.get_height()) // 2))
 
             qty_surf = self._font_qty.render(
-                f"\u00d7 {entry.qty}", True, HEADER_COLOR if sel else MUTED)
+                f"\u00d7 {entry.qty}", True, HEADER_COLOR if (sel and not in_tab) else MUTED)
             screen.blit(qty_surf, (rx + rw - qty_surf.get_width() - 10,
                                    row_y + (ITEM_ROW_H - qty_surf.get_height()) // 2))
 
