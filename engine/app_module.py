@@ -133,8 +133,8 @@ class AppModule(Module):
 
     @provider
     @singleton
-    def provide_bgm_manager(self) -> BgmManager:
-        return BgmManager()
+    def provide_bgm_manager(self, loader: ManifestLoader) -> BgmManager:
+        return BgmManager(loader.scenario_path)
 
     @provider
     @singleton

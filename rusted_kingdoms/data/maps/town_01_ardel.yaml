@@ -1,6 +1,6 @@
 id: town_01_ardel
 name: Ardel Village
-bgm: Whiteveil_Streets.mp3
+bgm: town.default
 inn:
   cost: 50
   position: [8, 5]

@@ -1,5 +1,5 @@
 # data/maps/world.yaml
-bgm: Across_the_Sundered_Peaks_64.mp3
+bgm: zone.starting_forest
 
 transport:
   sail:

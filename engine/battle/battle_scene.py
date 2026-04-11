@@ -63,14 +63,11 @@ class BattleScene(Scene):
         self._sfx_manager = sfx_manager
         self._encounter_sfx_played = False
 
-        # Resolve battle BGM path (played lazily on first render)
-        self._bgm_path: Path | None = None
+        # Resolve battle BGM key (played lazily on first render)
+        self._bgm_key: str | None = None
         if scenario_path:
             boss = any(e.boss for e in battle_state.enemies)
-            bgm_file = "Crimson_Storm_s_Echo.mp3" if boss else "Pixelated_Crusade.mp3"
-            p = Path(scenario_path) / "assets" / "audio" / "bgm" / bgm_file
-            if p.exists():
-                self._bgm_path = p
+            self._bgm_key = "battle.boss" if boss else "battle.normal"
 
         self._cmd_items: list[str] = ["Attack", "Defend", "Spell", "Item", "Run"]
         self._cmd_sel: int = 0
@@ -398,9 +395,9 @@ class BattleScene(Scene):
     # ── Render (delegates to BattleRenderer) ──────────────────
 
     def render(self, screen: pygame.Surface) -> None:
-        if not self._bgm_started and self._bgm_manager and self._bgm_path:
+        if not self._bgm_started and self._bgm_manager and self._bgm_key:
             self._bgm_started = True
-            self._bgm_manager.play(self._bgm_path)
+            self._bgm_manager.play_key(self._bgm_key)
         if not self._encounter_sfx_played and self._sfx_manager:
             self._encounter_sfx_played = True
             self._sfx_manager.play("encounter")

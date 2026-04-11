@@ -127,11 +127,9 @@ class WorldMapScene(Scene):
         if self._bgm_manager and map_yaml.exists():
             with open(map_yaml) as f:
                 map_data = yaml.safe_load(f) or {}
-            bgm_file = map_data.get("bgm")
-            if bgm_file:
-                bgm_path = scenario_path / "assets" / "audio" / "bgm" / bgm_file
-                if bgm_path.exists():
-                    self._bgm_manager.play(bgm_path)
+            bgm_key = map_data.get("bgm")
+            if bgm_key:
+                self._bgm_manager.play_key(bgm_key)
 
         self._encounter_manager.set_zone(map_id)
         self._last_tile = self._player.tile_position

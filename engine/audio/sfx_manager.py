@@ -1,7 +1,7 @@
 # engine/audio/sfx_manager.py
 #
 # Sound effects manager — thin wrapper around pygame.mixer.Sound.
-# Loads a scenario-level sfx_map.yaml and plays sounds by logical event key.
+# Loads a scenario-level sfx_index.yaml and plays sounds by logical event key.
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ class SfxManager:
         self._load(scenario_path)
 
     def _load(self, scenario_path: Path) -> None:
-        sfx_map_path = scenario_path / "data" / "audio" / "sfx_map.yaml"
+        sfx_map_path = scenario_path / "data" / "audio" / "sfx_index.yaml"
         if not sfx_map_path.exists():
             return
         with open(sfx_map_path) as f:

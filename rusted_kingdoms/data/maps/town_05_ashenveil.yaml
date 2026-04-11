@@ -1,6 +1,6 @@
 id: town_05_ashenveil
 name: Ashenveil
-bgm: Whiteveil_Streets.mp3
+bgm: town.default
 inn:
   cost: 800
   position: [8, 5]
