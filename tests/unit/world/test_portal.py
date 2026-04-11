@@ -1,7 +1,7 @@
 # tests/unit/world/test_portal.py
 
-from engine.dto.portal import Portal, PORTAL_TRIGGER_RADIUS
-from engine.dto.position import Position
+from engine.common.portal_data import Portal, PORTAL_TRIGGER_RADIUS
+from engine.common.position_data import Position
 
 
 def _portal(x=100, y=200, w=16, h=16):

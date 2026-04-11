@@ -10,9 +10,9 @@ from engine.encounter.encounter_zone import (
     load_encounter_zone,
 )
 from engine.encounter.encounter_resolver import EncounterResolver
-from engine.io.enemy_loader import EnemyLoader
+from engine.battle.enemy_loader import EnemyLoader
 from engine.battle.combatant import Combatant
-from engine.dto.flag_state import FlagState
+from engine.common.flag_state import FlagState
 
 
 # ── Helpers ───────────────────────────────────────────────────

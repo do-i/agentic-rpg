@@ -1,7 +1,7 @@
 # tests/unit/core/test_scene_manager.py
 
-from engine.scenes.scene_manager import SceneManager
-from engine.scenes.scene import Scene
+from engine.common.scene.scene_manager import SceneManager
+from engine.common.scene.scene import Scene
 
 
 class StubScene(Scene):

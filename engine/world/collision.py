@@ -1,7 +1,7 @@
 # engine/world/collision.py
 
 import pytmx
-from engine.dto.position import Position
+from engine.common.position_data import Position
 from engine.settings import Settings
 
 COLLISION_LAYER_NAME = "collision"

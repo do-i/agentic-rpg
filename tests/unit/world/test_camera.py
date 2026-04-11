@@ -2,7 +2,7 @@
 
 import pytest
 from engine.world.camera import Camera
-from engine.dto.position import Position
+from engine.common.position_data import Position
 from engine.settings import Settings
 
 

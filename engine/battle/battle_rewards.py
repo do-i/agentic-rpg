@@ -1,17 +1,17 @@
 # engine/battle/battle_rewards.py
 #
 # Battle reward logic — EXP split, level-ups, loot resolution.
-# DTOs live in engine.dto.battle_rewards.
+# DTOs live in engine.common.battle_rewards_data.
 
 from __future__ import annotations
 import math
 import random
 
 from engine.battle.combatant import Combatant
-from engine.dto.party_state import PartyState
-from engine.dto.member_state import MemberState
-from engine.service.party_state import calc_exp_next, stat_gain_at, recalc_exp_next
-from engine.dto.battle_rewards import (
+from engine.common.party_state import PartyState
+from engine.common.member_state import MemberState
+from engine.common.service.party_state import calc_exp_next, stat_gain_at, recalc_exp_next
+from engine.common.battle_rewards_data import (
     LevelUpResult,
     MemberExpResult,
     LootResult,

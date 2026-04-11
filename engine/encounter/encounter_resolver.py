@@ -7,10 +7,10 @@ import random
 from pathlib import Path
 
 from engine.encounter.encounter_zone import EncounterZone, Formation
-from engine.io.enemy_loader import EnemyLoader
+from engine.battle.enemy_loader import EnemyLoader
 from engine.battle.combatant import Combatant
 from engine.battle.battle_state import BattleState
-from engine.dto.flag_state import FlagState
+from engine.common.flag_state import FlagState
 
 
 class EncounterResolver:

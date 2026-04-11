@@ -4,9 +4,9 @@ import pytest
 from unittest.mock import patch
 from pathlib import Path
 
-from engine.dto.game_state_holder import GameStateHolder
-from engine.dto.position import Position
-from engine.io.game_state_loader import from_new_game
+from engine.common.game_state_holder import GameStateHolder
+from engine.common.position_data import Position
+from engine.common.io.game_state_loader import from_new_game
 
 # ── Shared manifest stub ──────────────────────────────────────
 
@@ -33,8 +33,8 @@ FAKE_CHAR_DATA = {
 
 
 def _make_game_state(name="Aric"):
-    with patch("engine.io.game_state_loader._load_class_data", return_value=FAKE_CLASS_DATA), \
-         patch("engine.io.game_state_loader._load_character_data", return_value=FAKE_CHAR_DATA):
+    with patch("engine.common.io.game_state_loader._load_class_data", return_value=FAKE_CLASS_DATA), \
+         patch("engine.common.io.game_state_loader._load_character_data", return_value=FAKE_CHAR_DATA):
         return from_new_game(
             MANIFEST_STUB, name,
             classes_dir=Path("/fake/classes"),

@@ -4,7 +4,7 @@ import pytest
 import yaml
 from pathlib import Path
 from unittest.mock import patch, MagicMock
-from engine.io.npc_loader import NpcLoader
+from engine.world.npc_loader import NpcLoader
 from engine.world.npc import Npc
 from engine.world.sprite_sheet import Direction
 
@@ -67,7 +67,7 @@ class TestNpcLoader:
                 }
             }]
         })
-        from engine.dto.flag_state import FlagState
+        from engine.common.flag_state import FlagState
         npcs = loader.load_from_map(p)
         npc = npcs[0]
         assert npc.is_present(FlagState({"flag_a"}))

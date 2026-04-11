@@ -1,9 +1,9 @@
 # tests/unit/core/state/test_party_state.py
 
 import pytest
-from engine.dto.member_state import MemberState
-from engine.dto.party_state import PartyState
-from engine.service.party_state import (
+from engine.common.member_state import MemberState
+from engine.common.party_state import PartyState
+from engine.common.service.party_state import (
     calc_exp_next, stat_gain_at, recalc_exp_next, exp_pct, LEVEL_CAP,
 )
 

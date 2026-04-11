@@ -4,8 +4,8 @@ import pytest
 from unittest.mock import patch, MagicMock
 from pathlib import Path
 
-from engine.dto.member_state import MemberState
-from engine.service.status_logic import (
+from engine.common.member_state import MemberState
+from engine.status.status_logic import (
     field_spells, valid_targets, apply_spell, apply_spell_all,
     load_class_data, FIELD_SPELL_TYPES,
 )

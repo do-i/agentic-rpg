@@ -2,7 +2,7 @@
 
 import pytest
 from pathlib import Path
-from engine.dto.save_slot import SaveSlot
+from engine.common.save_slot_data import SaveSlot
 
 
 # ── Properties ────────────────────────────────────────────────

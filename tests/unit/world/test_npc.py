@@ -5,8 +5,8 @@ from unittest.mock import MagicMock
 import pygame
 from engine.world.npc import Npc, INTERACTION_RANGE, _direction_toward
 from engine.world.sprite_sheet import SpriteSheet, Direction
-from engine.dto.flag_state import FlagState
-from engine.dto.position import Position
+from engine.common.flag_state import FlagState
+from engine.common.position_data import Position
 from engine.settings import Settings
 
 

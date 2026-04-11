@@ -3,8 +3,8 @@
 from pathlib import Path
 import yaml
 
-from engine.dto.flag_state import FlagState
-from engine.service.repository_state import RepositoryState
+from engine.common.flag_state import FlagState
+from engine.common.service.repository_state import RepositoryState
 
 
 class DialogueEntry:

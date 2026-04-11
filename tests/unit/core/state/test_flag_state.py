@@ -1,7 +1,7 @@
 # tests/unit/core/state/test_flag_state.py
 
 import pytest
-from engine.dto.flag_state import FlagState
+from engine.common.flag_state import FlagState
 
 
 # ── Construction ──────────────────────────────────────────────

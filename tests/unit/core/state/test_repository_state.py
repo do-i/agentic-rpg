@@ -1,8 +1,8 @@
 # tests/unit/core/state/test_repository_state.py
 
 import pytest
-from engine.dto.item_entry import ItemEntry
-from engine.service.repository_state import (
+from engine.common.item_entry_state import ItemEntry
+from engine.common.service.repository_state import (
     RepositoryState,
     GP_CAP,
     ITEM_QTY_CAP,
@@ -380,7 +380,7 @@ class TestCatalogIntegration:
             "  sell_price: 50\n"
             "  description: Restores 100 HP.\n"
         )
-        from engine.io.item_catalog import ItemCatalog
+        from engine.item.item_catalog import ItemCatalog
         return ItemCatalog(d)
 
     def test_add_item_auto_populates_from_catalog(self, tmp_path):

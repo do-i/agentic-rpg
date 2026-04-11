@@ -7,10 +7,10 @@ from pathlib import Path
 from typing import Callable
 import yaml
 
-from engine.dto.member_state import MemberState
-from engine.dto.party_state import PartyState
-from engine.service.repository_state import RepositoryState
-from engine.dto.item_defs import FieldItemDef, UseResult
+from engine.common.member_state import MemberState
+from engine.common.party_state import PartyState
+from engine.common.service.repository_state import RepositoryState
+from engine.common.item_defs_data import FieldItemDef, UseResult
 
 # Re-export so existing imports keep working
 __all__ = ["FieldItemDef", "UseResult", "ItemEffectHandler"]

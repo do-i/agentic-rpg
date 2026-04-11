@@ -8,9 +8,9 @@ from __future__ import annotations
 import yaml
 from pathlib import Path
 
-from engine.dto.position import Position
-from engine.dto.game_state_holder import GameStateHolder
-from engine.io.save_manager import GameStateManager
+from engine.common.position_data import Position
+from engine.common.game_state_holder import GameStateHolder
+from engine.common.io.save_manager import GameStateManager
 from engine.dialogue.dialogue_engine import DialogueEngine
 from engine.encounter.encounter_manager import EncounterManager
 from engine.world.npc import Npc

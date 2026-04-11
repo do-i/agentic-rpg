@@ -1,8 +1,8 @@
 # tests/unit/state/test_map_state.py
 
 import pytest
-from engine.dto.position import Position
-from engine.dto.map_state import MapState
+from engine.common.position_data import Position
+from engine.common.map_state import MapState
 
 
 # ── Construction ──────────────────────────────────────────────
