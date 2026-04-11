@@ -64,7 +64,7 @@ class BattleScene(Scene):
         if scenario_path:
             boss = any(e.boss for e in battle_state.enemies)
             bgm_file = "Crimson_Storm_s_Echo.mp3" if boss else "Pixelated_Crusade.mp3"
-            p = Path(scenario_path) / "assets" / "audio" / bgm_file
+            p = Path(scenario_path) / "assets" / "audio" / "bgm" / bgm_file
             if p.exists():
                 self._bgm_path = p
 

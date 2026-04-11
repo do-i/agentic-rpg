@@ -126,7 +126,7 @@ class WorldMapScene(Scene):
                 map_data = yaml.safe_load(f) or {}
             bgm_file = map_data.get("bgm")
             if bgm_file:
-                bgm_path = scenario_path / "assets" / "audio" / bgm_file
+                bgm_path = scenario_path / "assets" / "audio" / "bgm" / bgm_file
                 if bgm_path.exists():
                     self._bgm_manager.play(bgm_path)
 
