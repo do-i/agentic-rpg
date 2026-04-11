@@ -30,10 +30,12 @@ class SaveModalScene(Scene):
         game_state_manager: GameStateManager,
         state: GameState,
         on_close: callable,
+        sfx_manager=None,
     ) -> None:
         self._game_state_manager = game_state_manager
         self._state = state
         self._on_close = on_close
+        self._sfx_manager = sfx_manager
 
         self._slots: list[SaveSlot] = []
         self._selected = 1          # start at first player slot
@@ -68,26 +70,35 @@ class SaveModalScene(Scene):
                 return
 
             if event.key == pygame.K_ESCAPE:
+                if self._sfx_manager:
+                    self._sfx_manager.play("cancel")
                 self._on_close()
             elif event.key == pygame.K_UP:
                 self._move_selection(-1)
             elif event.key == pygame.K_DOWN:
                 self._move_selection(1)
             elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                if self._sfx_manager:
+                    self._sfx_manager.play("confirm")
                 self._select()
 
     def _handle_confirm_events(self, event: pygame.event.EventType) -> None:
         if event.key in (pygame.K_RETURN, pygame.K_y):
+            if self._sfx_manager:
+                self._sfx_manager.play("confirm")
             self._do_save(self._confirm_pending)
             self._confirm_pending = None
         elif event.key in (pygame.K_ESCAPE, pygame.K_n):
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
             self._confirm_pending = None
 
     def _move_selection(self, delta: int) -> None:
         # skip autosave slot (index 0) — not player-selectable
         total = len(self._slots)
-        new = self._selected + delta
-        new = max(1, min(new, total - 1))
+        new = max(1, min(self._selected + delta, total - 1))
+        if new != self._selected and self._sfx_manager:
+            self._sfx_manager.play("hover")
         self._selected = new
         self._clamp_scroll()
 

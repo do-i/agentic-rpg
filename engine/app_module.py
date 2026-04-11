@@ -165,13 +165,16 @@ class AppModule(Module):
         registry.register_singleton("boot", BootScene(scene_manager, loader, registry))
 
         registry.register_factory("title",
-            lambda: TitleScene(loader, scene_manager, registry, game_state_manager))
+            lambda: TitleScene(loader, scene_manager, registry, game_state_manager,
+                               sfx_manager=sfx_manager))
         registry.register_factory("name_entry",
             lambda: NameEntryScene(loader, scene_manager, registry, holder,
                                    item_catalog=item_catalog,
-                                   debug_party=settings.debug_party))
+                                   debug_party=settings.debug_party,
+                                   sfx_manager=sfx_manager))
         registry.register_factory("load_game",
-            lambda: LoadGameScene(game_state_manager, holder, scene_manager, registry))
+            lambda: LoadGameScene(game_state_manager, holder, scene_manager, registry,
+                                  sfx_manager=sfx_manager))
         registry.register_factory("world_map",
             lambda: WorldMapScene(
                 holder, loader, tile_map_factory,
@@ -193,6 +196,7 @@ class AppModule(Module):
                 registry=registry,
                 scenario_path=str(loader.scenario_path),
                 return_scene_name="world_map",
+                sfx_manager=sfx_manager,
             ))
         registry.register_factory("items",
             lambda: ItemScene(
@@ -202,6 +206,7 @@ class AppModule(Module):
                 effect_handler=effect_handler,
                 mc_catalog=mc_catalog,
                 use_aoe_confirm=settings.use_aoe_confirm,
+                sfx_manager=sfx_manager,
             ))
 
         return registry

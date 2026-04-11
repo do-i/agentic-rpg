@@ -27,11 +27,13 @@ class LoadGameScene(Scene):
         holder: GameStateHolder,
         scene_manager: SceneManager,
         registry: SceneRegistry,
+        sfx_manager=None,
     ) -> None:
         self._game_state_manager = game_state_manager
         self._holder = holder
         self._scene_manager = scene_manager
         self._registry = registry
+        self._sfx_manager = sfx_manager
         self._slots: list[SaveSlot] = []
         self._selected = 0
         self._scroll_offset = 0
@@ -56,6 +58,8 @@ class LoadGameScene(Scene):
             if event.type != pygame.KEYDOWN:
                 continue
             if event.key == pygame.K_ESCAPE:
+                if self._sfx_manager:
+                    self._sfx_manager.play("cancel")
                 self._scene_manager.switch(self._registry.get("title"))
             elif event.key == pygame.K_UP:
                 self._move(-1)
@@ -66,7 +70,10 @@ class LoadGameScene(Scene):
 
     def _move(self, delta: int) -> None:
         total = len(self._slots)
+        old = self._selected
         self._selected = max(0, min(self._selected + delta, total - 1))
+        if self._selected != old and self._sfx_manager:
+            self._sfx_manager.play("hover")
         self._clamp_scroll()
 
     def _clamp_scroll(self) -> None:
@@ -79,6 +86,8 @@ class LoadGameScene(Scene):
         slot = self._slots[self._selected]
         if slot.is_empty or slot.path is None:
             return
+        if self._sfx_manager:
+            self._sfx_manager.play("confirm")
         state = self._game_state_manager.load(slot.path)
         self._holder.set(state)
         self._scene_manager.switch(self._registry.get("world_map"))

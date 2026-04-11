@@ -38,6 +38,7 @@ class ItemScene(Scene):
         mc_catalog: MCCatalog | None = None,
         use_aoe_confirm: bool = True,
         return_scene_name: str = "world_map",
+        sfx_manager=None,
     ) -> None:
         self._holder       = holder
         self._scene_manager = scene_manager
@@ -46,6 +47,7 @@ class ItemScene(Scene):
         self._effect_handler = effect_handler
         self._mc_catalog = mc_catalog
         self._use_aoe_confirm = use_aoe_confirm
+        self._sfx_manager = sfx_manager
 
         self._tab_index:   int  = 0
         self._list_sel:    int  = 0
@@ -116,14 +118,22 @@ class ItemScene(Scene):
             self._tab_index = (self._tab_index - 1) % len(TABS)
             self._list_sel = 0
             self._scroll = 0
+            if self._sfx_manager:
+                self._sfx_manager.play("hover")
         elif key == pygame.K_RIGHT:
             self._tab_index = (self._tab_index + 1) % len(TABS)
             self._list_sel = 0
             self._scroll = 0
+            if self._sfx_manager:
+                self._sfx_manager.play("hover")
         elif key == pygame.K_ESCAPE:
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
             self._close()
         elif key == pygame.K_RETURN:
             if self._filtered_items():
+                if self._sfx_manager:
+                    self._sfx_manager.play("confirm")
                 self._in_tab = False
 
     def _handle_list_key(self, key: int) -> None:
@@ -131,15 +141,25 @@ class ItemScene(Scene):
         if not items:
             return
         if key == pygame.K_UP:
-            self._list_sel = max(0, self._list_sel - 1)
+            new = max(0, self._list_sel - 1)
+            if new != self._list_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._list_sel = new
             self._scroll = clamp_scroll(self._list_sel, self._scroll, VISIBLE_ROWS)
         elif key == pygame.K_DOWN:
-            self._list_sel = min(len(items) - 1, self._list_sel + 1)
+            new = min(len(items) - 1, self._list_sel + 1)
+            if new != self._list_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._list_sel = new
             self._scroll = clamp_scroll(self._list_sel, self._scroll, VISIBLE_ROWS)
         elif key == pygame.K_RETURN:
+            if self._sfx_manager:
+                self._sfx_manager.play("confirm")
             self._in_action = True
             self._action_sel = 0
         elif key == pygame.K_ESCAPE:
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
             self._in_tab = True
             self._in_action = False
             self._confirm_discard = False
@@ -151,16 +171,28 @@ class ItemScene(Scene):
             return
         item_actions = actions_for(entry, self._effect_handler)
         if key in (pygame.K_LEFT, pygame.K_ESCAPE):
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
             self._in_action = False
         elif key == pygame.K_UP:
-            self._action_sel = max(0, self._action_sel - 1)
+            new = max(0, self._action_sel - 1)
+            if new != self._action_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._action_sel = new
         elif key == pygame.K_DOWN:
-            self._action_sel = min(len(item_actions) - 1, self._action_sel + 1)
+            new = min(len(item_actions) - 1, self._action_sel + 1)
+            if new != self._action_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._action_sel = new
         elif key == pygame.K_RETURN:
             label = item_actions[self._action_sel]
             if label == "Use":
+                if self._sfx_manager:
+                    self._sfx_manager.play("confirm")
                 self._begin_use(entry)
             elif label == "Discard" and not entry.locked:
+                if self._sfx_manager:
+                    self._sfx_manager.play("confirm")
                 self._confirm_discard = True
 
     def _handle_confirm_discard(self, key: int) -> None:
@@ -207,6 +239,7 @@ class ItemScene(Scene):
                 item_label=label,
                 on_confirm=self._on_target_confirm,
                 on_cancel=self._on_target_cancel,
+                sfx_manager=self._sfx_manager,
             )
 
     def _on_target_confirm(self, member) -> None:

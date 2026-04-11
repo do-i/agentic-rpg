@@ -212,6 +212,7 @@ class WorldMapScene(Scene):
             game_state_manager=self._game_state_manager,
             state=self._holder.get(),
             on_close=self._close_save_modal,
+            sfx_manager=self._sfx_manager,
         )
 
     def _close_save_modal(self) -> None:
@@ -269,6 +270,7 @@ class WorldMapScene(Scene):
             on_close=self._close_mc_shop,
             mc_sizes=self._mc_catalog.sizes,
             confirm_large=self._mc_exchange_confirm_large,
+            sfx_manager=self._sfx_manager,
         )
 
     def _close_mc_shop(self) -> None:
@@ -289,6 +291,7 @@ class WorldMapScene(Scene):
             on_close=self._close_inn,
             cost=cost,
             sprite_path=sprite_path,
+            sfx_manager=self._sfx_manager,
         )
 
     def _close_inn(self) -> None:
@@ -308,6 +311,7 @@ class WorldMapScene(Scene):
             on_close=self._close_item_shop,
             shop_items=shop_items,
             sprite_path=sprite_path,
+            sfx_manager=self._sfx_manager,
         )
 
     def _close_item_shop(self) -> None:
@@ -325,6 +329,7 @@ class WorldMapScene(Scene):
             on_close=self._close_apothecary,
             recipes=recipes,
             sprite_path=sprite_path,
+            sfx_manager=self._sfx_manager,
         )
 
     def _close_apothecary(self) -> None:

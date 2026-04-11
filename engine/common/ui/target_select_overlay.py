@@ -68,12 +68,14 @@ class TargetSelectOverlay:
         on_confirm: callable,
         on_cancel: callable,
         warning: str = "",
+        sfx_manager=None,
     ) -> None:
         self._targets    = targets
         self._item_label = item_label
         self._on_confirm = on_confirm
         self._on_cancel  = on_cancel
         self.warning     = warning   # mutable — caller sets after apply()
+        self._sfx_manager = sfx_manager
 
         self._sel        = 0
         self._fonts_ready = False
@@ -97,13 +99,23 @@ class TargetSelectOverlay:
             if event.type != pygame.KEYDOWN:
                 continue
             if event.key == pygame.K_UP:
+                old = self._sel
                 self._sel = (self._sel - 1) % max(len(self._targets), 1)
+                if self._sel != old and self._sfx_manager:
+                    self._sfx_manager.play("hover")
             elif event.key == pygame.K_DOWN:
+                old = self._sel
                 self._sel = (self._sel + 1) % max(len(self._targets), 1)
+                if self._sel != old and self._sfx_manager:
+                    self._sfx_manager.play("hover")
             elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                 if self._targets:
+                    if self._sfx_manager:
+                        self._sfx_manager.play("confirm")
                     self._on_confirm(self._targets[self._sel])
             elif event.key == pygame.K_ESCAPE:
+                if self._sfx_manager:
+                    self._sfx_manager.play("cancel")
                 self._on_cancel()
 
     # ── Render ────────────────────────────────────────────────

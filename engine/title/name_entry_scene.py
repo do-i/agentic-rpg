@@ -29,6 +29,7 @@ class NameEntryScene(Scene):
         holder: GameStateHolder,
         item_catalog: ItemCatalog | None = None,
         debug_party: bool = False,
+        sfx_manager=None,
     ) -> None:
         self._manifest     = loader.load()
         self._scenario_path = loader.scenario_path
@@ -38,6 +39,7 @@ class NameEntryScene(Scene):
         self._holder       = holder
         self._item_catalog = item_catalog
         self._debug_party  = debug_party
+        self._sfx_manager  = sfx_manager
         self._name: str    = self._manifest["protagonist"]["name"]
         self._prompt_font  = None
         self._input_font   = None
@@ -59,6 +61,8 @@ class NameEntryScene(Scene):
                 if event.key == pygame.K_BACKSPACE:
                     self._name = self._name[:-1]
                 elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    if self._sfx_manager:
+                        self._sfx_manager.play("confirm")
                     self._confirm()
 
     def _confirm(self) -> None:

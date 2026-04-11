@@ -356,6 +356,7 @@ class BattleScene(Scene):
                 scene_manager=self._scene_manager,
                 registry=self._registry,
                 on_continue=self._return_to_world_map,
+                sfx_manager=self._sfx_manager,
             ))
             return
         if result == "defeat":
@@ -365,6 +366,7 @@ class BattleScene(Scene):
                 registry=self._registry,
                 holder=self._holder,
                 game_state_manager=self._game_state_manager,
+                sfx_manager=self._sfx_manager,
             ))
             return
 

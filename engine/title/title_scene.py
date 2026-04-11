@@ -17,11 +17,13 @@ class TitleScene(Scene):
         scene_manager: SceneManager,
         registry: SceneRegistry,
         game_state_manager: GameStateManager,
+        sfx_manager=None,
     ) -> None:
         self._manifest = loader.load()
         self._scene_manager = scene_manager
         self._registry = registry
         self._game_state_manager = game_state_manager
+        self._sfx_manager = sfx_manager
         self._title = self._manifest.get("name", "RPG")
         self._title_font = None
         self._menu_font = None
@@ -39,6 +41,7 @@ class TitleScene(Scene):
         self._menu = Menu(
             items=["New Game", "Load Game", "Quit"],
             font=self._menu_font,
+            sfx_manager=self._sfx_manager,
         )
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:

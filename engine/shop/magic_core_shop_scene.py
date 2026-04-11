@@ -65,6 +65,7 @@ class MagicCoreShopScene(Scene):
         mc_sizes: list[tuple[str, str, int]],
         confirm_large: bool = True,
         return_scene_name: str = "world_map",
+        sfx_manager=None,
     ) -> None:
         self._holder       = holder
         self._scene_manager = scene_manager
@@ -73,6 +74,7 @@ class MagicCoreShopScene(Scene):
         self._mc_sizes     = mc_sizes
         self._confirm_large = confirm_large
         self._return_scene_name = return_scene_name
+        self._sfx_manager  = sfx_manager
 
         self._state        = "list"   # list | qty | confirm | popup
         self._list_sel     = 0        # index into _available()
@@ -153,17 +155,29 @@ class MagicCoreShopScene(Scene):
         avail = self._available()
         if not avail:
             if key == pygame.K_ESCAPE:
+                if self._sfx_manager:
+                    self._sfx_manager.play("cancel")
                 self._on_close()
             return
 
         if key == pygame.K_UP:
+            old = self._list_sel
             self._list_sel = (self._list_sel - 1) % len(avail)
+            if self._list_sel != old and self._sfx_manager:
+                self._sfx_manager.play("hover")
         elif key == pygame.K_DOWN:
+            old = self._list_sel
             self._list_sel = (self._list_sel + 1) % len(avail)
+            if self._list_sel != old and self._sfx_manager:
+                self._sfx_manager.play("hover")
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+            if self._sfx_manager:
+                self._sfx_manager.play("confirm")
             self._qty = 1
             self._state = "qty"
         elif key == pygame.K_ESCAPE:
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
             self._on_close()
 
     def _handle_qty(self, key: int) -> None:
@@ -174,26 +188,44 @@ class MagicCoreShopScene(Scene):
         _, _, _, max_qty = sel
 
         if key == pygame.K_ESCAPE:
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
             self._state = "list"
         elif key == pygame.K_LEFT:
             self._qty_loop(-QTY_STEP_SMALL, max_qty)
+            if self._sfx_manager:
+                self._sfx_manager.play("hover")
         elif key == pygame.K_RIGHT:
             self._qty_loop(QTY_STEP_SMALL, max_qty)
+            if self._sfx_manager:
+                self._sfx_manager.play("hover")
         elif key == pygame.K_UP:
             self._qty_loop(-QTY_STEP_LARGE, max_qty)
+            if self._sfx_manager:
+                self._sfx_manager.play("hover")
         elif key == pygame.K_DOWN:
             self._qty_loop(QTY_STEP_LARGE, max_qty)
+            if self._sfx_manager:
+                self._sfx_manager.play("hover")
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             _, _, rate, _ = sel
             if self._confirm_large and rate >= LARGE_RATE_THRESHOLD:
+                if self._sfx_manager:
+                    self._sfx_manager.play("confirm")
                 self._state = "confirm"
             else:
+                if self._sfx_manager:
+                    self._sfx_manager.play("confirm")
                 self._do_exchange()
 
     def _handle_confirm(self, key: int) -> None:
         if key in (pygame.K_RETURN, pygame.K_y):
+            if self._sfx_manager:
+                self._sfx_manager.play("confirm")
             self._do_exchange()
         elif key in (pygame.K_ESCAPE, pygame.K_n):
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
             self._state = "qty"
 
     # ── Exchange ──────────────────────────────────────────────

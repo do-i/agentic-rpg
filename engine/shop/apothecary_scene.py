@@ -64,6 +64,7 @@ class ApothecaryScene(Scene):
         on_close: callable,
         recipes: list[dict],
         sprite_path: Path,
+        sfx_manager=None,
     ) -> None:
         self._holder        = holder
         self._scene_manager = scene_manager
@@ -71,6 +72,7 @@ class ApothecaryScene(Scene):
         self._on_close      = on_close
         self._recipes       = recipes
         self._sprite_path   = sprite_path
+        self._sfx_manager   = sfx_manager
 
         self._state        = "list"   # list | detail | popup
         self._list_sel     = 0
@@ -171,20 +173,32 @@ class ApothecaryScene(Scene):
         recipes = self._visible_recipes()
         if not recipes:
             if key == pygame.K_ESCAPE:
+                if self._sfx_manager:
+                    self._sfx_manager.play("cancel")
                 self._on_close()
             return
 
         if key == pygame.K_UP:
-            self._list_sel = max(0, self._list_sel - 1)
+            new = max(0, self._list_sel - 1)
+            if new != self._list_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._list_sel = new
             self._clamp_scroll()
         elif key == pygame.K_DOWN:
-            self._list_sel = min(len(recipes) - 1, self._list_sel + 1)
+            new = min(len(recipes) - 1, self._list_sel + 1)
+            if new != self._list_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._list_sel = new
             self._clamp_scroll()
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             sel = self._selected()
             if sel and self._is_unlocked(sel):
+                if self._sfx_manager:
+                    self._sfx_manager.play("confirm")
                 self._state = "detail"
         elif key == pygame.K_ESCAPE:
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
             self._on_close()
 
     def _handle_detail(self, key: int) -> None:
@@ -193,9 +207,13 @@ class ApothecaryScene(Scene):
             self._state = "list"
             return
         if key == pygame.K_ESCAPE:
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
             self._state = "list"
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             if self._can_craft(sel):
+                if self._sfx_manager:
+                    self._sfx_manager.play("confirm")
                 self._do_craft(sel)
 
     def _clamp_scroll(self) -> None:

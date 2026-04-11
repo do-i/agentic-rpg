@@ -41,11 +41,13 @@ class PostBattleScene(Scene):
         scene_manager: SceneManager,
         registry: SceneRegistry,
         on_continue: callable,
+        sfx_manager=None,
     ) -> None:
         self._rewards = rewards
         self._scene_manager = scene_manager
         self._registry = registry
         self._on_continue = on_continue
+        self._sfx_manager = sfx_manager
         self._fonts_ready = False
 
         # animate EXP bar filling
@@ -72,6 +74,8 @@ class PostBattleScene(Scene):
                 continue
             if event.key in (pygame.K_SPACE, pygame.K_RETURN,
                               pygame.K_KP_ENTER, pygame.K_z):
+                if self._sfx_manager:
+                    self._sfx_manager.play("confirm")
                 if not self._exp_done:
                     # skip animation
                     self._exp_fill = 1.0

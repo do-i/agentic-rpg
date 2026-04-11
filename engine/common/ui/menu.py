@@ -13,6 +13,7 @@ class Menu:
         color_selected: tuple = (255, 220, 50),
         color_disabled: tuple = (90, 90, 80),
         line_height: int = 48,
+        sfx_manager=None,
     ) -> None:
         self._items = items
         self._font = font
@@ -22,6 +23,7 @@ class Menu:
         self._line_height = line_height
         self._selected = 0
         self._disabled: set[str] = set()
+        self._sfx_manager = sfx_manager
 
     def set_item_disabled(self, item: str, disabled: bool) -> None:
         if disabled:
@@ -47,12 +49,17 @@ class Menu:
                     self._move(1)
                 elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
                     if self.selected_item not in self._disabled:
+                        if self._sfx_manager:
+                            self._sfx_manager.play("confirm")
                         return True
         return False
 
     def _move(self, delta: int) -> None:
         total = len(self._items)
+        old = self._selected
         self._selected = (self._selected + delta) % total
+        if self._selected != old and self._sfx_manager:
+            self._sfx_manager.play("hover")
 
     def render(self, screen: pygame.Surface, x: int, y: int) -> None:
         for i, item in enumerate(self._items):

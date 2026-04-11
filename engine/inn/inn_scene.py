@@ -52,6 +52,7 @@ class InnScene(Scene):
         on_close: callable,
         cost: int,
         sprite_path: Path,
+        sfx_manager=None,
     ) -> None:
         self._holder        = holder
         self._scene_manager = scene_manager
@@ -59,6 +60,7 @@ class InnScene(Scene):
         self._on_close      = on_close
         self._cost          = cost
         self._sprite_path   = sprite_path
+        self._sfx_manager   = sfx_manager
 
         self._state         = "confirm"   # confirm | no_gp | popup
         self._fonts_ready   = False
@@ -94,8 +96,12 @@ class InnScene(Scene):
                 return
             if self._state in ("confirm", "no_gp"):
                 if event.key == pygame.K_ESCAPE:
+                    if self._sfx_manager:
+                        self._sfx_manager.play("cancel")
                     self._on_close()
                 elif event.key == pygame.K_RETURN:
+                    if self._sfx_manager:
+                        self._sfx_manager.play("confirm")
                     self._try_rest()
 
     def _try_rest(self) -> None:

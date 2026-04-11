@@ -33,12 +33,14 @@ class StatusScene(Scene):
         registry: SceneRegistry,
         scenario_path: str = "",
         return_scene_name: str = "world_map",
+        sfx_manager=None,
     ) -> None:
         self._holder = holder
         self._scene_manager = scene_manager
         self._registry = registry
         self._return_scene_name = return_scene_name
         self._scenario_path = scenario_path
+        self._sfx_manager = sfx_manager
         self._selected = 0
         self._renderer = StatusRenderer(scenario_path)
 
@@ -79,12 +81,22 @@ class StatusScene(Scene):
                 return
 
             if event.key in (pygame.K_s, pygame.K_ESCAPE):
+                if self._sfx_manager:
+                    self._sfx_manager.play("cancel")
                 self._scene_manager.switch(self._registry.get(self._return_scene_name))
             elif event.key == pygame.K_UP:
-                self._selected = max(0, self._selected - 1)
+                new = max(0, self._selected - 1)
+                if new != self._selected and self._sfx_manager:
+                    self._sfx_manager.play("hover")
+                self._selected = new
             elif event.key == pygame.K_DOWN:
-                self._selected = min(len(members) - 1, self._selected + 1)
+                new = min(len(members) - 1, self._selected + 1)
+                if new != self._selected and self._sfx_manager:
+                    self._sfx_manager.play("hover")
+                self._selected = new
             elif event.key == pygame.K_RETURN:
+                if self._sfx_manager:
+                    self._sfx_manager.play("confirm")
                 self._open_spell_menu()
 
     def _open_spell_menu(self) -> None:
@@ -103,15 +115,23 @@ class StatusScene(Scene):
 
     def _handle_spell_key(self, key: int) -> None:
         if key == pygame.K_ESCAPE:
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
             self._spell_list = None
             self._spell_caster = None
             return
 
         spells = self._spell_list
         if key == pygame.K_UP:
-            self._spell_sel = max(0, self._spell_sel - 1)
+            new = max(0, self._spell_sel - 1)
+            if new != self._spell_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._spell_sel = new
         elif key == pygame.K_DOWN:
-            self._spell_sel = min(len(spells) - 1, self._spell_sel + 1)
+            new = min(len(spells) - 1, self._spell_sel + 1)
+            if new != self._spell_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._spell_sel = new
         elif key == pygame.K_RETURN:
             spell = spells[self._spell_sel]
             cost = spell.get("mp_cost", 0)
@@ -139,6 +159,7 @@ class StatusScene(Scene):
                     item_label=spell["name"],
                     on_confirm=lambda t, s=pending_spell, c=caster: self._on_target_confirm(s, c, t),
                     on_cancel=self._on_target_cancel,
+                    sfx_manager=self._sfx_manager,
                 )
 
     def _on_target_confirm(self, spell: dict, caster: MemberState, target: MemberState) -> None:
