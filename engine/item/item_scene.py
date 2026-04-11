@@ -130,7 +130,7 @@ class ItemScene(Scene):
             if self._sfx_manager:
                 self._sfx_manager.play("cancel")
             self._close()
-        elif key == pygame.K_RETURN:
+        elif key == pygame.K_DOWN:
             if self._filtered_items():
                 if self._sfx_manager:
                     self._sfx_manager.play("confirm")
@@ -141,8 +141,13 @@ class ItemScene(Scene):
         if not items:
             return
         if key == pygame.K_UP:
-            new = max(0, self._list_sel - 1)
-            if new != self._list_sel and self._sfx_manager:
+            if self._list_sel == 0:
+                if self._sfx_manager:
+                    self._sfx_manager.play("cancel")
+                self._in_tab = True
+                return
+            new = self._list_sel - 1
+            if self._sfx_manager:
                 self._sfx_manager.play("hover")
             self._list_sel = new
             self._scroll = clamp_scroll(self._list_sel, self._scroll, VISIBLE_ROWS)
