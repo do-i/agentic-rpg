@@ -101,7 +101,7 @@ class StatusRenderer:
                gp: int, selected: int,
                spell_list: list[dict] | None, spell_sel: int,
                spell_caster: MemberState | None,
-               target_overlay, toast_text: str, toast_timer: float) -> None:
+               target_overlay, popup_text: str, popup_active: bool) -> None:
         if not self._fonts_ready:
             self._init_fonts()
 
@@ -125,8 +125,8 @@ class StatusRenderer:
             self._draw_spell_menu(screen, spell_list, spell_sel, spell_caster)
         if target_overlay:
             target_overlay.render(screen)
-        if toast_timer > 0:
-            self._draw_toast(screen, toast_text)
+        if popup_active:
+            self._draw_popup(screen, popup_text)
 
     def _draw_header(self, screen: pygame.Surface, gp: int) -> None:
         screen.blit(self._font_title.render("STATUS", True, HEADER_COLOR), (PAD_X, PAD_Y))
@@ -307,17 +307,18 @@ class StatusRenderer:
         hint = self._font_hint.render("ENTER cast \u00b7 ESC back", True, MUTED)
         screen.blit(hint, (x + pad, y + h - pad - hint.get_height() + 4))
 
-    # ── Toast ─────────────────────────────────────────────────
+    # ── Popup ─────────────────────────────────────────────────
 
-    def _draw_toast(self, screen: pygame.Surface, toast_text: str) -> None:
-        surf = self._font_toast.render(toast_text, True, C_TOAST)
-        tw, th = surf.get_size()
-        tx = (Settings.SCREEN_WIDTH - tw) // 2
-        ty = Settings.SCREEN_HEIGHT - 60
-        bg = pygame.Surface((tw + 24, th + 12), pygame.SRCALPHA)
-        bg.fill((0, 0, 0, 180))
-        screen.blit(bg, (tx - 12, ty - 6))
-        screen.blit(surf, (tx, ty))
+    def _draw_popup(self, screen: pygame.Surface, popup_text: str) -> None:
+        pw, ph = 360, 80
+        px = (Settings.SCREEN_WIDTH  - pw) // 2
+        py = (Settings.SCREEN_HEIGHT - ph) // 2
+        pygame.draw.rect(screen, BG_COLOR,   (px, py, pw, ph), border_radius=6)
+        pygame.draw.rect(screen, BORDER_SEL, (px, py, pw, ph), 2, border_radius=6)
+        msg = self._font_toast.render(popup_text, True, C_TOAST)
+        screen.blit(msg, (px + (pw - msg.get_width()) // 2, py + 14))
+        hint = self._font_hint.render("ENTER / ESC  close", True, MUTED)
+        screen.blit(hint, (px + (pw - hint.get_width()) // 2, py + ph - 28))
 
     def _draw_footer(self, screen: pygame.Surface) -> None:
         fy = Settings.SCREEN_HEIGHT - FOOTER_H

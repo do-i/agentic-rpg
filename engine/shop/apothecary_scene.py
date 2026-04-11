@@ -47,7 +47,7 @@ ROW_H         = 44
 ROW_GAP       = 4
 FOOTER_H      = 36
 VISIBLE_ROWS  = 6
-TOAST_DUR     = 1.4
+POPUP_W       = 360
 
 
 class ApothecaryScene(Scene):
@@ -72,11 +72,10 @@ class ApothecaryScene(Scene):
         self._recipes       = recipes
         self._sprite_path   = sprite_path
 
-        self._state        = "list"   # list | detail | toast
+        self._state        = "list"   # list | detail | popup
         self._list_sel     = 0
         self._scroll       = 0
-        self._toast_timer  = 0.0
-        self._toast_text   = ""
+        self._popup_text   = ""
         self._fonts_ready  = False
         self._sprite_surf: pygame.Surface | None = None
         self._sprite: SpriteSheet | None = None
@@ -159,7 +158,9 @@ class ApothecaryScene(Scene):
         for event in events:
             if event.type != pygame.KEYDOWN:
                 continue
-            if self._state == "toast":
+            if self._state == "popup":
+                if event.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER):
+                    self._state = "list"
                 return
             if self._state == "list":
                 self._handle_list(event.key)
@@ -232,17 +233,13 @@ class ApothecaryScene(Scene):
             repo.add_item(out_id, out_qty)
 
         out_name = self._item_name(out_id) if out_id else "???"
-        self._toast_text  = f"Crafted {out_qty} x {out_name}"
-        self._toast_timer = TOAST_DUR
-        self._state       = "toast"
+        self._popup_text  = f"Crafted {out_qty} x {out_name}"
+        self._state       = "popup"
 
     # ── Update ────────────────────────────────────────────────
 
     def update(self, delta: float) -> None:
-        if self._state == "toast":
-            self._toast_timer -= delta
-            if self._toast_timer <= 0:
-                self._state = "list"
+        pass
 
     # ── Render ────────────────────────────────────────────────
 
@@ -277,8 +274,8 @@ class ApothecaryScene(Scene):
 
         if self._state == "detail":
             self._draw_detail_overlay(screen, mx, my, mh)
-        elif self._state == "toast":
-            self._draw_toast(screen)
+        elif self._state == "popup":
+            self._draw_popup(screen)
 
     def _draw_header(self, screen: pygame.Surface, mx: int, my: int) -> None:
         if self._sprite_surf:
@@ -480,10 +477,15 @@ class ApothecaryScene(Scene):
         hint = self._font_hint.render(hint_text, True, C_HINT)
         screen.blit(hint, (ox + ow // 2 - hint.get_width() // 2, cy))
 
-    # ── Toast ─────────────────────────────────────────────────
+    # ── Popup ─────────────────────────────────────────────────
 
-    def _draw_toast(self, screen: pygame.Surface) -> None:
-        surf = self._font_toast.render(self._toast_text, True, C_TOAST)
-        x = (Settings.SCREEN_WIDTH  - surf.get_width())  // 2
-        y = (Settings.SCREEN_HEIGHT - surf.get_height()) // 2
-        screen.blit(surf, (x, y))
+    def _draw_popup(self, screen: pygame.Surface) -> None:
+        ph = 80
+        px = (Settings.SCREEN_WIDTH  - POPUP_W) // 2
+        py = (Settings.SCREEN_HEIGHT - ph) // 2
+        pygame.draw.rect(screen, C_BG,     (px, py, POPUP_W, ph), border_radius=6)
+        pygame.draw.rect(screen, C_BORDER, (px, py, POPUP_W, ph), 2, border_radius=6)
+        msg = self._font_toast.render(self._popup_text, True, C_TOAST)
+        screen.blit(msg, (px + (POPUP_W - msg.get_width()) // 2, py + 14))
+        hint = self._font_hint.render("ENTER / ESC  close", True, C_HINT)
+        screen.blit(hint, (px + (POPUP_W - hint.get_width()) // 2, py + ph - 28))

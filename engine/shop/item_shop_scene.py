@@ -41,7 +41,7 @@ ROW_H         = 44
 ROW_GAP       = 4
 FOOTER_H      = 36
 VISIBLE_ROWS  = 6
-TOAST_DUR     = 1.4
+POPUP_W       = 360
 
 QTY_STEP_SMALL = 1
 QTY_STEP_LARGE = 5
@@ -69,12 +69,11 @@ class ItemShopScene(Scene):
         self._shop_items    = shop_items
         self._sprite_path   = sprite_path
 
-        self._state        = "list"   # list | qty | toast
+        self._state        = "list"   # list | qty | popup
         self._list_sel     = 0
         self._scroll       = 0
         self._qty          = 1
-        self._toast_timer  = 0.0
-        self._toast_text   = ""
+        self._popup_text   = ""
         self._fonts_ready  = False
         self._sprite_surf: pygame.Surface | None = None
         self._sprite: SpriteSheet | None = None
@@ -131,7 +130,9 @@ class ItemShopScene(Scene):
         for event in events:
             if event.type != pygame.KEYDOWN:
                 continue
-            if self._state == "toast":
+            if self._state == "popup":
+                if event.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER):
+                    self._state = "list"
                 return
             if self._state == "list":
                 self._handle_list(event.key)
@@ -213,17 +214,13 @@ class ItemShopScene(Scene):
                 entry.tags.add(tag)
 
         name = self._display_name(sel)
-        self._toast_text  = f"Bought {self._qty} x {name}"
-        self._toast_timer = TOAST_DUR
-        self._state       = "toast"
+        self._popup_text  = f"Bought {self._qty} x {name}"
+        self._state       = "popup"
 
     # ── Update ────────────────────────────────────────────────
 
     def update(self, delta: float) -> None:
-        if self._state == "toast":
-            self._toast_timer -= delta
-            if self._toast_timer <= 0:
-                self._state = "list"
+        pass
 
     # ── Render ────────────────────────────────────────────────
 
@@ -258,8 +255,8 @@ class ItemShopScene(Scene):
 
         if self._state == "qty":
             self._draw_qty_overlay(screen, mx, my, mh)
-        elif self._state == "toast":
-            self._draw_toast(screen)
+        elif self._state == "popup":
+            self._draw_popup(screen)
 
     def _draw_header(self, screen: pygame.Surface, mx: int, my: int) -> None:
         # sprite
@@ -384,10 +381,15 @@ class ItemShopScene(Scene):
             True, C_HINT)
         screen.blit(hint, (ox + ow // 2 - hint.get_width() // 2, oy + oh - 20))
 
-    # ── Toast ─────────────────────────────────────────────────
+    # ── Popup ─────────────────────────────────────────────────
 
-    def _draw_toast(self, screen: pygame.Surface) -> None:
-        surf = self._font_toast.render(self._toast_text, True, C_TOAST)
-        x = (Settings.SCREEN_WIDTH  - surf.get_width())  // 2
-        y = (Settings.SCREEN_HEIGHT - surf.get_height()) // 2
-        screen.blit(surf, (x, y))
+    def _draw_popup(self, screen: pygame.Surface) -> None:
+        ph = 80
+        px = (Settings.SCREEN_WIDTH  - POPUP_W) // 2
+        py = (Settings.SCREEN_HEIGHT - ph) // 2
+        pygame.draw.rect(screen, C_BG,     (px, py, POPUP_W, ph), border_radius=6)
+        pygame.draw.rect(screen, C_BORDER, (px, py, POPUP_W, ph), 2, border_radius=6)
+        msg = self._font_toast.render(self._popup_text, True, C_TOAST)
+        screen.blit(msg, (px + (POPUP_W - msg.get_width()) // 2, py + 14))
+        hint = self._font_hint.render("ENTER / ESC  close", True, C_HINT)
+        screen.blit(hint, (px + (POPUP_W - hint.get_width()) // 2, py + ph - 28))

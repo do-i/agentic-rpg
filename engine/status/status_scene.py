@@ -16,7 +16,7 @@ from engine.status.status_logic import (
 )
 from engine.status.status_renderer import StatusRenderer
 
-TOAST_DUR = 1.2
+POPUP_W = 360
 
 
 class StatusScene(Scene):
@@ -47,8 +47,8 @@ class StatusScene(Scene):
         self._spell_sel: int = 0
         self._spell_caster: MemberState | None = None
         self._target_overlay: TargetSelectOverlay | None = None
-        self._toast_text: str = ""
-        self._toast_timer: float = 0.0
+        self._popup_text: str = ""
+        self._popup_active: bool = False
 
     @property
     def _fonts_ready(self) -> bool:
@@ -61,7 +61,12 @@ class StatusScene(Scene):
             self._target_overlay.handle_events(events)
             return
 
-        if self._toast_timer > 0:
+        if self._popup_active:
+            for event in events:
+                if event.type == pygame.KEYDOWN and event.key in (
+                    pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER,
+                ):
+                    self._popup_active = False
             return
 
         members = self._holder.get().party.members
@@ -89,8 +94,8 @@ class StatusScene(Scene):
         member = members[self._selected]
         spells = field_spells(member, self._scenario_path)
         if not spells:
-            self._toast_text = f"{member.name} has no field spells."
-            self._toast_timer = TOAST_DUR
+            self._popup_text = f"{member.name} has no field spells."
+            self._popup_active = True
             return
         self._spell_caster = member
         self._spell_list = spells
@@ -117,14 +122,14 @@ class StatusScene(Scene):
                 members = self._holder.get().party.members
                 msg = apply_spell_all(spell, self._spell_caster, members)
                 self._spell_list = None
-                self._toast_text = msg
-                self._toast_timer = TOAST_DUR
+                self._popup_text = msg
+                self._popup_active = True
             else:
                 members = self._holder.get().party.members
                 targets = valid_targets(spell, members)
                 if not targets:
-                    self._toast_text = "No valid targets."
-                    self._toast_timer = TOAST_DUR
+                    self._popup_text = "No valid targets."
+                    self._popup_active = True
                     self._spell_list = None
                     return
                 pending_spell = spell
@@ -141,8 +146,8 @@ class StatusScene(Scene):
         self._target_overlay = None
         self._spell_list = None
         self._spell_caster = None
-        self._toast_text = msg
-        self._toast_timer = TOAST_DUR
+        self._popup_text = msg
+        self._popup_active = True
 
     def _on_target_cancel(self) -> None:
         self._target_overlay = None
@@ -150,8 +155,7 @@ class StatusScene(Scene):
     # ── Update ────────────────────────────────────────────────
 
     def update(self, delta: float) -> None:
-        if self._toast_timer > 0:
-            self._toast_timer -= delta
+        pass
 
     # ── Render (delegates to StatusRenderer) ──────────────────
 
@@ -167,6 +171,6 @@ class StatusScene(Scene):
             spell_sel=self._spell_sel,
             spell_caster=self._spell_caster,
             target_overlay=self._target_overlay,
-            toast_text=self._toast_text,
-            toast_timer=self._toast_timer,
+            popup_text=self._popup_text,
+            popup_active=self._popup_active,
         )

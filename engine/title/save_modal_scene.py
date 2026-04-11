@@ -12,7 +12,7 @@ MODAL_H = 480
 SLOT_HEIGHT = 44
 VISIBLE_SLOTS = 8
 
-TOAST_DURATION = 1.8  # seconds
+POPUP_W = 320
 
 
 class SaveModalScene(Scene):
@@ -39,8 +39,8 @@ class SaveModalScene(Scene):
         self._selected = 1          # start at first player slot
         self._scroll_offset = 0
         self._confirm_pending: SaveSlot | None = None   # overwrite confirm
-        self._toast_text: str = ""
-        self._toast_timer: float = 0.0
+        self._popup_text: str = ""
+        self._popup_active: bool = False
         self._fonts_ready = False
 
     def _init_fonts(self) -> None:
@@ -57,6 +57,11 @@ class SaveModalScene(Scene):
         for event in events:
             if event.type != pygame.KEYDOWN:
                 continue
+
+            if self._popup_active:
+                if event.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER):
+                    self._on_close()
+                return
 
             if self._confirm_pending:
                 self._handle_confirm_events(event)
@@ -108,16 +113,13 @@ class SaveModalScene(Scene):
             overwrite_path=slot.path,
         )
         self._slots = self._game_state_manager.list_slots()
-        self._toast_text = "Game Saved!"
-        self._toast_timer = TOAST_DURATION
+        self._popup_text = "Game Saved!"
+        self._popup_active = True
 
     # ── Update ────────────────────────────────────────────────
 
     def update(self, delta: float) -> None:
-        if self._toast_timer > 0:
-            self._toast_timer -= delta
-            if self._toast_timer <= 0:
-                self._on_close()
+        pass
 
     # ── Render ────────────────────────────────────────────────
 
@@ -172,9 +174,9 @@ class SaveModalScene(Scene):
         if self._confirm_pending:
             self._render_confirm(screen, mx, my)
 
-        # toast
-        if self._toast_timer > 0:
-            self._render_toast(screen)
+        # popup
+        if self._popup_active:
+            self._render_popup(screen)
 
     def _render_slot_row(
         self,
@@ -211,7 +213,13 @@ class SaveModalScene(Scene):
         hint = self._font_hint.render("ENTER / Y — Confirm    ESC / N — Cancel", True, (160, 120, 120))
         screen.blit(hint, (bx + 20, by + 60))
 
-    def _render_toast(self, screen: pygame.Surface) -> None:
-        surf = self._font_toast.render(self._toast_text, True, (100, 220, 100))
-        x = (Settings.SCREEN_WIDTH - surf.get_width()) // 2
-        screen.blit(surf, (x, Settings.SCREEN_HEIGHT - 80))
+    def _render_popup(self, screen: pygame.Surface) -> None:
+        ph = 80
+        px = (Settings.SCREEN_WIDTH  - POPUP_W) // 2
+        py = (Settings.SCREEN_HEIGHT - ph) // 2
+        pygame.draw.rect(screen, (20, 20, 45),    (px, py, POPUP_W, ph), border_radius=6)
+        pygame.draw.rect(screen, (160, 160, 100), (px, py, POPUP_W, ph), 2, border_radius=6)
+        msg = self._font_toast.render(self._popup_text, True, (100, 220, 100))
+        screen.blit(msg, (px + (POPUP_W - msg.get_width()) // 2, py + 14))
+        hint = self._font_hint.render("ENTER / ESC  close", True, (120, 120, 90))
+        screen.blit(hint, (px + (POPUP_W - hint.get_width()) // 2, py + ph - 28))

@@ -36,7 +36,7 @@ SPRITE_SIZE = 96
 ROW_H       = 44
 BAR_H       = 8
 FOOTER_H    = 36
-TOAST_DUR   = 1.6
+POPUP_W     = 360
 
 
 class InnScene(Scene):
@@ -60,8 +60,7 @@ class InnScene(Scene):
         self._cost          = cost
         self._sprite_path   = sprite_path
 
-        self._state         = "confirm"   # confirm | no_gp | toast
-        self._toast_timer   = 0.0
+        self._state         = "confirm"   # confirm | no_gp | popup
         self._fonts_ready   = False
         self._sprite: SpriteSheet | None = None
         self._sprite_surf: pygame.Surface | None = None
@@ -89,7 +88,9 @@ class InnScene(Scene):
         for event in events:
             if event.type != pygame.KEYDOWN:
                 continue
-            if self._state == "toast":
+            if self._state == "popup":
+                if event.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER):
+                    self._on_close()
                 return
             if self._state in ("confirm", "no_gp"):
                 if event.key == pygame.K_ESCAPE:
@@ -106,16 +107,12 @@ class InnScene(Scene):
         for member in state.party.members:
             member.hp = member.hp_max
             member.mp = member.mp_max
-        self._state       = "toast"
-        self._toast_timer = TOAST_DUR
+        self._state       = "popup"
 
     # ── Update ────────────────────────────────────────────────
 
     def update(self, delta: float) -> None:
-        if self._state == "toast":
-            self._toast_timer -= delta
-            if self._toast_timer <= 0:
-                self._on_close()
+        pass
 
     # ── Render ────────────────────────────────────────────────
 
@@ -149,8 +146,8 @@ class InnScene(Scene):
         self._draw_body(screen, mx, my + HEADER_H, members)
         self._draw_footer(screen, mx, my + mh - FOOTER_H, state.repository.gp)
 
-        if self._state == "toast":
-            self._draw_toast(screen)
+        if self._state == "popup":
+            self._draw_popup(screen)
 
     def _draw_header(self, screen: pygame.Surface, mx: int, my: int, gp: int) -> None:
         title = self._font_title.render("Inn", True, C_HEADER)
@@ -225,8 +222,13 @@ class InnScene(Scene):
                 "ENTER  rest · ESC  cancel", True, C_HINT)
             screen.blit(hint, (mx + PAD, y + (FOOTER_H - hint.get_height()) // 2))
 
-    def _draw_toast(self, screen: pygame.Surface) -> None:
-        surf = self._font_toast.render("The party rested and recovered!", True, C_TOAST)
-        x = (Settings.SCREEN_WIDTH  - surf.get_width())  // 2
-        y = (Settings.SCREEN_HEIGHT - surf.get_height()) // 2
-        screen.blit(surf, (x, y))
+    def _draw_popup(self, screen: pygame.Surface) -> None:
+        ph = 80
+        px = (Settings.SCREEN_WIDTH  - POPUP_W) // 2
+        py = (Settings.SCREEN_HEIGHT - ph) // 2
+        pygame.draw.rect(screen, C_BG,     (px, py, POPUP_W, ph), border_radius=6)
+        pygame.draw.rect(screen, C_BORDER, (px, py, POPUP_W, ph), 2, border_radius=6)
+        msg = self._font_toast.render("The party rested and recovered!", True, C_TOAST)
+        screen.blit(msg, (px + (POPUP_W - msg.get_width()) // 2, py + 14))
+        hint = self._font_hint.render("ENTER / ESC  close", True, C_HINT)
+        screen.blit(hint, (px + (POPUP_W - hint.get_width()) // 2, py + ph - 28))

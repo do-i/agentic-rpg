@@ -74,11 +74,10 @@ class MagicCoreShopScene(Scene):
         self._confirm_large = confirm_large
         self._return_scene_name = return_scene_name
 
-        self._state        = "list"   # list | qty | confirm | toast
+        self._state        = "list"   # list | qty | confirm | popup
         self._list_sel     = 0        # index into _available()
         self._qty          = 1
-        self._toast_timer  = 0.0
-        self._toast_text   = ""
+        self._popup_text   = ""
         self._fonts_ready  = False
 
     # ── Font init ─────────────────────────────────────────────
@@ -135,7 +134,13 @@ class MagicCoreShopScene(Scene):
         for event in events:
             if event.type != pygame.KEYDOWN:
                 continue
-            if self._state == "toast":
+            if self._state == "popup":
+                if event.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER):
+                    avail = self._available()
+                    if avail:
+                        self._state = "list"
+                    else:
+                        self._on_close()
                 return
             if self._state == "list":
                 self._handle_list(event.key)
@@ -209,22 +214,14 @@ class MagicCoreShopScene(Scene):
         repo.remove_item(item_id, qty)
         repo.add_gp(total)
 
-        self._toast_text  = f"Exchanged {qty} × {label}  →  +{total:,} GP"
-        self._toast_timer = 1.8
-        self._state       = "toast"
+        self._popup_text  = f"Exchanged {qty} × {label}  →  +{total:,} GP"
+        self._state       = "popup"
         self._clamp_list_sel()
 
     # ── Update ────────────────────────────────────────────────
 
     def update(self, delta: float) -> None:
-        if self._state == "toast":
-            self._toast_timer -= delta
-            if self._toast_timer <= 0:
-                avail = self._available()
-                if avail:
-                    self._state = "list"
-                else:
-                    self._on_close()
+        pass
 
     # ── Render ────────────────────────────────────────────────
 
@@ -259,8 +256,8 @@ class MagicCoreShopScene(Scene):
             self._draw_qty_overlay(screen, mx, my, mw, mh)
         elif self._state == "confirm":
             self._draw_confirm_overlay(screen)
-        elif self._state == "toast":
-            self._draw_toast(screen)
+        elif self._state == "popup":
+            self._draw_popup(screen)
 
     def _draw_header(self, screen: pygame.Surface, mx: int, my: int, mw: int) -> None:
         title = self._font_title.render("Magic Core Exchange", True, C_HEADER)
@@ -385,10 +382,15 @@ class MagicCoreShopScene(Scene):
             "ENTER / Y — Confirm    ESC / N — Cancel", True, C_HINT)
         screen.blit(hint, (ox + 20, oy + 64))
 
-    # ── Toast ─────────────────────────────────────────────────
+    # ── Popup ─────────────────────────────────────────────────
 
-    def _draw_toast(self, screen: pygame.Surface) -> None:
-        surf = self._font_toast.render(self._toast_text, True, C_GP_GAIN)
-        x = (Settings.SCREEN_WIDTH  - surf.get_width())  // 2
-        y = (Settings.SCREEN_HEIGHT - surf.get_height()) // 2
-        screen.blit(surf, (x, y))
+    def _draw_popup(self, screen: pygame.Surface) -> None:
+        pw, ph = 460, 80
+        px = (Settings.SCREEN_WIDTH  - pw) // 2
+        py = (Settings.SCREEN_HEIGHT - ph) // 2
+        pygame.draw.rect(screen, C_BG,      (px, py, pw, ph), border_radius=6)
+        pygame.draw.rect(screen, C_SEL_BDR, (px, py, pw, ph), 2, border_radius=6)
+        msg = self._font_toast.render(self._popup_text, True, C_GP_GAIN)
+        screen.blit(msg, (px + (pw - msg.get_width()) // 2, py + 14))
+        hint = self._font_hint.render("ENTER / ESC  close", True, C_HINT)
+        screen.blit(hint, (px + (pw - hint.get_width()) // 2, py + ph - 28))
