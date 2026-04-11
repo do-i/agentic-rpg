@@ -144,7 +144,7 @@ def resolve_action(state: BattleState, effect_handler=None, repository=None) -> 
     return msg_parts[0] if msg_parts else ""
 
 
-def resolve_enemy_turn(state: BattleState) -> str:
+def resolve_enemy_turn(state: BattleState, sfx_manager=None) -> str:
     """Execute the current enemy's turn using AI data. Returns message."""
     active = state.active
     if not active or not active.is_enemy:
@@ -165,19 +165,32 @@ def resolve_enemy_turn(state: BattleState) -> str:
 
     if action_type == "attack":
         target = target_list[0]
+        alive_before = not target.is_ko
         dmg = max(1, active.atk - target.def_)
         actual = target.apply_damage(dmg)
         state.add_float(str(actual), *float_pos(state, target), C_DMG_PHYS)
+        if sfx_manager:
+            sfx_manager.play("atk_impact")
+            if alive_before and target.is_ko:
+                sfx_manager.play("party_hit")
         return f"{active.name} attacked {target.name} for {actual} damage!"
 
     # ability — display ability name, deal ATK-based damage to targets
     ability_name = ability_id.replace("_", " ").title()
     msg_parts: list[str] = []
+    newly_ko = False
     for target in target_list:
+        alive_before = not target.is_ko
         dmg = max(1, active.atk - target.def_)
         actual = target.apply_damage(dmg)
         state.add_float(str(actual), *float_pos(state, target), C_DMG_MAGIC)
         msg_parts.append(f"{target.name} took {actual} damage")
+        if alive_before and target.is_ko:
+            newly_ko = True
+    if sfx_manager:
+        sfx_manager.play("atk_impact")
+        if newly_ko:
+            sfx_manager.play("party_hit")
 
     targets_msg = ", ".join(msg_parts)
     return f"{active.name} used {ability_name}! {targets_msg}!"

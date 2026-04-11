@@ -37,6 +37,7 @@ from engine.world.sprite_sheet import SpriteSheet
 from engine.world.npc import Npc
 from engine.world.npc_loader import NpcLoader
 from engine.audio.bgm_manager import BgmManager
+from engine.audio.sfx_manager import SfxManager
 
 
 class WorldMapScene(Scene):
@@ -61,6 +62,7 @@ class WorldMapScene(Scene):
         smooth_collision: bool = True,
         mc_exchange_confirm_large: bool = True,
         bgm_manager: BgmManager | None = None,
+        sfx_manager: SfxManager | None = None,
     ) -> None:
         self._smooth_collision = smooth_collision
         self._holder = holder
@@ -77,6 +79,7 @@ class WorldMapScene(Scene):
         self._mc_exchange_confirm_large = mc_exchange_confirm_large
         self._mc_catalog = mc_catalog or MCCatalog()
         self._bgm_manager = bgm_manager
+        self._sfx_manager = sfx_manager
 
         self._tile_map: TileMap | None = None
         self._camera: Camera | None = None
@@ -349,6 +352,7 @@ class WorldMapScene(Scene):
             effect_handler=self._effect_handler,
             game_state_manager=self._game_state_manager,
             bgm_manager=self._bgm_manager,
+            sfx_manager=self._sfx_manager,
         )
         self._scene_manager.switch(scene)
 

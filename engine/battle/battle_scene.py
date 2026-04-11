@@ -26,6 +26,7 @@ from engine.battle.battle_renderer import BattleRenderer
 from engine.item.item_effect_handler import ItemEffectHandler
 from engine.common.io.save_manager import GameStateManager
 from engine.audio.bgm_manager import BgmManager
+from engine.audio.sfx_manager import SfxManager
 
 
 class BattleScene(Scene):
@@ -46,6 +47,7 @@ class BattleScene(Scene):
         effect_handler: ItemEffectHandler | None = None,
         game_state_manager: GameStateManager | None = None,
         bgm_manager: BgmManager | None = None,
+        sfx_manager: SfxManager | None = None,
     ) -> None:
         self._state = battle_state
         self._scene_manager = scene_manager
@@ -58,6 +60,8 @@ class BattleScene(Scene):
         self._renderer = BattleRenderer(Path(scenario_path))
         self._bgm_manager = bgm_manager
         self._bgm_started = False
+        self._sfx_manager = sfx_manager
+        self._encounter_sfx_played = False
 
         # Resolve battle BGM path (played lazily on first render)
         self._bgm_path: Path | None = None
@@ -290,7 +294,14 @@ class BattleScene(Scene):
 
     def _do_resolve(self) -> None:
         repo = self._holder.get().repository
+        pending = dict(self._state.pending_action) if self._state.pending_action else {}
+        alive_before = {e.name for e in self._state.enemies if not e.is_ko}
         msg = resolve_action(self._state, self._effect_handler, repo)
+        if self._sfx_manager:
+            self._sfx_manager.play_battle_action(pending)
+            newly_ko = [e for e in self._state.enemies if e.is_ko and e.name in alive_before]
+            if newly_ko:
+                self._sfx_manager.play("enemy_death")
         self._enter_resolve(msg)
 
     def _enter_resolve(self, msg: str, is_enemy: bool = False) -> None:
@@ -299,7 +310,7 @@ class BattleScene(Scene):
         self._state.phase = BattlePhase.RESOLVE
 
     def _do_enemy_turn(self) -> None:
-        msg = resolve_enemy_turn(self._state)
+        msg = resolve_enemy_turn(self._state, self._sfx_manager)
         if msg:
             self._enter_resolve(msg, is_enemy=True)
         else:
@@ -337,6 +348,8 @@ class BattleScene(Scene):
 
     def _attempt_run(self) -> None:
         success, msg = attempt_flee(self._state, self._holder)
+        if self._sfx_manager:
+            self._sfx_manager.play("flee" if success else "denied")
         if success:
             self._scene_manager.switch(self._registry.get("world_map"))
         else:
@@ -358,6 +371,9 @@ class BattleScene(Scene):
         if not self._bgm_started and self._bgm_manager and self._bgm_path:
             self._bgm_started = True
             self._bgm_manager.play(self._bgm_path)
+        if not self._encounter_sfx_played and self._sfx_manager:
+            self._encounter_sfx_played = True
+            self._sfx_manager.play("encounter")
         self._renderer.render(
             screen, self._state,
             self._cmd_items, self._cmd_sel,
