@@ -11,11 +11,12 @@ import pygame
 
 from engine.battle.combatant import Combatant, StatusEffect
 from engine.battle.battle_state import BattleState, BattlePhase
+from engine.battle.constants import ENEMY_AREA_H, ENEMY_LAYOUTS, ENEMY_SIZES, ROW_H
 from engine.settings import Settings
+from engine.ui.colors import C_BG, C_TEXT, C_TEXT_MUT, C_TEXT_DIM, HP_LOW_THRESHOLD
 from engine.world.sprite_sheet import SpriteSheet, Direction
 
 # ── Layout ────────────────────────────────────────────────────
-ENEMY_AREA_H    = 468
 BOTTOM_H        = Settings.SCREEN_HEIGHT - ENEMY_AREA_H
 PARTY_W         = int(Settings.SCREEN_WIDTH * 0.25)
 CMD_W           = int(Settings.SCREEN_WIDTH * 0.30)
@@ -23,7 +24,6 @@ MSG_X           = PARTY_W + CMD_W
 MSG_W           = Settings.SCREEN_WIDTH - MSG_X
 
 PORTRAIT_SIZE   = 36
-ROW_H           = 56
 ROW_PAD         = 8
 BAR_H           = 6
 
@@ -35,7 +35,6 @@ STATUS_COLORS = {
 }
 
 # ── Colors ────────────────────────────────────────────────────
-C_BG           = (13,  13,  26)
 C_FLOOR        = (17,  17,  40)
 C_PANEL_LINE   = (51,  51,  51)
 C_ROW_ACTIVE   = (42,  26,  26)
@@ -44,9 +43,6 @@ C_BORDER_ACT   = (255, 220, 60)
 C_BORDER_NORM  = (51,  51,  68)
 C_CMD_SEL_BG   = (42,  32,  64)
 C_CMD_SEL_BDR  = (119, 85,  204)
-C_TEXT         = (238, 238, 238)
-C_TEXT_MUT     = (170, 170, 170)
-C_TEXT_DIM     = (102, 102, 102)
 C_HP_OK        = (68,  170, 68)
 C_HP_LOW       = (204, 68,  68)
 C_MP           = (68,  102, 204)
@@ -55,23 +51,6 @@ C_HP_LABEL_LOW = (204, 136, 136)
 C_MP_LABEL     = (136, 136, 204)
 C_MSG_ENEMY    = (255, 170, 50)
 C_MSG_PARTY    = (100, 200, 255)
-
-HP_LOW_THRESHOLD = 0.35
-
-ENEMY_LAYOUTS = {
-    1: [(0,   0)],
-    2: [(-80, 0),  (80,  0)],
-    3: [(-110, -30), (0, 20), (110, -20)],
-    4: [(-140, -20), (-45, 20), (45, -20), (140, 20)],
-    5: [(-160, -30), (-80, 20), (0, -10), (80, 20), (160, -30)],
-}
-
-ENEMY_SIZES = {
-    "boss":   (96, 96),
-    "large":  (80, 80),
-    "medium": (64, 64),
-    "small":  (52, 52),
-}
 
 
 class BattleRenderer:

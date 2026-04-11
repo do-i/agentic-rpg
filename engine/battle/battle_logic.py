@@ -11,27 +11,11 @@ from engine.battle.combatant import Combatant
 from engine.battle.battle_state import BattleState, BattlePhase
 from engine.battle.battle_rewards import RewardCalculator
 from engine.encounter.encounter_manager import EncounterManager
+from engine.battle.constants import ENEMY_AREA_H, ENEMY_LAYOUTS, ENEMY_SIZES, ROW_H
 from engine.settings import Settings
 
 # ── Layout constants needed for float positioning ─────────────
-ENEMY_AREA_H = 468
 PARTY_W = Settings.SCREEN_WIDTH // 2
-ROW_H = 56
-
-ENEMY_LAYOUTS = {
-    1: [(0,   0)],
-    2: [(-80, 0),  (80,  0)],
-    3: [(-110, -30), (0, 20), (110, -20)],
-    4: [(-140, -20), (-45, 20), (45, -20), (140, 20)],
-    5: [(-160, -30), (-80, 20), (0, -10), (80, 20), (160, -30)],
-}
-
-ENEMY_SIZES = {
-    "boss":   (96, 96),
-    "large":  (80, 80),
-    "medium": (64, 64),
-    "small":  (52, 52),
-}
 
 # ── Float colors ──────────────────────────────────────────────
 C_DMG_PHYS  = (255, 180, 80)

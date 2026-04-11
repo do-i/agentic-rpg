@@ -10,13 +10,10 @@ from engine.scenes.scene_manager import SceneManager
 from engine.scenes.scene_registry import SceneRegistry
 from engine.settings import Settings
 from engine.battle.battle_rewards import BattleRewards, LevelUpResult
+from engine.ui.colors import C_BG, C_TEXT, C_TEXT_DIM as C_DIM, C_TEXT_MUT as C_MUTED
 
 # ── Colors ────────────────────────────────────────────────────
-C_BG          = (13,  13,  26)
 C_HEADER      = (212, 200, 138)
-C_TEXT        = (238, 238, 238)
-C_MUTED       = (170, 170, 170)
-C_DIM         = (102, 102, 102)
 C_EXP         = (106, 138, 238)
 C_LEVELUP     = (255, 220,  80)
 C_HP_GAIN     = (100, 220, 100)

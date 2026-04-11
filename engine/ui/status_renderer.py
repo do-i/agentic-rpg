@@ -11,6 +11,11 @@ import pygame
 from engine.settings import Settings
 from engine.dto.member_state import MemberState
 from engine.service.party_state import exp_pct
+from engine.ui.colors import (
+    C_TEXT as TEXT_PRIMARY,
+    C_TEXT_MUT as TEXT_SECONDARY,
+    HP_LOW_THRESHOLD,
+)
 
 # ── Colors ────────────────────────────────────────────────────
 BG_COLOR        = (26, 26, 46)
@@ -20,8 +25,6 @@ BORDER_SEL      = (74, 74, 122)
 BORDER_NORM     = (51, 51, 51)
 HEADER_COLOR    = (212, 200, 138)
 MUTED           = (102, 102, 102)
-TEXT_PRIMARY    = (238, 238, 238)
-TEXT_SECONDARY  = (170, 170, 170)
 TEXT_DIM        = (85, 85, 85)
 HP_BAR_OK       = (74, 170, 74)
 HP_BAR_LOW      = (170, 74, 74)
@@ -35,8 +38,6 @@ C_SPELL_SEL     = (45, 42, 75)
 C_SPELL_DIS     = (70, 70, 80)
 C_MP_COST       = (130, 130, 220)
 C_TOAST         = (100, 220, 130)
-
-HP_LOW_THRESHOLD = 0.35
 
 PAD_X    = 20
 PAD_Y    = 16
