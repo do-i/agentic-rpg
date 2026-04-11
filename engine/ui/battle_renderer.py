@@ -72,7 +72,7 @@ class BattleRenderer:
         self._font_turn  = pygame.font.SysFont("Arial", 13)
         self._font_msg   = pygame.font.SysFont("Arial", 18)
         self._font_dmg   = pygame.font.SysFont("Arial", 26, bold=True)
-        self._font_enemy = pygame.font.SysFont("Arial", 11)
+        self._font_enemy = pygame.font.SysFont("Arial", 13, bold=True)
         self._font_badge = pygame.font.SysFont("Arial", 9,  bold=True)
         self._fonts_ready = True
 
@@ -209,13 +209,10 @@ class BattleRenderer:
             pygame.draw.rect(screen, base_col, (rx, ry, w, h), border_radius=4)
             pygame.draw.rect(screen, bdr_col,  (rx, ry, w, h), 1, border_radius=4)
 
-        name_surf = self._font_enemy.render(enemy.name, True, C_TEXT_MUT)
-        screen.blit(name_surf, (cx - name_surf.get_width() // 2, ry + h + 4))
-
         bar_w = w
         bar_x = cx - bar_w // 2
-        bar_y = ry + h + 4 + name_surf.get_height() + 3
-        bar_h = 13
+        bar_y = ry + h + 4
+        bar_h = 18
         # outer border – dark
         pygame.draw.rect(screen, (40, 40, 40), (bar_x - 3, bar_y - 3, bar_w + 6, bar_h + 6), 2, border_radius=6)
         # inner border – light
@@ -226,6 +223,15 @@ class BattleRenderer:
         hp_col  = C_HP_OK if enemy.hp_pct > HP_LOW_THRESHOLD else C_HP_LOW
         if hp_fill > 0 and not enemy.is_ko:
             pygame.draw.rect(screen, hp_col, (bar_x, bar_y, hp_fill, bar_h), border_radius=3)
+        # name on the HP bar
+        name_surf = self._font_enemy.render(enemy.name, True, (255, 255, 255))
+        name_x = bar_x + bar_w // 2 - name_surf.get_width() // 2
+        name_y = bar_y + bar_h // 2 - name_surf.get_height() // 2
+        # shadow for readability
+        shadow = self._font_enemy.render(enemy.name, True, (0, 0, 0))
+        for ox, oy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+            screen.blit(shadow, (name_x + ox, name_y + oy))
+        screen.blit(name_surf, (name_x, name_y))
 
         if (state.phase == BattlePhase.SELECT_TARGET
                 and target_pool
