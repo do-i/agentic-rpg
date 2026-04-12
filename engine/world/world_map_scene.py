@@ -35,6 +35,7 @@ from engine.world.player import Player
 from engine.world.sprite_sheet import SpriteSheet
 from engine.world.npc import Npc
 from engine.world.npc_loader import NpcLoader
+from engine.world.world_map_renderer import WorldMapRenderer
 from engine.audio.bgm_manager import BgmManager
 from engine.audio.sfx_manager import SfxManager
 
@@ -100,7 +101,8 @@ class WorldMapScene(Scene):
         self._item_shop: ItemShopScene | None = None
         self._apothecary: ApothecaryScene | None = None
         self._quit_confirm: bool = False
-        self._quit_font: pygame.font.Font | None = None
+
+        self._renderer = WorldMapRenderer()
 
         self._fade_alpha: int = 255
         self._fade_dir: int = -1
@@ -465,85 +467,30 @@ class WorldMapScene(Scene):
         else:
             self._check_portals()
 
-    # ── Quit Confirm ──────────────────────────────────────────
-
-    def _render_quit_confirm(self, screen: pygame.Surface) -> None:
-        if self._quit_font is None:
-            self._quit_font = pygame.font.SysFont("Arial", 20, bold=True)
-        font = self._quit_font
-        hint_font = pygame.font.SysFont("Arial", 16)
-
-        w, h = 320, 110
-        x = (screen.get_width() - w) // 2
-        y = (screen.get_height() - h) // 2
-
-        overlay = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 160))
-        screen.blit(overlay, (0, 0))
-
-        pygame.draw.rect(screen, (20, 20, 45), (x, y, w, h))
-        pygame.draw.rect(screen, (160, 160, 100), (x, y, w, h), 2)
-
-        title = font.render("Quit Game?", True, (220, 220, 180))
-        screen.blit(title, (x + w // 2 - title.get_width() // 2, y + 18))
-
-        hint = hint_font.render("ENTER  confirm       ESC  cancel", True, (160, 160, 120))
-        screen.blit(hint, (x + w // 2 - hint.get_width() // 2, y + 68))
-
-    # ── Render ────────────────────────────────────────────────
+    # ── Render (delegates to WorldMapRenderer) ─────────────────
 
     def render(self, screen: pygame.Surface) -> None:
         if self._tile_map is None:
             self._init()
 
-        screen.fill((0, 0, 0))
-        self._tile_map.render(screen, self._camera.offset_x, self._camera.offset_y)
-
         state = self._holder.get()
-        player_pos = self._player.pixel_position
-
         visible_npcs = [npc for npc in self._npcs if npc.is_present(state.flags)]
 
-        def render_player():
-            self._player.render(screen, self._camera.offset_x, self._camera.offset_y)
-
-        def render_npc(npc):
-            near = (npc.is_near(player_pos)
-                    and npc.is_facing_toward(player_pos)
-                    and _is_player_facing(self._player, npc.pixel_position)
-                    and self._dialogue is None)
-            npc.render(
-                screen,
-                self._camera.offset_x,
-                self._camera.offset_y,
-                near=near,
-                player_pos=player_pos,
-            )
-
-        drawables = [(player_pos.y, render_player)] + [
-            (npc._py, lambda n=npc: render_npc(n)) for npc in visible_npcs
+        overlays = [
+            o for o in (
+                self._save_modal, self._dialogue, self._mc_shop,
+                self._inn, self._item_shop, self._apothecary,
+            ) if o is not None
         ]
-        for _, draw in sorted(drawables, key=lambda d: d[0]):
-            draw()
 
-        if self._save_modal:
-            self._save_modal.render(screen)
-        if self._dialogue:
-            self._dialogue.render(screen)
-        if self._mc_shop:
-            self._mc_shop.render(screen)
-        if self._inn:
-            self._inn.render(screen)
-        if self._item_shop:
-            self._item_shop.render(screen)
-        if self._apothecary:
-            self._apothecary.render(screen)
-        if self._quit_confirm:
-            self._render_quit_confirm(screen)
-
-        if self._fade_alpha > 0:
-            fade_surf = pygame.Surface(
-                (screen.get_width(), screen.get_height()), pygame.SRCALPHA
-            )
-            fade_surf.fill((0, 0, 0, self._fade_alpha))
-            screen.blit(fade_surf, (0, 0))
+        self._renderer.render(
+            screen,
+            self._tile_map,
+            self._camera,
+            self._player,
+            visible_npcs,
+            overlays,
+            self._dialogue,
+            self._fade_alpha,
+            self._quit_confirm,
+        )
