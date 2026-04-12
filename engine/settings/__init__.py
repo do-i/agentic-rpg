@@ -1,4 +1,4 @@
-# engine/settings.py
+# engine/settings/__init__.py
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -22,7 +22,7 @@ class Settings:
     LAYER_UI: int = 3
 
 
-SETTINGS_PATH = Path(__file__).parent / "config" / "settings.yaml"
+SETTINGS_PATH = Path(__file__).parent / "settings.yaml"
 
 
 @dataclass(frozen=True)

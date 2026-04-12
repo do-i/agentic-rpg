@@ -1,4 +1,4 @@
-# engine/config/settings.yaml
+# engine/settings/settings.yaml
 
 dialogue:
   text_speed: fast   # slow | fast | very_fast

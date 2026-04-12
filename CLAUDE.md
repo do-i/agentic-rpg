@@ -40,7 +40,7 @@ Pytest is configured in `pyproject.toml` with `-v -x` (verbose, stop on first fa
 - **`main.py`** — Entry point. Parses `--scenario` arg, creates `Injector` with `AppModule`, runs `Game`.
 - **`app_module.py`** — Central DI wiring. All singletons (scenes, state, loaders) are registered here via `injector` `@provider` methods. This is the first place to look when adding a new system or understanding how components connect.
 - **`game.py`** — Main game loop (Display, FrameClock, SceneManager).
-- **`settings.py`** — `Settings` (compile-time constants: screen size, FPS, tile size, layers) and `EngineSettings` (runtime config loaded from `config/settings.yaml`).
+- **`settings/`** — `Settings` (compile-time constants: screen size, FPS, tile size, layers) and `EngineSettings` (runtime config loaded from `settings/settings.yaml`).
 - **`scenes/`** — Scene base class, `SceneManager`, `SceneRegistry`, and all scene implementations (world map, battle, dialogue, shops, title, etc.). Each scene handles its own input, update, and draw.
 - **`battle/`** — Battle system (combatants, battle state, battle logic, reward calculation).
 - **`dialogue/`** — Dialogue engine, loads YAML dialogue trees.

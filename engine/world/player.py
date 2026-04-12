@@ -67,7 +67,7 @@ class Player:
 
     smooth_collision=False skips axis-separation; any tile block stops dead too.
 
-    Controlled via engine/config/settings.yaml:
+    Controlled via engine/settings/settings.yaml:
         movement:
           smooth_collision: true
     """

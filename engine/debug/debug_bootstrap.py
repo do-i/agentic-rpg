@@ -1,7 +1,7 @@
 # engine/debug/debug_bootstrap.py
 #
 # Debug only — adds all party members to GameState at new game start.
-# Enabled via engine/config/settings.yaml:
+# Enabled via engine/settings/settings.yaml:
 #   debug:
 #     party: true
 
