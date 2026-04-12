@@ -172,11 +172,11 @@ targeting:
       target: self
 
 ---
-id: venom_bat
-name: Venom Bat
+id: grik_the_grin_192
+name: Grik the Grin
 type: beast
 rank: F
-sprite_scale: 210
+sprite_scale: 300
 hp: 33
 atk: 11
 def: 4

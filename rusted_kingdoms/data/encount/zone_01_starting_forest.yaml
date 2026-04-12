@@ -6,9 +6,9 @@ background: world1-bg-1280x468
 set_a:
   entries:
     - formation: [goblin, goblin_warrier, goblin, goblin]
-      weight: 93
-    - formation: [goblin_warrier]
       weight: 1
+    - formation: [grik_the_grin_192]
+      weight: 93
     - formation: [cave_spider, cave_spider]
       weight: 1
     - formation: [giant_rat, giant_rat]
@@ -25,9 +25,9 @@ set_a:
 set_b:
   entries:
     - formation: [goblin, goblin, goblin_warrier, goblin]
-      weight: 93
-    - formation: [goblin_warrier]
       weight: 1
+    - formation: [grik_the_grin_192]
+      weight: 93
     - formation: [venom_bat, venom_bat]
       weight: 1
     - formation: [forest_spider]
