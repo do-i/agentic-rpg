@@ -4,13 +4,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 
-@dataclass
+@dataclass(frozen=True)
 class Formation:
     enemy_ids: list[str]
     weight:    int
 
 
-@dataclass
+@dataclass(frozen=True)
 class EncounterSet:
     entries: list[Formation] = field(default_factory=list)
 
@@ -19,7 +19,7 @@ class EncounterSet:
         return sum(e.weight for e in self.entries)
 
 
-@dataclass
+@dataclass(frozen=True)
 class BossConfig:
     enemy_id:    str
     name:        str
@@ -27,14 +27,14 @@ class BossConfig:
     flag_set:    str  = ""   # set_flag on_complete
 
 
-@dataclass
+@dataclass(frozen=True)
 class BarrierEnemy:
     enemy_id:        str
     requires_item:   str
     blocked_message: str = "A mysterious force blocks your attack."
 
 
-@dataclass
+@dataclass(frozen=True)
 class EncounterZone:
     """
     Parsed encounter zone — loaded from data/encount/<zone_id>.yaml.

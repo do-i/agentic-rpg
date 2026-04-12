@@ -26,6 +26,18 @@ def make_combatant(name="Wolf") -> Combatant:
     )
 
 
+def make_zone_custom(rate=1.0, formation=None, with_barrier=False) -> EncounterZone:
+    f = formation or Formation(["wolf"], 100)
+    set_ = EncounterSet([f])
+    barriers = [
+        BarrierEnemy("ghost", "veil_breaker", "A force blocks your attack.")
+    ] if with_barrier else []
+    return EncounterZone(
+        zone_id="zone_01", name="Forest", encounter_rate=rate,
+        set_a=set_, set_b=set_, barrier_enemies=barriers,
+    )
+
+
 def make_zone(rate=0.15, with_boss=False, with_barrier=False) -> EncounterZone:
     set_a = EncounterSet([
         Formation(["wolf"], 60),
@@ -146,19 +158,14 @@ class TestTryRandomEncounter:
             assert result is None   # 0.15 - 0.15 = 0.0 → roll 1 > 0
 
     def test_barrier_enemy_skipped_without_item(self):
-        zone = make_zone(rate=1.0, with_barrier=True)
-        # force set_a with ghost formation
-        zone.set_a = EncounterSet([Formation(["ghost"], 100)])
-        zone.set_b = EncounterSet([Formation(["ghost"], 100)])
+        zone = make_zone_custom(formation=Formation(["ghost"], 100), with_barrier=True)
         resolver = make_resolver("ghost")
         result = resolver.try_random_encounter(zone, 0.0, FlagState(), set())
         # ghost filtered out — battle should have 0 enemies → None returned
         assert result is None
 
     def test_barrier_enemy_allowed_with_item(self):
-        zone = make_zone(rate=1.0, with_barrier=True)
-        zone.set_a = EncounterSet([Formation(["ghost"], 100)])
-        zone.set_b = EncounterSet([Formation(["ghost"], 100)])
+        zone = make_zone_custom(formation=Formation(["ghost"], 100), with_barrier=True)
         resolver = make_resolver("ghost")
         result = resolver.try_random_encounter(
             zone, 0.0, FlagState(), {"veil_breaker"}
@@ -167,10 +174,8 @@ class TestTryRandomEncounter:
         assert len(result.enemies) == 1
 
     def test_barrier_message_surfaced_on_state(self):
-        zone = make_zone(rate=1.0, with_barrier=True)
         # formation with ghost (barrier) + wolf (normal)
-        zone.set_a = EncounterSet([Formation(["ghost", "wolf"], 100)])
-        zone.set_b = EncounterSet([Formation(["ghost", "wolf"], 100)])
+        zone = make_zone_custom(formation=Formation(["ghost", "wolf"], 100), with_barrier=True)
         resolver = make_resolver("ghost", "wolf")
         result = resolver.try_random_encounter(zone, 0.0, FlagState(), set())
         # ghost filtered out, but wolf remains

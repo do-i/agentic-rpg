@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 
-@dataclass
+@dataclass(frozen=True)
 class LevelUpResult:
     member_id:   str
     member_name: str
@@ -18,7 +18,7 @@ class LevelUpResult:
     int_gained:  int
 
 
-@dataclass
+@dataclass(frozen=True)
 class MemberExpResult:
     member_id:   str
     member_name: str
@@ -26,14 +26,14 @@ class MemberExpResult:
     level_ups:   list[LevelUpResult] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(frozen=True)
 class LootResult:
     mc_drops:   list[dict] = field(default_factory=list)   # [{"size": "S", "qty": 1}, ...]
     item_drops: list[dict] = field(default_factory=list)   # [{"id": "rat_tail", "name": "Rat Tail", "qty": 1}, ...]
     gp_gained:  int = 0
 
 
-@dataclass
+@dataclass(frozen=True)
 class BattleRewards:
     total_exp:      int
     member_results: list[MemberExpResult]

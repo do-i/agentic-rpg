@@ -7,7 +7,7 @@ from engine.settings import Settings
 PORTAL_TRIGGER_RADIUS = 8  # px — portal fires when centers are within this distance
 
 
-@dataclass
+@dataclass(frozen=True)
 class Portal:
     """
     Represents a map exit.
