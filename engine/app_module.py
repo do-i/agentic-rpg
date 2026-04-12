@@ -23,7 +23,7 @@ from engine.encounter.encounter_resolver import EncounterResolver
 from engine.encounter.encounter_manager import EncounterManager
 from engine.item.item_catalog import ItemCatalog
 from engine.item.item_effect_handler import ItemEffectHandler
-from engine.item.item_logic import build_mc_catalog
+from engine.item.magic_core_catalog_state import build_mc_catalog
 from engine.world.world_map_logic import load_magic_cores
 from engine.common.io.manifest_loader import ManifestLoader
 from engine.world.tile_map_factory import TileMapFactory

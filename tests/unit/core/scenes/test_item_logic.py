@@ -6,9 +6,10 @@ from unittest.mock import MagicMock
 from engine.common.item_entry_state import ItemEntry
 from engine.common.service.repository_state import RepositoryState
 from engine.item.item_logic import (
-    TABS, MCCatalog, build_mc_catalog, item_tab, filtered_items, is_usable,
+    TABS, item_tab, filtered_items, is_usable,
     actions_for, display_name, discard_item, clamp_scroll,
 )
+from engine.item.magic_core_catalog_state import MagicCoreCatalogState, build_mc_catalog
 
 
 def make_entry(item_id="potion", qty=5, tags=None, locked=False) -> ItemEntry:

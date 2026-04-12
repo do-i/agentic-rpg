@@ -16,9 +16,10 @@ from engine.common.service.repository_state import RepositoryState
 from engine.item.item_effect_handler import ItemEffectHandler
 from engine.common.ui.target_select_overlay import TargetSelectOverlay
 from engine.item.item_logic import (
-    TABS, MCCatalog, filtered_items, actions_for, is_usable, discard_item,
+    TABS, filtered_items, actions_for, is_usable, discard_item,
     clamp_scroll, display_name,
 )
+from engine.item.magic_core_catalog_state import MagicCoreCatalogState
 from engine.item.item_renderer import ItemRenderer, VISIBLE_ROWS
 
 
@@ -35,7 +36,7 @@ class ItemScene(Scene):
         scene_manager: SceneManager,
         registry: SceneRegistry,
         effect_handler: ItemEffectHandler,
-        mc_catalog: MCCatalog | None = None,
+        mc_catalog: MagicCoreCatalogState | None = None,
         use_aoe_confirm: bool = True,
         return_scene_name: str = "world_map",
         sfx_manager=None,

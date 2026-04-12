@@ -22,7 +22,7 @@ from engine.shop.item_shop_scene import ItemShopScene
 from engine.shop.apothecary_scene import ApothecaryScene
 from engine.encounter.encounter_manager import EncounterManager
 from engine.item.item_effect_handler import ItemEffectHandler
-from engine.item.item_logic import MCCatalog
+from engine.item.magic_core_catalog_state import MagicCoreCatalogState
 from engine.world.world_map_logic import (
     FADE_SPEED, try_interact, dispatch_dialogue_result,
     check_encounter, check_portals, apply_transition,
@@ -57,7 +57,7 @@ class WorldMapScene(Scene):
         npc_loader: NpcLoader,
         encounter_manager: EncounterManager,
         effect_handler: ItemEffectHandler | None = None,
-        mc_catalog: MCCatalog | None = None,
+        mc_catalog: MagicCoreCatalogState | None = None,
         text_speed: str = "fast",
         smooth_collision: bool = True,
         mc_exchange_confirm_large: bool = True,
@@ -77,7 +77,7 @@ class WorldMapScene(Scene):
         self._effect_handler = effect_handler
         self._text_speed = text_speed
         self._mc_exchange_confirm_large = mc_exchange_confirm_large
-        self._mc_catalog = mc_catalog or MCCatalog()
+        self._mc_catalog = mc_catalog or MagicCoreCatalogState()
         self._bgm_manager = bgm_manager
         self._sfx_manager = sfx_manager
 

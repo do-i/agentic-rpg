@@ -5,43 +5,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-
 from engine.common.item_entry_state import ItemEntry
 from engine.common.service.repository_state import RepositoryState
 from engine.item.item_effect_handler import ItemEffectHandler
+from engine.item.magic_core_catalog_state import MagicCoreCatalogState, build_mc_catalog
 
 # ── Tabs — Magic Core inserted between Material and Key ───────
 TABS = ["New", "All", "Recovery", "Status", "Battle", "Material", "Magic Core", "Key"]
-
-
-# ── Magic Core catalog — built from scenario data ─────────────
-
-@dataclass
-class MCCatalog:
-    """Derived magic-core metadata, built from loaded YAML data."""
-    ids: set[str] = field(default_factory=set)
-    order: list[str] = field(default_factory=list)
-    labels: dict[str, str] = field(default_factory=dict)
-    sizes: list[tuple[str, str, int]] = field(default_factory=list)
-
-
-def build_mc_catalog(mc_data: list[dict]) -> MCCatalog:
-    """Build an MCCatalog from loaded magic core YAML entries.
-
-    Each entry should have keys: id, name, exchange_rate.
-    Entries are expected pre-sorted by exchange_rate descending.
-    """
-    cat = MCCatalog()
-    for entry in mc_data:
-        mc_id = entry["id"]
-        name = entry["name"]
-        rate = entry.get("exchange_rate", 0)
-        cat.ids.add(mc_id)
-        cat.order.append(mc_id)
-        cat.labels[mc_id] = name
-        cat.sizes.append((mc_id, name, rate))
-    return cat
 
 
 def item_tab(entry: ItemEntry) -> str:
@@ -63,7 +33,7 @@ def item_tab(entry: ItemEntry) -> str:
 
 
 def filtered_items(repo: RepositoryState, tab_index: int,
-                   mc_catalog: MCCatalog | None = None) -> list[ItemEntry]:
+                   mc_catalog: MagicCoreCatalogState | None = None) -> list[ItemEntry]:
     """Return items matching the given tab index."""
     all_items = repo.items
     tab = TABS[tab_index]
@@ -119,7 +89,7 @@ def actions_for(entry: ItemEntry, effect_handler: ItemEffectHandler) -> list[str
     return actions or ["—"]
 
 
-def display_name(entry: ItemEntry, mc_catalog: MCCatalog | None = None) -> str:
+def display_name(entry: ItemEntry, mc_catalog: MagicCoreCatalogState | None = None) -> str:
     """Human-readable name for an item entry."""
     if "magic_core" in entry.tags and mc_catalog and entry.id in mc_catalog.labels:
         return mc_catalog.labels[entry.id]

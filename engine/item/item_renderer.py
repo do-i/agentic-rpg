@@ -8,7 +8,8 @@ from __future__ import annotations
 import pygame
 from engine.settings import Settings
 from engine.common.item_entry_state import ItemEntry
-from engine.item.item_logic import TABS, MCCatalog, actions_for, display_name
+from engine.item.item_logic import TABS, actions_for, display_name
+from engine.item.magic_core_catalog_state import MagicCoreCatalogState
 from engine.item.item_effect_handler import ItemEffectHandler
 
 # ── Colors ────────────────────────────────────────────────────
@@ -70,7 +71,7 @@ class ItemRenderer:
     """Handles all rendering for the item scene."""
 
     def __init__(self, effect_handler: ItemEffectHandler,
-                 mc_catalog: MCCatalog | None = None) -> None:
+                 mc_catalog: MagicCoreCatalogState | None = None) -> None:
         self._effect_handler = effect_handler
         self._mc_catalog = mc_catalog
         self._fonts_ready = False
