@@ -303,8 +303,9 @@ class BattleRenderer:
                 "\u2191\u2193 choose \u00b7 ENTER confirm \u00b7 ESC cancel", True, C_TEXT_MUT),
                 (panel_x, ENEMY_AREA_H + 56))
         else:
+            show_sel = (phase == BattlePhase.PLAYER_TURN)
             self._draw_main_cmd(screen, panel_x, ENEMY_AREA_H + 30, active,
-                                cmd_items, cmd_sel)
+                                cmd_items, cmd_sel if show_sel else -1)
 
     def _draw_main_cmd(self, screen: pygame.Surface,
                        x: int, y: int, active: Combatant | None,
