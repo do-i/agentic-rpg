@@ -1,4 +1,4 @@
-# engine/ui/colors.py
+# engine/common/color_constants.py
 #
 # Shared UI color constants and thresholds used across multiple renderers.
 

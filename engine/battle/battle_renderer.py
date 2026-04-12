@@ -12,7 +12,7 @@ import pygame
 from engine.battle.combatant import Combatant, StatusEffect
 from engine.battle.battle_state import BattleState, BattlePhase
 from engine.battle.constants import ENEMY_AREA_H, ENEMY_LAYOUTS, ENEMY_SIZES, ROW_H
-from engine.ui.colors import C_BG, C_TEXT, C_TEXT_MUT, C_TEXT_DIM, HP_LOW_THRESHOLD
+from engine.common.color_constants import C_BG, C_TEXT, C_TEXT_MUT, C_TEXT_DIM, HP_LOW_THRESHOLD
 from engine.world.sprite_sheet import SpriteSheet, Direction
 
 PORTRAIT_SIZE   = 36

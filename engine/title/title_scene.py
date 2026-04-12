@@ -6,7 +6,7 @@ from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.io.save_manager import GameStateManager
 from engine.io.manifest_loader import ManifestLoader
-from engine.ui.menu import Menu
+from engine.title.menu_renderer import Menu
 
 
 class TitleScene(Scene):
