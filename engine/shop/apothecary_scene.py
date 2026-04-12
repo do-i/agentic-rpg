@@ -11,7 +11,6 @@ import pygame
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
-from engine.settings import Settings
 from engine.common.game_state_holder import GameStateHolder
 from engine.world.sprite_sheet import SpriteSheet, Direction
 
@@ -272,12 +271,12 @@ class ApothecaryScene(Scene):
         body_h  = rows * (ROW_H + ROW_GAP) + 12
         mh      = HEADER_H + body_h + FOOTER_H + PAD * 2
 
-        mx = (Settings.SCREEN_WIDTH  - MODAL_W) // 2
-        my = (Settings.SCREEN_HEIGHT - mh) // 2
+        mx = (screen.get_width()  - MODAL_W) // 2
+        my = (screen.get_height() - mh) // 2
 
         # dim background
         overlay = pygame.Surface(
-            (Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT), pygame.SRCALPHA
+            (screen.get_width(), screen.get_height()), pygame.SRCALPHA
         )
         overlay.fill((0, 0, 0, 180))
         screen.blit(overlay, (0, 0))
@@ -499,8 +498,8 @@ class ApothecaryScene(Scene):
 
     def _draw_popup(self, screen: pygame.Surface) -> None:
         ph = 80
-        px = (Settings.SCREEN_WIDTH  - POPUP_W) // 2
-        py = (Settings.SCREEN_HEIGHT - ph) // 2
+        px = (screen.get_width()  - POPUP_W) // 2
+        py = (screen.get_height() - ph) // 2
         pygame.draw.rect(screen, C_BG,     (px, py, POPUP_W, ph), border_radius=6)
         pygame.draw.rect(screen, C_BORDER, (px, py, POPUP_W, ph), 2, border_radius=6)
         msg = self._font_toast.render(self._popup_text, True, C_TOAST)

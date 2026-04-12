@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 from engine.common.position_data import Position
-from engine.settings import Settings
 
 PORTAL_TRIGGER_RADIUS = 8  # px — portal fires when centers are within this distance
 

@@ -9,6 +9,9 @@ from engine.world.npc import Npc
 from engine.world.sprite_sheet import Direction
 
 
+TS = 32
+
+
 @pytest.fixture
 def loader() -> NpcLoader:
     return NpcLoader()
@@ -75,14 +78,13 @@ class TestNpcLoader:
         assert not npc.is_present(FlagState())
 
     def test_npc_position_translated_to_pixels(self, loader, tmp_path):
-        from engine.settings import Settings
         p = write_map(tmp_path, {
             "npcs": [{"id": "n", "dialogue": "d", "position": [3, 7]}]
         })
         npcs = loader.load_from_map(p)
         pos = npcs[0].pixel_position
-        assert pos.x == 3 * Settings.TILE_SIZE
-        assert pos.y == 7 * Settings.TILE_SIZE
+        assert pos.x == 3 * TS
+        assert pos.y == 7 * TS
 
     def test_default_facing_loaded(self, loader, tmp_path):
         p = write_map(tmp_path, {

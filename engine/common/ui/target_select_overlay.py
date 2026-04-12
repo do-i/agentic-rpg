@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import pygame
-from engine.settings import Settings
 from engine.common.member_state import MemberState
 
 # ── Colors ────────────────────────────────────────────────────
@@ -129,12 +128,12 @@ class TargetSelectOverlay:
         body_h = rows * (ROW_H + ROW_GAP) + 8
         mh     = HEADER_H + body_h + warn_h + FOOTER_H + PAD * 2
 
-        mx = (Settings.SCREEN_WIDTH  - MODAL_W) // 2
-        my = (Settings.SCREEN_HEIGHT - mh)      // 2
+        mx = (screen.get_width()  - MODAL_W) // 2
+        my = (screen.get_height() - mh)      // 2
 
         # dim background
         dim = pygame.Surface(
-            (Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT), pygame.SRCALPHA)
+            (screen.get_width(), screen.get_height()), pygame.SRCALPHA)
         dim.fill((0, 0, 0, 160))
         screen.blit(dim, (0, 0))
 

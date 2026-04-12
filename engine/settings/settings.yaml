@@ -1,5 +1,14 @@
 # engine/settings/settings.yaml
 
+display:
+  screen_width: 1280
+  screen_height: 766
+  fps: 60
+  window_title: "Rusted Kingdoms"
+
+tiles:
+  tile_size: 32
+
 dialogue:
   text_speed: fast   # slow | fast | very_fast
 
@@ -18,8 +27,3 @@ item:
 debug:
   party: true   # true = add all party members at new game start
 
-shop:
-  mc_exchange_confirm_large: true
-
-item:
-  use_aoe_confirm: true     # confirm before applying all_alive items (Tent, Rest Capsule)

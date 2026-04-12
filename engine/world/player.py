@@ -2,7 +2,6 @@
 
 import pygame
 from engine.common.position_data import Position
-from engine.settings import Settings
 from engine.world.collision import CollisionMap
 from engine.world.sprite_sheet import Direction, SpriteSheet
 from engine.world.animation_controller import AnimationController
@@ -79,8 +78,12 @@ class Player:
         map_height_px: int,
         sprite_sheet: SpriteSheet | None = None,
         smooth_collision: bool = True,
+        tile_size: int = 32,
+        fps: int = 60,
     ) -> None:
-        ts = Settings.TILE_SIZE
+        self._tile_size = tile_size
+        self._fps = fps
+        ts = tile_size
         self._x: float = float(
             start.x * ts + ts // 2 - COLLISION_OFFSET_X - COLLISION_W // 2
         )
@@ -115,7 +118,7 @@ class Player:
     def tile_position(self) -> Position:
         cx = int(self._x) + COLLISION_OFFSET_X + COLLISION_W // 2
         cy = int(self._y) + COLLISION_OFFSET_Y + COLLISION_H // 2
-        return Position(cx // Settings.TILE_SIZE, cy // Settings.TILE_SIZE)
+        return Position(cx // self._tile_size, cy // self._tile_size)
 
     # ── Update ────────────────────────────────────────────────
 
@@ -128,7 +131,7 @@ class Player:
     ) -> None:
         if frozen:
             if self._animation:
-                self._animation.update(1 / Settings.FPS, 0, 0)
+                self._animation.update(1 / self._fps, 0, 0)
             return
 
         dx, dy = 0, 0
@@ -138,7 +141,7 @@ class Player:
                 dy += vy
 
         if self._animation:
-            self._animation.update(1 / Settings.FPS, dx, dy)
+            self._animation.update(1 / self._fps, dx, dy)
 
         if dx == 0 and dy == 0:
             return

@@ -1,9 +1,9 @@
-# tests/unit/core/config/test_engine_settings.py
+# tests/unit/core/config/test_engine_config_data.py
 
 import pytest
 import yaml
 from pathlib import Path
-from engine.settings import EngineSettings
+from engine.settings.engine_config_data import EngineConfigData
 
 
 def write_settings(tmp_path: Path, data: dict) -> Path:
@@ -19,40 +19,55 @@ VALID = {
 }
 
 
-class TestEngineSettings:
+class TestEngineConfigData:
     def test_loads_saves_dir(self, tmp_path):
         p = write_settings(tmp_path, {"saves": {"dir": "/custom/path"}, "dialogue": {"text_speed": "fast"}})
-        s = EngineSettings.load(p)
+        s = EngineConfigData.load(p)
         assert s.saves_dir == "/custom/path"
 
     def test_loads_text_speed(self, tmp_path):
         p = write_settings(tmp_path, {"saves": {"dir": "~/x"}, "dialogue": {"text_speed": "slow"}})
-        s = EngineSettings.load(p)
+        s = EngineConfigData.load(p)
         assert s.text_speed == "slow"
+
+    def test_loads_display_defaults(self, tmp_path):
+        p = write_settings(tmp_path, VALID)
+        s = EngineConfigData.load(p)
+        assert s.screen_width == 1280
+        assert s.screen_height == 766
+        assert s.fps == 60
+        assert s.tile_size == 32
+
+    def test_loads_display_overrides(self, tmp_path):
+        p = write_settings(tmp_path, {**VALID,
+            "display": {"screen_width": 800, "screen_height": 600, "fps": 30, "window_title": "Test"},
+            "tiles": {"tile_size": 16},
+        })
+        s = EngineConfigData.load(p)
+        assert s.screen_width == 800
+        assert s.screen_height == 600
+        assert s.fps == 30
+        assert s.tile_size == 16
+        assert s.window_title == "Test"
 
     def test_raises_when_saves_dir_missing(self, tmp_path):
         p = write_settings(tmp_path, {"dialogue": {"text_speed": "fast"}})
         with pytest.raises(KeyError, match="saves.dir"):
-            EngineSettings.load(p)
+            EngineConfigData.load(p)
 
     def test_raises_when_text_speed_missing(self, tmp_path):
         p = write_settings(tmp_path, {"saves": {"dir": "~/x"}})
         with pytest.raises(KeyError, match="dialogue.text_speed"):
-            EngineSettings.load(p)
-
-    def test_raises_when_both_missing(self, tmp_path):
-        p = write_settings(tmp_path, {})
-        with pytest.raises(KeyError, match="saves.dir"):
-            EngineSettings.load(p)
+            EngineConfigData.load(p)
 
     def test_raises_on_empty_file(self, tmp_path):
         p = tmp_path / "settings.yaml"
         p.write_text("")
         with pytest.raises(KeyError):
-            EngineSettings.load(p)
+            EngineConfigData.load(p)
 
     def test_is_frozen(self, tmp_path):
         p = write_settings(tmp_path, VALID)
-        s = EngineSettings.load(p)
+        s = EngineConfigData.load(p)
         with pytest.raises(Exception):
             s.saves_dir = "/new/path"

@@ -9,7 +9,6 @@ import pygame
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
-from engine.settings import Settings
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.io.save_manager import GameStateManager
 
@@ -111,8 +110,8 @@ class GameOverScene(Scene):
 
         screen.fill(C_BG)
 
-        cx = Settings.SCREEN_WIDTH // 2
-        cy = Settings.SCREEN_HEIGHT // 2
+        cx = screen.get_width() // 2
+        cy = screen.get_height() // 2
 
         # title
         title = self._font_title.render("Game Over", True, C_TITLE)
@@ -145,7 +144,7 @@ class GameOverScene(Scene):
         # fade-in overlay
         if not self._fade_done:
             overlay = pygame.Surface(
-                (Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT), pygame.SRCALPHA
+                (screen.get_width(), screen.get_height()), pygame.SRCALPHA
             )
             overlay.fill((0, 0, 0, 255 - self._fade_alpha))
             screen.blit(overlay, (0, 0))

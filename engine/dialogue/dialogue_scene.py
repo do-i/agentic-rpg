@@ -2,7 +2,6 @@
 
 import pygame
 from engine.common.scene.scene import Scene
-from engine.settings import Settings
 from engine.dialogue.dialogue_engine import DialogueResult
 
 # Typewriter speeds — characters revealed per second
@@ -115,8 +114,8 @@ class DialogueScene(Scene):
         if not self._fonts_ready:
             self._init_fonts()
 
-        box_y = Settings.SCREEN_HEIGHT - BOX_H - BOX_MARGIN
-        box_w = Settings.SCREEN_WIDTH - BOX_MARGIN * 2
+        box_y = screen.get_height() - BOX_H - BOX_MARGIN
+        box_w = screen.get_width() - BOX_MARGIN * 2
 
         # background
         box_surf = pygame.Surface((box_w, BOX_H), pygame.SRCALPHA)

@@ -5,10 +5,11 @@ import pytest
 import pygame
 from engine.world.player import Player, PLAYER_SPEED, PLAYER_WIDTH, PLAYER_HEIGHT, COLLISION_W, COLLISION_H, COLLISION_OFFSET_X, COLLISION_OFFSET_Y
 from engine.common.position_data import Position
-from engine.settings import Settings
 
 
 # ── Helpers ───────────────────────────────────────────────────
+
+TS = 32
 
 MAP_W = 640
 MAP_H = 480
@@ -37,7 +38,7 @@ def make_player(tile_x: int = 5, tile_y: int = 5, sprite_sheet=None) -> Player:
 class TestPlayerInit:
     def test_pixel_position_derived_from_tile(self):
         p = make_player(tile_x=3, tile_y=4)
-        ts = Settings.TILE_SIZE
+        ts = TS
         expected_x = 3 * ts + ts // 2 - COLLISION_OFFSET_X - COLLISION_W // 2
         expected_y = 4 * ts + ts // 2 - COLLISION_OFFSET_Y - COLLISION_H // 2
 
@@ -49,7 +50,7 @@ class TestPlayerInit:
         """Tile (0, 0) should place the player so its collision rect starts near (0, 0)."""
         p = make_player(tile_x=0, tile_y=0)
 
-        ts = Settings.TILE_SIZE
+        ts = TS
         expected_x = 0 * ts + ts // 2 - COLLISION_OFFSET_X - COLLISION_W // 2
         expected_y = 0 * ts + ts // 2 - COLLISION_OFFSET_Y - COLLISION_H // 2
 

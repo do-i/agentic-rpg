@@ -12,11 +12,6 @@ from engine.battle.battle_state import BattleState, BattlePhase
 from engine.battle.battle_rewards import RewardCalculator
 from engine.encounter.encounter_manager import EncounterManager
 from engine.battle.constants import ENEMY_AREA_H, ENEMY_LAYOUTS, ENEMY_SIZES, ROW_H
-from engine.settings import Settings
-
-# ── Layout constants needed for float positioning ─────────────
-PARTY_W = Settings.SCREEN_WIDTH // 2
-
 # ── Float colors ──────────────────────────────────────────────
 C_DMG_PHYS  = (255, 180, 80)
 C_DMG_MAGIC = (140, 180, 255)
@@ -31,22 +26,25 @@ def enemy_rect_size(enemy: Combatant) -> tuple[int, int]:
     return [ENEMY_SIZES["medium"], ENEMY_SIZES["small"], ENEMY_SIZES["medium"]][idx]
 
 
-def float_pos(state: BattleState, combatant: Combatant) -> tuple[int, int]:
+def float_pos(state: BattleState, combatant: Combatant,
+              screen_width: int = 1280) -> tuple[int, int]:
     """Screen position for a damage float over the given combatant."""
     if combatant.is_enemy:
         n = len(state.enemies)
         idx = state.enemies.index(combatant)
         ox, oy = ENEMY_LAYOUTS.get(n, ENEMY_LAYOUTS[1])[idx]
-        cx = Settings.SCREEN_WIDTH // 2 + ox
+        cx = screen_width // 2 + ox
         cy = ENEMY_AREA_H // 2 + 10 + oy
         _, h = enemy_rect_size(combatant)
         return cx - 15, cy - h // 2 - 30
     else:
         idx = state.party.index(combatant)
-        return PARTY_W - 60, ENEMY_AREA_H + 8 + idx * (ROW_H + 2) + 5
+        party_w = screen_width // 2
+        return party_w - 60, ENEMY_AREA_H + 8 + idx * (ROW_H + 2) + 5
 
 
-def resolve_action(state: BattleState, effect_handler=None, repository=None) -> str:
+def resolve_action(state: BattleState, effect_handler=None, repository=None,
+                   screen_width: int = 1280) -> str:
     """Execute the pending action. Returns the message to display."""
     action = state.pending_action
     if not action:
@@ -58,7 +56,7 @@ def resolve_action(state: BattleState, effect_handler=None, repository=None) -> 
 
     if atype == "defend":
         source.defending = True
-        state.add_float("Defend", *float_pos(state, source), C_DEFEND)
+        state.add_float("Defend", *float_pos(state, source, screen_width), C_DEFEND)
         state.pending_action = None
         return f"{source.name} is defending!"
 
@@ -66,7 +64,7 @@ def resolve_action(state: BattleState, effect_handler=None, repository=None) -> 
         if atype == "attack":
             dmg = max(1, source.atk - target.def_)
             actual = target.apply_damage(dmg)
-            state.add_float(str(actual), *float_pos(state, target), C_DMG_PHYS)
+            state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_PHYS)
             msg_parts.append(f"{source.name} attacked {target.name} for {actual} damage!")
         elif atype == "spell":
             ab = action.get("data", {})
@@ -82,27 +80,27 @@ def resolve_action(state: BattleState, effect_handler=None, repository=None) -> 
                     pct = ab["revive_hp_pct"]
                     target.hp = max(1, int(target.hp_max * pct))
                     target.is_ko = False
-                    state.add_float("Revive", *float_pos(state, target), C_HEAL)
+                    state.add_float("Revive", *float_pos(state, target, screen_width), C_HEAL)
                     msg_parts.append(f"{source.name} casts {spell_name}! {target.name} revived!")
             elif spell_type == "heal":
                 amount = int(source.mres * coeff) if source else 10
                 actual = target.apply_heal(amount)
-                state.add_float(str(actual), *float_pos(state, target), C_HEAL)
+                state.add_float(str(actual), *float_pos(state, target, screen_width), C_HEAL)
                 msg_parts.append(f"{source.name} casts {spell_name}! {target.name} healed {actual} HP!")
             elif spell_type == "utility":
                 target.clear_all_status()
-                state.add_float("Cured", *float_pos(state, target), C_HEAL)
+                state.add_float("Cured", *float_pos(state, target, screen_width), C_HEAL)
                 msg_parts.append(f"{source.name} casts {spell_name}! {target.name} cured!")
             elif spell_type == "buff":
-                state.add_float("Buff", *float_pos(state, target), C_HEAL)
+                state.add_float("Buff", *float_pos(state, target, screen_width), C_HEAL)
                 msg_parts.append(f"{source.name} casts {spell_name} on {target.name}!")
             elif spell_type == "debuff":
-                state.add_float("Debuff", *float_pos(state, target), C_DMG_MAGIC)
+                state.add_float("Debuff", *float_pos(state, target, screen_width), C_DMG_MAGIC)
                 msg_parts.append(f"{source.name} casts {spell_name} on {target.name}!")
             else:
                 dmg = max(1, int(source.mres * coeff) - target.def_) if source else 10
                 actual = target.apply_damage(dmg)
-                state.add_float(str(actual), *float_pos(state, target), C_DMG_MAGIC)
+                state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_MAGIC)
                 msg_parts.append(f"{source.name} casts {spell_name}! {actual} damage to {target.name}!")
         elif atype == "item":
             item_id = action.get("data", {}).get("id", "")
@@ -116,21 +114,21 @@ def resolve_action(state: BattleState, effect_handler=None, repository=None) -> 
                     target.is_ko = False
                 # generate float + message
                 if defn_effect in ("restore_hp", "restore_mp", "restore_full"):
-                    state.add_float(str(defn.amount) if defn.amount else "Full", *float_pos(state, target), C_HEAL)
+                    state.add_float(str(defn.amount) if defn.amount else "Full", *float_pos(state, target, screen_width), C_HEAL)
                     msg_parts.append(f"{source.name} used {item_label} on {target.name}!")
                 elif defn_effect == "revive":
-                    state.add_float("Revive", *float_pos(state, target), C_HEAL)
+                    state.add_float("Revive", *float_pos(state, target, screen_width), C_HEAL)
                     msg_parts.append(f"{source.name} used {item_label}! {target.name} revived!")
                 elif defn_effect == "cure":
-                    state.add_float("Cured", *float_pos(state, target), C_HEAL)
+                    state.add_float("Cured", *float_pos(state, target, screen_width), C_HEAL)
                     msg_parts.append(f"{source.name} used {item_label} on {target.name}!")
                 else:
-                    state.add_float("Used", *float_pos(state, target), C_HEAL)
+                    state.add_float("Used", *float_pos(state, target, screen_width), C_HEAL)
                     msg_parts.append(f"{source.name} used {item_label} on {target.name}!")
             else:
                 # fallback for unknown items
                 actual = target.apply_heal(100)
-                state.add_float(str(actual), *float_pos(state, target), C_HEAL)
+                state.add_float(str(actual), *float_pos(state, target, screen_width), C_HEAL)
                 msg_parts.append(f"{source.name} used item on {target.name}! Healed {actual} HP!")
 
     # decrement item qty after all targets resolved
@@ -144,7 +142,8 @@ def resolve_action(state: BattleState, effect_handler=None, repository=None) -> 
     return msg_parts[0] if msg_parts else ""
 
 
-def resolve_enemy_turn(state: BattleState, sfx_manager=None) -> str:
+def resolve_enemy_turn(state: BattleState, sfx_manager=None,
+                       screen_width: int = 1280) -> str:
     """Execute the current enemy's turn using AI data. Returns message."""
     active = state.active
     if not active or not active.is_enemy:
@@ -168,7 +167,7 @@ def resolve_enemy_turn(state: BattleState, sfx_manager=None) -> str:
         alive_before = not target.is_ko
         dmg = max(1, active.atk - target.def_)
         actual = target.apply_damage(dmg)
-        state.add_float(str(actual), *float_pos(state, target), C_DMG_PHYS)
+        state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_PHYS)
         if sfx_manager:
             sfx_manager.play("atk_impact")
             if alive_before and target.is_ko:
@@ -183,7 +182,7 @@ def resolve_enemy_turn(state: BattleState, sfx_manager=None) -> str:
         alive_before = not target.is_ko
         dmg = max(1, active.atk - target.def_)
         actual = target.apply_damage(dmg)
-        state.add_float(str(actual), *float_pos(state, target), C_DMG_MAGIC)
+        state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_MAGIC)
         msg_parts.append(f"{target.name} took {actual} damage")
         if alive_before and target.is_ko:
             newly_ko = True

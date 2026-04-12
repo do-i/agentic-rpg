@@ -8,7 +8,6 @@ import pygame
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
-from engine.settings import Settings
 from engine.battle.battle_rewards import BattleRewards, LevelUpResult
 from engine.common.ui.colors import C_BG, C_TEXT, C_TEXT_DIM as C_DIM, C_TEXT_MUT as C_MUTED
 
@@ -100,7 +99,7 @@ class PostBattleScene(Scene):
             self._init_fonts()
 
         screen.fill(C_BG)
-        cx = Settings.SCREEN_WIDTH // 2
+        cx = screen.get_width() // 2
         y = PAD
 
         # ── Header ───────────────────────────────────────────
@@ -113,7 +112,7 @@ class PostBattleScene(Scene):
         screen.blit(exp_s, (cx - exp_s.get_width() // 2, y))
         y += exp_s.get_height() + 16
 
-        pygame.draw.line(screen, C_DIVIDER, (PAD, y), (Settings.SCREEN_WIDTH - PAD, y))
+        pygame.draw.line(screen, C_DIVIDER, (PAD, y), (screen.get_width() - PAD, y))
         y += 12
 
         # ── Member rows ───────────────────────────────────────
@@ -121,7 +120,7 @@ class PostBattleScene(Scene):
             has_lvup = bool(result.level_ups)
             row_bg = C_ROW_LVUP_BG if has_lvup else C_ROW_BG
             pygame.draw.rect(screen, row_bg,
-                             (PAD, y, Settings.SCREEN_WIDTH - PAD * 2, ROW_H),
+                             (PAD, y, screen.get_width() - PAD * 2, ROW_H),
                              border_radius=4)
 
             # name
@@ -151,7 +150,7 @@ class PostBattleScene(Scene):
             y += ROW_H + 4
 
         y += 8
-        pygame.draw.line(screen, C_DIVIDER, (PAD, y), (Settings.SCREEN_WIDTH - PAD, y))
+        pygame.draw.line(screen, C_DIVIDER, (PAD, y), (screen.get_width() - PAD, y))
         y += 14
 
         # ── Loot ─────────────────────────────────────────────
@@ -183,7 +182,7 @@ class PostBattleScene(Scene):
             hint = self._font_hint.render(
                 "SPACE / ENTER  to continue", True, C_HINT)
             hx = cx - hint.get_width() // 2
-            hy = Settings.SCREEN_HEIGHT - PAD - hint.get_height()
+            hy = screen.get_height() - PAD - hint.get_height()
             # subtle pulse using tick
             alpha = 128 + int(127 * abs(
                 (pygame.time.get_ticks() % 1000) / 500.0 - 1.0))

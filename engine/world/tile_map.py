@@ -2,7 +2,6 @@
 
 import pytmx
 import pygame
-from engine.settings import Settings
 from engine.world.collision import CollisionMap
 from engine.common.portal_data import Portal
 from engine.world.portal_loader import PortalLoader
@@ -25,7 +24,7 @@ class TileMap:
         self.tile_height = self._tmx.tileheight
         self.width       = self._tmx.width     # in tiles
         self.height      = self._tmx.height    # in tiles
-        self.collision_map = collision_factory(self._tmx)
+        self.collision_map = collision_factory(self._tmx, self._tmx.tilewidth)
         self.portals: list[Portal] = (portal_loader or PortalLoader()).load(self._tmx)
 
     @property
@@ -55,9 +54,9 @@ class TileMap:
 
         # viewport tile range — cull off-screen tiles
         col_start = max(0, offset_x // tw)
-        col_end   = min(self.width,  (offset_x + Settings.SCREEN_WIDTH)  // tw + 1)
+        col_end   = min(self.width,  (offset_x + screen.get_width())  // tw + 1)
         row_start = max(0, offset_y // th)
-        row_end   = min(self.height, (offset_y + Settings.SCREEN_HEIGHT) // th + 1)
+        row_end   = min(self.height, (offset_y + screen.get_height()) // th + 1)
 
         for row in range(row_start, row_end):
             for col in range(col_start, col_end):

@@ -8,7 +8,6 @@ from __future__ import annotations
 from pathlib import Path
 import pygame
 
-from engine.settings import Settings
 from engine.common.member_state import MemberState
 from engine.common.service.party_state import exp_pct
 from engine.common.ui.colors import (
@@ -132,15 +131,15 @@ class StatusRenderer:
         screen.blit(self._font_title.render("STATUS", True, HEADER_COLOR), (PAD_X, PAD_Y))
         gp_val   = self._font_gp.render(f"{gp:,}", True, TEXT_PRIMARY)
         gp_label = self._font_gp.render("GP", True, HEADER_COLOR)
-        gx = Settings.SCREEN_WIDTH - PAD_X - gp_val.get_width()
+        gx = screen.get_width() - PAD_X - gp_val.get_width()
         screen.blit(gp_val,   (gx, PAD_Y + 2))
         screen.blit(gp_label, (gx - gp_label.get_width() - 6, PAD_Y + 2))
         pygame.draw.line(screen, (68, 68, 68),
                          (PAD_X, PAD_Y + HEADER_H - 4),
-                         (Settings.SCREEN_WIDTH - PAD_X, PAD_Y + HEADER_H - 4))
+                         (screen.get_width() - PAD_X, PAD_Y + HEADER_H - 4))
 
     def _draw_row(self, screen, m: MemberState, index: int, y: int, selected: bool) -> None:
-        row_w = Settings.SCREEN_WIDTH - PAD_X * 2
+        row_w = screen.get_width() - PAD_X * 2
         bg  = ROW_COLOR_SEL if selected else ROW_COLOR_NORM
         bdr = BORDER_SEL    if selected else BORDER_NORM
         pygame.draw.rect(screen, bg,  (PAD_X, y, row_w, ROW_H), border_radius=4)
@@ -265,11 +264,11 @@ class StatusRenderer:
         pad    = 16
         w      = 340
         h      = pad + 28 + len(spells) * row_h + pad + 20
-        x      = (Settings.SCREEN_WIDTH - w) // 2
-        y      = (Settings.SCREEN_HEIGHT - h) // 2
+        x      = (screen.get_width() - w) // 2
+        y      = (screen.get_height() - h) // 2
 
         overlay = pygame.Surface(
-            (Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT), pygame.SRCALPHA
+            (screen.get_width(), screen.get_height()), pygame.SRCALPHA
         )
         overlay.fill((0, 0, 0, 150))
         screen.blit(overlay, (0, 0))
@@ -311,8 +310,8 @@ class StatusRenderer:
 
     def _draw_popup(self, screen: pygame.Surface, popup_text: str) -> None:
         pw, ph = 360, 80
-        px = (Settings.SCREEN_WIDTH  - pw) // 2
-        py = (Settings.SCREEN_HEIGHT - ph) // 2
+        px = (screen.get_width()  - pw) // 2
+        py = (screen.get_height() - ph) // 2
         pygame.draw.rect(screen, BG_COLOR,   (px, py, pw, ph), border_radius=6)
         pygame.draw.rect(screen, BORDER_SEL, (px, py, pw, ph), 2, border_radius=6)
         msg = self._font_toast.render(popup_text, True, C_TOAST)
@@ -321,8 +320,8 @@ class StatusRenderer:
         screen.blit(hint, (px + (pw - hint.get_width()) // 2, py + ph - 28))
 
     def _draw_footer(self, screen: pygame.Surface) -> None:
-        fy = Settings.SCREEN_HEIGHT - FOOTER_H
+        fy = screen.get_height() - FOOTER_H
         pygame.draw.line(screen, (51, 51, 51),
-                         (PAD_X, fy), (Settings.SCREEN_WIDTH - PAD_X, fy))
+                         (PAD_X, fy), (screen.get_width() - PAD_X, fy))
         hint = self._font_hint.render("\u2191\u2193 select \u00b7 ENTER spells \u00b7 S close", True, MUTED)
         screen.blit(hint, (PAD_X, fy + 8))

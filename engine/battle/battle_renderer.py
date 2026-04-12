@@ -12,16 +12,8 @@ import pygame
 from engine.battle.combatant import Combatant, StatusEffect
 from engine.battle.battle_state import BattleState, BattlePhase
 from engine.battle.constants import ENEMY_AREA_H, ENEMY_LAYOUTS, ENEMY_SIZES, ROW_H
-from engine.settings import Settings
 from engine.common.ui.colors import C_BG, C_TEXT, C_TEXT_MUT, C_TEXT_DIM, HP_LOW_THRESHOLD
 from engine.world.sprite_sheet import SpriteSheet, Direction
-
-# ── Layout ────────────────────────────────────────────────────
-BOTTOM_H        = Settings.SCREEN_HEIGHT - ENEMY_AREA_H
-PARTY_W         = int(Settings.SCREEN_WIDTH * 0.25)
-CMD_W           = int(Settings.SCREEN_WIDTH * 0.30)
-MSG_X           = PARTY_W + CMD_W
-MSG_W           = Settings.SCREEN_WIDTH - MSG_X
 
 PORTRAIT_SIZE   = 36
 ROW_PAD         = 8
@@ -56,8 +48,21 @@ C_MSG_PARTY    = (100, 200, 255)
 class BattleRenderer:
     """Handles all rendering for the battle scene."""
 
-    def __init__(self, scenario_path: Path) -> None:
+    def __init__(
+        self,
+        scenario_path: Path,
+        screen_width: int = 1280,
+        screen_height: int = 766,
+    ) -> None:
         self._scenario_path = scenario_path
+        # ── Layout constants ──────────────────────────────────
+        self._screen_w  = screen_width
+        self._screen_h  = screen_height
+        self.bottom_h   = screen_height - ENEMY_AREA_H
+        self.party_w    = int(screen_width * 0.25)
+        self.cmd_w      = int(screen_width * 0.30)
+        self.msg_x      = self.party_w + self.cmd_w
+        self.msg_w      = screen_width - self.msg_x
         self._fonts_ready = False
         self._portraits: dict[str, pygame.Surface] = {}
         self._enemy_size: dict[str, tuple] = {}
@@ -146,8 +151,8 @@ class BattleRenderer:
 
         bg = self._load_background(state.background) if state.background else None
         if bg is not None:
-            screen.blit(bg, (0, 0), area=(0, 0, Settings.SCREEN_WIDTH, ENEMY_AREA_H))
-            screen.fill(C_BG, (0, ENEMY_AREA_H, Settings.SCREEN_WIDTH, BOTTOM_H))
+            screen.blit(bg, (0, 0), area=(0, 0, self._screen_w, ENEMY_AREA_H))
+            screen.fill(C_BG, (0, ENEMY_AREA_H, self._screen_w, self.bottom_h))
         else:
             screen.fill(C_BG)
 
@@ -163,7 +168,7 @@ class BattleRenderer:
             return
         color = C_MSG_ENEMY if is_enemy else C_MSG_PARTY
         text = self._font_msg.render(resolve_msg, True, color)
-        tx = MSG_X + 10
+        tx = self.msg_x + 10
         ty = ENEMY_AREA_H + 10
         screen.blit(text, (tx, ty))
 
@@ -174,14 +179,14 @@ class BattleRenderer:
                          has_bg: bool = False) -> None:
         if not has_bg:
             pygame.draw.rect(screen, C_FLOOR,
-                             (0, ENEMY_AREA_H - 60, Settings.SCREEN_WIDTH, 60))
+                             (0, ENEMY_AREA_H - 60, self._screen_w, 60))
             pygame.draw.line(screen, (42, 42, 68),
-                             (0, ENEMY_AREA_H - 60), (Settings.SCREEN_WIDTH, ENEMY_AREA_H - 60))
+                             (0, ENEMY_AREA_H - 60), (self._screen_w, ENEMY_AREA_H - 60))
 
         enemies = state.enemies
         n = len(enemies)
         offsets = ENEMY_LAYOUTS.get(n, ENEMY_LAYOUTS[1])
-        cx = Settings.SCREEN_WIDTH // 2
+        cx = self._screen_w // 2
         cy = ENEMY_AREA_H // 2 + 10
 
         for i, enemy in enumerate(enemies):
@@ -249,11 +254,11 @@ class BattleRenderer:
                            resolve_msg: str,
                            resolve_is_enemy: bool = False) -> None:
         pygame.draw.line(screen, C_PANEL_LINE,
-                         (0, ENEMY_AREA_H), (Settings.SCREEN_WIDTH, ENEMY_AREA_H))
+                         (0, ENEMY_AREA_H), (self._screen_w, ENEMY_AREA_H))
         pygame.draw.line(screen, C_PANEL_LINE,
-                         (PARTY_W, ENEMY_AREA_H), (PARTY_W, Settings.SCREEN_HEIGHT))
+                         (self.party_w, ENEMY_AREA_H), (self.party_w, self._screen_h))
         pygame.draw.line(screen, C_PANEL_LINE,
-                         (MSG_X, ENEMY_AREA_H), (MSG_X, Settings.SCREEN_HEIGHT))
+                         (self.msg_x, ENEMY_AREA_H), (self.msg_x, self._screen_h))
         self._draw_party_panel(screen, state, target_pool, target_sel)
         self._draw_command_panel(screen, state, cmd_items, cmd_sel,
                                 sub_items, sub_sel)
@@ -279,7 +284,7 @@ class BattleRenderer:
         bg  = C_ROW_ACTIVE if is_active else C_ROW_NORMAL
         bdr = C_BORDER_ACT if is_active else C_BORDER_NORM
 
-        rx, rw = ROW_PAD, PARTY_W - ROW_PAD * 2
+        rx, rw = ROW_PAD, self.party_w - ROW_PAD * 2
         pygame.draw.rect(screen, bg,  (rx, y, rw, ROW_H - 2), border_radius=4)
         bdr_w = 2 if is_active else 1
         pygame.draw.rect(screen, bdr, (rx, y, rw, ROW_H - 2), bdr_w, border_radius=4)
@@ -374,7 +379,7 @@ class BattleRenderer:
     def _draw_command_panel(self, screen: pygame.Surface, state: BattleState,
                            cmd_items: list[str], cmd_sel: int,
                            sub_items: list[dict], sub_sel: int) -> None:
-        panel_x = PARTY_W + 20
+        panel_x = self.party_w + 20
         active  = state.active
         phase   = state.phase
 
@@ -408,9 +413,9 @@ class BattleRenderer:
 
             if sel and not disabled:
                 pygame.draw.rect(screen, C_CMD_SEL_BG,
-                                 (x - 4, row_y - 4, CMD_W - 30, 32), border_radius=4)
+                                 (x - 4, row_y - 4, self.cmd_w - 30, 32), border_radius=4)
                 pygame.draw.rect(screen, C_CMD_SEL_BDR,
-                                 (x - 4, row_y - 4, CMD_W - 30, 32), 1, border_radius=4)
+                                 (x - 4, row_y - 4, self.cmd_w - 30, 32), 1, border_radius=4)
 
             col = (C_TEXT_DIM if disabled
                    else (200, 160, 255) if sel else C_TEXT_MUT)
@@ -433,9 +438,9 @@ class BattleRenderer:
 
             if sel and not disabled:
                 pygame.draw.rect(screen, C_CMD_SEL_BG,
-                                 (x - 4, row_y - 3, CMD_W - 30, 26), border_radius=4)
+                                 (x - 4, row_y - 3, self.cmd_w - 30, 26), border_radius=4)
                 pygame.draw.rect(screen, C_CMD_SEL_BDR,
-                                 (x - 4, row_y - 3, CMD_W - 30, 26), 1, border_radius=4)
+                                 (x - 4, row_y - 3, self.cmd_w - 30, 26), 1, border_radius=4)
 
             col = C_TEXT_DIM if disabled else (C_TEXT if sel else C_TEXT_MUT)
             if sel and not disabled:

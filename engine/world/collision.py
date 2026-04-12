@@ -2,7 +2,6 @@
 
 import pytmx
 from engine.common.position_data import Position
-from engine.settings import Settings
 
 COLLISION_LAYER_NAME = "collision"
 
@@ -13,7 +12,8 @@ class CollisionMap:
     Any non-zero tile GID in that layer = impassable.
     """
 
-    def __init__(self, tmx_data: pytmx.TiledMap) -> None:
+    def __init__(self, tmx_data: pytmx.TiledMap, tile_size: int = 32) -> None:
+        self._tile_size = tile_size
         self._blocked: set[tuple[int, int]] = set()
         self._load(tmx_data)
 
@@ -32,8 +32,8 @@ class CollisionMap:
 
     def is_blocked_px(self, px: int, py: int) -> bool:
         """Check passability using pixel coordinates."""
-        tile_x = px // Settings.TILE_SIZE
-        tile_y = py // Settings.TILE_SIZE
+        tile_x = px // self._tile_size
+        tile_y = py // self._tile_size
         return self.is_blocked(tile_x, tile_y)
 
     def is_rect_blocked(self, px: int, py: int, width: int, height: int) -> bool:

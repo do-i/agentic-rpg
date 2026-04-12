@@ -4,7 +4,6 @@ import pygame
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
-from engine.settings import Settings
 from engine.item.item_catalog import ItemCatalog
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.io.game_state_loader import from_new_game
@@ -86,8 +85,8 @@ class NameEntryScene(Scene):
             pygame.key.start_text_input()
 
         screen.fill((10, 10, 30))
-        cx = Settings.SCREEN_WIDTH  // 2
-        cy = Settings.SCREEN_HEIGHT // 2
+        cx = screen.get_width()  // 2
+        cy = screen.get_height() // 2
 
         prompt = self._prompt_font.render("Enter your name", True, (180, 180, 140))
         screen.blit(prompt, (cx - prompt.get_width() // 2, cy - 100))

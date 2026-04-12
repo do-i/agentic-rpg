@@ -4,7 +4,6 @@ import pygame
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
-from engine.settings import Settings
 from engine.common.io.save_manager import GameStateManager
 from engine.common.io.manifest_loader import ManifestLoader
 from engine.common.ui.menu import Menu
@@ -68,12 +67,12 @@ class TitleScene(Scene):
         screen.fill((10, 10, 30))
 
         text = self._title_font.render(self._title, True, (220, 220, 180))
-        x = (Settings.SCREEN_WIDTH - text.get_width()) // 2
+        x = (screen.get_width() - text.get_width()) // 2
         screen.blit(text, (x, 180))
 
         # gray out Load Game if no saves
         if not self._has_saves:
             self._menu.set_item_disabled("Load Game", True)
 
-        menu_x = (Settings.SCREEN_WIDTH - 200) // 2
+        menu_x = (screen.get_width() - 200) // 2
         self._menu.render(screen, menu_x, 380)

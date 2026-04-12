@@ -9,7 +9,6 @@ import pygame
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
-from engine.settings import Settings
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.item_entry_state import ItemEntry
 from engine.common.service.repository_state import RepositoryState

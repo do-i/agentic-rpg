@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import pygame
-from engine.settings import Settings
 from engine.common.item_entry_state import ItemEntry
 from engine.item.item_logic import TABS, actions_for, display_name
 from engine.item.magic_core_catalog_state import MagicCoreCatalogState
@@ -106,12 +105,12 @@ class ItemRenderer:
         self._draw_tabs(screen, tab_index, in_tab)
 
         panel_top    = PAD + HEADER_H + TAB_H + TAB_GAP * 2
-        panel_bottom = Settings.SCREEN_HEIGHT - FOOTER_H - PAD
+        panel_bottom = screen.get_height() - FOOTER_H - PAD
         panel_h      = panel_bottom - panel_top
 
         list_x = PAD
         det_x  = PAD + LIST_W + PAD
-        det_w  = Settings.SCREEN_WIDTH - det_x - PAD
+        det_w  = screen.get_width() - det_x - PAD
 
         self._draw_list_panel(screen, list_x, panel_top, LIST_W, panel_h,
                               items, list_sel, scroll, tab_index, in_tab, in_action)
@@ -133,12 +132,12 @@ class ItemRenderer:
         screen.blit(title, (PAD, PAD + 6))
         gp_val   = self._font_gp.render(f"{gp}", True, TEXT_PRIMARY)
         gp_label = self._font_gp.render("GP", True, HEADER_COLOR)
-        gx = Settings.SCREEN_WIDTH - PAD - gp_val.get_width()
+        gx = screen.get_width() - PAD - gp_val.get_width()
         screen.blit(gp_val,   (gx, PAD + 6))
         screen.blit(gp_label, (gx - gp_label.get_width() - 6, PAD + 6))
         pygame.draw.line(screen, DIVIDER,
                          (PAD, PAD + HEADER_H - 2),
-                         (Settings.SCREEN_WIDTH - PAD, PAD + HEADER_H - 2))
+                         (screen.get_width() - PAD, PAD + HEADER_H - 2))
 
     # ── Tabs ──────────────────────────────────────────────────
 
@@ -300,8 +299,8 @@ class ItemRenderer:
     def _draw_confirm_overlay(self, screen: pygame.Surface, entry: ItemEntry | None) -> None:
         name  = entry.id.replace("_", " ").title() if entry else "item"
         ow, oh = 420, 110
-        ox = (Settings.SCREEN_WIDTH  - ow) // 2
-        oy = (Settings.SCREEN_HEIGHT - oh) // 2
+        ox = (screen.get_width()  - ow) // 2
+        oy = (screen.get_height() - oh) // 2
         pygame.draw.rect(screen, (30, 15, 20), (ox, oy, ow, oh), border_radius=6)
         pygame.draw.rect(screen, (180, 70, 70), (ox, oy, ow, oh), 2, border_radius=6)
         msg  = self._font_detail.render(f"Discard {name}?", True, (220, 180, 180))
@@ -312,8 +311,8 @@ class ItemRenderer:
     def _draw_aoe_confirm_overlay(self, screen: pygame.Surface, entry: ItemEntry | None) -> None:
         name  = entry.id.replace("_", " ").title() if entry else "item"
         ow, oh = 460, 110
-        ox = (Settings.SCREEN_WIDTH  - ow) // 2
-        oy = (Settings.SCREEN_HEIGHT - oh) // 2
+        ox = (screen.get_width()  - ow) // 2
+        oy = (screen.get_height() - oh) // 2
         pygame.draw.rect(screen, C_CONFIRM_BG,  (ox, oy, ow, oh), border_radius=6)
         pygame.draw.rect(screen, C_CONFIRM_BDR, (ox, oy, ow, oh), 2, border_radius=6)
         msg  = self._font_detail.render(
@@ -326,8 +325,8 @@ class ItemRenderer:
     # ── Footer ────────────────────────────────────────────────
 
     def _draw_footer(self, screen: pygame.Surface) -> None:
-        fy = Settings.SCREEN_HEIGHT - FOOTER_H
-        pygame.draw.line(screen, DIVIDER, (PAD, fy), (Settings.SCREEN_WIDTH - PAD, fy))
+        fy = screen.get_height() - FOOTER_H
+        pygame.draw.line(screen, DIVIDER, (PAD, fy), (screen.get_width() - PAD, fy))
         hint = self._font_hint.render(
             "\u2191\u2193 navigate \u00b7 Q/E tab \u00b7 \u2192 actions \u00b7 I close", True, MUTED)
         screen.blit(hint, (PAD, fy + 8))

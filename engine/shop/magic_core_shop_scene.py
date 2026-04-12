@@ -8,7 +8,6 @@ import pygame
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
-from engine.settings import Settings
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.service.repository_state import RepositoryState
 
@@ -263,7 +262,7 @@ class MagicCoreShopScene(Scene):
 
         # dim world underneath
         overlay = pygame.Surface(
-            (Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT), pygame.SRCALPHA
+            (screen.get_width(), screen.get_height()), pygame.SRCALPHA
         )
         overlay.fill((0, 0, 0, 180))
         screen.blit(overlay, (0, 0))
@@ -274,8 +273,8 @@ class MagicCoreShopScene(Scene):
         body_h = rows * (ROW_H + ROW_GAP) + 12
         mh     = HEADER_H + body_h + FOOTER_H + PAD * 2
 
-        mx = (Settings.SCREEN_WIDTH  - mw) // 2
-        my = (Settings.SCREEN_HEIGHT - mh) // 2
+        mx = (screen.get_width()  - mw) // 2
+        my = (screen.get_height() - mh) // 2
 
         pygame.draw.rect(screen, C_BG,     (mx, my, mw, mh), border_radius=8)
         pygame.draw.rect(screen, C_SEL_BDR,(mx, my, mw, mh), 1, border_radius=8)
@@ -399,8 +398,8 @@ class MagicCoreShopScene(Scene):
         total = self._qty * rate
 
         ow, oh = 480, 110
-        ox = (Settings.SCREEN_WIDTH  - ow) // 2
-        oy = (Settings.SCREEN_HEIGHT - oh) // 2
+        ox = (screen.get_width()  - ow) // 2
+        oy = (screen.get_height() - oh) // 2
 
         pygame.draw.rect(screen, C_CONFIRM_BG,  (ox, oy, ow, oh), border_radius=6)
         pygame.draw.rect(screen, C_CONFIRM_BDR, (ox, oy, ow, oh), 2, border_radius=6)
@@ -418,8 +417,8 @@ class MagicCoreShopScene(Scene):
 
     def _draw_popup(self, screen: pygame.Surface) -> None:
         pw, ph = 460, 80
-        px = (Settings.SCREEN_WIDTH  - pw) // 2
-        py = (Settings.SCREEN_HEIGHT - ph) // 2
+        px = (screen.get_width()  - pw) // 2
+        py = (screen.get_height() - ph) // 2
         pygame.draw.rect(screen, C_BG,      (px, py, pw, ph), border_radius=6)
         pygame.draw.rect(screen, C_SEL_BDR, (px, py, pw, ph), 2, border_radius=6)
         msg = self._font_toast.render(self._popup_text, True, C_GP_GAIN)

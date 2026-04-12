@@ -3,7 +3,6 @@
 # Shared layout constants for the battle system.
 # Used by both battle_logic.py (float positioning) and battle_renderer.py (drawing).
 
-from engine.settings import Settings
 
 # ── Layout ────────────────────────────────────────────────────
 ENEMY_AREA_H = 468

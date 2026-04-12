@@ -3,18 +3,18 @@
 import pytest
 from engine.world.camera import Camera
 from engine.common.position_data import Position
-from engine.settings import Settings
 
 
-# ── Helpers ───────────────────────────────────────────────────
+SCREEN_W = 1280
+SCREEN_H = 766
 
 # Map larger than viewport to allow camera movement
-MAP_W = Settings.SCREEN_WIDTH * 3   # 3840
-MAP_H = Settings.SCREEN_HEIGHT * 3  # 2160
+MAP_W = SCREEN_W * 3   # 3840
+MAP_H = SCREEN_H * 3   # 2298
 
 
 def make_camera() -> Camera:
-    return Camera(MAP_W, MAP_H)
+    return Camera(MAP_W, MAP_H, SCREEN_W, SCREEN_H)
 
 
 # ── Construction ──────────────────────────────────────────────
@@ -31,9 +31,9 @@ class TestCameraInit:
 class TestUpdate:
     def test_centers_on_player(self):
         c = make_camera()
-        c.update(Position(Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT))
-        assert c.offset_x == Settings.SCREEN_WIDTH // 2
-        assert c.offset_y == Settings.SCREEN_HEIGHT // 2
+        c.update(Position(SCREEN_W, SCREEN_H))
+        assert c.offset_x == SCREEN_W // 2
+        assert c.offset_y == SCREEN_H // 2
 
     def test_clamps_left_edge(self):
         c = make_camera()
@@ -48,24 +48,24 @@ class TestUpdate:
     def test_clamps_right_edge(self):
         c = make_camera()
         c.update(Position(MAP_W, MAP_H // 2))
-        assert c.offset_x == MAP_W - Settings.SCREEN_WIDTH
+        assert c.offset_x == MAP_W - SCREEN_W
 
     def test_clamps_bottom_edge(self):
         c = make_camera()
         c.update(Position(MAP_W // 2, MAP_H))
-        assert c.offset_y == MAP_H - Settings.SCREEN_HEIGHT
+        assert c.offset_y == MAP_H - SCREEN_H
 
     def test_player_near_center_moves_camera(self):
         c = make_camera()
         mid_x = MAP_W // 2
         mid_y = MAP_H // 2
         c.update(Position(mid_x, mid_y))
-        assert c.offset_x == mid_x - Settings.SCREEN_WIDTH // 2
-        assert c.offset_y == mid_y - Settings.SCREEN_HEIGHT // 2
+        assert c.offset_x == mid_x - SCREEN_W // 2
+        assert c.offset_y == mid_y - SCREEN_H // 2
 
     def test_small_map_clamps_both_axes(self):
         # map smaller than viewport — offset should stay at 0
-        small_cam = Camera(Settings.SCREEN_WIDTH // 2, Settings.SCREEN_HEIGHT // 2)
+        small_cam = Camera(SCREEN_W // 2, SCREEN_H // 2, SCREEN_W, SCREEN_H)
         small_cam.update(Position(100, 100))
         assert small_cam.offset_x == 0
         assert small_cam.offset_y == 0
@@ -80,10 +80,10 @@ class TestApply:
 
     def test_apply_subtracts_offset(self):
         c = make_camera()
-        c.update(Position(Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT))
-        sx, sy = c.apply(Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT)
-        assert sx == Settings.SCREEN_WIDTH - c.offset_x
-        assert sy == Settings.SCREEN_HEIGHT - c.offset_y
+        c.update(Position(SCREEN_W, SCREEN_H))
+        sx, sy = c.apply(SCREEN_W, SCREEN_H)
+        assert sx == SCREEN_W - c.offset_x
+        assert sy == SCREEN_H - c.offset_y
 
     def test_apply_returns_tuple(self):
         c = make_camera()

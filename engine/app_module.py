@@ -2,7 +2,7 @@
 
 from injector import Module, singleton, provider
 
-from engine.settings import EngineSettings
+from engine.settings.engine_config_data import EngineConfigData
 from engine.common.ui.display import Display
 from engine.common.util.frame_clock import FrameClock
 from engine.common.scene.scene_manager import SceneManager
@@ -38,8 +38,8 @@ class AppModule(Module):
 
     @provider
     @singleton
-    def provide_engine_settings(self) -> EngineSettings:
-        return EngineSettings.load()
+    def provide_engine_settings(self) -> EngineConfigData:
+        return EngineConfigData.load()
 
     @provider
     @singleton
@@ -48,13 +48,13 @@ class AppModule(Module):
 
     @provider
     @singleton
-    def provide_display(self) -> Display:
-        return Display()
+    def provide_display(self, config: EngineConfigData) -> Display:
+        return Display(config.screen_width, config.screen_height, config.window_title)
 
     @provider
     @singleton
-    def provide_frame_clock(self) -> FrameClock:
-        return FrameClock()
+    def provide_frame_clock(self, config: EngineConfigData) -> FrameClock:
+        return FrameClock(config.fps)
 
     @provider
     @singleton
@@ -75,7 +75,7 @@ class AppModule(Module):
     @singleton
     def provide_game_state_manager(
         self,
-        settings: EngineSettings,
+        settings: EngineConfigData,
         loader: ManifestLoader,
         item_catalog: ItemCatalog,
     ) -> GameStateManager:
@@ -93,8 +93,8 @@ class AppModule(Module):
 
     @provider
     @singleton
-    def provide_npc_loader(self, loader: ManifestLoader) -> NpcLoader:
-        return NpcLoader(scenario_path=loader.scenario_path)
+    def provide_npc_loader(self, loader: ManifestLoader, config: EngineConfigData) -> NpcLoader:
+        return NpcLoader(scenario_path=loader.scenario_path, tile_size=config.tile_size)
 
     @provider
     @singleton
@@ -145,7 +145,7 @@ class AppModule(Module):
     @singleton
     def provide_scene_registry(
         self,
-        settings: EngineSettings,
+        settings: EngineConfigData,
         loader: ManifestLoader,
         scene_manager: SceneManager,
         holder: GameStateHolder,
@@ -188,6 +188,10 @@ class AppModule(Module):
                 mc_exchange_confirm_large=settings.mc_exchange_confirm_large,
                 bgm_manager=bgm_manager,
                 sfx_manager=sfx_manager,
+                screen_width=settings.screen_width,
+                screen_height=settings.screen_height,
+                tile_size=settings.tile_size,
+                fps=settings.fps,
             ))
         registry.register_factory("status",
             lambda: StatusScene(

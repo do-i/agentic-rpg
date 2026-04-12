@@ -4,7 +4,6 @@ import pygame
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
-from engine.settings import Settings
 from engine.common.io.save_manager import GameStateManager
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.save_slot_data import SaveSlot
@@ -99,8 +98,8 @@ class LoadGameScene(Scene):
             self._init()
 
         screen.fill((10, 10, 30))
-        mx = (Settings.SCREEN_WIDTH - MODAL_W) // 2
-        my = (Settings.SCREEN_HEIGHT - MODAL_H) // 2
+        mx = (screen.get_width() - MODAL_W) // 2
+        my = (screen.get_height() - MODAL_H) // 2
 
         pygame.draw.rect(screen, (20, 20, 45), (mx, my, MODAL_W, MODAL_H))
         pygame.draw.rect(screen, (160, 160, 100), (mx, my, MODAL_W, MODAL_H), 2)

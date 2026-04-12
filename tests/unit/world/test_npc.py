@@ -3,11 +3,13 @@
 import pytest
 from unittest.mock import MagicMock
 import pygame
-from engine.world.npc import Npc, INTERACTION_RANGE, _direction_toward
+from engine.world.npc import Npc, _direction_toward
+
+TS = 32
+INTERACTION_RANGE = TS * 1.5  # mirrors Npc default
 from engine.world.sprite_sheet import SpriteSheet, Direction
 from engine.common.flag_state import FlagState
 from engine.common.position_data import Position
-from engine.settings import Settings
 
 
 def make_npc(
@@ -63,28 +65,28 @@ class TestIsPresent:
 class TestIsNear:
     def test_same_pixel_position_is_near(self):
         npc = make_npc(tile_x=5, tile_y=5)
-        pos = Position(5 * Settings.TILE_SIZE, 5 * Settings.TILE_SIZE)
+        pos = Position(5 * TS, 5 * TS)
         assert npc.is_near(pos)
 
     def test_adjacent_tile_is_near(self):
         npc = make_npc(tile_x=5, tile_y=5)
-        pos = Position(6 * Settings.TILE_SIZE, 5 * Settings.TILE_SIZE)
+        pos = Position(6 * TS, 5 * TS)
         assert npc.is_near(pos)
 
     def test_far_position_is_not_near(self):
         npc = make_npc(tile_x=5, tile_y=5)
-        pos = Position(20 * Settings.TILE_SIZE, 20 * Settings.TILE_SIZE)
+        pos = Position(20 * TS, 20 * TS)
         assert not npc.is_near(pos)
 
     def test_boundary_just_inside(self):
         npc = make_npc(tile_x=5, tile_y=5)
-        npc_px = 5 * Settings.TILE_SIZE
+        npc_px = 5 * TS
         pos = Position(npc_px + int(INTERACTION_RANGE), npc_px)
         assert npc.is_near(pos)
 
     def test_boundary_just_outside(self):
         npc = make_npc(tile_x=5, tile_y=5)
-        npc_px = 5 * Settings.TILE_SIZE
+        npc_px = 5 * TS
         pos = Position(npc_px + int(INTERACTION_RANGE) + 1, npc_px)
         assert not npc.is_near(pos)
 
@@ -94,37 +96,37 @@ class TestIsNear:
 class TestIsFacingToward:
     def test_facing_down_target_below(self):
         npc = make_npc(tile_x=5, tile_y=5, default_facing="down")
-        target = Position(5 * Settings.TILE_SIZE, 6 * Settings.TILE_SIZE)
+        target = Position(5 * TS, 6 * TS)
         assert npc.is_facing_toward(target)
 
     def test_facing_down_target_above(self):
         npc = make_npc(tile_x=5, tile_y=5, default_facing="down")
-        target = Position(5 * Settings.TILE_SIZE, 4 * Settings.TILE_SIZE)
+        target = Position(5 * TS, 4 * TS)
         assert not npc.is_facing_toward(target)
 
     def test_facing_up_target_above(self):
         npc = make_npc(tile_x=5, tile_y=5, default_facing="up")
-        target = Position(5 * Settings.TILE_SIZE, 4 * Settings.TILE_SIZE)
+        target = Position(5 * TS, 4 * TS)
         assert npc.is_facing_toward(target)
 
     def test_facing_left_target_left(self):
         npc = make_npc(tile_x=5, tile_y=5, default_facing="left")
-        target = Position(4 * Settings.TILE_SIZE, 5 * Settings.TILE_SIZE)
+        target = Position(4 * TS, 5 * TS)
         assert npc.is_facing_toward(target)
 
     def test_facing_right_target_right(self):
         npc = make_npc(tile_x=5, tile_y=5, default_facing="right")
-        target = Position(6 * Settings.TILE_SIZE, 5 * Settings.TILE_SIZE)
+        target = Position(6 * TS, 5 * TS)
         assert npc.is_facing_toward(target)
 
     def test_facing_right_target_left(self):
         npc = make_npc(tile_x=5, tile_y=5, default_facing="right")
-        target = Position(4 * Settings.TILE_SIZE, 5 * Settings.TILE_SIZE)
+        target = Position(4 * TS, 5 * TS)
         assert not npc.is_facing_toward(target)
 
     def test_same_position_returns_false(self):
         npc = make_npc(tile_x=5, tile_y=5, default_facing="down")
-        target = Position(5 * Settings.TILE_SIZE, 5 * Settings.TILE_SIZE)
+        target = Position(5 * TS, 5 * TS)
         assert not npc.is_facing_toward(target)
 
 
@@ -185,14 +187,14 @@ class TestFacing:
 
     def test_near_faces_player_below(self):
         npc = make_npc(tile_x=5, tile_y=5)
-        npc_py = 5 * Settings.TILE_SIZE
-        player = Position(5 * Settings.TILE_SIZE, npc_py + 20)
+        npc_py = 5 * TS
+        player = Position(5 * TS, npc_py + 20)
         assert npc._facing(player, near=True) == Direction.DOWN
 
     def test_near_faces_player_above(self):
         npc = make_npc(tile_x=5, tile_y=5)
-        npc_py = 5 * Settings.TILE_SIZE
-        player = Position(5 * Settings.TILE_SIZE, npc_py - 20)
+        npc_py = 5 * TS
+        player = Position(5 * TS, npc_py - 20)
         assert npc._facing(player, near=True) == Direction.UP
 
     def test_near_no_player_pos_returns_default(self):

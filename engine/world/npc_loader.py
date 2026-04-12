@@ -14,8 +14,9 @@ class NpcLoader:
     Loads sprite sheet from TSX path if provided.
     """
 
-    def __init__(self, scenario_path: Path | None = None) -> None:
+    def __init__(self, scenario_path: Path | None = None, tile_size: int = 32) -> None:
         self._scenario_path = scenario_path
+        self._tile_size = tile_size
 
     def load_from_map(self, map_yaml_path: Path) -> list[Npc]:
         if not map_yaml_path.exists():
@@ -56,6 +57,7 @@ class NpcLoader:
             anim_mode=anim_mode,
             anim_speed=anim_speed,
             wander_range=wander_range,
+            tile_size=self._tile_size,
         )
 
     def _load_sprite(self, sprite_path: str) -> SpriteSheet | None:

@@ -7,7 +7,6 @@ import pygame
 from pathlib import Path
 from engine.common.position_data import Position
 from engine.common.flag_state import FlagState
-from engine.settings import Settings
 from engine.world.sprite_sheet import SpriteSheet, Direction
 
 from typing import TYPE_CHECKING
@@ -17,7 +16,6 @@ if TYPE_CHECKING:
 NPC_SIZE = 64
 NPC_COLOR = (80, 160, 220)
 INDICATOR_COLOR = (255, 220, 50)
-INTERACTION_RANGE = Settings.TILE_SIZE * 1.5  # pixels
 
 # Animation frames
 IDLE_FRAME     = 0
@@ -82,11 +80,13 @@ class Npc:
         anim_mode: str = "still",
         anim_speed: float = 1.0,
         wander_range: int = 2,
+        tile_size: int = 32,
     ) -> None:
+        self._tile_size = tile_size
         self.id = npc_id
         self.dialogue_id = dialogue_id
-        self._origin_px = tile_x * Settings.TILE_SIZE
-        self._origin_py = tile_y * Settings.TILE_SIZE
+        self._origin_px = tile_x * tile_size
+        self._origin_py = tile_y * tile_size
         self._px = self._origin_px
         self._py = self._origin_py
         self._present_requires = present_requires or []
@@ -107,7 +107,8 @@ class Npc:
         self._wander_target_py: int | None = None
         self._wander_pause = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
         self._wander_moving = False
-        self._move_speed = Settings.TILE_SIZE * 1.5  # pixels/sec base
+        self._interaction_range = tile_size * 1.5    # pixels
+        self._move_speed = tile_size * 1.5           # pixels/sec base
 
     @property
     def pixel_position(self) -> Position:
@@ -136,7 +137,7 @@ class Npc:
     def is_near(self, player_px: Position) -> bool:
         dx = abs(self._px - player_px.x)
         dy = abs(self._py - player_px.y)
-        return dx <= INTERACTION_RANGE and dy <= INTERACTION_RANGE
+        return dx <= self._interaction_range and dy <= self._interaction_range
 
     def is_facing_toward(self, target: Position) -> bool:
         """True if the NPC's current facing direction points toward *target*."""
@@ -248,8 +249,7 @@ class Npc:
                             npc_rects: list[tuple[int, int, int, int]] | None = None) -> bool:
         """Choose a random tile within wander_range of origin.
         Returns False if no passable target found after a few tries."""
-        tile_size = Settings.TILE_SIZE
-        max_offset = self._wander_range * tile_size
+        max_offset = self._wander_range * self._tile_size
         rects = npc_rects or []
         for _ in range(8):
             tx = self._origin_px + random.randint(-max_offset, max_offset)

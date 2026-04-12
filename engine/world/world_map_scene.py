@@ -9,7 +9,6 @@ from engine.common.position_data import Position
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
-from engine.settings import Settings
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.io.save_manager import GameStateManager
 from engine.dialogue.dialogue_engine import DialogueEngine
@@ -63,7 +62,15 @@ class WorldMapScene(Scene):
         mc_exchange_confirm_large: bool = True,
         bgm_manager: BgmManager | None = None,
         sfx_manager: SfxManager | None = None,
+        screen_width: int = 1280,
+        screen_height: int = 766,
+        tile_size: int = 32,
+        fps: int = 60,
     ) -> None:
+        self._screen_width = screen_width
+        self._screen_height = screen_height
+        self._tile_size = tile_size
+        self._fps = fps
         self._smooth_collision = smooth_collision
         self._holder = holder
         self._loader = loader
@@ -109,7 +116,10 @@ class WorldMapScene(Scene):
 
         tmx_path = scenario_path / "assets" / "maps" / f"{map_id}.tmx"
         self._tile_map = self._tile_map_factory.create(str(tmx_path))
-        self._camera = Camera(self._tile_map.width_px, self._tile_map.height_px)
+        self._camera = Camera(
+            self._tile_map.width_px, self._tile_map.height_px,
+            self._screen_width, self._screen_height,
+        )
 
         sprite_sheet = self._load_protagonist_sprite(manifest, scenario_path)
         self._player = Player(
@@ -118,6 +128,8 @@ class WorldMapScene(Scene):
             map_height_px=self._tile_map.height_px,
             sprite_sheet=sprite_sheet,
             smooth_collision=self._smooth_collision,
+            tile_size=self._tile_size,
+            fps=self._fps,
         )
 
         map_yaml = scenario_path / "data" / "maps" / f"{map_id}.yaml"
@@ -462,10 +474,10 @@ class WorldMapScene(Scene):
         hint_font = pygame.font.SysFont("Arial", 16)
 
         w, h = 320, 110
-        x = (Settings.SCREEN_WIDTH - w) // 2
-        y = (Settings.SCREEN_HEIGHT - h) // 2
+        x = (screen.get_width() - w) // 2
+        y = (screen.get_height() - h) // 2
 
-        overlay = pygame.Surface((Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT), pygame.SRCALPHA)
+        overlay = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 160))
         screen.blit(overlay, (0, 0))
 
@@ -531,7 +543,7 @@ class WorldMapScene(Scene):
 
         if self._fade_alpha > 0:
             fade_surf = pygame.Surface(
-                (Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT), pygame.SRCALPHA
+                (screen.get_width(), screen.get_height()), pygame.SRCALPHA
             )
             fade_surf.fill((0, 0, 0, self._fade_alpha))
             screen.blit(fade_surf, (0, 0))

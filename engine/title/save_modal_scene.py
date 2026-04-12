@@ -2,7 +2,6 @@
 
 import pygame
 from engine.common.scene.scene import Scene
-from engine.settings import Settings
 from engine.common.io.save_manager import GameStateManager
 from engine.common.game_state import GameState
 from engine.common.save_slot_data import SaveSlot
@@ -139,13 +138,13 @@ class SaveModalScene(Scene):
             self._init_fonts()
 
         # dim background
-        overlay = pygame.Surface((Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT), pygame.SRCALPHA)
+        overlay = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 160))
         screen.blit(overlay, (0, 0))
 
         # modal box
-        mx = (Settings.SCREEN_WIDTH - MODAL_W) // 2
-        my = (Settings.SCREEN_HEIGHT - MODAL_H) // 2
+        mx = (screen.get_width() - MODAL_W) // 2
+        my = (screen.get_height() - MODAL_H) // 2
         pygame.draw.rect(screen, (20, 20, 45), (mx, my, MODAL_W, MODAL_H))
         pygame.draw.rect(screen, (160, 160, 100), (mx, my, MODAL_W, MODAL_H), 2)
 
@@ -226,8 +225,8 @@ class SaveModalScene(Scene):
 
     def _render_popup(self, screen: pygame.Surface) -> None:
         ph = 80
-        px = (Settings.SCREEN_WIDTH  - POPUP_W) // 2
-        py = (Settings.SCREEN_HEIGHT - ph) // 2
+        px = (screen.get_width()  - POPUP_W) // 2
+        py = (screen.get_height() - ph) // 2
         pygame.draw.rect(screen, (20, 20, 45),    (px, py, POPUP_W, ph), border_radius=6)
         pygame.draw.rect(screen, (160, 160, 100), (px, py, POPUP_W, ph), 2, border_radius=6)
         msg = self._font_toast.render(self._popup_text, True, (100, 220, 100))

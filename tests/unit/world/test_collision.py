@@ -5,7 +5,6 @@ from unittest.mock import MagicMock
 import pytmx
 
 from engine.world.collision import CollisionMap
-from engine.settings import Settings
 
 
 # ── Helpers ───────────────────────────────────────────────────
@@ -36,7 +35,7 @@ def make_empty_tmx() -> pytmx.TiledMap:
     return make_tmx(set())
 
 
-TS = Settings.TILE_SIZE
+TS = 32
 
 
 # ── Construction ──────────────────────────────────────────────
