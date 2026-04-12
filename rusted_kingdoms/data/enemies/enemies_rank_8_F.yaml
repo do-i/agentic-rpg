@@ -211,7 +211,7 @@ id: goblin
 name: Goblin
 type: humanoid
 rank: F
-sprite_scale: 215
+sprite_scale: 250
 hp: 25
 atk: 9
 def: 3
@@ -244,7 +244,7 @@ id: goblin_warrier
 name: Goblin Warrier
 type: humanoid
 rank: F
-sprite_scale: 230
+sprite_scale: 300
 hp: 35
 atk: 11
 def: 5

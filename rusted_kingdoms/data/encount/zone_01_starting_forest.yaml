@@ -5,41 +5,41 @@ background: world1-bg-1280x468
 
 set_a:
   entries:
-    - formation: [goblin]
-      weight: 30
+    - formation: [goblin, goblin_warrier, goblin, goblin]
+      weight: 93
     - formation: [goblin_warrier]
-      weight: 30
+      weight: 1
     - formation: [cave_spider, cave_spider]
-      weight: 5
+      weight: 1
     - formation: [giant_rat, giant_rat]
-      weight: 5
+      weight: 1
     - formation: [wild_wolf, cave_spider]
-      weight: 10
+      weight: 1
     - formation: [wild_wolf]
-      weight: 10
+      weight: 1
     - formation: [cave_bat]
-      weight: 5
+      weight: 1
     - formation: [treant]
-      weight: 5
+      weight: 1
 
 set_b:
   entries:
-    - formation: [goblin]
-      weight: 30
+    - formation: [goblin, goblin, goblin_warrier, goblin]
+      weight: 93
     - formation: [goblin_warrier]
-      weight: 30
+      weight: 1
     - formation: [venom_bat, venom_bat]
-      weight: 5
+      weight: 1
     - formation: [forest_spider]
-      weight: 5
+      weight: 1
     - formation: [venom_bat, forest_spider]
-      weight: 10
+      weight: 1
     - formation: [wild_wolf]
-      weight: 5
+      weight: 1
     - formation: [cave_bat]
-      weight: 10
+      weight: 1
     - formation: [treant]
-      weight: 5
+      weight: 1
 
 boss:
   id: forest_spider_giant
