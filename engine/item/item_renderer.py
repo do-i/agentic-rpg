@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import pygame
-from engine.common.item_entry_state import ItemEntry
+from engine.item.item_entry_state import ItemEntry
 from engine.item.item_logic import TABS, actions_for, display_name
 from engine.item.magic_core_catalog_state import MagicCoreCatalogState
 from engine.item.item_effect_handler import ItemEffectHandler

@@ -2,7 +2,7 @@
 
 import pytest
 from engine.world.camera import Camera
-from engine.common.position_data import Position
+from engine.world.position_data import Position
 
 
 SCREEN_W = 1280

@@ -8,7 +8,7 @@ from engine.status.status_scene import StatusScene
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.game_state import GameState
 from engine.party.member_state import MemberState
-from engine.common.party_state import PartyState
+from engine.party.party_state import PartyState
 from engine.party.party_state import exp_pct
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry

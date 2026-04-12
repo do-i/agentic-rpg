@@ -1,7 +1,7 @@
 # tests/unit/core/state/test_repository_state.py
 
 import pytest
-from engine.common.item_entry_state import ItemEntry
+from engine.item.item_entry_state import ItemEntry
 from engine.party.repository_state import (
     RepositoryState,
     GP_CAP,

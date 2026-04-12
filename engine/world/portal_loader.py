@@ -1,8 +1,8 @@
 # engine/io/portal_loader.py
 
 import pytmx
-from engine.common.portal_data import Portal
-from engine.common.position_data import Position
+from engine.world.portal_data import Portal
+from engine.world.position_data import Position
 
 PORTAL_LAYER_NAME = "portals"
 

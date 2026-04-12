@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from engine.common.item_entry_state import ItemEntry
+from engine.item.item_entry_state import ItemEntry
 
 if TYPE_CHECKING:
     from engine.item.item_catalog import ItemCatalog

@@ -5,7 +5,7 @@ import sys
 
 import pygame
 import yaml
-from engine.common.position_data import Position
+from engine.world.position_data import Position
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry

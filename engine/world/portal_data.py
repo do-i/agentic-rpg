@@ -1,7 +1,7 @@
 # engine/dto/portal.py
 
 from dataclasses import dataclass
-from engine.common.position_data import Position
+from engine.world.position_data import Position
 
 PORTAL_TRIGGER_RADIUS = 8  # px — portal fires when centers are within this distance
 

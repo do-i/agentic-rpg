@@ -3,7 +3,7 @@
 import pytest
 from unittest.mock import MagicMock
 
-from engine.common.item_entry_state import ItemEntry
+from engine.item.item_entry_state import ItemEntry
 from engine.party.repository_state import RepositoryState
 from engine.item.item_logic import (
     TABS, item_tab, filtered_items, is_usable,

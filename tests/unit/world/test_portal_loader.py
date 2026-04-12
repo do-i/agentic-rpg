@@ -5,8 +5,8 @@ from unittest.mock import MagicMock
 import pytmx
 
 from engine.world.portal_loader import PortalLoader
-from engine.common.portal_data import Portal
-from engine.common.position_data import Position
+from engine.world.portal_data import Portal
+from engine.world.position_data import Position
 
 
 def make_tmx(objects: list[dict]) -> pytmx.TiledMap:

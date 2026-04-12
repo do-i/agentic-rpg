@@ -1,13 +1,44 @@
-# engine/service/party_state.py
+# engine/party/party_state.py
 #
-# Stat calculation helpers operating on MemberState.
-# MemberState and PartyState data classes live in engine/dto/.
+# Party data + stat calculation helpers.
 
 from __future__ import annotations
 import math
 
 from engine.party.member_state import MemberState
-from engine.common.party_state import PartyState
+
+
+class PartyState:
+    """Holds the active party member list."""
+
+    def __init__(self) -> None:
+        self._members: list[MemberState] = []
+
+    def add_member(self, member: MemberState) -> None:
+        self._members.append(member)
+
+    def set_protagonist_name(self, name: str) -> None:
+        for m in self._members:
+            if m.protagonist:
+                m.name = name
+                return
+
+    @property
+    def members(self) -> list[MemberState]:
+        return list(self._members)
+
+    @property
+    def protagonist(self) -> MemberState | None:
+        for m in self._members:
+            if m.protagonist:
+                return m
+        return None
+
+    def __repr__(self) -> str:
+        return f"PartyState({self._members})"
+
+
+# ── Stat calculation helpers ─────────────────────────────────
 
 # EXP formula constants — mirrors battle_rewards.py
 _CLASS_EXP_BASE: dict[str, int] = {

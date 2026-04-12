@@ -10,7 +10,7 @@ from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
-from engine.common.item_entry_state import ItemEntry
+from engine.item.item_entry_state import ItemEntry
 from engine.party.repository_state import RepositoryState
 from engine.item.item_effect_handler import ItemEffectHandler
 from engine.ui.target_select_overlay import TargetSelectOverlay

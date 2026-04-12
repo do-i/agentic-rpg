@@ -13,7 +13,7 @@ from engine.encounter.encounter_resolver import EncounterResolver
 from engine.battle.battle_state import BattleState
 from engine.battle.combatant import Combatant
 from engine.common.flag_state import FlagState
-from engine.common.party_state import PartyState
+from engine.party.party_state import PartyState
 from engine.party.member_state import MemberState
 from engine.party.repository_state import RepositoryState
 

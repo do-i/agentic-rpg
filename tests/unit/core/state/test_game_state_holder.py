@@ -5,7 +5,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 from engine.common.game_state_holder import GameStateHolder
-from engine.common.position_data import Position
+from engine.world.position_data import Position
 from engine.io.game_state_loader import from_new_game
 
 # ── Shared manifest stub ──────────────────────────────────────

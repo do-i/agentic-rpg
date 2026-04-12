@@ -1,6 +1,6 @@
 # engine/dto/map_state.py
 
-from engine.common.position_data import Position
+from engine.world.position_data import Position
 
 
 class MapState:

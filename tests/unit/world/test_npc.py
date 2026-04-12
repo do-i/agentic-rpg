@@ -9,7 +9,7 @@ TS = 32
 INTERACTION_RANGE = TS * 1.5  # mirrors Npc default
 from engine.world.sprite_sheet import SpriteSheet, Direction
 from engine.common.flag_state import FlagState
-from engine.common.position_data import Position
+from engine.world.position_data import Position
 
 
 def make_npc(

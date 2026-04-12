@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from engine.common.item_entry_state import ItemEntry
+from engine.item.item_entry_state import ItemEntry
 from engine.party.repository_state import RepositoryState
 from engine.item.item_effect_handler import ItemEffectHandler
 from engine.item.magic_core_catalog_state import MagicCoreCatalogState, build_mc_catalog

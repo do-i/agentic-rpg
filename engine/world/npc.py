@@ -5,7 +5,7 @@ from __future__ import annotations
 import random
 import pygame
 from pathlib import Path
-from engine.common.position_data import Position
+from engine.world.position_data import Position
 from engine.common.flag_state import FlagState
 from engine.world.sprite_sheet import SpriteSheet, Direction
 

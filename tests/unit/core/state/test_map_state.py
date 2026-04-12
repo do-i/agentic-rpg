@@ -1,7 +1,7 @@
 # tests/unit/state/test_map_state.py
 
 import pytest
-from engine.common.position_data import Position
+from engine.world.position_data import Position
 from engine.common.map_state import MapState
 
 

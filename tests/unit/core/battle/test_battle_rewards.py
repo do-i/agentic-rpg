@@ -7,7 +7,7 @@ from engine.battle.battle_rewards import (
     EXP_CAP, LEVEL_CAP, _weighted_pick,
 )
 from engine.battle.combatant import Combatant
-from engine.common.party_state import PartyState
+from engine.party.party_state import PartyState
 from engine.party.member_state import MemberState
 
 

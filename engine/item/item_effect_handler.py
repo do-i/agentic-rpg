@@ -8,9 +8,9 @@ from typing import Callable
 import yaml
 
 from engine.party.member_state import MemberState
-from engine.common.party_state import PartyState
+from engine.party.party_state import PartyState
 from engine.party.repository_state import RepositoryState
-from engine.common.item_defs_data import FieldItemDef, UseResult
+from engine.item.item_defs_data import FieldItemDef, UseResult
 
 # Re-export so existing imports keep working
 __all__ = ["FieldItemDef", "UseResult", "ItemEffectHandler"]

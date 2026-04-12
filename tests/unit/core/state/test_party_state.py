@@ -2,7 +2,7 @@
 
 import pytest
 from engine.party.member_state import MemberState
-from engine.common.party_state import PartyState
+from engine.party.party_state import PartyState
 from engine.party.party_state import (
     calc_exp_next, stat_gain_at, recalc_exp_next, exp_pct, LEVEL_CAP,
 )

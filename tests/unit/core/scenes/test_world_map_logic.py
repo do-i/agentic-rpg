@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import MagicMock, PropertyMock, patch
 from pathlib import Path
 
-from engine.common.position_data import Position
+from engine.world.position_data import Position
 from engine.world.world_map_logic import (
     try_interact, dispatch_dialogue_result,
     check_encounter, check_portals, apply_transition,

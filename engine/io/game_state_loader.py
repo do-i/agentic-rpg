@@ -10,7 +10,7 @@ from engine.common.game_state import GameState
 from engine.common.flag_state import FlagState
 from engine.common.map_state import MapState
 from engine.party.member_state import MemberState
-from engine.common.position_data import Position
+from engine.world.position_data import Position
 from engine.party.party_state import calc_exp_next
 from engine.util.playtime import Playtime
 

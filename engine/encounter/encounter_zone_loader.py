@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 import yaml
 
-from engine.common.encounter_zone_data import (
+from engine.encounter.encounter_zone_data import (
     Formation,
     EncounterSet,
     BossConfig,

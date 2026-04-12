@@ -1,9 +1,9 @@
 # engine/encounter/encounter_zone.py
 #
 # Re-exports for backwards compatibility.
-# DTOs live in engine.common.encounter_zone_data, loader in engine.encounter.encounter_zone_loader.
+# DTOs live in engine.encounter.encounter_zone_data, loader in engine.encounter.encounter_zone_loader.
 
-from engine.common.encounter_zone_data import (
+from engine.encounter.encounter_zone_data import (
     Formation,
     EncounterSet,
     BossConfig,

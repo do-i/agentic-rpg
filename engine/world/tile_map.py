@@ -3,7 +3,7 @@
 import pytmx
 import pygame
 from engine.world.collision import CollisionMap
-from engine.common.portal_data import Portal
+from engine.world.portal_data import Portal
 from engine.world.portal_loader import PortalLoader
 
 

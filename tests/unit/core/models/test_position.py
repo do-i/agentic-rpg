@@ -2,7 +2,7 @@
 
 import math
 import pytest
-from engine.common.position_data import Position
+from engine.world.position_data import Position
 
 
 # ── Construction ──────────────────────────────────────────────
