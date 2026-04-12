@@ -1,4 +1,4 @@
-# engine/ui/target_select_overlay.py
+# engine/common/target_select_overlay_renderer.py
 #
 # Phase 6 — Shop + Apothecary
 

@@ -1,14 +1,19 @@
 # engine/game.py
 
 import pygame
-from engine.ui.display import Display
+from engine.settings.engine_config_data import EngineConfigData
 from engine.util.frame_clock import FrameClock
 from engine.common.scene.scene_manager import SceneManager
 
 
 class Game:
-    def __init__(self, display: Display, clock: FrameClock, scene_manager: SceneManager) -> None:
-        self._display = display
+    def __init__(self, config: EngineConfigData, clock: FrameClock, scene_manager: SceneManager) -> None:
+        pygame.init()
+        self._screen = pygame.display.set_mode(
+            (config.screen_width, config.screen_height),
+            pygame.SCALED | pygame.RESIZABLE,
+        )
+        pygame.display.set_caption(config.window_title)
         self._clock = clock
         self._scene_manager = scene_manager
         self._running = False
@@ -20,9 +25,9 @@ class Game:
             events = pygame.event.get()
             self._handle_events(events)
             self._scene_manager.update(self._clock.delta)
-            self._scene_manager.render(self._display.screen)
-            self._display.flip()
-        self._display.quit()
+            self._scene_manager.render(self._screen)
+            pygame.display.flip()
+        pygame.quit()
 
     def _handle_events(self, events: list) -> None:
         for event in events:

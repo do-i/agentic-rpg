@@ -3,7 +3,6 @@
 from injector import Module, singleton, provider
 
 from engine.settings.engine_config_data import EngineConfigData
-from engine.ui.display import Display
 from engine.util.frame_clock import FrameClock
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
@@ -45,11 +44,6 @@ class AppModule(Module):
     @singleton
     def provide_manifest_loader(self) -> ManifestLoader:
         return ManifestLoader(self._scenario_path)
-
-    @provider
-    @singleton
-    def provide_display(self, config: EngineConfigData) -> Display:
-        return Display(config.screen_width, config.screen_height, config.window_title)
 
     @provider
     @singleton
@@ -219,10 +213,10 @@ class AppModule(Module):
     @singleton
     def provide_game(
         self,
-        display: Display,
+        config: EngineConfigData,
         clock: FrameClock,
         scene_manager: SceneManager,
         registry: SceneRegistry,
     ) -> Game:
         scene_manager.switch(registry.get("boot"))
-        return Game(display, clock, scene_manager)
+        return Game(config, clock, scene_manager)
