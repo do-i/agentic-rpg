@@ -19,9 +19,10 @@ from engine.common.game_state_holder import GameStateHolder
 from engine.battle.post_battle_scene import PostBattleScene
 from engine.battle.game_over_scene import GameOverScene
 from engine.battle.battle_logic import (
-    resolve_action, resolve_enemy_turn, handle_victory, handle_defeat,
+    resolve_action, handle_victory, handle_defeat,
     check_result, advance_to_next_turn, attempt_flee,
 )
+from engine.battle.battle_enemy_logic import resolve_enemy_turn
 from engine.battle.battle_renderer import BattleRenderer
 from engine.item.item_effect_handler import ItemEffectHandler
 from engine.io.save_manager import GameStateManager

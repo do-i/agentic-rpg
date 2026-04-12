@@ -9,13 +9,16 @@ from engine.battle.battle_rewards import RewardCalculator
 from engine.item.item_effect_handler import ItemEffectHandler, FieldItemDef
 from engine.party.repository_state import RepositoryState
 from engine.battle.battle_logic import (
-    resolve_action, resolve_enemy_turn, handle_victory, handle_defeat,
+    resolve_action, handle_victory, handle_defeat,
     check_result, advance_to_next_turn, sync_party_state,
-    float_pos, enemy_rect_size, ENEMY_SIZES,
+    float_pos, enemy_rect_size,
     attempt_flee, FLEE_BASE_CHANCE, FLEE_ROGUE_DEX_BONUS,
-    pick_enemy_action, resolve_targeting,
+)
+from engine.battle.battle_enemy_logic import (
+    resolve_enemy_turn, pick_enemy_action, resolve_targeting,
     _check_condition, _weighted_pick_move,
 )
+from engine.battle.constants import ENEMY_SIZES
 
 
 def make_combatant(name="Hero", hp=100, hp_max=100, mp=50, mp_max=50,
