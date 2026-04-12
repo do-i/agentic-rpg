@@ -10,8 +10,8 @@ import yaml
 
 from engine.common.save_slot_data import SaveSlot
 from engine.common.game_state import GameState
-from engine.common.io.game_state_loader import from_save
-from engine.common.util.playtime import Playtime
+from engine.io.game_state_loader import from_save
+from engine.util.playtime import Playtime
 
 if TYPE_CHECKING:
     from engine.item.item_catalog import ItemCatalog

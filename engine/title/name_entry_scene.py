@@ -6,8 +6,8 @@ from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.item.item_catalog import ItemCatalog
 from engine.common.game_state_holder import GameStateHolder
-from engine.common.io.game_state_loader import from_new_game
-from engine.common.io.manifest_loader import ManifestLoader
+from engine.io.game_state_loader import from_new_game
+from engine.io.manifest_loader import ManifestLoader
 from engine.debug.debug_bootstrap import inject_full_party
 
 

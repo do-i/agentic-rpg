@@ -10,7 +10,7 @@ from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
-from engine.common.io.save_manager import GameStateManager
+from engine.io.save_manager import GameStateManager
 from engine.dialogue.dialogue_engine import DialogueEngine
 from engine.title.save_modal_scene import SaveModalScene
 from engine.dialogue.dialogue_scene import DialogueScene
@@ -27,7 +27,7 @@ from engine.world.world_map_logic import (
     check_encounter, check_portals, apply_transition,
     load_inn_cost, load_shop_items, load_recipes, _is_player_facing,
 )
-from engine.common.io.manifest_loader import ManifestLoader
+from engine.io.manifest_loader import ManifestLoader
 from engine.world.tile_map import TileMap
 from engine.world.tile_map_factory import TileMapFactory
 from engine.world.camera import Camera

@@ -24,7 +24,7 @@ from engine.battle.battle_logic import (
 )
 from engine.battle.battle_renderer import BattleRenderer
 from engine.item.item_effect_handler import ItemEffectHandler
-from engine.common.io.save_manager import GameStateManager
+from engine.io.save_manager import GameStateManager
 from engine.audio.bgm_manager import BgmManager
 from engine.audio.sfx_manager import SfxManager
 

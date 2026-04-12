@@ -9,7 +9,7 @@ from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.battle.battle_rewards import BattleRewards, LevelUpResult
-from engine.common.ui.colors import C_BG, C_TEXT, C_TEXT_DIM as C_DIM, C_TEXT_MUT as C_MUTED
+from engine.ui.colors import C_BG, C_TEXT, C_TEXT_DIM as C_DIM, C_TEXT_MUT as C_MUTED
 
 # ── Colors ────────────────────────────────────────────────────
 C_HEADER      = (212, 200, 138)

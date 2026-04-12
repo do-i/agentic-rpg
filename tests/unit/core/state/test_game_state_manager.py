@@ -6,8 +6,8 @@ from unittest.mock import patch
 
 import yaml
 
-from engine.common.io.save_manager import GameStateManager
-from engine.common.io.game_state_loader import from_new_game
+from engine.io.save_manager import GameStateManager
+from engine.io.game_state_loader import from_new_game
 
 MANIFEST_STUB = {
     "protagonist": {
@@ -51,8 +51,8 @@ def manager(saves_dir: Path, classes_dir: Path) -> GameStateManager:
 
 @pytest.fixture
 def state() -> GameState:
-    with patch("engine.common.io.game_state_loader._load_class_data", return_value=FAKE_CLASS_DATA), \
-         patch("engine.common.io.game_state_loader._load_character_data", return_value=FAKE_CHAR_DATA):
+    with patch("engine.io.game_state_loader._load_class_data", return_value=FAKE_CLASS_DATA), \
+         patch("engine.io.game_state_loader._load_character_data", return_value=FAKE_CHAR_DATA):
         return from_new_game(
             MANIFEST_STUB, "Aric",
             classes_dir=Path("/fake/classes"),

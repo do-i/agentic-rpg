@@ -2,7 +2,7 @@
 
 from engine.common.flag_state import FlagState
 from engine.common.map_state import MapState
-from engine.common.util.playtime import Playtime
+from engine.util.playtime import Playtime
 from engine.common.party_state import PartyState
 from engine.common.service.repository_state import RepositoryState
 

@@ -12,7 +12,7 @@ from engine.common.map_state import MapState
 from engine.common.member_state import MemberState
 from engine.common.position_data import Position
 from engine.common.service.party_state import calc_exp_next
-from engine.common.util.playtime import Playtime
+from engine.util.playtime import Playtime
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:

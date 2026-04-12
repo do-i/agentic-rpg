@@ -4,7 +4,7 @@ import pygame
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
-from engine.common.io.save_manager import GameStateManager
+from engine.io.save_manager import GameStateManager
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.save_slot_data import SaveSlot
 

@@ -3,8 +3,8 @@
 from injector import Module, singleton, provider
 
 from engine.settings.engine_config_data import EngineConfigData
-from engine.common.ui.display import Display
-from engine.common.util.frame_clock import FrameClock
+from engine.ui.display import Display
+from engine.util.frame_clock import FrameClock
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.game import Game
@@ -16,7 +16,7 @@ from engine.world.world_map_scene import WorldMapScene
 from engine.title.load_game_scene import LoadGameScene
 from engine.status.status_scene import StatusScene
 from engine.common.game_state_holder import GameStateHolder
-from engine.common.io.save_manager import GameStateManager
+from engine.io.save_manager import GameStateManager
 from engine.dialogue.dialogue_engine import DialogueEngine
 from engine.battle.enemy_loader import EnemyLoader
 from engine.encounter.encounter_resolver import EncounterResolver
@@ -25,7 +25,7 @@ from engine.item.item_catalog import ItemCatalog
 from engine.item.item_effect_handler import ItemEffectHandler
 from engine.item.magic_core_catalog_state import build_mc_catalog
 from engine.world.world_map_logic import load_magic_cores
-from engine.common.io.manifest_loader import ManifestLoader
+from engine.io.manifest_loader import ManifestLoader
 from engine.world.tile_map_factory import TileMapFactory
 from engine.world.npc_loader import NpcLoader
 from engine.audio.bgm_manager import BgmManager

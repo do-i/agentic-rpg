@@ -13,7 +13,7 @@ from engine.common.game_state_holder import GameStateHolder
 from engine.common.item_entry_state import ItemEntry
 from engine.common.service.repository_state import RepositoryState
 from engine.item.item_effect_handler import ItemEffectHandler
-from engine.common.ui.target_select_overlay import TargetSelectOverlay
+from engine.ui.target_select_overlay import TargetSelectOverlay
 from engine.item.item_logic import (
     TABS, filtered_items, actions_for, is_usable, discard_item,
     clamp_scroll, display_name,

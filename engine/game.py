@@ -1,8 +1,8 @@
 # engine/game.py
 
 import pygame
-from engine.common.ui.display import Display
-from engine.common.util.frame_clock import FrameClock
+from engine.ui.display import Display
+from engine.util.frame_clock import FrameClock
 from engine.common.scene.scene_manager import SceneManager
 
 

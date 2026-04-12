@@ -4,7 +4,7 @@ import pygame
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
-from engine.common.io.manifest_loader import ManifestLoader
+from engine.io.manifest_loader import ManifestLoader
 
 
 class BootScene(Scene):
