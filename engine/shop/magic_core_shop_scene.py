@@ -10,34 +10,30 @@ from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
 from engine.party.repository_state import RepositoryState
+from engine.shop.shop_constants import (
+    C_BG, C_DIM, C_GP, C_HINT, C_MUTED, C_TEXT,
+    HEADER_H, MODAL_W, ROW_GAP,
+)
+from engine.shop.shop_renderer import (
+    draw_cursor_arrow, draw_dim_overlay, draw_footer, draw_list_row_box,
+    draw_modal_box, draw_shop_header,
+)
 
 # Confirm dialog threshold — rates at or above this trigger confirmation
 LARGE_RATE_THRESHOLD = 1_000
 
-# ── Colors ────────────────────────────────────────────────────
-C_BG          = (18, 18, 35)
+# ── Colors (scene-specific) ──────────────────────────────────
 C_HEADER      = (212, 200, 138)
-C_TEXT        = (238, 238, 238)
-C_MUTED       = (130, 130, 140)
-C_DIM         = (80, 80, 90)
 C_SEL_BG      = (45, 42, 75)
 C_SEL_BDR     = (180, 160, 255)
-C_NORM_BDR    = (55, 55, 78)
-C_ROW_BG      = (28, 28, 50)
-C_GP          = (200, 185, 100)
 C_GP_GAIN     = (100, 220, 100)
-C_DIVIDER     = (50, 50, 70)
-C_HINT        = (100, 100, 115)
 C_CONFIRM_BG  = (28, 14, 14)
 C_CONFIRM_BDR = (180, 70, 70)
 C_CONFIRM_TXT = (220, 180, 180)
 
-# ── Layout ────────────────────────────────────────────────────
+# ── Layout (scene-specific) ──────────────────────────────────
 PAD        = 28
-HEADER_H   = 48
 ROW_H      = 52
-ROW_GAP    = 4
-MODAL_W    = 560
 FOOTER_H   = 32
 
 QTY_STEP_SMALL = 1
@@ -260,12 +256,7 @@ class MagicCoreShopScene(Scene):
         if not self._fonts_ready:
             self._init_fonts()
 
-        # dim world underneath
-        overlay = pygame.Surface(
-            (screen.get_width(), screen.get_height()), pygame.SRCALPHA
-        )
-        overlay.fill((0, 0, 0, 180))
-        screen.blit(overlay, (0, 0))
+        draw_dim_overlay(screen)
 
         mw = MODAL_W
         avail  = self._available()
@@ -276,8 +267,7 @@ class MagicCoreShopScene(Scene):
         mx = (screen.get_width()  - mw) // 2
         my = (screen.get_height() - mh) // 2
 
-        pygame.draw.rect(screen, C_BG,     (mx, my, mw, mh), border_radius=8)
-        pygame.draw.rect(screen, C_SEL_BDR,(mx, my, mw, mh), 1, border_radius=8)
+        draw_modal_box(screen, mx, my, mw, mh, C_SEL_BDR, border_width=1)
 
         self._draw_header(screen, mx, my, mw)
         self._draw_list(screen, mx, my + HEADER_H + PAD, mw, avail)
@@ -291,16 +281,16 @@ class MagicCoreShopScene(Scene):
             self._draw_popup(screen)
 
     def _draw_header(self, screen: pygame.Surface, mx: int, my: int, mw: int) -> None:
-        title = self._font_title.render("Magic Core Exchange", True, C_HEADER)
-        screen.blit(title, (mx + PAD, my + PAD // 2 + 4))
-
-        repo = self._repo()
-        gp_s = self._font_gp.render(f"GP  {repo.gp:,}", True, C_GP)
-        screen.blit(gp_s, (mx + mw - gp_s.get_width() - PAD, my + PAD // 2 + 6))
-
-        pygame.draw.line(screen, C_DIVIDER,
-                         (mx + 10, my + HEADER_H),
-                         (mx + mw - 10, my + HEADER_H))
+        draw_shop_header(
+            screen, mx, my, mw,
+            title_text="Magic Core Exchange",
+            title_color=C_HEADER,
+            gp=self._repo().gp,
+            gp_color=C_GP,
+            font_title=self._font_title,
+            font_row=self._font_gp,
+            pad=PAD,
+        )
 
     def _draw_list(self, screen: pygame.Surface,
                    mx: int, y: int, mw: int,
@@ -317,14 +307,10 @@ class MagicCoreShopScene(Scene):
             rx    = mx + 10
             rw    = mw - 20
 
-            bg  = C_SEL_BG   if sel else C_ROW_BG
-            bdr = C_SEL_BDR  if sel else C_NORM_BDR
-            pygame.draw.rect(screen, bg,  (rx, row_y, rw, ROW_H), border_radius=4)
-            pygame.draw.rect(screen, bdr, (rx, row_y, rw, ROW_H), 1, border_radius=4)
+            draw_list_row_box(screen, rx, row_y, rw, ROW_H, sel, C_SEL_BG, C_SEL_BDR)
 
             if sel:
-                cur = self._font_row.render("▶", True, C_HEADER)
-                screen.blit(cur, (rx + 8, row_y + (ROW_H - cur.get_height()) // 2))
+                draw_cursor_arrow(screen, rx, row_y, ROW_H, C_HEADER, self._font_row)
 
             # label + qty
             lbl = self._font_row.render(label, True, C_TEXT if sel else C_MUTED)
@@ -341,10 +327,10 @@ class MagicCoreShopScene(Scene):
                                   row_y + (ROW_H - rate_s.get_height()) // 2))
 
     def _draw_footer(self, screen: pygame.Surface, mx: int, y: int, mw: int) -> None:
-        pygame.draw.line(screen, C_DIVIDER, (mx + 10, y), (mx + mw - 10, y))
-        hint = self._font_hint.render(
-            "↑↓ select · ENTER exchange · ESC close", True, C_HINT)
-        screen.blit(hint, (mx + PAD, y + 8))
+        draw_footer(
+            screen, mx, y, mw, PAD,
+            "↑↓ select · ENTER exchange · ESC close", self._font_hint,
+        )
 
     # ── Qty overlay ───────────────────────────────────────────
 

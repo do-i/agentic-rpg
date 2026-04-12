@@ -13,40 +13,33 @@ from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
 from engine.world.sprite_sheet import SpriteSheet, Direction
+from engine.shop.shop_constants import (
+    C_DIM, C_DIVIDER, C_GP, C_HINT, C_LOCKED, C_MUTED, C_TEXT, C_TOAST,
+    C_WARN, HEADER_H, MODAL_W, ROW_GAP,
+)
+from engine.shop.shop_renderer import (
+    draw_cursor_arrow, draw_dim_overlay, draw_footer, draw_list_row_box,
+    draw_modal_box, draw_popup, draw_scroll_hints, draw_shop_header,
+)
 
 # MC size label → item id mapping
 _MC_SIZE_TO_ID = {"XS": "mc_xs", "S": "mc_s", "M": "mc_m", "L": "mc_l", "XL": "mc_xl"}
 
-# ── Colors ────────────────────────────────────────────────────
-C_BG          = (18, 18, 35)
-C_BORDER      = (120, 160, 120)
-C_HEADER      = (180, 220, 180)
-C_TEXT         = (238, 238, 238)
-C_MUTED        = (130, 130, 140)
-C_DIM          = (80, 80, 90)
-C_GP           = (200, 185, 100)
-C_SEL_BG       = (35, 50, 42)
-C_SEL_BDR      = (130, 200, 140)
-C_NORM_BDR     = (55, 55, 78)
-C_ROW_BG       = (28, 28, 50)
-C_DIVIDER      = (50, 50, 70)
-C_HINT         = (100, 100, 115)
-C_WARN         = (220, 100, 80)
-C_TOAST        = (100, 220, 130)
-C_LOCKED       = (90, 90, 100)
-C_READY        = (100, 200, 120)
-C_MISSING      = (200, 130, 100)
+# ── Colors (scene-specific) ──────────────────────────────────
+C_BORDER  = (120, 160, 120)
+C_HEADER  = (180, 220, 180)
+C_SEL_BG  = (35, 50, 42)
+C_SEL_BDR = (130, 200, 140)
+C_READY   = (100, 200, 120)
+C_MISSING = (200, 130, 100)
 
-# ── Layout ────────────────────────────────────────────────────
-MODAL_W       = 560
-PAD           = 24
-HEADER_H      = 48
-SPRITE_SIZE   = 64
-ROW_H         = 44
-ROW_GAP       = 4
-FOOTER_H      = 36
-VISIBLE_ROWS  = 6
-POPUP_W       = 360
+# ── Layout (scene-specific) ──────────────────────────────────
+PAD          = 24
+SPRITE_SIZE  = 64
+ROW_H        = 44
+FOOTER_H     = 36
+VISIBLE_ROWS = 6
+POPUP_W      = 360
 
 
 class ApothecaryScene(Scene):
@@ -274,16 +267,8 @@ class ApothecaryScene(Scene):
         mx = (screen.get_width()  - MODAL_W) // 2
         my = (screen.get_height() - mh) // 2
 
-        # dim background
-        overlay = pygame.Surface(
-            (screen.get_width(), screen.get_height()), pygame.SRCALPHA
-        )
-        overlay.fill((0, 0, 0, 180))
-        screen.blit(overlay, (0, 0))
-
-        # modal box
-        pygame.draw.rect(screen, C_BG,     (mx, my, MODAL_W, mh), border_radius=8)
-        pygame.draw.rect(screen, C_BORDER, (mx, my, MODAL_W, mh), 2, border_radius=8)
+        draw_dim_overlay(screen)
+        draw_modal_box(screen, mx, my, MODAL_W, mh, C_BORDER)
 
         self._draw_header(screen, mx, my)
         self._draw_list(screen, mx, my + HEADER_H + PAD, recipes)
@@ -295,21 +280,18 @@ class ApothecaryScene(Scene):
             self._draw_popup(screen)
 
     def _draw_header(self, screen: pygame.Surface, mx: int, my: int) -> None:
-        if self._sprite_surf:
-            screen.blit(self._sprite_surf, (mx + PAD, my + (HEADER_H - SPRITE_SIZE) // 2))
-
-        title = self._font_title.render("Apothecary", True, C_HEADER)
-        screen.blit(title, (mx + PAD + SPRITE_SIZE + 12,
-                            my + (HEADER_H - title.get_height()) // 2))
-
-        gp = self._holder.get().repository.gp
-        gp_s = self._font_row.render(f"GP  {gp:,}", True, C_GP)
-        screen.blit(gp_s, (mx + MODAL_W - gp_s.get_width() - PAD,
-                            my + (HEADER_H - gp_s.get_height()) // 2))
-
-        pygame.draw.line(screen, C_DIVIDER,
-                         (mx + 10, my + HEADER_H),
-                         (mx + MODAL_W - 10, my + HEADER_H))
+        draw_shop_header(
+            screen, mx, my, MODAL_W,
+            title_text="Apothecary",
+            title_color=C_HEADER,
+            gp=self._holder.get().repository.gp,
+            gp_color=C_GP,
+            font_title=self._font_title,
+            font_row=self._font_row,
+            pad=PAD,
+            sprite_surf=self._sprite_surf,
+            sprite_size=SPRITE_SIZE,
+        )
 
     def _draw_list(self, screen: pygame.Surface, mx: int, y: int,
                    recipes: list[dict]) -> None:
@@ -330,14 +312,10 @@ class ApothecaryScene(Scene):
             rx = mx + 10
             rw = MODAL_W - 20
 
-            bg  = C_SEL_BG  if sel else C_ROW_BG
-            bdr = C_SEL_BDR if sel else C_NORM_BDR
-            pygame.draw.rect(screen, bg,  (rx, row_y, rw, ROW_H), border_radius=4)
-            pygame.draw.rect(screen, bdr, (rx, row_y, rw, ROW_H), 1, border_radius=4)
+            draw_list_row_box(screen, rx, row_y, rw, ROW_H, sel, C_SEL_BG, C_SEL_BDR)
 
             if sel:
-                cur = self._font_row.render("▶", True, C_HEADER)
-                screen.blit(cur, (rx + 8, row_y + (ROW_H - cur.get_height()) // 2))
+                draw_cursor_arrow(screen, rx, row_y, ROW_H, C_HEADER, self._font_row)
 
             # status icon
             if unlocked:
@@ -377,20 +355,17 @@ class ApothecaryScene(Scene):
                 screen.blit(price_s, (rx + rw - price_s.get_width() - 16,
                                        row_y + (ROW_H - price_s.get_height()) // 2))
 
-        # scroll hints
-        if self._scroll > 0:
-            up = self._font_hint.render("▲", True, C_HINT)
-            screen.blit(up, (mx + MODAL_W - 30, y - 4))
-        if self._scroll + VISIBLE_ROWS < len(recipes):
-            bottom_y = y + VISIBLE_ROWS * (ROW_H + ROW_GAP) - 18
-            dn = self._font_hint.render("▼", True, C_HINT)
-            screen.blit(dn, (mx + MODAL_W - 30, bottom_y))
+        draw_scroll_hints(
+            screen, mx, y, MODAL_W,
+            self._scroll, len(recipes), VISIBLE_ROWS, ROW_H, ROW_GAP,
+            self._font_hint,
+        )
 
     def _draw_footer(self, screen: pygame.Surface, mx: int, y: int) -> None:
-        pygame.draw.line(screen, C_DIVIDER, (mx + 10, y), (mx + MODAL_W - 10, y))
-        hint = self._font_hint.render(
-            "↑↓ select · ENTER view · ESC close", True, C_HINT)
-        screen.blit(hint, (mx + PAD, y + 8))
+        draw_footer(
+            screen, mx, y, MODAL_W, PAD,
+            "↑↓ select · ENTER view · ESC close", self._font_hint,
+        )
 
     # ── Detail overlay ────────────────────────────────────────
 
@@ -497,12 +472,7 @@ class ApothecaryScene(Scene):
     # ── Popup ─────────────────────────────────────────────────
 
     def _draw_popup(self, screen: pygame.Surface) -> None:
-        ph = 80
-        px = (screen.get_width()  - POPUP_W) // 2
-        py = (screen.get_height() - ph) // 2
-        pygame.draw.rect(screen, C_BG,     (px, py, POPUP_W, ph), border_radius=6)
-        pygame.draw.rect(screen, C_BORDER, (px, py, POPUP_W, ph), 2, border_radius=6)
-        msg = self._font_toast.render(self._popup_text, True, C_TOAST)
-        screen.blit(msg, (px + (POPUP_W - msg.get_width()) // 2, py + 14))
-        hint = self._font_hint.render("ENTER / ESC  close", True, C_HINT)
-        screen.blit(hint, (px + (POPUP_W - hint.get_width()) // 2, py + ph - 28))
+        draw_popup(
+            screen, POPUP_W, self._popup_text, C_TOAST, C_BORDER,
+            self._font_toast, self._font_hint,
+        )

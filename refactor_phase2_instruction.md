@@ -36,7 +36,7 @@ Use consistent module purposes:
 | -------------- | ----------------------- |
 | logic          | core rules and behavior |
 | renderer       | UI or output formatting |
-| entity / model | state containers        |
+| state          | state containers        |
 | data           | immutable configuration |
 | constants      | enums, fixed values     |
 
@@ -44,7 +44,7 @@ Use consistent module purposes:
 
 Split when:
 
-* file exceeds ~300–500 lines
+* file exceeds ~350 lines (soft guideline)
 * multiple independent responsibilities exist
 * sections can be grouped by subdomain
 * functions operate on different entity types
