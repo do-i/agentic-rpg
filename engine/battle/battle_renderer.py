@@ -1,7 +1,7 @@
-# engine/ui/battle_renderer.py
+# engine/battle/battle_renderer.py
 #
-# Battle rendering — all drawing, fonts, portrait loading, layout.
-# Extracted from battle_scene.py to separate rendering from game logic.
+# Battle rendering — all drawing and layout.
+# Fonts, portraits, and sprite loading are delegated to BattleAssetCache.
 
 from __future__ import annotations
 
@@ -9,40 +9,18 @@ from pathlib import Path
 
 import pygame
 
-from engine.battle.combatant import Combatant, StatusEffect
+from engine.battle.combatant import Combatant
 from engine.battle.battle_state import BattleState, BattlePhase
-from engine.battle.constants import ENEMY_AREA_H, ENEMY_LAYOUTS, ENEMY_SIZES, ROW_H
+from engine.battle.constants import ENEMY_AREA_H, ENEMY_LAYOUTS, ROW_H
+from engine.battle.battle_asset_cache import BattleAssetCache
+from engine.battle.battle_renderer_constants import (
+    BAR_H, PORTRAIT_SIZE, ROW_PAD, STATUS_COLORS,
+    C_BORDER_ACT, C_BORDER_NORM, C_CMD_SEL_BDR, C_CMD_SEL_BG,
+    C_FLOOR, C_HP_LABEL_LOW, C_HP_LABEL_OK, C_HP_LOW, C_HP_OK,
+    C_MP, C_MP_LABEL, C_MSG_ENEMY, C_MSG_PARTY, C_PANEL_LINE,
+    C_ROW_ACTIVE, C_ROW_NORMAL,
+)
 from engine.common.color_constants import C_BG, C_TEXT, C_TEXT_MUT, C_TEXT_DIM, HP_LOW_THRESHOLD
-from engine.world.sprite_sheet import SpriteSheet, Direction
-
-PORTRAIT_SIZE   = 36
-ROW_PAD         = 8
-BAR_H           = 6
-
-STATUS_COLORS = {
-    StatusEffect.POISON:  ((51, 102, 51),  (170, 255, 170), "PSN"),
-    StatusEffect.SLEEP:   ((68, 68, 170),  (204, 204, 255), "zzz"),
-    StatusEffect.STUN:    ((120, 90, 20),  (255, 220, 100), "STN"),
-    StatusEffect.SILENCE: ((100, 60, 100), (220, 180, 220), "SIL"),
-}
-
-# ── Colors ────────────────────────────────────────────────────
-C_FLOOR        = (17,  17,  40)
-C_PANEL_LINE   = (51,  51,  51)
-C_ROW_ACTIVE   = (42,  26,  26)
-C_ROW_NORMAL   = (26,  26,  42)
-C_BORDER_ACT   = (255, 220, 60)
-C_BORDER_NORM  = (51,  51,  68)
-C_CMD_SEL_BG   = (42,  32,  64)
-C_CMD_SEL_BDR  = (119, 85,  204)
-C_HP_OK        = (68,  170, 68)
-C_HP_LOW       = (204, 68,  68)
-C_MP           = (68,  102, 204)
-C_HP_LABEL_OK  = (136, 204, 136)
-C_HP_LABEL_LOW = (204, 136, 136)
-C_MP_LABEL     = (136, 136, 204)
-C_MSG_ENEMY    = (255, 170, 50)
-C_MSG_PARTY    = (100, 200, 255)
 
 
 class BattleRenderer:
@@ -54,7 +32,7 @@ class BattleRenderer:
         screen_width: int = 1280,
         screen_height: int = 766,
     ) -> None:
-        self._scenario_path = scenario_path
+        self._assets = BattleAssetCache(scenario_path)
         # ── Layout constants ──────────────────────────────────
         self._screen_w  = screen_width
         self._screen_h  = screen_height
@@ -63,80 +41,6 @@ class BattleRenderer:
         self.cmd_w      = int(screen_width * 0.30)
         self.msg_x      = self.party_w + self.cmd_w
         self.msg_w      = screen_width - self.msg_x
-        self._fonts_ready = False
-        self._portraits: dict[str, pygame.Surface] = {}
-        self._enemy_size: dict[str, tuple] = {}
-        self._enemy_sprites: dict[str, pygame.Surface | None] = {}
-        self._bg_cache: dict[str, pygame.Surface | None] = {}
-
-    def _init_fonts(self) -> None:
-        self._font_name  = pygame.font.SysFont("Arial", 14, bold=True)
-        self._font_stat  = pygame.font.SysFont("Arial", 12)
-        self._font_cmd   = pygame.font.SysFont("Arial", 16)
-        self._font_sub   = pygame.font.SysFont("Arial", 14)
-        self._font_turn  = pygame.font.SysFont("Arial", 13)
-        self._font_msg   = pygame.font.SysFont("Arial", 18)
-        self._font_dmg   = pygame.font.SysFont("Arial", 26, bold=True)
-        self._font_enemy = pygame.font.SysFont("Arial", 13, bold=True)
-        self._font_badge = pygame.font.SysFont("Arial", 9,  bold=True)
-        self._fonts_ready = True
-
-    def _load_portrait(self, member_id: str) -> pygame.Surface | None:
-        if member_id in self._portraits:
-            return self._portraits[member_id]
-        path = self._scenario_path / "assets" / "images" / f"{member_id}_profile.png"
-        if not path.exists():
-            return None
-        try:
-            img = pygame.image.load(str(path)).convert_alpha()
-            img = pygame.transform.scale(img, (PORTRAIT_SIZE, PORTRAIT_SIZE))
-            self._portraits[member_id] = img
-            return img
-        except Exception:
-            return None
-
-    def _enemy_rect_size(self, enemy: Combatant) -> tuple:
-        if enemy.id in self._enemy_size:
-            return self._enemy_size[enemy.id]
-        if enemy.boss:
-            base = ENEMY_SIZES["large"]
-        else:
-            idx = len(enemy.name) % 3
-            base = [ENEMY_SIZES["medium"], ENEMY_SIZES["small"], ENEMY_SIZES["medium"]][idx]
-        scale = enemy.sprite_scale / 100.0
-        return (int(base[0] * scale), int(base[1] * scale))
-
-    def _load_enemy_sprite(self, enemy: Combatant) -> pygame.Surface | None:
-        sprite_id = enemy.sprite_id or enemy.id
-        if sprite_id in self._enemy_sprites:
-            return self._enemy_sprites[sprite_id]
-        tsx_path = self._scenario_path / "assets" / "sprites" / "enemies" / f"{sprite_id}.tsx"
-        if not tsx_path.exists():
-            self._enemy_sprites[sprite_id] = None
-            return None
-        try:
-            sheet = SpriteSheet(tsx_path)
-            frame = sheet.get_frame(Direction.DOWN, 0)
-            w, h = self._enemy_rect_size(enemy)
-            scaled = pygame.transform.scale(frame, (w, h))
-            self._enemy_sprites[sprite_id] = scaled
-            return scaled
-        except Exception:
-            self._enemy_sprites[sprite_id] = None
-            return None
-
-    def _load_background(self, bg_id: str) -> pygame.Surface | None:
-        if bg_id in self._bg_cache:
-            return self._bg_cache[bg_id]
-        path = self._scenario_path / "assets" / "images" / "battle_bg" / f"{bg_id}.webp"
-        if path.exists():
-            try:
-                self._bg_cache[bg_id] = pygame.image.load(str(path)).convert()
-                return self._bg_cache[bg_id]
-            except Exception:
-                pass
-        self._bg_cache[bg_id] = None
-        return None
 
     # ── Main render ───────────────────────────────────────────
 
@@ -146,10 +50,9 @@ class BattleRenderer:
                target_pool: list[Combatant], target_sel: int,
                resolve_msg: str,
                resolve_is_enemy: bool = False) -> None:
-        if not self._fonts_ready:
-            self._init_fonts()
+        self._assets.init_fonts()
 
-        bg = self._load_background(state.background) if state.background else None
+        bg = self._assets.load_background(state.background) if state.background else None
         if bg is not None:
             screen.blit(bg, (0, 0), area=(0, 0, self._screen_w, ENEMY_AREA_H))
             screen.fill(C_BG, (0, ENEMY_AREA_H, self._screen_w, self.bottom_h))
@@ -167,7 +70,7 @@ class BattleRenderer:
         if not resolve_msg:
             return
         color = C_MSG_ENEMY if is_enemy else C_MSG_PARTY
-        text = self._font_msg.render(resolve_msg, True, color)
+        text = self._assets.font_msg.render(resolve_msg, True, color)
         tx = self.msg_x + 10
         ty = ENEMY_AREA_H + 10
         screen.blit(text, (tx, ty))
@@ -198,10 +101,10 @@ class BattleRenderer:
                     cx: int, cy: int, index: int,
                     state: BattleState,
                     target_pool: list[Combatant], target_sel: int) -> None:
-        w, h = self._enemy_rect_size(enemy)
+        w, h = self._assets.enemy_rect_size(enemy)
         rx, ry = cx - w // 2, cy - h // 2
 
-        sprite = self._load_enemy_sprite(enemy)
+        sprite = self._assets.load_enemy_sprite(enemy)
         if sprite is not None:
             img = sprite
             if enemy.is_ko:
@@ -229,11 +132,11 @@ class BattleRenderer:
         if hp_fill > 0 and not enemy.is_ko:
             pygame.draw.rect(screen, hp_col, (bar_x, bar_y, hp_fill, bar_h), border_radius=3)
         # name on the HP bar
-        name_surf = self._font_enemy.render(enemy.name, True, (255, 255, 255))
+        name_surf = self._assets.font_enemy.render(enemy.name, True, (255, 255, 255))
         name_x = bar_x + bar_w // 2 - name_surf.get_width() // 2
         name_y = bar_y + bar_h // 2 - name_surf.get_height() // 2
         # shadow for readability
-        shadow = self._font_enemy.render(enemy.name, True, (0, 0, 0))
+        shadow = self._assets.font_enemy.render(enemy.name, True, (0, 0, 0))
         for ox, oy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
             screen.blit(shadow, (name_x + ox, name_y + oy))
         screen.blit(name_surf, (name_x, name_y))
@@ -294,14 +197,14 @@ class BattleRenderer:
 
         px = rx + 6
         py = y + (ROW_H - 2 - PORTRAIT_SIZE) // 2
-        img = self._load_portrait(member.id)
+        img = self._assets.load_portrait(member.id)
         if img:
             screen.blit(img, (px, py))
         else:
             col = (58, 42, 42) if is_active else (42, 42, 58)
             pygame.draw.rect(screen, col, (px, py, PORTRAIT_SIZE, PORTRAIT_SIZE), border_radius=3)
             init = "".join(w[0].upper() for w in member.name.split()[:2])
-            s = self._font_badge.render(init, True, C_TEXT_MUT)
+            s = self._assets.font_badge.render(init, True, C_TEXT_MUT)
             screen.blit(s, (px + PORTRAIT_SIZE // 2 - s.get_width() // 2,
                              py + PORTRAIT_SIZE // 2 - s.get_height() // 2))
 
@@ -309,7 +212,7 @@ class BattleRenderer:
             effect = member.status_effects[0]
             if effect in STATUS_COLORS:
                 bg_col, text_col, label = STATUS_COLORS[effect]
-                bs = self._font_badge.render(label, True, text_col)
+                bs = self._assets.font_badge.render(label, True, text_col)
                 bx = px + PORTRAIT_SIZE - bs.get_width() - 2
                 pygame.draw.rect(screen, bg_col,
                                  (bx - 3, py - 7, bs.get_width() + 6, bs.get_height() + 2),
@@ -329,18 +232,18 @@ class BattleRenderer:
 
         # ── Row 1: Name ──
         name_col = C_TEXT if not member.is_ko else C_TEXT_DIM
-        screen.blit(self._font_name.render(member.name, True, name_col), (sx, y + 4))
+        screen.blit(self._assets.font_name.render(member.name, True, name_col), (sx, y + 4))
 
         hp_pct  = member.hp_pct
         hp_col  = C_HP_LOW  if hp_pct <= HP_LOW_THRESHOLD else C_HP_OK
         hp_lcol = C_HP_LABEL_LOW if hp_pct <= HP_LOW_THRESHOLD else C_HP_LABEL_OK
 
-        hp_label = self._font_stat.render("HP", True, hp_lcol)
+        hp_label = self._assets.font_stat.render("HP", True, hp_lcol)
         hp_lw = hp_label.get_width()
 
         # ── Row 2: HP [bar]  <space>  MP [bar] ──
         if member.mp_max > 0:
-            mp_label = self._font_stat.render("MP", True, C_MP_LABEL)
+            mp_label = self._assets.font_stat.render("MP", True, C_MP_LABEL)
             mp_lw = mp_label.get_width()
             # split remaining width after both labels and gaps
             avail = sw - hp_lw - mp_lw - bar_gap * 3
@@ -360,7 +263,7 @@ class BattleRenderer:
         pygame.draw.rect(screen, (42, 42, 42), (hp_bx, bar_y, hp_bw, bar_h), border_radius=3)
         if not member.is_ko:
             pygame.draw.rect(screen, hp_col, (hp_bx, bar_y, int(hp_bw * hp_pct), bar_h), border_radius=3)
-        hp_txt = self._font_stat.render(f"{member.hp}/{member.hp_max}", True, (255, 255, 255))
+        hp_txt = self._assets.font_stat.render(f"{member.hp}/{member.hp_max}", True, (255, 255, 255))
         screen.blit(hp_txt, (hp_bx + hp_bw // 2 - hp_txt.get_width() // 2,
                              bar_y + bar_h // 2 - hp_txt.get_height() // 2))
 
@@ -370,7 +273,7 @@ class BattleRenderer:
             screen.blit(mp_label, (mp_lx, bar_y + bar_h // 2 - mp_label.get_height() // 2))
             pygame.draw.rect(screen, (42, 42, 42), (mp_bx, bar_y, mp_bw, bar_h), border_radius=3)
             pygame.draw.rect(screen, C_MP, (mp_bx, bar_y, int(mp_bw * mp_pct), bar_h), border_radius=3)
-            mp_txt = self._font_stat.render(f"{member.mp}/{member.mp_max}", True, (255, 255, 255))
+            mp_txt = self._assets.font_stat.render(f"{member.mp}/{member.mp_max}", True, (255, 255, 255))
             screen.blit(mp_txt, (mp_bx + mp_bw // 2 - mp_txt.get_width() // 2,
                                  bar_y + bar_h // 2 - mp_txt.get_height() // 2))
 
@@ -383,7 +286,7 @@ class BattleRenderer:
         active  = state.active
         phase   = state.phase
 
-        screen.blit(self._font_turn.render(
+        screen.blit(self._assets.font_turn.render(
             f"{active.name}'s turn" if active else "", True, C_TEXT_MUT),
             (panel_x, ENEMY_AREA_H + 10))
 
@@ -393,10 +296,10 @@ class BattleRenderer:
         elif phase == BattlePhase.SELECT_TARGET:
             action = state.pending_action
             label = action.get("data", {}).get("name", "Attack") if action else "Attack"
-            screen.blit(self._font_name.render(
+            screen.blit(self._assets.font_name.render(
                 f"Select target for {label}", True, (204, 170, 255)),
                 (panel_x, ENEMY_AREA_H + 34))
-            screen.blit(self._font_stat.render(
+            screen.blit(self._assets.font_stat.render(
                 "\u2191\u2193 choose \u00b7 ENTER confirm \u00b7 ESC cancel", True, C_TEXT_MUT),
                 (panel_x, ENEMY_AREA_H + 56))
         else:
@@ -421,13 +324,13 @@ class BattleRenderer:
                    else (200, 160, 255) if sel else C_TEXT_MUT)
 
             if sel and not disabled:
-                screen.blit(self._font_cmd.render("\u25b6", True, (200, 160, 255)), (x - 16, row_y))
-            screen.blit(self._font_cmd.render(label, True, col), (x, row_y))
+                screen.blit(self._assets.font_cmd.render("\u25b6", True, (200, 160, 255)), (x - 16, row_y))
+            screen.blit(self._assets.font_cmd.render(label, True, col), (x, row_y))
 
             if label == "Spell" and disabled:
-                screen.blit(self._font_stat.render("\u2014", True, C_TEXT_DIM), (x + 60, row_y + 2))
+                screen.blit(self._assets.font_stat.render("\u2014", True, C_TEXT_DIM), (x + 60, row_y + 2))
             elif label in ("Item", "Spell") and not disabled:
-                screen.blit(self._font_stat.render("\u2192", True, C_TEXT_DIM), (x + 60, row_y + 2))
+                screen.blit(self._assets.font_stat.render("\u2192", True, C_TEXT_DIM), (x + 60, row_y + 2))
 
     def _draw_submenu(self, screen: pygame.Surface, x: int, y: int,
                       sub_items: list[dict], sub_sel: int) -> None:
@@ -444,28 +347,28 @@ class BattleRenderer:
 
             col = C_TEXT_DIM if disabled else (C_TEXT if sel else C_TEXT_MUT)
             if sel and not disabled:
-                screen.blit(self._font_sub.render("\u25b6", True, (200, 160, 255)), (x - 14, row_y))
-            screen.blit(self._font_sub.render(item["label"], True, col), (x, row_y))
+                screen.blit(self._assets.font_sub.render("\u25b6", True, (200, 160, 255)), (x - 14, row_y))
+            screen.blit(self._assets.font_sub.render(item["label"], True, col), (x, row_y))
 
             if "mp_cost" in item:
-                screen.blit(self._font_stat.render(
+                screen.blit(self._assets.font_stat.render(
                     f"MP {item['mp_cost']}", True,
                     C_TEXT_DIM if disabled else C_MP_LABEL), (x + 160, row_y + 1))
             elif "qty" in item:
-                screen.blit(self._font_stat.render(
+                screen.blit(self._assets.font_stat.render(
                     f"\u00d7{item['qty']}", True, C_TEXT_MUT), (x + 160, row_y + 1))
 
-        screen.blit(self._font_stat.render("ESC back", True, C_TEXT_DIM),
+        screen.blit(self._assets.font_stat.render("ESC back", True, C_TEXT_DIM),
                     (x, y + len(sub_items) * 28 + 8))
 
     # ── Damage floats ─────────────────────────────────────────
 
     def _draw_damage_floats(self, screen: pygame.Surface, state: BattleState) -> None:
         for f in state.damage_floats:
-            shadow = self._font_dmg.render(f.text, True, (0, 0, 0))
+            shadow = self._assets.font_dmg.render(f.text, True, (0, 0, 0))
             shadow.set_alpha(f.alpha)
             for ox, oy in ((-1, -1), (1, -1), (-1, 1), (1, 1), (0, 2)):
                 screen.blit(shadow, (f.x + ox, f.y + oy))
-            surf = self._font_dmg.render(f.text, True, f.color)
+            surf = self._assets.font_dmg.render(f.text, True, f.color)
             surf.set_alpha(f.alpha)
             screen.blit(surf, (f.x, f.y))
