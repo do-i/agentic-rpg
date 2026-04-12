@@ -9,7 +9,7 @@ from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
-from engine.common.member_state import MemberState
+from engine.party.member_state import MemberState
 from engine.ui.target_select_overlay import TargetSelectOverlay
 from engine.status.status_logic import (
     field_spells, valid_targets, apply_spell, apply_spell_all,

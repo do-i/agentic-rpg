@@ -9,7 +9,7 @@ from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
-from engine.common.service.repository_state import RepositoryState
+from engine.party.repository_state import RepositoryState
 
 # Confirm dialog threshold — rates at or above this trigger confirmation
 LARGE_RATE_THRESHOLD = 1_000

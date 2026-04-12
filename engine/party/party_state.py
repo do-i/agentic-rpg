@@ -6,7 +6,7 @@
 from __future__ import annotations
 import math
 
-from engine.common.member_state import MemberState
+from engine.party.member_state import MemberState
 from engine.common.party_state import PartyState
 
 # EXP formula constants — mirrors battle_rewards.py

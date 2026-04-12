@@ -9,8 +9,8 @@ import random
 
 from engine.battle.combatant import Combatant
 from engine.common.party_state import PartyState
-from engine.common.member_state import MemberState
-from engine.common.service.party_state import calc_exp_next, stat_gain_at, recalc_exp_next
+from engine.party.member_state import MemberState
+from engine.party.party_state import calc_exp_next, stat_gain_at, recalc_exp_next
 from engine.common.battle_rewards_data import (
     LevelUpResult,
     MemberExpResult,

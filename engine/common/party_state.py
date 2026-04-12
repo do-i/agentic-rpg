@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from engine.common.member_state import MemberState
+from engine.party.member_state import MemberState
 
 
 class PartyState:

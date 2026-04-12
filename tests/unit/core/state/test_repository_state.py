@@ -2,7 +2,7 @@
 
 import pytest
 from engine.common.item_entry_state import ItemEntry
-from engine.common.service.repository_state import (
+from engine.party.repository_state import (
     RepositoryState,
     GP_CAP,
     ITEM_QTY_CAP,

@@ -14,8 +14,8 @@ from engine.battle.battle_state import BattleState
 from engine.battle.combatant import Combatant
 from engine.common.flag_state import FlagState
 from engine.common.party_state import PartyState
-from engine.common.member_state import MemberState
-from engine.common.service.repository_state import RepositoryState
+from engine.party.member_state import MemberState
+from engine.party.repository_state import RepositoryState
 
 ROGUE_BASE_REDUCTION = -0.05
 

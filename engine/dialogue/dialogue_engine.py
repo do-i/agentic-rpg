@@ -4,7 +4,7 @@ from pathlib import Path
 import yaml
 
 from engine.common.flag_state import FlagState
-from engine.common.service.repository_state import RepositoryState
+from engine.party.repository_state import RepositoryState
 
 
 class DialogueEntry:

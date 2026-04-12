@@ -10,8 +10,8 @@ from pathlib import Path
 import yaml
 
 from engine.common.game_state import GameState
-from engine.common.member_state import MemberState
-from engine.common.service.party_state import calc_exp_next
+from engine.party.member_state import MemberState
+from engine.party.party_state import calc_exp_next
 
 
 def _load_class_data(scenario_path: Path, class_name: str) -> dict:

@@ -8,7 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 import yaml
 
-from engine.common.member_state import MemberState
+from engine.party.member_state import MemberState
 
 # field-usable spell types (no offensive spells on world map)
 FIELD_SPELL_TYPES = {"heal", "utility", "buff"}

@@ -8,8 +8,8 @@ from __future__ import annotations
 from pathlib import Path
 import pygame
 
-from engine.common.member_state import MemberState
-from engine.common.service.party_state import exp_pct
+from engine.party.member_state import MemberState
+from engine.party.party_state import exp_pct
 from engine.ui.colors import (
     C_TEXT as TEXT_PRIMARY,
     C_TEXT_MUT as TEXT_SECONDARY,

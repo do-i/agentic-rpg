@@ -4,7 +4,7 @@ from engine.common.flag_state import FlagState
 from engine.common.map_state import MapState
 from engine.util.playtime import Playtime
 from engine.common.party_state import PartyState
-from engine.common.service.repository_state import RepositoryState
+from engine.party.repository_state import RepositoryState
 
 
 class GameState:

@@ -8,7 +8,7 @@ from engine.battle.battle_rewards import (
 )
 from engine.battle.combatant import Combatant
 from engine.common.party_state import PartyState
-from engine.common.member_state import MemberState
+from engine.party.member_state import MemberState
 
 
 STAT_GROWTH = {

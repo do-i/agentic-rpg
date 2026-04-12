@@ -6,7 +6,7 @@ import yaml
 
 from engine.dialogue.dialogue_engine import DialogueEngine
 from engine.common.flag_state import FlagState
-from engine.common.service.repository_state import RepositoryState
+from engine.party.repository_state import RepositoryState
 
 
 @pytest.fixture
