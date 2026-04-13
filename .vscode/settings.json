@@ -12,5 +12,8 @@
     "**/.pytest_cache": true,
     "**/.venv_*": true,
     "**/__pycache__": true,
+  },
+  "files.associations": {
+    "*.stamp": "json"
   }
 }
