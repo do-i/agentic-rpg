@@ -182,10 +182,7 @@ class ItemRenderer:
             sel    = (idx == list_sel)
             rx, rw = x + 6, w - 12
 
-            if sel and in_tab:
-                bg  = LIST_PRE_BG
-                bdr = LIST_PRE_BDR
-            elif sel:
+            if sel and not in_tab:
                 bg  = LIST_SEL_BG
                 bdr = LIST_SEL_BDR
             else:
