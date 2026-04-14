@@ -7,8 +7,8 @@
   <object id="2" x="946" y="385" width="12" height="33">
    <properties>
     <property name="target_map" value="zone_01_starting_forest"/>
-    <property name="target_position_x" type="int" value="25"/>
-    <property name="target_position_y" type="int" value="3"/>
+    <property name="target_position_x" type="int" value="29"/>
+    <property name="target_position_y" type="int" value="1"/>
    </properties>
   </object>
   <object id="3" x="456.091" y="71.7273" width="16.6364" height="13.8182">
