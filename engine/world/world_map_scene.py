@@ -189,15 +189,6 @@ class WorldMapScene(Scene):
             if raw_interval is not None:
                 map_interval = float(raw_interval)
 
-        from engine.battle.enemy_loader import EnemyLoader
-        # Reuse the loader that's already wired — access via resolver (it holds one)
-        # The resolver doesn't expose enemy_loader directly; get it from encounter_manager
-        # path or build one. Simplest: get the EnemyLoader from the resolver's internal ref.
-        # Since we can't easily access it, we construct one from the scenario path.
-        enemies_dir = scenario_path / "data" / "enemies"
-        classes_dir = scenario_path / "data" / "classes"
-        enemy_loader = EnemyLoader(enemies_dir=enemies_dir, classes_dir=classes_dir)
-
         return EnemySpawner(
             zone=zone,
             spawn_tiles=self._tile_map.enemy_spawn_tiles,
@@ -206,7 +197,6 @@ class WorldMapScene(Scene):
             map_interval=map_interval,
             global_interval=self._enemy_spawn_global_interval,
             resolver=self._encounter_resolver,
-            enemy_loader=enemy_loader,
             scenario_path=scenario_path,
             tile_size=self._tile_size,
         )

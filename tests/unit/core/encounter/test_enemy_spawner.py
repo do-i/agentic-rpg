@@ -49,9 +49,6 @@ def make_spawner(
     resolver = MagicMock()
     resolver.pick_formation.return_value = Formation(["goblin"], 100, chase_range=3)
 
-    loader = MagicMock()
-    loader.load_world_sprite_path.return_value = None
-
     return EnemySpawner(
         zone=zone,
         spawn_tiles=spawn_tiles,
@@ -60,7 +57,6 @@ def make_spawner(
         map_interval=map_interval,
         global_interval=global_interval,
         resolver=resolver,
-        enemy_loader=loader,
         scenario_path=Path("/fake"),
         tile_size=32,
     )

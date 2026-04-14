@@ -15,7 +15,6 @@ from pathlib import Path
 from engine.encounter.encounter_zone_data import EncounterZone, Formation
 from engine.encounter.encounter_resolver import EncounterResolver
 from engine.encounter.enemy_sprite import EnemySprite
-from engine.battle.enemy_loader import EnemyLoader
 from engine.world.sprite_sheet import SpriteSheet
 
 from typing import TYPE_CHECKING
@@ -47,7 +46,6 @@ class EnemySpawner:
         map_interval: float | None,       # from map YAML enemy_spawn.interval (may be None)
         global_interval: float,           # from settings.yaml
         resolver: EncounterResolver,
-        enemy_loader: EnemyLoader,
         scenario_path: Path,
         tile_size: int = 32,
     ) -> None:
@@ -56,7 +54,6 @@ class EnemySpawner:
         self._init_count    = init_count
         self._max_count     = max_count
         self._resolver      = resolver
-        self._enemy_loader  = enemy_loader
         self._scenario_path = scenario_path
         self._tile_size     = tile_size
 
@@ -290,13 +287,11 @@ class EnemySpawner:
         if enemy_id in self._sprite_cache:
             return self._sprite_cache[enemy_id]
         sprite_sheet = None
-        sprite_path_str = self._enemy_loader.load_world_sprite_path(enemy_id)
-        if sprite_path_str:
-            full_path = self._scenario_path / sprite_path_str
-            if full_path.exists():
-                try:
-                    sprite_sheet = SpriteSheet(full_path)
-                except Exception as e:
-                    print(f"[WARN] failed to load enemy world sprite {full_path}: {e}")
+        tsx_path = self._scenario_path / "assets" / "sprites" / "enemies" / f"{enemy_id}.tsx"
+        if tsx_path.exists():
+            try:
+                sprite_sheet = SpriteSheet(tsx_path)
+            except Exception as e:
+                print(f"[WARN] failed to load enemy world sprite {tsx_path}: {e}")
         self._sprite_cache[enemy_id] = sprite_sheet
         return sprite_sheet
