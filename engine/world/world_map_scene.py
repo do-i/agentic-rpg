@@ -1,4 +1,4 @@
-# engine/scenes/world_map_scene.py
+# engine/world/world_map_scene.py
 # Thin orchestrator: delegates logic to world_map_logic.
 
 import sys
@@ -20,13 +20,17 @@ from engine.inn.inn_scene import InnScene
 from engine.shop.item_shop_scene import ItemShopScene
 from engine.shop.apothecary_scene import ApothecaryScene
 from engine.encounter.encounter_manager import EncounterManager
+from engine.encounter.encounter_resolver import EncounterResolver
+from engine.encounter.enemy_spawner import EnemySpawner
+from engine.encounter.enemy_sprite import EnemySprite
 from engine.item.item_effect_handler import ItemEffectHandler
 from engine.item.magic_core_catalog_state import MagicCoreCatalogState
 from engine.world.world_map_logic import (
     FADE_SPEED, try_interact, dispatch_dialogue_result,
-    check_encounter, check_portals, apply_transition,
+    check_portals, apply_transition,
     load_inn_cost, load_shop_items, load_recipes, _is_player_facing,
 )
+from engine.world.player import COLLISION_W, COLLISION_H
 from engine.io.manifest_loader import ManifestLoader
 from engine.world.tile_map import TileMap
 from engine.world.tile_map_factory import TileMapFactory
@@ -43,6 +47,7 @@ from engine.audio.sfx_manager import SfxManager
 class WorldMapScene(Scene):
     """
     Phase 6 — adds Magic Core Shop overlay support.
+    Visible enemy system: enemies spawn on the map and battle triggers on collision.
     """
 
     def __init__(
@@ -56,6 +61,8 @@ class WorldMapScene(Scene):
         dialogue_engine: DialogueEngine,
         npc_loader: NpcLoader,
         encounter_manager: EncounterManager,
+        encounter_resolver: EncounterResolver | None = None,
+        enemy_spawn_global_interval: float = 30.0,
         effect_handler: ItemEffectHandler | None = None,
         mc_catalog: MagicCoreCatalogState | None = None,
         text_speed: str = "fast",
@@ -82,6 +89,8 @@ class WorldMapScene(Scene):
         self._dialogue_engine = dialogue_engine
         self._npc_loader = npc_loader
         self._encounter_manager = encounter_manager
+        self._encounter_resolver = encounter_resolver
+        self._enemy_spawn_global_interval = enemy_spawn_global_interval
         self._effect_handler = effect_handler
         self._text_speed = text_speed
         self._mc_exchange_confirm_large = mc_exchange_confirm_large
@@ -93,6 +102,7 @@ class WorldMapScene(Scene):
         self._camera: Camera | None = None
         self._player: Player | None = None
         self._npcs: list[Npc] = []
+        self._enemy_spawner: EnemySpawner | None = None
 
         self._save_modal: SaveModalScene | None = None
         self._dialogue: DialogueScene | None = None
@@ -107,8 +117,6 @@ class WorldMapScene(Scene):
         self._fade_alpha: int = 255
         self._fade_dir: int = -1
         self._pending_transition: dict | None = None
-
-        self._last_tile: Position | None = None
 
     def _init(self) -> None:
         scenario_path = self._loader.scenario_path
@@ -134,25 +142,74 @@ class WorldMapScene(Scene):
             fps=self._fps,
         )
 
-        map_yaml = scenario_path / "data" / "maps" / f"{map_id}.yaml"
-        self._npcs = self._npc_loader.load_from_map(map_yaml)
+        map_yaml_path = scenario_path / "data" / "maps" / f"{map_id}.yaml"
+        self._npcs = self._npc_loader.load_from_map(map_yaml_path)
 
-        # Start background music for this map
-        if self._bgm_manager and map_yaml.exists():
-            with open(map_yaml) as f:
+        # BGM
+        if self._bgm_manager and map_yaml_path.exists():
+            with open(map_yaml_path) as f:
                 map_data = yaml.safe_load(f) or {}
             bgm_key = map_data.get("bgm")
             if bgm_key:
                 self._bgm_manager.play_key(bgm_key)
 
+        # Encounter zone + enemy spawner
         self._encounter_manager.set_zone(map_id)
-        self._last_tile = self._player.tile_position
+        self._enemy_spawner = self._build_spawner(map_yaml_path, map_id, scenario_path)
+        if self._enemy_spawner:
+            self._enemy_spawner.init_spawn(state.flags)
 
         self._fade_alpha = 255
         self._fade_dir = -1
         self._pending_transition = None
 
         print(f"[DEBUG] loading map={map_id} pos={state.map.position}")
+
+    def _build_spawner(self, map_yaml_path, map_id, scenario_path) -> EnemySpawner | None:
+        """Create EnemySpawner if this map has an encounter zone and spawn tiles."""
+        zone = self._encounter_manager.get_zone()
+        if zone is None:
+            return None   # town or non-encounter map
+        if self._encounter_resolver is None:
+            return None
+        if not self._tile_map.enemy_spawn_tiles:
+            return None   # no spawn points defined in TMX
+
+        # Parse map-level spawn config
+        map_interval: float | None = None
+        init_count = 3
+        max_count  = 6
+        if map_yaml_path.exists():
+            with open(map_yaml_path) as f:
+                map_data = yaml.safe_load(f) or {}
+            spawn_cfg = map_data.get("enemy_spawn") or {}
+            init_count  = int(spawn_cfg.get("init",     init_count))
+            max_count   = int(spawn_cfg.get("max",      max_count))
+            raw_interval = spawn_cfg.get("interval")
+            if raw_interval is not None:
+                map_interval = float(raw_interval)
+
+        from engine.battle.enemy_loader import EnemyLoader
+        # Reuse the loader that's already wired — access via resolver (it holds one)
+        # The resolver doesn't expose enemy_loader directly; get it from encounter_manager
+        # path or build one. Simplest: get the EnemyLoader from the resolver's internal ref.
+        # Since we can't easily access it, we construct one from the scenario path.
+        enemies_dir = scenario_path / "data" / "enemies"
+        classes_dir = scenario_path / "data" / "classes"
+        enemy_loader = EnemyLoader(enemies_dir=enemies_dir, classes_dir=classes_dir)
+
+        return EnemySpawner(
+            zone=zone,
+            spawn_tiles=self._tile_map.enemy_spawn_tiles,
+            init_count=init_count,
+            max_count=max_count,
+            map_interval=map_interval,
+            global_interval=self._enemy_spawn_global_interval,
+            resolver=self._encounter_resolver,
+            enemy_loader=enemy_loader,
+            scenario_path=scenario_path,
+            tile_size=self._tile_size,
+        )
 
     def _load_protagonist_sprite(self, manifest: dict, scenario_path) -> SpriteSheet | None:
         sprite_path = manifest.get("protagonist", {}).get("sprite")
@@ -347,18 +404,45 @@ class WorldMapScene(Scene):
     def _close_apothecary(self) -> None:
         self._apothecary = None
 
-    # ── Encounter ─────────────────────────────────────────────
+    # ── Battle ────────────────────────────────────────────────
 
-    def _check_encounter(self) -> bool:
-        battle_state, boss_flag = check_encounter(
-            self._holder, self._encounter_manager, self._player,
-        )
+    def _launch_battle_from_enemy(self, enemy: EnemySprite) -> None:
+        """Build a BattleState from a visible enemy sprite and switch to BattleScene."""
+        state = self._holder.get()
+
+        # Remove from spawner immediately so it queues for respawn
+        if self._enemy_spawner:
+            self._enemy_spawner.on_enemy_defeated(enemy)
+
+        # Build battle state
+        zone = self._encounter_manager.get_zone()
+        inventory_ids: set[str] = {entry.id for entry in state.repository.items}
+
+        if enemy.is_boss and zone:
+            from engine.common.flag_state import FlagState
+            battle_state = self._encounter_resolver.build_battle_from_boss(
+                zone, state.flags
+            )
+        elif zone:
+            from engine.encounter.encounter_zone_data import Formation
+            formation = Formation(
+                enemy_ids=enemy.formation,
+                weight=1,
+                chase_range=enemy.chase_range,
+            )
+            battle_state = self._encounter_resolver.build_battle_from_formation(
+                formation, zone, inventory_ids
+            )
+        else:
+            return
+
         if battle_state is None:
-            return False
-        self._launch_battle(battle_state, boss_flag=boss_flag)
-        return True
+            return
 
-    def _launch_battle(self, battle_state, boss_flag: str = "") -> None:
+        boss_flag = getattr(battle_state, "boss_flag", "")
+        battle_state = self._encounter_manager.fill_party(battle_state, state.party)
+        state.map.set_position(self._player.tile_position)
+
         scene = BattleScene(
             battle_state=battle_state,
             scene_manager=self._scene_manager,
@@ -372,9 +456,6 @@ class WorldMapScene(Scene):
             sfx_manager=self._sfx_manager,
         )
         self._scene_manager.switch(scene)
-
-    def _on_battle_defeat(self) -> None:
-        self._scene_manager.switch(self._registry.get("world_map"))
 
     # ── Portal ────────────────────────────────────────────────
 
@@ -399,6 +480,7 @@ class WorldMapScene(Scene):
         )
         self._tile_map = None
         self._player = None
+        self._enemy_spawner = None
 
     # ── Update ────────────────────────────────────────────────
 
@@ -440,12 +522,17 @@ class WorldMapScene(Scene):
         keys = pygame.key.get_pressed()
         frozen = self._fade_dir != 0
         state = self._holder.get()
+
+        # Build collision rects for NPCs + enemies so player can't walk through them
         npc_rects = [
             npc.collision_rect
             for npc in self._npcs
             if npc.is_present(state.flags)
         ]
-        self._player.update(keys, self._tile_map.collision_map, frozen, npc_rects=npc_rects)
+        enemy_rects = self._enemy_spawner.get_rects() if self._enemy_spawner else []
+        all_solid_rects = npc_rects + enemy_rects
+
+        self._player.update(keys, self._tile_map.collision_map, frozen, npc_rects=all_solid_rects)
         self._camera.update(self._player.pixel_position)
 
         player_pos = self._player.pixel_position
@@ -459,13 +546,23 @@ class WorldMapScene(Scene):
                        collision_map=self._tile_map.collision_map,
                        npc_rects=other_rects)
 
-        current_tile = self._player.tile_position
-        if current_tile != self._last_tile:
-            self._last_tile = current_tile
-            if not self._check_encounter():
-                self._check_portals()
-        else:
-            self._check_portals()
+        # Update enemy spawner and check for collision-based battle trigger
+        if self._enemy_spawner and not frozen:
+            self._enemy_spawner.update(
+                delta,
+                player_pos.x,
+                player_pos.y,
+                self._tile_map.collision_map,
+                state.party,
+            )
+            col = self._player.collision_rect_position
+            player_rect = (col.x, col.y, COLLISION_W, COLLISION_H)
+            colliding = self._enemy_spawner.check_player_collision(player_rect)
+            if colliding:
+                self._launch_battle_from_enemy(colliding)
+                return
+
+        self._check_portals()
 
     # ── Render (delegates to WorldMapRenderer) ─────────────────
 
@@ -475,6 +572,7 @@ class WorldMapScene(Scene):
 
         state = self._holder.get()
         visible_npcs = [npc for npc in self._npcs if npc.is_present(state.flags)]
+        enemy_sprites = self._enemy_spawner.active_enemies if self._enemy_spawner else []
 
         overlays = [
             o for o in (
@@ -489,6 +587,7 @@ class WorldMapScene(Scene):
             self._camera,
             self._player,
             visible_npcs,
+            enemy_sprites,
             overlays,
             self._dialogue,
             self._fade_alpha,

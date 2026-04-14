@@ -1,6 +1,6 @@
 id: zone_08_corrupted_forest
 name: Corrupted Forest
-encounter_rate: 0.15
+density: 0.15
 
 set_a:
   entries:

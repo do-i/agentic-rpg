@@ -6,11 +6,35 @@ from engine.world.collision import CollisionMap
 from engine.world.portal_data import Portal
 from engine.world.portal_loader import PortalLoader
 
+ENEMY_SPAWNS_LAYER = "enemy_spawns"
+
+
+def _load_enemy_spawn_tiles(tmx_data: pytmx.TiledMap) -> list[dict]:
+    """
+    Read the 'enemy_spawns' object layer from a TMX map.
+    Returns a list of dicts: {x: int, y: int, is_boss: bool}.
+    Objects with property spawn_type='boss' are marked as boss spawn points.
+    """
+    tiles = []
+    for layer in tmx_data.layers:
+        if not isinstance(layer, pytmx.TiledObjectGroup):
+            continue
+        if layer.name != ENEMY_SPAWNS_LAYER:
+            continue
+        for obj in layer:
+            props = obj.properties or {}
+            tiles.append({
+                "x": int(obj.x),
+                "y": int(obj.y),
+                "is_boss": props.get("spawn_type", "") == "boss",
+            })
+    return tiles
+
 
 class TileMap:
     """
     Loads a TMX file via pytmx and renders tile layers.
-    Exposes collision map and portal list.
+    Exposes collision map, portal list, and enemy spawn tiles.
     """
 
     def __init__(
@@ -26,6 +50,7 @@ class TileMap:
         self.height      = self._tmx.height    # in tiles
         self.collision_map = collision_factory(self._tmx, self._tmx.tilewidth)
         self.portals: list[Portal] = (portal_loader or PortalLoader()).load(self._tmx)
+        self.enemy_spawn_tiles: list[dict] = _load_enemy_spawn_tiles(self._tmx)
 
     @property
     def width_px(self) -> int:

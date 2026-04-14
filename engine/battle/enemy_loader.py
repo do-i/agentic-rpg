@@ -105,6 +105,20 @@ class EnemyLoader:
             "targeting": data.get("targeting", {}),
         }
 
+    def load_world_sprite_path(self, enemy_id: str) -> str | None:
+        """Return the world_sprite path string from the enemy YAML, or None."""
+        path = self._index.get(enemy_id)
+        if not path:
+            return None
+        try:
+            with open(path, "r") as f:
+                for doc in yaml.safe_load_all(f):
+                    if isinstance(doc, dict) and doc.get("id") == enemy_id:
+                        return doc.get("world_sprite")
+        except Exception:
+            pass
+        return None
+
     # ── Registry query ────────────────────────────────────────
 
     @property

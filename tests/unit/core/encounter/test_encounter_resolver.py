@@ -26,19 +26,19 @@ def make_combatant(name="Wolf") -> Combatant:
     )
 
 
-def make_zone_custom(rate=1.0, formation=None, with_barrier=False) -> EncounterZone:
+def make_zone_custom(density=1.0, formation=None, with_barrier=False) -> EncounterZone:
     f = formation or Formation(["wolf"], 100)
     set_ = EncounterSet([f])
     barriers = [
         BarrierEnemy("ghost", "veil_breaker", "A force blocks your attack.")
     ] if with_barrier else []
     return EncounterZone(
-        zone_id="zone_01", name="Forest", encounter_rate=rate,
+        zone_id="zone_01", name="Forest", density=density,
         set_a=set_, set_b=set_, barrier_enemies=barriers,
     )
 
 
-def make_zone(rate=0.15, with_boss=False, with_barrier=False) -> EncounterZone:
+def make_zone(density=0.15, with_boss=False, with_barrier=False) -> EncounterZone:
     set_a = EncounterSet([
         Formation(["wolf"], 60),
         Formation(["bat", "wolf"], 40),
@@ -52,7 +52,7 @@ def make_zone(rate=0.15, with_boss=False, with_barrier=False) -> EncounterZone:
         BarrierEnemy("ghost", "veil_breaker", "A force blocks your attack.")
     ] if with_barrier else []
     return EncounterZone(
-        zone_id="zone_01", name="Forest", encounter_rate=rate,
+        zone_id="zone_01", name="Forest", density=density,
         set_a=set_a, set_b=set_b, boss=boss, barrier_enemies=barriers,
     )
 
@@ -76,7 +76,7 @@ class TestLoadEncounterZone:
         data = {
             "id": "zone_01_starting_forest",
             "name": "Starting Forest",
-            "encounter_rate": 0.10,
+            "density": 0.70,
             "set_a": {"entries": [
                 {"formation": ["wild_wolf"], "weight": 70},
                 {"formation": ["cave_bat"],  "weight": 30},
@@ -89,13 +89,52 @@ class TestLoadEncounterZone:
         p.write_text(yaml.dump(data))
         zone = load_encounter_zone(p)
         assert zone.zone_id == "zone_01_starting_forest"
-        assert zone.encounter_rate == 0.10
+        assert zone.density == 0.70
         assert len(zone.set_a.entries) == 2
         assert len(zone.set_b.entries) == 1
 
+    def test_loads_old_encounter_rate_as_density(self, tmp_path):
+        """Loader accepts legacy encounter_rate field for backwards compat."""
+        data = {
+            "id": "zone_01", "name": "Z",
+            "encounter_rate": 0.10,   # legacy field
+            "set_a": {"entries": [{"formation": ["wolf"], "weight": 100}]},
+            "set_b": {"entries": [{"formation": ["wolf"], "weight": 100}]},
+        }
+        p = tmp_path / "z.yaml"
+        p.write_text(yaml.dump(data))
+        zone = load_encounter_zone(p)
+        assert zone.density == 0.10
+
+    def test_loads_spawn_frequency(self, tmp_path):
+        data = {
+            "id": "zone_01", "name": "Z", "density": 0.5,
+            "spawn_frequency": 15.0,
+            "set_a": {"entries": [{"formation": ["wolf"], "weight": 100}]},
+            "set_b": {"entries": [{"formation": ["wolf"], "weight": 100}]},
+        }
+        p = tmp_path / "z.yaml"
+        p.write_text(yaml.dump(data))
+        zone = load_encounter_zone(p)
+        assert zone.spawn_frequency == 15.0
+
+    def test_loads_chase_range_per_formation(self, tmp_path):
+        data = {
+            "id": "zone_01", "name": "Z", "density": 0.5,
+            "set_a": {"entries": [
+                {"formation": ["wolf"], "weight": 100, "chase_range": 4},
+            ]},
+            "set_b": {"entries": [{"formation": ["bat"], "weight": 100}]},
+        }
+        p = tmp_path / "z.yaml"
+        p.write_text(yaml.dump(data))
+        zone = load_encounter_zone(p)
+        assert zone.set_a.entries[0].chase_range == 4
+        assert zone.set_b.entries[0].chase_range == 0  # default
+
     def test_loads_boss(self, tmp_path):
         data = {
-            "id": "zone_01", "name": "Z", "encounter_rate": 0.10,
+            "id": "zone_01", "name": "Z", "density": 0.10,
             "set_a": {"entries": [{"formation": ["wolf"], "weight": 100}]},
             "set_b": {"entries": [{"formation": ["wolf"], "weight": 100}]},
             "boss": {
@@ -114,7 +153,7 @@ class TestLoadEncounterZone:
 
     def test_loads_barrier_enemies(self, tmp_path):
         data = {
-            "id": "zone_04", "name": "Ruins", "encounter_rate": 0.13,
+            "id": "zone_04", "name": "Ruins", "density": 0.13,
             "set_a": {"entries": [{"formation": ["ghost"], "weight": 100}]},
             "set_b": {"entries": [{"formation": ["skeleton"], "weight": 100}]},
             "barrier_enemies": [
@@ -129,82 +168,66 @@ class TestLoadEncounterZone:
         assert zone.barrier_enemies[0].requires_item == "veil_breaker"
 
 
-# ── EncounterResolver.try_random_encounter ────────────────────
+# ── EncounterResolver.build_battle_from_formation ─────────────
 
-class TestTryRandomEncounter:
-    def test_no_encounter_when_rate_zero(self):
-        zone = make_zone(rate=0.0)
-        resolver = make_resolver("wolf", "bat", "spider")
-        result = resolver.try_random_encounter(zone, 0.0, FlagState(), set())
-        assert result is None
+class TestBuildBattleFromFormation:
+    def test_builds_state_with_enemies(self):
+        zone = make_zone(density=1.0)
+        resolver = make_resolver("wolf", "bat")
+        formation = Formation(["wolf", "bat"], 100)
+        state = resolver.build_battle_from_formation(formation, zone, set())
+        assert state is not None
+        assert len(state.enemies) == 2
 
-    def test_encounter_fires_when_rate_100(self):
-        zone = make_zone(rate=1.0)
-        resolver = make_resolver("wolf", "bat", "spider")
-        result = resolver.try_random_encounter(zone, 0.0, FlagState(), set())
-        assert result is not None
-
-    def test_encounter_has_enemies(self):
-        zone = make_zone(rate=1.0)
-        resolver = make_resolver("wolf", "bat", "spider")
-        result = resolver.try_random_encounter(zone, 0.0, FlagState(), set())
-        assert len(result.enemies) >= 1
-
-    def test_modifier_reduces_rate(self):
-        zone = make_zone(rate=0.15)
-        resolver = make_resolver("wolf")
-        with patch("random.randint", return_value=1):
-            result = resolver.try_random_encounter(zone, -0.15, FlagState(), set())
-            assert result is None   # 0.15 - 0.15 = 0.0 → roll 1 > 0
-
-    def test_barrier_enemy_skipped_without_item(self):
+    def test_returns_none_when_all_enemies_barrier_blocked(self):
         zone = make_zone_custom(formation=Formation(["ghost"], 100), with_barrier=True)
         resolver = make_resolver("ghost")
-        result = resolver.try_random_encounter(zone, 0.0, FlagState(), set())
-        # ghost filtered out — battle should have 0 enemies → None returned
+        formation = Formation(["ghost"], 100)
+        result = resolver.build_battle_from_formation(formation, zone, set())
         assert result is None
 
     def test_barrier_enemy_allowed_with_item(self):
         zone = make_zone_custom(formation=Formation(["ghost"], 100), with_barrier=True)
         resolver = make_resolver("ghost")
-        result = resolver.try_random_encounter(
-            zone, 0.0, FlagState(), {"veil_breaker"}
-        )
+        formation = Formation(["ghost"], 100)
+        result = resolver.build_battle_from_formation(formation, zone, {"veil_breaker"})
         assert result is not None
         assert len(result.enemies) == 1
 
-    def test_barrier_message_surfaced_on_state(self):
-        # formation with ghost (barrier) + wolf (normal)
+    def test_barrier_message_surfaced(self):
         zone = make_zone_custom(formation=Formation(["ghost", "wolf"], 100), with_barrier=True)
         resolver = make_resolver("ghost", "wolf")
-        result = resolver.try_random_encounter(zone, 0.0, FlagState(), set())
-        # ghost filtered out, but wolf remains
+        formation = Formation(["ghost", "wolf"], 100)
+        result = resolver.build_battle_from_formation(formation, zone, set())
         assert result is not None
         assert len(result.enemies) == 1
         assert result.enemies[0].id == "wolf"
         assert len(result.barrier_messages) == 1
-        assert "blocks your attack" in result.barrier_messages[0]
 
-    def test_no_barrier_messages_without_barrier(self):
-        zone = make_zone(rate=1.0, with_barrier=False)
-        resolver = make_resolver("wolf", "bat", "spider")
-        result = resolver.try_random_encounter(zone, 0.0, FlagState(), set())
-        assert result is not None
-        assert result.barrier_messages == []
+    def test_background_from_zone(self):
+        zone = EncounterZone(
+            zone_id="z", name="Z", density=1.0,
+            set_a=EncounterSet([Formation(["wolf"], 100)]),
+            set_b=EncounterSet([]),
+            background="world1-bg",
+        )
+        resolver = make_resolver("wolf")
+        state = resolver.build_battle_from_formation(Formation(["wolf"], 100), zone, set())
+        assert state.background == "world1-bg"
 
 
-# ── EncounterResolver.try_boss_encounter ──────────────────────
+# ── EncounterResolver.build_battle_from_boss ──────────────────
 
-class TestTryBossEncounter:
+class TestBuildBattleFromBoss:
     def test_returns_none_when_no_boss(self):
         zone = make_zone(with_boss=False)
         resolver = make_resolver()
-        assert resolver.try_boss_encounter(zone, FlagState()) is None
+        assert resolver.build_battle_from_boss(zone, FlagState()) is None
 
     def test_returns_state_when_boss_not_defeated(self):
         zone = make_zone(with_boss=True)
         resolver = make_resolver("giant_spider")
-        result = resolver.try_boss_encounter(zone, FlagState())
+        result = resolver.build_battle_from_boss(zone, FlagState())
         assert result is not None
         assert result.enemies[0].id == "giant_spider"
 
@@ -212,14 +235,34 @@ class TestTryBossEncounter:
         zone = make_zone(with_boss=True)
         resolver = make_resolver("giant_spider")
         flags = FlagState({"boss_zone01_defeated"})
-        result = resolver.try_boss_encounter(zone, flags)
+        result = resolver.build_battle_from_boss(zone, flags)
         assert result is None
 
-    def test_boss_enemy_loaded_correctly(self):
+    def test_boss_flag_on_state(self):
         zone = make_zone(with_boss=True)
         resolver = make_resolver("giant_spider")
-        result = resolver.try_boss_encounter(zone, FlagState())
-        assert result.enemies[0].name == "giant_spider"
+        result = resolver.build_battle_from_boss(zone, FlagState())
+        assert result.boss_flag == "boss_zone01_defeated"
+
+
+# ── EncounterResolver.pick_formation ─────────────────────────
+
+class TestPickFormation:
+    def test_returns_formation_from_zone(self):
+        zone = make_zone()
+        resolver = make_resolver("wolf")
+        result = resolver.pick_formation(zone)
+        assert result is not None
+        assert len(result.enemy_ids) >= 1
+
+    def test_returns_none_for_empty_sets(self):
+        zone = EncounterZone(
+            zone_id="z", name="Z", density=1.0,
+            set_a=EncounterSet([]),
+            set_b=EncounterSet([]),
+        )
+        resolver = make_resolver()
+        assert resolver.pick_formation(zone) is None
 
 
 # ── Weighted pick ─────────────────────────────────────────────

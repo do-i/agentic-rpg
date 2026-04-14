@@ -7,7 +7,7 @@ from pathlib import Path
 from engine.world.position_data import Position
 from engine.world.world_map_logic import (
     try_interact, dispatch_dialogue_result,
-    check_encounter, check_portals, apply_transition,
+    check_portals, apply_transition,
     load_inn_cost, load_shop_items,
 )
 from engine.world.sprite_sheet import Direction
@@ -138,45 +138,6 @@ class TestDispatchDialogueResult:
 
         assert result == {"open_shop": "item"}
         engine.dispatch_on_complete.assert_called_with({"some": "data"}, "flags", "repo")
-
-
-# ── check_encounter ───────────────────────────────────────────
-
-class TestCheckEncounter:
-    def test_no_encounter(self):
-        holder = MagicMock()
-        state = MagicMock()
-        state.repository.items = []
-        holder.get.return_value = state
-
-        em = MagicMock()
-        em.on_step.return_value = None
-
-        player = MagicMock()
-
-        battle, flag = check_encounter(holder, em, player)
-        assert battle is None
-        assert flag == ""
-
-    def test_encounter_triggered(self):
-        holder = MagicMock()
-        state = MagicMock()
-        state.repository.items = []
-        holder.get.return_value = state
-
-        battle_state = MagicMock()
-        battle_state.boss_flag = "boss_1"
-
-        em = MagicMock()
-        em.on_step.return_value = battle_state
-
-        player = MagicMock()
-        player.tile_position = Position(5, 3)
-
-        battle, flag = check_encounter(holder, em, player)
-        assert battle is battle_state
-        assert flag == "boss_1"
-        state.map.set_position.assert_called_with(Position(5, 3))
 
 
 # ── check_portals ─────────────────────────────────────────────

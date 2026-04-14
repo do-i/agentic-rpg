@@ -1,6 +1,6 @@
 id: zone_07_sunken_cave
 name: Sunken Cave
-encounter_rate: 0.15
+density: 0.15
 
 set_a:
   entries:

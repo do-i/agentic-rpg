@@ -1,6 +1,6 @@
 # engine/world/world_map_renderer.py
 #
-# Rendering for the world map scene — tile map, y-sorted player+NPC drawing,
+# Rendering for the world map scene — tile map, y-sorted player+NPC+enemy drawing,
 # overlay rendering, fade overlay, and quit-confirm dialog.
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from engine.world.world_map_logic import _is_player_facing
 
 
 class WorldMapRenderer:
-    """Draws the world map: tiles, player, NPCs, overlays, fade, quit dialog."""
+    """Draws the world map: tiles, player, NPCs, enemy sprites, overlays, fade, quit dialog."""
 
     def __init__(self) -> None:
         self._quit_font: pygame.font.Font | None = None
@@ -23,6 +23,7 @@ class WorldMapRenderer:
         camera,
         player,
         npcs: list,
+        enemy_sprites: list,
         overlays: list,
         dialogue,
         fade_alpha: int,
@@ -49,9 +50,13 @@ class WorldMapRenderer:
                 player_pos=player_pos,
             )
 
-        drawables = [(player_pos.y, render_player)] + [
-            (npc._py, lambda n=npc: render_npc(n)) for npc in npcs
-        ]
+        def render_enemy(sprite):
+            sprite.render(screen, camera.offset_x, camera.offset_y)
+
+        drawables = [(player_pos.y, render_player)]
+        drawables += [(npc._py, lambda n=npc: render_npc(n)) for npc in npcs]
+        drawables += [(e.pixel_y, lambda s=e: render_enemy(s)) for e in enemy_sprites]
+
         for _, draw in sorted(drawables, key=lambda d: d[0]):
             draw()
 

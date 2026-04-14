@@ -1,6 +1,11 @@
 # data/maps/world.yaml
 bgm: zone.starting_forest
 
+enemy_spawn:
+  init: 3
+  max: 6
+  interval: 25.0
+
 transport:
   sail:
     unlock_flag: transport_sail_unlocked

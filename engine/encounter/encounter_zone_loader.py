@@ -25,6 +25,7 @@ def load_encounter_zone(path: Path) -> EncounterZone:
             Formation(
                 enemy_ids=entry["formation"],
                 weight=entry["weight"],
+                chase_range=int(entry.get("chase_range", 0)),
             )
             for entry in raw.get("entries", [])
         ]
@@ -50,13 +51,17 @@ def load_encounter_zone(path: Path) -> EncounterZone:
         for b in data.get("barrier_enemies", [])
     ]
 
+    raw_freq = data.get("spawn_frequency")
+    spawn_frequency = float(raw_freq) if raw_freq is not None else None
+
     return EncounterZone(
         zone_id=data.get("id", path.stem),
         name=data.get("name", ""),
-        encounter_rate=float(data.get("encounter_rate", 0.0)),
+        density=float(data.get("density", data.get("encounter_rate", 0.5))),
         set_a=parse_set(data.get("set_a")),
         set_b=parse_set(data.get("set_b")),
         boss=boss,
         barrier_enemies=barriers,
         background=data.get("background", ""),
+        spawn_frequency=spawn_frequency,
     )

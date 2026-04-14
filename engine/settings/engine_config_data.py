@@ -19,12 +19,13 @@ class EngineConfigData:
     # tiles
     tile_size: int
     # runtime
-    saves_dir:                 str
-    text_speed:                str
-    smooth_collision:          bool
-    mc_exchange_confirm_large: bool
-    use_aoe_confirm:           bool
-    debug_party:               bool
+    saves_dir:                    str
+    text_speed:                   str
+    smooth_collision:             bool
+    mc_exchange_confirm_large:    bool
+    use_aoe_confirm:              bool
+    debug_party:                  bool
+    enemy_spawn_global_interval:  float
 
     @classmethod
     def load(cls, path: Path = SETTINGS_PATH) -> "EngineConfigData":
@@ -35,10 +36,11 @@ class EngineConfigData:
         tiles         = data.get("tiles")   or {}
         saves_dir     = (data.get("saves")    or {}).get("dir")
         text_speed    = (data.get("dialogue") or {}).get("text_speed")
-        smooth        = (data.get("movement") or {}).get("smooth_collision", True)
-        confirm_large = (data.get("shop")     or {}).get("mc_exchange_confirm_large", True)
-        use_aoe       = (data.get("item")     or {}).get("use_aoe_confirm", True)
-        debug_party   = (data.get("debug")    or {}).get("party", False)
+        smooth        = (data.get("movement")    or {}).get("smooth_collision", True)
+        confirm_large = (data.get("shop")        or {}).get("mc_exchange_confirm_large", True)
+        use_aoe       = (data.get("item")        or {}).get("use_aoe_confirm", True)
+        debug_party   = (data.get("debug")       or {}).get("party", False)
+        global_interval = (data.get("enemy_spawn") or {}).get("global_interval", 30.0)
 
         missing = []
         if saves_dir is None:
@@ -62,4 +64,5 @@ class EngineConfigData:
             mc_exchange_confirm_large=bool(confirm_large),
             use_aoe_confirm=bool(use_aoe),
             debug_party=bool(debug_party),
+            enemy_spawn_global_interval=float(global_interval),
         )

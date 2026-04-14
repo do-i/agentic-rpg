@@ -1,40 +1,54 @@
 id: zone_02_open_plains
 name: Open Plains
-encounter_rate: 0.12
+density: 0.65
+spawn_frequency: 20.0
 
 set_a:
   entries:
     - formation: [giant_rat, giant_rat, giant_rat]
       weight: 30
+      chase_range: 3
     - formation: [sand_serpent]
       weight: 25
+      chase_range: 2
     - formation: [forest_spider, giant_rat]
       weight: 20
+      chase_range: 3
     - formation: [forest_wolf]
       weight: 10
+      chase_range: 5
     - formation: [horned_rabbit]
       weight: 10
+      chase_range: 1
     - formation: [forest_wolf, horned_rabbit]
       weight: 5
+      chase_range: 4
 
 set_b:
   entries:
     - formation: [marsh_rat, marsh_rat]
       weight: 30
+      chase_range: 3
     - formation: [treant, venom_bat]
       weight: 25
+      chase_range: 1
     - formation: [marsh_rat, venom_bat]
       weight: 20
+      chase_range: 3
     - formation: [forest_wolf]
       weight: 10
+      chase_range: 5
     - formation: [horned_rabbit]
       weight: 10
+      chase_range: 1
     - formation: [forest_wolf, horned_rabbit]
       weight: 5
+      chase_range: 4
 
 boss:
   id: mountain_bear
   name: Mountain Bear
   once: true
+  chase_range: 0
   on_complete:
     set_flag: boss_zone02_defeated

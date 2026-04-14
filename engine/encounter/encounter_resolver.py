@@ -1,12 +1,9 @@
 # engine/encounter/encounter_resolver.py
-#
-# Phase 4 — Battle system
 
 from __future__ import annotations
 import random
-from pathlib import Path
 
-from engine.encounter.encounter_zone import EncounterZone, Formation
+from engine.encounter.encounter_zone_data import EncounterZone, Formation
 from engine.battle.enemy_loader import EnemyLoader
 from engine.battle.combatant import Combatant
 from engine.battle.battle_state import BattleState
@@ -15,64 +12,65 @@ from engine.common.flag_state import FlagState
 
 class EncounterResolver:
     """
-    Decides whether a random encounter triggers, picks the formation,
-    filters barrier enemies, and builds a BattleState ready for BattleScene.
+    Picks formations and builds BattleState objects for the visible enemy system.
 
-    Resolution algorithm (matches docs/03-Battle.md + docs/11-Loot.md):
-      Roll 1 — encounter trigger:
-        roll D100 <= final_encounter_rate * 100  → encounter fires
-      Roll 2 — set selection:
-        50/50 between set_a and set_b
-      Roll 3 — formation:
-        weighted walk, first entry where cumulative_weight >= roll
-      Barrier filter:
-        any barrier enemy in formation without required item → swap/skip
+    Used by EnemySpawner to pick which formation a spawned enemy represents,
+    and by WorldMapScene to build a BattleState when the player collides with one.
     """
 
     def __init__(self, enemy_loader: EnemyLoader) -> None:
         self._enemy_loader = enemy_loader
 
-    # ── Public API ────────────────────────────────────────────
+    # ── Formation selection ───────────────────────────────────────
 
-    def try_random_encounter(
+    def pick_formation(self, zone: EncounterZone) -> Formation | None:
+        """Pick a random formation from the zone (50/50 set_a/set_b, then weighted)."""
+        chosen_set = zone.set_a if random.random() < 0.5 else zone.set_b
+        if not chosen_set.entries:
+            return None
+        return self._weighted_pick(chosen_set.entries)
+
+    @staticmethod
+    def _weighted_pick(entries: list[Formation]) -> Formation | None:
+        total = sum(e.weight for e in entries)
+        if total == 0:
+            return None
+        roll = random.randint(1, 100)
+        cumulative = 0
+        for entry in entries:
+            cumulative += int(entry.weight * 100 / total)
+            if roll <= cumulative:
+                return entry
+        return entries[-1]
+
+    # ── Battle state construction ─────────────────────────────────
+
+    def build_battle_from_formation(
         self,
+        formation: Formation,
         zone: EncounterZone,
-        encounter_modifier: float,
-        flags: FlagState,
         inventory_item_ids: set[str],
     ) -> BattleState | None:
         """
-        Returns a BattleState if an encounter triggers, None otherwise.
-        encounter_modifier: from Rogue passive / accessories (can be negative).
+        Build a BattleState from a specific formation. Called when the player
+        physically collides with a visible enemy sprite.
         """
-        final_rate = max(0.0, min(1.0, zone.encounter_rate + encounter_modifier))
-        roll = random.randint(1, 100)
-        if roll > int(final_rate * 100):
-            return None
-
-        formation = self._pick_formation(zone)
-        if not formation:
-            return None
-
-        enemies, barrier_messages = self._build_enemies(
-            formation, zone, inventory_item_ids
-        )
+        enemies, barrier_messages = self._build_enemies(formation, zone, inventory_item_ids)
         if not enemies:
             return None
-
         state = BattleState(party=[], enemies=enemies)
         state.barrier_messages = barrier_messages
         state.background = zone.background
         return state
 
-    def try_boss_encounter(
+    def build_battle_from_boss(
         self,
         zone: EncounterZone,
         flags: FlagState,
     ) -> BattleState | None:
         """
-        Returns BattleState for the zone boss if it should trigger.
-        Boss is once:true — skipped if completion flag already set.
+        Build a BattleState for the zone boss. Returns None if boss already defeated.
+        Kept for use by EnemySpawner when the player collides with the boss sprite.
         """
         boss = zone.boss
         if not boss:
@@ -89,30 +87,7 @@ class EncounterResolver:
         state.background = zone.background
         return state
 
-    # ── Formation selection ───────────────────────────────────
-
-    def _pick_formation(self, zone: EncounterZone) -> Formation | None:
-        # 50/50 set choice
-        chosen_set = zone.set_a if random.random() < 0.5 else zone.set_b
-        if not chosen_set.entries:
-            return None
-        return self._weighted_pick(chosen_set.entries)
-
-    @staticmethod
-    def _weighted_pick(entries: list[Formation]) -> Formation | None:
-        total = sum(e.weight for e in entries)
-        if total == 0:
-            return None
-        roll = random.randint(1, 100)
-        # normalise weights to 100 if they don't already sum to 100
-        cumulative = 0
-        for entry in entries:
-            cumulative += int(entry.weight * 100 / total)
-            if roll <= cumulative:
-                return entry
-        return entries[-1]   # fallback: last entry
-
-    # ── Enemy building ────────────────────────────────────────
+    # ── Enemy building ────────────────────────────────────────────
 
     def _build_enemies(
         self,

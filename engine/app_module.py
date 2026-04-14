@@ -106,12 +106,11 @@ class AppModule(Module):
     @singleton
     def provide_encounter_manager(
         self,
-        resolver: EncounterResolver,
         loader: ManifestLoader,
     ) -> EncounterManager:
         encount_dir = loader.scenario_path / "data" / "encount"
         classes_dir = loader.scenario_path / "data" / "classes"
-        return EncounterManager(resolver=resolver, encount_dir=encount_dir, classes_dir=classes_dir)
+        return EncounterManager(encount_dir=encount_dir, classes_dir=classes_dir)
 
     @provider
     @singleton
@@ -148,6 +147,7 @@ class AppModule(Module):
         dialogue_engine: DialogueEngine,
         npc_loader: NpcLoader,
         encounter_manager: EncounterManager,
+        encounter_resolver: EncounterResolver,
         item_catalog: ItemCatalog,
         effect_handler: ItemEffectHandler,
         bgm_manager: BgmManager,
@@ -175,6 +175,8 @@ class AppModule(Module):
                 scene_manager, registry,
                 game_state_manager, dialogue_engine, npc_loader,
                 encounter_manager=encounter_manager,
+                encounter_resolver=encounter_resolver,
+                enemy_spawn_global_interval=settings.enemy_spawn_global_interval,
                 effect_handler=effect_handler,
                 mc_catalog=mc_catalog,
                 text_speed=settings.text_speed,

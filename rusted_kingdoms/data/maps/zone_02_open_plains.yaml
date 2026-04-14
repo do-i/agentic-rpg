@@ -1,0 +1,6 @@
+bgm: zone.open_plains
+
+enemy_spawn:
+  init: 4
+  max: 8
+  interval: 20.0

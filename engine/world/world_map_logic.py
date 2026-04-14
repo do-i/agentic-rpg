@@ -12,7 +12,6 @@ from engine.world.position_data import Position
 from engine.common.game_state_holder import GameStateHolder
 from engine.io.save_manager import GameStateManager
 from engine.dialogue.dialogue_engine import DialogueEngine
-from engine.encounter.encounter_manager import EncounterManager
 from engine.world.npc import Npc
 from engine.world.player import Player, COLLISION_W, COLLISION_H
 from engine.world.sprite_sheet import Direction
@@ -74,28 +73,6 @@ def dispatch_dialogue_result(on_complete: dict, flags, repository, dialogue_engi
     if not on_complete:
         return {}
     return dialogue_engine.dispatch_on_complete(on_complete, flags, repository)
-
-
-def check_encounter(holder: GameStateHolder, encounter_manager: EncounterManager,
-                    player: Player):
-    """Check for a random encounter on the current tile.
-    Returns (battle_state, boss_flag) or (None, "").
-    """
-    state = holder.get()
-    inventory_ids: set[str] = {
-        entry.id for entry in state.repository.items
-    }
-    battle_state = encounter_manager.on_step(
-        flags=state.flags,
-        party=state.party,
-        inventory_item_ids=inventory_ids,
-    )
-    if battle_state is None:
-        return None, ""
-
-    boss_flag = getattr(battle_state, "boss_flag", "")
-    state.map.set_position(player.tile_position)
-    return battle_state, boss_flag
 
 
 def check_portals(tile_map: TileMap, player: Player) -> dict | None:

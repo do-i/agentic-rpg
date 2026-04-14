@@ -6,8 +6,9 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class Formation:
-    enemy_ids: list[str]
-    weight:    int
+    enemy_ids:   list[str]
+    weight:      int
+    chase_range: int = 0
 
 
 @dataclass(frozen=True)
@@ -38,13 +39,14 @@ class BarrierEnemy:
 class EncounterZone:
     """
     Parsed encounter zone — loaded from data/encount/<zone_id>.yaml.
-    Contains set_a, set_b, boss config, barrier enemy list, and base rate.
+    Contains set_a, set_b, boss config, barrier enemy list, density, and spawn frequency.
     """
-    zone_id:        str
-    name:           str
-    encounter_rate: float
-    set_a:          EncounterSet
-    set_b:          EncounterSet
-    boss:           BossConfig | None = None
+    zone_id:         str
+    name:            str
+    density:         float          # 0-1 probability a spawn tick fires
+    set_a:           EncounterSet
+    set_b:           EncounterSet
+    boss:            BossConfig | None = None
     barrier_enemies: list[BarrierEnemy] = field(default_factory=list)
-    background:     str = ""
+    background:      str = ""
+    spawn_frequency: float | None = None  # optional zone-level interval override (seconds)
