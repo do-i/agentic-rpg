@@ -2,35 +2,25 @@ id: zone_08_corrupted_forest
 name: Corrupted Forest
 density: 0.15
 
-set_a:
-  entries:
-    - formation: [shadow_wolf, shadow_wolf]
-      weight: 30
-    - formation: [phantom, phantom]
-      weight: 25
-    - formation: [wraith, shadow_wolf]
-      weight: 20
-    - formation: [shadow_imp]
-      weight: 10
-    - formation: [blighted_treant]
-      weight: 10
-    - formation: [shadow_imp, blighted_treant]
-      weight: 5
-
-set_b:
-  entries:
-    - formation: [rot_zombie, rot_zombie]
-      weight: 30
-    - formation: [cursed_gargoyle, rot_zombie]
-      weight: 25
-    - formation: [banshee]
-      weight: 20
-    - formation: [shadow_imp]
-      weight: 10
-    - formation: [blighted_treant]
-      weight: 10
-    - formation: [shadow_imp, blighted_treant]
-      weight: 5
+entries:
+  - formation: [shadow_wolf, shadow_wolf]
+    weight: 30
+  - formation: [phantom, phantom]
+    weight: 25
+  - formation: [wraith, shadow_wolf]
+    weight: 20
+  - formation: [rot_zombie, rot_zombie]
+    weight: 20
+  - formation: [cursed_gargoyle, rot_zombie]
+    weight: 15
+  - formation: [banshee]
+    weight: 10
+  - formation: [shadow_imp]
+    weight: 10
+  - formation: [blighted_treant]
+    weight: 10
+  - formation: [shadow_imp, blighted_treant]
+    weight: 5
 
 boss:
   id: succubus

@@ -4,64 +4,17 @@ density: 0.70
 spawn_frequency: 25.0
 background: world1-bg-1280x468
 
-set_a:
-  entries:
-    - formation: [goblin, goblin_warrier, goblin, goblin]
-      weight: 50
-      chase_range: 3
-    - formation: [grik_the_grin_192]
-      weight: 50
-      chase_range: 2
-    # - formation: [cave_spider, cave_spider]
-    #   weight: 1
-    #   chase_range: 4
-    # - formation: [giant_rat, giant_rat]
-    #   weight: 1
-    #   chase_range: 3
-    # - formation: [wild_wolf, cave_spider]
-    #   weight: 1
-    #   chase_range: 5
-    # - formation: [wild_wolf]
-    #   weight: 1
-    #   chase_range: 5
-    # - formation: [cave_bat]
-    #   weight: 1
-    #   chase_range: 4
-    # - formation: [treant]
-    #   weight: 1
-    #   chase_range: 0
-
-set_b:
-  entries:
-    - formation: [goblin, goblin, goblin_warrier, goblin]
-      weight: 50
-      chase_range: 3
-    - formation: [grik_the_grin_192]
-      weight: 50
-      chase_range: 2
-    # - formation: [venom_bat, venom_bat]
-    #   weight: 1
-    #   chase_range: 4
-    # - formation: [forest_spider]
-    #   weight: 1
-    #   chase_range: 3
-    # - formation: [venom_bat, forest_spider]
-    #   weight: 1
-    #   chase_range: 4
-    # - formation: [wild_wolf]
-    #   weight: 1
-    #   chase_range: 5
-    # - formation: [cave_bat]
-    #   weight: 1
-    #   chase_range: 4
-    # - formation: [treant]
-    #   weight: 1
-    #   chase_range: 0
+entries:
+  - formation: [goblin, goblin_warrier, goblin, goblin]
+    weight: 50
+    chase_range: 3
+  - formation: [grik_the_grin_192]
+    weight: 50
+    chase_range: 2
 
 boss:
   id: forest_spider_giant
   name: Forest Spider (Giant)
   once: true
-  chase_range: 0
   on_complete:
     set_flag: boss_zone01_defeated

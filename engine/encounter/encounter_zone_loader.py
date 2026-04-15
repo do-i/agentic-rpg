@@ -18,18 +18,14 @@ def load_encounter_zone(path: Path) -> EncounterZone:
     with open(path, "r") as f:
         data = yaml.safe_load(f)
 
-    def parse_set(raw: dict | None) -> EncounterSet:
-        if not raw:
-            return EncounterSet()
-        entries = [
-            Formation(
-                enemy_ids=entry["formation"],
-                weight=entry["weight"],
-                chase_range=int(entry.get("chase_range", 0)),
-            )
-            for entry in raw.get("entries", [])
-        ]
-        return EncounterSet(entries=entries)
+    entries = [
+        Formation(
+            enemy_ids=entry["formation"],
+            weight=entry["weight"],
+            chase_range=int(entry.get("chase_range", 0)),
+        )
+        for entry in data.get("entries", [])
+    ]
 
     boss = None
     raw_boss = data.get("boss")
@@ -52,16 +48,14 @@ def load_encounter_zone(path: Path) -> EncounterZone:
     ]
 
     raw_freq = data.get("spawn_frequency")
-    spawn_frequency = float(raw_freq) if raw_freq is not None else None
 
     return EncounterZone(
         zone_id=data.get("id", path.stem),
         name=data.get("name", ""),
-        density=float(data.get("density", data.get("encounter_rate", 0.5))),
-        set_a=parse_set(data.get("set_a")),
-        set_b=parse_set(data.get("set_b")),
+        density=float(data.get("density", 0.5)),
+        entries=EncounterSet(entries=entries),
         boss=boss,
         barrier_enemies=barriers,
         background=data.get("background", ""),
-        spawn_frequency=spawn_frequency,
+        spawn_frequency=float(raw_freq) if raw_freq is not None else None,
     )

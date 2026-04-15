@@ -24,11 +24,10 @@ class EncounterResolver:
     # ── Formation selection ───────────────────────────────────────
 
     def pick_formation(self, zone: EncounterZone) -> Formation | None:
-        """Pick a random formation from the zone (50/50 set_a/set_b, then weighted)."""
-        chosen_set = zone.set_a if random.random() < 0.5 else zone.set_b
-        if not chosen_set.entries:
+        """Pick a random weighted formation from the zone's entry list."""
+        if not zone.entries.entries:
             return None
-        return self._weighted_pick(chosen_set.entries)
+        return self._weighted_pick(zone.entries.entries)
 
     @staticmethod
     def _weighted_pick(entries: list[Formation]) -> Formation | None:

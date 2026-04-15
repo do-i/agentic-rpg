@@ -18,13 +18,15 @@ from engine.encounter.enemy_sprite import EnemySprite
 
 
 def make_zone(density=0.8, with_boss=False, spawn_frequency=None) -> EncounterZone:
-    set_a = EncounterSet([Formation(["goblin"], 100, chase_range=3)])
-    set_b = EncounterSet([Formation(["bat"], 100, chase_range=2)])
+    entries = EncounterSet([
+        Formation(["goblin"], 60, chase_range=3),
+        Formation(["bat"], 40, chase_range=2),
+    ])
     boss = BossConfig("spider_boss", "Boss Spider", once=True,
                       flag_set="boss_defeated") if with_boss else None
     return EncounterZone(
         zone_id="zone_01", name="Forest", density=density,
-        set_a=set_a, set_b=set_b, boss=boss,
+        entries=entries, boss=boss,
         spawn_frequency=spawn_frequency,
     )
 

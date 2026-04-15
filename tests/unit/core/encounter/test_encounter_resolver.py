@@ -5,10 +5,10 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 import yaml
 
-from engine.encounter.encounter_zone import (
+from engine.encounter.encounter_zone_data import (
     EncounterZone, EncounterSet, Formation, BossConfig, BarrierEnemy,
-    load_encounter_zone,
 )
+from engine.encounter.encounter_zone_loader import load_encounter_zone
 from engine.encounter.encounter_resolver import EncounterResolver
 from engine.battle.enemy_loader import EnemyLoader
 from engine.battle.combatant import Combatant
@@ -28,22 +28,20 @@ def make_combatant(name="Wolf") -> Combatant:
 
 def make_zone_custom(density=1.0, formation=None, with_barrier=False) -> EncounterZone:
     f = formation or Formation(["wolf"], 100)
-    set_ = EncounterSet([f])
+    entries = EncounterSet([f])
     barriers = [
         BarrierEnemy("ghost", "veil_breaker", "A force blocks your attack.")
     ] if with_barrier else []
     return EncounterZone(
         zone_id="zone_01", name="Forest", density=density,
-        set_a=set_, set_b=set_, barrier_enemies=barriers,
+        entries=entries, barrier_enemies=barriers,
     )
 
 
 def make_zone(density=0.15, with_boss=False, with_barrier=False) -> EncounterZone:
-    set_a = EncounterSet([
+    entries = EncounterSet([
         Formation(["wolf"], 60),
         Formation(["bat", "wolf"], 40),
-    ])
-    set_b = EncounterSet([
         Formation(["spider"], 100),
     ])
     boss = BossConfig("giant_spider", "Giant Spider", once=True,
@@ -53,7 +51,7 @@ def make_zone(density=0.15, with_boss=False, with_barrier=False) -> EncounterZon
     ] if with_barrier else []
     return EncounterZone(
         zone_id="zone_01", name="Forest", density=density,
-        set_a=set_a, set_b=set_b, boss=boss, barrier_enemies=barriers,
+        entries=entries, boss=boss, barrier_enemies=barriers,
     )
 
 
@@ -77,41 +75,24 @@ class TestLoadEncounterZone:
             "id": "zone_01_starting_forest",
             "name": "Starting Forest",
             "density": 0.70,
-            "set_a": {"entries": [
+            "entries": [
                 {"formation": ["wild_wolf"], "weight": 70},
                 {"formation": ["cave_bat"],  "weight": 30},
-            ]},
-            "set_b": {"entries": [
                 {"formation": ["venom_bat"], "weight": 100},
-            ]},
+            ],
         }
         p = tmp_path / "zone_01.yaml"
         p.write_text(yaml.dump(data))
         zone = load_encounter_zone(p)
         assert zone.zone_id == "zone_01_starting_forest"
         assert zone.density == 0.70
-        assert len(zone.set_a.entries) == 2
-        assert len(zone.set_b.entries) == 1
-
-    def test_loads_old_encounter_rate_as_density(self, tmp_path):
-        """Loader accepts legacy encounter_rate field for backwards compat."""
-        data = {
-            "id": "zone_01", "name": "Z",
-            "encounter_rate": 0.10,   # legacy field
-            "set_a": {"entries": [{"formation": ["wolf"], "weight": 100}]},
-            "set_b": {"entries": [{"formation": ["wolf"], "weight": 100}]},
-        }
-        p = tmp_path / "z.yaml"
-        p.write_text(yaml.dump(data))
-        zone = load_encounter_zone(p)
-        assert zone.density == 0.10
+        assert len(zone.entries.entries) == 3
 
     def test_loads_spawn_frequency(self, tmp_path):
         data = {
             "id": "zone_01", "name": "Z", "density": 0.5,
             "spawn_frequency": 15.0,
-            "set_a": {"entries": [{"formation": ["wolf"], "weight": 100}]},
-            "set_b": {"entries": [{"formation": ["wolf"], "weight": 100}]},
+            "entries": [{"formation": ["wolf"], "weight": 100}],
         }
         p = tmp_path / "z.yaml"
         p.write_text(yaml.dump(data))
@@ -121,22 +102,21 @@ class TestLoadEncounterZone:
     def test_loads_chase_range_per_formation(self, tmp_path):
         data = {
             "id": "zone_01", "name": "Z", "density": 0.5,
-            "set_a": {"entries": [
+            "entries": [
                 {"formation": ["wolf"], "weight": 100, "chase_range": 4},
-            ]},
-            "set_b": {"entries": [{"formation": ["bat"], "weight": 100}]},
+                {"formation": ["bat"], "weight": 50},
+            ],
         }
         p = tmp_path / "z.yaml"
         p.write_text(yaml.dump(data))
         zone = load_encounter_zone(p)
-        assert zone.set_a.entries[0].chase_range == 4
-        assert zone.set_b.entries[0].chase_range == 0  # default
+        assert zone.entries.entries[0].chase_range == 4
+        assert zone.entries.entries[1].chase_range == 0  # default
 
     def test_loads_boss(self, tmp_path):
         data = {
             "id": "zone_01", "name": "Z", "density": 0.10,
-            "set_a": {"entries": [{"formation": ["wolf"], "weight": 100}]},
-            "set_b": {"entries": [{"formation": ["wolf"], "weight": 100}]},
+            "entries": [{"formation": ["wolf"], "weight": 100}],
             "boss": {
                 "id": "forest_spider_giant",
                 "name": "Forest Spider (Giant)",
@@ -154,8 +134,7 @@ class TestLoadEncounterZone:
     def test_loads_barrier_enemies(self, tmp_path):
         data = {
             "id": "zone_04", "name": "Ruins", "density": 0.13,
-            "set_a": {"entries": [{"formation": ["ghost"], "weight": 100}]},
-            "set_b": {"entries": [{"formation": ["skeleton"], "weight": 100}]},
+            "entries": [{"formation": ["ghost"], "weight": 100}],
             "barrier_enemies": [
                 {"id": "ghost", "requires_item": "veil_breaker",
                  "blocked_message": "A mysterious force blocks your attack."},
@@ -207,8 +186,7 @@ class TestBuildBattleFromFormation:
     def test_background_from_zone(self):
         zone = EncounterZone(
             zone_id="z", name="Z", density=1.0,
-            set_a=EncounterSet([Formation(["wolf"], 100)]),
-            set_b=EncounterSet([]),
+            entries=EncounterSet([Formation(["wolf"], 100)]),
             background="world1-bg",
         )
         resolver = make_resolver("wolf")
@@ -255,11 +233,10 @@ class TestPickFormation:
         assert result is not None
         assert len(result.enemy_ids) >= 1
 
-    def test_returns_none_for_empty_sets(self):
+    def test_returns_none_for_empty_entries(self):
         zone = EncounterZone(
             zone_id="z", name="Z", density=1.0,
-            set_a=EncounterSet([]),
-            set_b=EncounterSet([]),
+            entries=EncounterSet([]),
         )
         resolver = make_resolver()
         assert resolver.pick_formation(zone) is None

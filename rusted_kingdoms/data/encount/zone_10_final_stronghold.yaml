@@ -2,35 +2,23 @@ id: zone_10_final_stronghold
 name: Final Stronghold
 density: 0.18
 
-set_a:
-  entries:
-    - formation: [ancient_golem, ancient_golem]
-      weight: 30
-    - formation: [lich, ancient_golem]
-      weight: 25
-    - formation: [chaos_elemental, lich]
-      weight: 20
-    - formation: [specter]
-      weight: 10
-    - formation: [death_knight]
-      weight: 10
-    - formation: [specter, death_knight]
-      weight: 5
-
-set_b:
-  entries:
-    - formation: [dark_elemental, dark_elemental]
-      weight: 30
-    - formation: [fallen_angel]
-      weight: 25
-    - formation: [demon_lords_guard, dark_elemental]
-      weight: 20
-    - formation: [specter]
-      weight: 10
-    - formation: [death_knight]
-      weight: 10
-    - formation: [specter, death_knight]
-      weight: 5
+entries:
+  - formation: [ancient_golem, ancient_golem]
+    weight: 30
+  - formation: [lich, ancient_golem]
+    weight: 25
+  - formation: [chaos_elemental, lich]
+    weight: 20
+  - formation: [dark_elemental, dark_elemental]
+    weight: 20
+  - formation: [fallen_angel]
+    weight: 15
+  - formation: [specter]
+    weight: 10
+  - formation: [death_knight]
+    weight: 10
+  - formation: [specter, death_knight]
+    weight: 5
 
 boss:
   id: dullahan

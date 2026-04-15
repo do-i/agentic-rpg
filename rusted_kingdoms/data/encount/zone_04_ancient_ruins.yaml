@@ -2,35 +2,23 @@ id: zone_04_ancient_ruins
 name: Ancient Ruins
 density: 0.13
 
-set_a:
-  entries:
-    - formation: [mimic]
-      weight: 30
-    - formation: [will_o_wisp, will_o_wisp]
-      weight: 25
-    - formation: [skeleton, will_o_wisp]
-      weight: 20
-    - formation: [skeleton]
-      weight: 10
-    - formation: [stone_gargoyle]
-      weight: 10
-    - formation: [ghost]
-      weight: 5
-
-set_b:
-  entries:
-    - formation: [bone_archer, bone_archer]
-      weight: 30
-    - formation: [plague_zombie, plague_zombie]
-      weight: 25
-    - formation: [bone_archer, plague_zombie]
-      weight: 20
-    - formation: [skeleton]
-      weight: 10
-    - formation: [stone_gargoyle]
-      weight: 10
-    - formation: [ghost]
-      weight: 5
+entries:
+  - formation: [mimic]
+    weight: 30
+  - formation: [will_o_wisp, will_o_wisp]
+    weight: 25
+  - formation: [skeleton, will_o_wisp]
+    weight: 20
+  - formation: [bone_archer, bone_archer]
+    weight: 20
+  - formation: [plague_zombie, plague_zombie]
+    weight: 15
+  - formation: [skeleton]
+    weight: 10
+  - formation: [stone_gargoyle]
+    weight: 10
+  - formation: [ghost]
+    weight: 5
 
 barrier_enemies:
   - id: ghost

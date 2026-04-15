@@ -2,35 +2,23 @@ id: zone_05_mountain_foothills
 name: Mountain Foothills
 density: 0.14
 
-set_a:
-  entries:
-    - formation: [stone_golem, stone_golem]
-      weight: 30
-    - formation: [plague_rat, plague_rat]
-      weight: 25
-    - formation: [stone_golem, plague_rat]
-      weight: 20
-    - formation: [rock_crab]
-      weight: 10
-    - formation: [sand_worm]
-      weight: 10
-    - formation: [wind_elemental]
-      weight: 5
-
-set_b:
-  entries:
-    - formation: [iron_golem, iron_golem]
-      weight: 30
-    - formation: [iron_golem, rock_crab]
-      weight: 25
-    - formation: [iron_golem, sand_worm]
-      weight: 20
-    - formation: [rock_crab]
-      weight: 10
-    - formation: [sand_worm]
-      weight: 10
-    - formation: [wind_elemental]
-      weight: 5
+entries:
+  - formation: [stone_golem, stone_golem]
+    weight: 30
+  - formation: [plague_rat, plague_rat]
+    weight: 25
+  - formation: [stone_golem, plague_rat]
+    weight: 20
+  - formation: [iron_golem, iron_golem]
+    weight: 20
+  - formation: [iron_golem, rock_crab]
+    weight: 15
+  - formation: [rock_crab]
+    weight: 10
+  - formation: [sand_worm]
+    weight: 10
+  - formation: [wind_elemental]
+    weight: 5
 
 barrier_enemies:
   - id: wind_elemental
