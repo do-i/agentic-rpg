@@ -513,16 +513,15 @@ class WorldMapScene(Scene):
         frozen = self._fade_dir != 0
         state = self._holder.get()
 
-        # Build collision rects for NPCs + enemies so player can't walk through them
+        # Build collision rects — only NPCs block the player as solid walls.
+        # Enemy sprites are trigger volumes: player walks into them to start battle.
         npc_rects = [
             npc.collision_rect
             for npc in self._npcs
             if npc.is_present(state.flags)
         ]
-        enemy_rects = self._enemy_spawner.get_rects() if self._enemy_spawner else []
-        all_solid_rects = npc_rects + enemy_rects
 
-        self._player.update(keys, self._tile_map.collision_map, frozen, npc_rects=all_solid_rects)
+        self._player.update(keys, self._tile_map.collision_map, frozen, npc_rects=npc_rects)
         self._camera.update(self._player.pixel_position)
 
         player_pos = self._player.pixel_position

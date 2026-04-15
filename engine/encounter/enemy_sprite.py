@@ -211,8 +211,11 @@ class EnemySprite:
             self._facing_dir = Direction.UP if dy < 0 else Direction.DOWN
 
         move = self._move_speed * delta
-        new_px = self._px + (move if dx > 0 else -move if dx < 0 else 0)
-        new_py = self._py + (move if dy > 0 else -move if dy < 0 else 0)
+        # Clamp each axis to the remaining distance to prevent overshoot oscillation.
+        step_x = min(move, abs(dx)) * (1 if dx > 0 else -1) if dx != 0 else 0.0
+        step_y = min(move, abs(dy)) * (1 if dy > 0 else -1) if dy != 0 else 0.0
+        new_px = self._px + step_x
+        new_py = self._py + step_y
 
         if self._is_blocked(int(new_px), int(new_py), collision_map, other_rects):
             self._wander_moving = False
