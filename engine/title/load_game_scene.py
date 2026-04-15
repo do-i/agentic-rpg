@@ -89,7 +89,9 @@ class LoadGameScene(Scene):
             self._sfx_manager.play("confirm")
         state = self._game_state_manager.load(slot.path)
         self._holder.set(state)
-        self._scene_manager.switch(self._registry.get("world_map"))
+        world_map = self._registry.get("world_map")
+        world_map.reset()
+        self._scene_manager.switch(world_map)
 
     # ── Render ────────────────────────────────────────────────
 

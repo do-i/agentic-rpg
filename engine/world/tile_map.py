@@ -6,29 +6,48 @@ from engine.world.collision import CollisionMap
 from engine.world.portal_data import Portal
 from engine.world.portal_loader import PortalLoader
 
-ENEMY_SPAWNS_LAYER = "enemy_spawns"
+SPAWN_TILE_LAYER = "spawn_tile"   # tile layer: any placed tile = spawn point
+BOSS_ENEMY_LAYER = "boss_enemy"   # object group: single object = boss spawn position
 
 
 def _load_enemy_spawn_tiles(tmx_data: pytmx.TiledMap) -> list[dict]:
     """
-    Read the 'enemy_spawns' object layer from a TMX map.
-    Returns a list of dicts: {x: int, y: int, is_boss: bool}.
-    Objects with property spawn_type='boss' are marked as boss spawn points.
+    Return spawn points as [{x, y}] in pixel coords.
+    Reads the 'spawn_tile' tile layer — each placed tile is one spawn point.
     """
-    tiles = []
+    tw = tmx_data.tilewidth
+    th = tmx_data.tileheight
+    for layer in tmx_data.layers:
+        if not isinstance(layer, pytmx.TiledTileLayer):
+            continue
+        if layer.name != SPAWN_TILE_LAYER:
+            continue
+        tiles = []
+        for x, y, gid in layer:
+            if gid:  # 0 = empty; any non-zero GID = spawn point
+                tiles.append({"x": x * tw, "y": y * th})
+        return tiles
+    return []
+
+
+def _load_boss_spawn_tile(tmx_data: pytmx.TiledMap) -> dict | None:
+    """
+    Read the first object in the 'boss_enemy' object group.
+    Returns {x, y, is_boss: True} in pixel coords snapped to tile grid, or None.
+    """
+    tw = tmx_data.tilewidth
+    th = tmx_data.tileheight
     for layer in tmx_data.layers:
         if not isinstance(layer, pytmx.TiledObjectGroup):
             continue
-        if layer.name != ENEMY_SPAWNS_LAYER:
+        if layer.name != BOSS_ENEMY_LAYER:
             continue
         for obj in layer:
-            props = obj.properties or {}
-            tiles.append({
-                "x": int(obj.x),
-                "y": int(obj.y),
-                "is_boss": props.get("spawn_type", "") == "boss",
-            })
-    return tiles
+            # Snap the object's pixel position to the nearest tile boundary
+            x = round(obj.x / tw) * tw
+            y = round(obj.y / th) * th
+            return {"x": x, "y": y, "is_boss": True}
+    return None
 
 
 class TileMap:
@@ -51,6 +70,7 @@ class TileMap:
         self.collision_map = collision_factory(self._tmx, self._tmx.tilewidth)
         self.portals: list[Portal] = (portal_loader or PortalLoader()).load(self._tmx)
         self.enemy_spawn_tiles: list[dict] = _load_enemy_spawn_tiles(self._tmx)
+        self.boss_spawn_tile: dict | None = _load_boss_spawn_tile(self._tmx)
 
     @property
     def width_px(self) -> int:

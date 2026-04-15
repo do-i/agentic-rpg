@@ -1,15 +1,15 @@
 # engine/encounter/enemy_spawner.py
 #
 # Manages visible enemy sprites on the world map:
-#   - Initial spawning at map load
-#   - Timer-based respawning (up to max cap)
+#   - Initial spawning at map load (one per spawn tile, all active)
+#   - On battle: enemy deactivates (invisible/inactive)
+#   - Timer-based reactivation: every interval, one random inactive enemy becomes active
 #   - Modifiers from party composition (Rogue/accessories)
-#   - Spawn tile selection (dedicated TMX points)
+#   - Spawn tile positions come from the 'spawn_tile' TMX tile layer
 
 from __future__ import annotations
 
 import random
-import time
 from pathlib import Path
 
 from engine.encounter.encounter_zone_data import EncounterZone, Formation
@@ -31,7 +31,11 @@ LURE_CHARM_INTERVAL_MULT   = 0.5 # halves the spawn interval
 
 class EnemySpawner:
     """
-    Owns all active EnemySprite instances for the current map.
+    Owns all EnemySprite instances for the current map as a fixed pool.
+
+    At init, one enemy is created per spawn tile — all active.
+    When the player engages an enemy (battle starts), that enemy deactivates.
+    Every interval, one random inactive enemy is reactivated.
 
     Interval resolution priority:
         map YAML interval  >  zone.spawn_frequency  >  global_interval
@@ -40,19 +44,17 @@ class EnemySpawner:
     def __init__(
         self,
         zone: EncounterZone,
-        spawn_tiles: list[dict],          # [{x, y, is_boss}] from TMX enemy_spawns layer
-        init_count: int,
-        max_count: int,
+        spawn_tiles: list[dict],          # [{x, y}] spawn points from TMX spawn_tile layer
         map_interval: float | None,       # from map YAML enemy_spawn.interval (may be None)
         global_interval: float,           # from settings.yaml
         resolver: EncounterResolver,
         scenario_path: Path,
         tile_size: int = 32,
+        boss_tile: dict | None = None,    # {x, y} boss spawn position from TMX boss_enemy layer
     ) -> None:
         self._zone          = zone
         self._spawn_tiles   = spawn_tiles
-        self._init_count    = init_count
-        self._max_count     = max_count
+        self._boss_tile     = boss_tile
         self._resolver      = resolver
         self._scenario_path = scenario_path
         self._tile_size     = tile_size
@@ -65,38 +67,30 @@ class EnemySpawner:
         else:
             self._base_interval = global_interval
 
-        self._active: list[EnemySprite] = []
-        self._respawn_queue: list[tuple[Formation, bool, float]] = []
-        # ^ (formation, is_boss, defeat_time)
-
-        self._spawn_timer   = 0.0
+        self._all_enemies: list[EnemySprite] = []
+        self._elapsed     = 0.0
+        self._spawn_timer = 0.0
         self._sprite_cache: dict[str, SpriteSheet | None] = {}
 
     # ── Public API ────────────────────────────────────────────────
 
     def init_spawn(self, flags: FlagState) -> None:
-        """Spawn initial enemies at map load. Called once from WorldMapScene._init()."""
+        """Create one enemy per spawn tile (all active). Called once from WorldMapScene._init()."""
         # Spawn boss if present and not defeated
         boss = self._zone.boss
         if boss and not (boss.once and boss.flag_set and flags.has_flag(boss.flag_set)):
-            boss_tile = self._find_boss_tile() or self._find_free_tile()
-            if boss_tile:
-                self._spawn_boss(boss_tile)
+            if self._boss_tile:
+                self._create_enemy(
+                    Formation(enemy_ids=[boss.enemy_id], weight=1, chase_range=0),
+                    self._boss_tile,
+                    is_boss=True,
+                )
 
-        # Spawn regular enemies up to init_count
-        spawned = 0
-        for _ in range(self._init_count * 3):   # retry budget
-            if spawned >= self._init_count:
-                break
-            if len(self._active) >= self._max_count:
-                break
-            tile = self._find_free_tile()
-            if tile is None:
-                break
+        # One enemy per spawn tile
+        for tile in self._spawn_tiles:
             formation = self._resolver.pick_formation(self._zone)
             if formation:
                 self._create_enemy(formation, tile, is_boss=False)
-                spawned += 1
 
     def update(
         self,
@@ -107,66 +101,47 @@ class EnemySpawner:
         party: PartyState | None,
     ) -> None:
         """Per-frame update. Call from WorldMapScene.update()."""
+        self._elapsed += delta
         interval_mult, chase_reduction = self._compute_modifiers(party)
         effective_interval = self._base_interval * interval_mult
 
-        # Process respawn queue
-        now = time.monotonic()
-        still_waiting: list[tuple[Formation, bool, float]] = []
-        for formation, is_boss, defeat_time in self._respawn_queue:
-            if now - defeat_time >= effective_interval:
-                if len(self._active) < self._max_count:
-                    tile = self._find_boss_tile() if is_boss else self._find_free_tile()
-                    if tile:
-                        self._create_enemy(formation, tile, is_boss=is_boss)
-                    else:
-                        still_waiting.append((formation, is_boss, defeat_time))
-                else:
-                    still_waiting.append((formation, is_boss, defeat_time))
-            else:
-                still_waiting.append((formation, is_boss, defeat_time))
-        self._respawn_queue = still_waiting
-
-        # Update active enemy sprites
-        all_rects = [e.collision_rect for e in self._active]
-        for enemy in self._active:
-            other_rects = [r for e, r in zip(self._active, all_rects) if e is not enemy]
-            eff_chase = max(0, enemy.chase_range - chase_reduction)
-            enemy.update(delta, player_px, player_py, collision_map, other_rects, eff_chase)
-
-        # Tick spawn timer
+        # Tick spawn timer — reactivate one inactive enemy when ready
         self._spawn_timer += delta
         if self._spawn_timer >= effective_interval:
             self._spawn_timer = 0.0
-            self._try_spawn_one()
+            self._try_activate_one()
+
+        # Update active enemies
+        active = [e for e in self._all_enemies if e.active]
+        all_rects = [e.collision_rect for e in active]
+        for enemy in active:
+            other_rects = [r for e, r in zip(active, all_rects) if e is not enemy]
+            eff_chase = max(0, enemy.chase_range - chase_reduction)
+            enemy.update(delta, player_px, player_py, collision_map, other_rects, eff_chase)
 
     def check_player_collision(
         self, player_rect: tuple[int, int, int, int]
     ) -> EnemySprite | None:
         """Return the first active enemy that overlaps the player's collision rect."""
-        for enemy in self._active:
-            if enemy.collides_with(player_rect):
+        for enemy in self._all_enemies:
+            if enemy.active and enemy.collides_with(player_rect):
                 return enemy
         return None
 
-    def on_enemy_defeated(self, enemy: EnemySprite) -> None:
-        """Remove enemy from active list and queue it for respawn."""
-        if enemy in self._active:
-            self._active.remove(enemy)
-        formation_obj = Formation(
-            enemy_ids=enemy.formation,
-            weight=1,
-            chase_range=enemy.chase_range,
-        )
-        self._respawn_queue.append((formation_obj, enemy.is_boss, time.monotonic()))
+    def on_enemy_engaged(self, enemy: EnemySprite) -> None:
+        """Deactivate enemy when player starts a battle with it. Resets the spawn timer
+        so the player always waits the full interval before a new enemy appears.
+        """
+        enemy.deactivate()
+        self._spawn_timer = 0.0
 
     def get_rects(self) -> list[tuple[int, int, int, int]]:
-        """Return all active enemy collision rects (for player/NPC collision)."""
-        return [e.collision_rect for e in self._active]
+        """Return collision rects for all active enemies."""
+        return [e.collision_rect for e in self._all_enemies if e.active]
 
     @property
     def active_enemies(self) -> list[EnemySprite]:
-        return list(self._active)
+        return [e for e in self._all_enemies if e.active]
 
     # ── Modifier computation ──────────────────────────────────────
 
@@ -196,20 +171,11 @@ class EnemySpawner:
 
     # ── Spawning helpers ──────────────────────────────────────────
 
-    def _try_spawn_one(self) -> None:
-        """Attempt a single spawn tick: density check → free tile → create enemy."""
-        if len(self._active) >= self._max_count:
-            return
-        if not self._spawn_tiles:
-            return
-        if random.random() > self._zone.density:
-            return
-        tile = self._find_free_tile()
-        if tile is None:
-            return
-        formation = self._resolver.pick_formation(self._zone)
-        if formation:
-            self._create_enemy(formation, tile, is_boss=False)
+    def _try_activate_one(self) -> None:
+        """Pick a random inactive enemy and activate it. No-op if all are active."""
+        inactive = [e for e in self._all_enemies if not e.active]
+        if inactive:
+            random.choice(inactive).activate()
 
     def _create_enemy(
         self,
@@ -230,56 +196,8 @@ class EnemySpawner:
             sprite_sheet=sprite_sheet,
             tile_size=self._tile_size,
         )
-        self._active.append(enemy)
+        self._all_enemies.append(enemy)
         return enemy
-
-    def _spawn_boss(self, tile: dict) -> None:
-        boss = self._zone.boss
-        if not boss:
-            return
-        formation = Formation(
-            enemy_ids=[boss.enemy_id],
-            weight=1,
-            chase_range=0,
-        )
-        self._create_enemy(formation, tile, is_boss=True)
-
-    def _find_free_tile(self) -> dict | None:
-        """Find a spawn tile not currently occupied by any active enemy."""
-        regular_tiles = [t for t in self._spawn_tiles if not t.get("is_boss")]
-        random.shuffle(regular_tiles)
-        occupied_rects = [e.collision_rect for e in self._active]
-        for tile in regular_tiles:
-            if not self._tile_is_occupied(tile, occupied_rects):
-                return tile
-        return None
-
-    def _find_boss_tile(self) -> dict | None:
-        """Find the dedicated boss spawn tile if one exists."""
-        boss_tiles = [t for t in self._spawn_tiles if t.get("is_boss")]
-        if not boss_tiles:
-            return None
-        occupied_rects = [e.collision_rect for e in self._active]
-        for tile in boss_tiles:
-            if not self._tile_is_occupied(tile, occupied_rects):
-                return tile
-        return None
-
-    def _tile_is_occupied(
-        self,
-        tile: dict,
-        occupied_rects: list[tuple[int, int, int, int]],
-    ) -> bool:
-        """True if any active enemy's collision rect overlaps the spawn tile area."""
-        from engine.encounter.enemy_sprite import COLLISION_OFFSET_X, COLLISION_OFFSET_Y, COLLISION_W, COLLISION_H
-        tile_px = tile["x"]
-        tile_py = tile["y"]
-        cx = tile_px + COLLISION_OFFSET_X
-        cy = tile_py + COLLISION_OFFSET_Y
-        for ox, oy, ow, oh in occupied_rects:
-            if cx < ox + ow and cx + COLLISION_W > ox and cy < oy + oh and cy + COLLISION_H > oy:
-                return True
-        return False
 
     # ── Sprite loading ────────────────────────────────────────────
 

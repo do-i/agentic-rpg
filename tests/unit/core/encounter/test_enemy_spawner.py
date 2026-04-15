@@ -1,8 +1,7 @@
 # tests/unit/core/encounter/test_enemy_spawner.py
 
 import pytest
-import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from pathlib import Path
 
 from engine.encounter.enemy_spawner import (
@@ -17,7 +16,7 @@ from engine.encounter.encounter_zone_data import (
 from engine.encounter.enemy_sprite import EnemySprite
 
 
-def make_zone(density=0.8, with_boss=False, spawn_frequency=None) -> EncounterZone:
+def make_zone(with_boss=False, spawn_frequency=None) -> EncounterZone:
     entries = EncounterSet([
         Formation(["goblin"], 60, chase_range=3),
         Formation(["bat"], 40, chase_range=2),
@@ -25,28 +24,27 @@ def make_zone(density=0.8, with_boss=False, spawn_frequency=None) -> EncounterZo
     boss = BossConfig("spider_boss", "Boss Spider", once=True,
                       flag_set="boss_defeated") if with_boss else None
     return EncounterZone(
-        zone_id="zone_01", name="Forest", density=density,
+        zone_id="zone_01", name="Forest", density=0.8,
         entries=entries, boss=boss,
         spawn_frequency=spawn_frequency,
     )
 
 
 def make_spawn_tiles(count=3) -> list[dict]:
-    return [{"x": i * 96, "y": i * 96, "is_boss": False} for i in range(count)]
+    return [{"x": i * 96, "y": i * 96} for i in range(count)]
 
 
 def make_spawner(
     zone=None,
     spawn_tiles=None,
-    init_count=2,
-    max_count=4,
     map_interval=None,
     global_interval=30.0,
+    boss_tile=None,
 ) -> EnemySpawner:
     if zone is None:
         zone = make_zone()
     if spawn_tiles is None:
-        spawn_tiles = make_spawn_tiles(4)
+        spawn_tiles = make_spawn_tiles(3)
 
     resolver = MagicMock()
     resolver.pick_formation.return_value = Formation(["goblin"], 100, chase_range=3)
@@ -54,13 +52,12 @@ def make_spawner(
     return EnemySpawner(
         zone=zone,
         spawn_tiles=spawn_tiles,
-        init_count=init_count,
-        max_count=max_count,
         map_interval=map_interval,
         global_interval=global_interval,
         resolver=resolver,
         scenario_path=Path("/fake"),
         tile_size=32,
+        boss_tile=boss_tile,
     )
 
 
@@ -86,105 +83,169 @@ class TestIntervalResolution:
 # ── init_spawn ────────────────────────────────────────────────
 
 class TestInitSpawn:
-    def test_spawns_init_count_enemies(self):
-        spawner = make_spawner(init_count=3, max_count=6)
+    def test_spawns_one_enemy_per_spawn_tile(self):
+        spawner = make_spawner(spawn_tiles=make_spawn_tiles(4))
         flags = MagicMock()
         flags.has_flag.return_value = False
         spawner.init_spawn(flags)
-        assert len(spawner._active) == 3
+        assert len(spawner._all_enemies) == 4
 
-    def test_does_not_exceed_max_count(self):
-        spawner = make_spawner(init_count=10, max_count=3)
+    def test_all_enemies_start_active(self):
+        spawner = make_spawner(spawn_tiles=make_spawn_tiles(3))
         flags = MagicMock()
         flags.has_flag.return_value = False
         spawner.init_spawn(flags)
-        assert len(spawner._active) <= 3
+        assert all(e.active for e in spawner._all_enemies)
 
     def test_spawns_boss_when_not_defeated(self):
         zone = make_zone(with_boss=True)
-        tiles = make_spawn_tiles(4)
-        tiles.append({"x": 500, "y": 500, "is_boss": True})
-        spawner = make_spawner(zone=zone, spawn_tiles=tiles, init_count=0)
+        boss_tile = {"x": 500, "y": 500}
+        spawner = make_spawner(zone=zone, spawn_tiles=make_spawn_tiles(2), boss_tile=boss_tile)
         flags = MagicMock()
-        flags.has_flag.return_value = False   # boss not defeated
+        flags.has_flag.return_value = False
         spawner.init_spawn(flags)
-        bosses = [e for e in spawner._active if e.is_boss]
+        bosses = [e for e in spawner._all_enemies if e.is_boss]
         assert len(bosses) == 1
 
     def test_skips_boss_when_defeated(self):
         zone = make_zone(with_boss=True)
-        tiles = make_spawn_tiles(4)
-        tiles.append({"x": 500, "y": 500, "is_boss": True})
-        spawner = make_spawner(zone=zone, spawn_tiles=tiles, init_count=0)
+        boss_tile = {"x": 500, "y": 500}
+        spawner = make_spawner(zone=zone, spawn_tiles=make_spawn_tiles(2), boss_tile=boss_tile)
         flags = MagicMock()
-        flags.has_flag.return_value = True   # boss already defeated
+        flags.has_flag.return_value = True
         spawner.init_spawn(flags)
-        bosses = [e for e in spawner._active if e.is_boss]
+        bosses = [e for e in spawner._all_enemies if e.is_boss]
         assert len(bosses) == 0
 
 
-# ── on_enemy_defeated / respawn queue ─────────────────────────
+# ── on_enemy_engaged ──────────────────────────────────────────
 
-class TestOnEnemyDefeated:
-    def test_removes_enemy_from_active(self):
-        spawner = make_spawner(init_count=2)
+class TestOnEnemyEngaged:
+    def test_deactivates_enemy(self):
+        spawner = make_spawner()
         flags = MagicMock()
         flags.has_flag.return_value = False
         spawner.init_spawn(flags)
-        enemy = spawner._active[0]
-        spawner.on_enemy_defeated(enemy)
-        assert enemy not in spawner._active
+        enemy = spawner._all_enemies[0]
+        spawner.on_enemy_engaged(enemy)
+        assert not enemy.active
 
-    def test_adds_to_respawn_queue(self):
-        spawner = make_spawner(init_count=1)
+    def test_enemy_remains_in_pool(self):
+        spawner = make_spawner()
         flags = MagicMock()
         flags.has_flag.return_value = False
         spawner.init_spawn(flags)
-        enemy = spawner._active[0]
-        spawner.on_enemy_defeated(enemy)
-        assert len(spawner._respawn_queue) == 1
+        before = len(spawner._all_enemies)
+        spawner.on_enemy_engaged(spawner._all_enemies[0])
+        assert len(spawner._all_enemies) == before
 
-    def test_respawns_after_interval(self):
-        spawner = make_spawner(init_count=0, max_count=5, global_interval=1.0)
-        # Manually add a defeated enemy
-        formation = Formation(["goblin"], 100, chase_range=3)
-        past_time = time.monotonic() - 5.0   # 5 seconds ago
-        spawner._respawn_queue.append((formation, False, past_time))
+    def test_resets_spawn_timer(self):
+        spawner = make_spawner(global_interval=30.0)
+        flags = MagicMock()
+        flags.has_flag.return_value = False
+        spawner.init_spawn(flags)
+        spawner._spawn_timer = 29.9
+        spawner.on_enemy_engaged(spawner._all_enemies[0])
+        assert spawner._spawn_timer == 0.0
+
+
+# ── Respawn (reactivation) ────────────────────────────────────
+
+class TestRespawn:
+    def test_activates_inactive_enemy_after_interval(self):
+        spawner = make_spawner(global_interval=1.0, spawn_tiles=make_spawn_tiles(1))
+        flags = MagicMock()
+        flags.has_flag.return_value = False
+        spawner.init_spawn(flags)
+        enemy = spawner._all_enemies[0]
+        spawner.on_enemy_engaged(enemy)
+        assert not enemy.active
 
         collision = MagicMock()
         collision.is_rect_blocked.return_value = False
         party = MagicMock()
         party.members = []
 
-        spawner.update(0.016, 0.0, 0.0, collision, party)
-        # Interval elapsed, enemy should have spawned
-        assert len(spawner._active) == 1
-        assert len(spawner._respawn_queue) == 0
+        # Advance past the interval
+        spawner.update(1.1, 0.0, 0.0, collision, party)
+        assert enemy.active
+
+    def test_skips_when_all_active(self):
+        spawner = make_spawner(global_interval=1.0, spawn_tiles=make_spawn_tiles(2))
+        flags = MagicMock()
+        flags.has_flag.return_value = False
+        spawner.init_spawn(flags)
+
+        collision = MagicMock()
+        party = MagicMock()
+        party.members = []
+
+        # All active — timer fires but nothing should change
+        spawner.update(1.1, 0.0, 0.0, collision, party)
+        assert all(e.active for e in spawner._all_enemies)
 
 
 # ── check_player_collision ────────────────────────────────────
 
 class TestCheckPlayerCollision:
     def test_returns_none_when_no_enemies(self):
-        spawner = make_spawner(init_count=0)
+        spawner = make_spawner()
         result = spawner.check_player_collision((0, 0, 10, 10))
         assert result is None
 
-    def test_returns_enemy_on_overlap(self):
-        spawner = make_spawner(init_count=0)
+    def test_returns_active_enemy_on_overlap(self):
+        spawner = make_spawner()
         enemy = MagicMock(spec=EnemySprite)
+        enemy.active = True
         enemy.collides_with.return_value = True
-        spawner._active.append(enemy)
-        result = spawner.check_player_collision((0, 0, 20, 18))
-        assert result is enemy
+        spawner._all_enemies.append(enemy)
+        assert spawner.check_player_collision((0, 0, 20, 18)) is enemy
+
+    def test_ignores_inactive_enemy(self):
+        spawner = make_spawner()
+        enemy = MagicMock(spec=EnemySprite)
+        enemy.active = False
+        enemy.collides_with.return_value = True
+        spawner._all_enemies.append(enemy)
+        assert spawner.check_player_collision((0, 0, 20, 18)) is None
 
     def test_returns_none_when_no_overlap(self):
-        spawner = make_spawner(init_count=0)
+        spawner = make_spawner()
         enemy = MagicMock(spec=EnemySprite)
+        enemy.active = True
         enemy.collides_with.return_value = False
-        spawner._active.append(enemy)
-        result = spawner.check_player_collision((9999, 9999, 20, 18))
-        assert result is None
+        spawner._all_enemies.append(enemy)
+        assert spawner.check_player_collision((9999, 9999, 20, 18)) is None
+
+
+# ── get_rects ─────────────────────────────────────────────────
+
+class TestGetRects:
+    def test_returns_only_active_rects(self):
+        spawner = make_spawner()
+        e1 = MagicMock(spec=EnemySprite)
+        e1.active = True
+        e1.collision_rect = (10, 20, 20, 18)
+        e2 = MagicMock(spec=EnemySprite)
+        e2.active = False
+        e2.collision_rect = (100, 200, 20, 18)
+        spawner._all_enemies = [e1, e2]
+        rects = spawner.get_rects()
+        assert (10, 20, 20, 18) in rects
+        assert (100, 200, 20, 18) not in rects
+
+
+# ── active_enemies property ───────────────────────────────────
+
+class TestActiveEnemies:
+    def test_returns_only_active(self):
+        spawner = make_spawner()
+        e1 = MagicMock(spec=EnemySprite)
+        e1.active = True
+        e2 = MagicMock(spec=EnemySprite)
+        e2.active = False
+        spawner._all_enemies = [e1, e2]
+        assert spawner.active_enemies == [e1]
 
 
 # ── Modifier computation ──────────────────────────────────────
@@ -228,37 +289,3 @@ class TestComputeModifiers:
         mult, reduction = spawner._compute_modifiers(None)
         assert mult == 1.0
         assert reduction == 0
-
-
-# ── Occupied tile detection ───────────────────────────────────
-
-class TestTileOccupied:
-    def test_free_tile_not_occupied(self):
-        spawner = make_spawner(init_count=0)
-        tile = {"x": 0, "y": 0, "is_boss": False}
-        assert not spawner._tile_is_occupied(tile, [])
-
-    def test_occupied_when_enemy_overlaps(self):
-        spawner = make_spawner(init_count=0)
-        from engine.encounter.enemy_sprite import COLLISION_OFFSET_X, COLLISION_OFFSET_Y, COLLISION_W, COLLISION_H
-        tile = {"x": 0, "y": 0, "is_boss": False}
-        # Enemy rect that overlaps the tile's collision area
-        cx = COLLISION_OFFSET_X
-        cy = COLLISION_OFFSET_Y
-        occupied = [(cx, cy, COLLISION_W, COLLISION_H)]
-        assert spawner._tile_is_occupied(tile, occupied)
-
-
-# ── get_rects ─────────────────────────────────────────────────
-
-class TestGetRects:
-    def test_returns_all_active_rects(self):
-        spawner = make_spawner(init_count=0)
-        e1 = MagicMock(spec=EnemySprite)
-        e1.collision_rect = (10, 20, 20, 18)
-        e2 = MagicMock(spec=EnemySprite)
-        e2.collision_rect = (100, 200, 20, 18)
-        spawner._active = [e1, e2]
-        rects = spawner.get_rects()
-        assert (10, 20, 20, 18) in rects
-        assert (100, 200, 20, 18) in rects

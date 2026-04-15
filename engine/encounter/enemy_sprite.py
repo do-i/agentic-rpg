@@ -97,6 +97,8 @@ class EnemySprite:
         self._wander_pause  = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
         self._wander_moving = False
 
+        self.active: bool = True
+
     # ── Properties ────────────────────────────────────────────────
 
     @property
@@ -111,6 +113,22 @@ class EnemySprite:
     @property
     def pixel_y(self) -> float:
         return self._py
+
+    def deactivate(self) -> None:
+        """Mark inactive and reset to spawn origin. Called when player engages in battle."""
+        self.active = False
+        self._px = float(self._origin_px)
+        self._py = float(self._origin_py)
+        self._state = "wandering"
+        self._wander_moving = False
+        self._wander_target_px = None
+        self._wander_target_py = None
+        self._wander_pause = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
+
+    def activate(self) -> None:
+        """Mark active. Called by EnemySpawner when the respawn interval fires."""
+        self.active = True
+        self._wander_pause = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
 
     def collides_with(self, rect: tuple[int, int, int, int]) -> bool:
         cx, cy, cw, ch = self.collision_rect

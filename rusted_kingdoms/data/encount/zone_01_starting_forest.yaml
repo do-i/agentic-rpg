@@ -5,16 +5,22 @@ spawn_frequency: 25.0
 background: world1-bg-1280x468
 
 entries:
-  - formation: [goblin, goblin_warrier, goblin, goblin]
-    weight: 50
+  - formation: [goblin]
+    weight: 25
     chase_range: 3
-  - formation: [grik_the_grin_192]
-    weight: 50
+  - formation: [goblin, goblin]
+    weight: 25
+    chase_range: 3
+  - formation: [goblin, goblin, goblin]
+    weight: 25
+    chase_range: 3
+  - formation: [goblin_warrier, goblin, goblin]
+    weight: 25
     chase_range: 2
 
 boss:
-  id: forest_spider_giant
-  name: Forest Spider (Giant)
+  id: grik_the_grin_192
+  name: Grik the Grin
   once: true
   on_complete:
     set_flag: boss_zone01_defeated

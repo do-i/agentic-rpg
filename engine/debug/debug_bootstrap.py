@@ -66,5 +66,3 @@ def inject_full_party(state: GameState, scenario_path: Path) -> None:
         )
         member.load_stat_growth(class_data)
         state.party.add_member(member)
-        print(f"[DEBUG] added: {member.name} ({class_name}) "
-              f"Lv{member.level} exp_next={member.exp_next}")

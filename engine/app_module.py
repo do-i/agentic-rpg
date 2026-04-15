@@ -169,8 +169,7 @@ class AppModule(Module):
         registry.register_factory("load_game",
             lambda: LoadGameScene(game_state_manager, holder, scene_manager, registry,
                                   sfx_manager=sfx_manager))
-        registry.register_factory("world_map",
-            lambda: WorldMapScene(
+        registry.register_singleton("world_map", WorldMapScene(
                 holder, loader, tile_map_factory,
                 scene_manager, registry,
                 game_state_manager, dialogue_engine, npc_loader,

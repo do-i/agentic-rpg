@@ -98,11 +98,16 @@ class WorldMapScene(Scene):
         self._bgm_manager = bgm_manager
         self._sfx_manager = sfx_manager
 
+        self._renderer = WorldMapRenderer()
+        self._reset_state()
+
+    def _reset_state(self) -> None:
         self._tile_map: TileMap | None = None
         self._camera: Camera | None = None
         self._player: Player | None = None
         self._npcs: list[Npc] = []
         self._enemy_spawner: EnemySpawner | None = None
+        self._engaged_enemy: EnemySprite | None = None
 
         self._save_modal: SaveModalScene | None = None
         self._dialogue: DialogueScene | None = None
@@ -112,11 +117,13 @@ class WorldMapScene(Scene):
         self._apothecary: ApothecaryScene | None = None
         self._quit_confirm: bool = False
 
-        self._renderer = WorldMapRenderer()
-
         self._fade_alpha: int = 255
         self._fade_dir: int = -1
         self._pending_transition: dict | None = None
+
+    def reset(self) -> None:
+        """Re-initialize for a new game/load session. Clears all map state so _init() reruns."""
+        self._reset_state()
 
     def _init(self) -> None:
         scenario_path = self._loader.scenario_path
@@ -163,8 +170,6 @@ class WorldMapScene(Scene):
         self._fade_dir = -1
         self._pending_transition = None
 
-        print(f"[DEBUG] loading map={map_id} pos={state.map.position}")
-
     def _build_spawner(self, map_yaml_path, map_id, scenario_path) -> EnemySpawner | None:
         """Create EnemySpawner if this map has an encounter zone and spawn tiles."""
         zone = self._encounter_manager.get_zone()
@@ -177,14 +182,10 @@ class WorldMapScene(Scene):
 
         # Parse map-level spawn config
         map_interval: float | None = None
-        init_count = 3
-        max_count  = 6
         if map_yaml_path.exists():
             with open(map_yaml_path) as f:
                 map_data = yaml.safe_load(f) or {}
             spawn_cfg = map_data.get("enemy_spawn") or {}
-            init_count  = int(spawn_cfg.get("init",     init_count))
-            max_count   = int(spawn_cfg.get("max",      max_count))
             raw_interval = spawn_cfg.get("interval")
             if raw_interval is not None:
                 map_interval = float(raw_interval)
@@ -192,13 +193,12 @@ class WorldMapScene(Scene):
         return EnemySpawner(
             zone=zone,
             spawn_tiles=self._tile_map.enemy_spawn_tiles,
-            init_count=init_count,
-            max_count=max_count,
             map_interval=map_interval,
             global_interval=self._enemy_spawn_global_interval,
             resolver=self._encounter_resolver,
             scenario_path=scenario_path,
             tile_size=self._tile_size,
+            boss_tile=self._tile_map.boss_spawn_tile,
         )
 
     def _load_protagonist_sprite(self, manifest: dict, scenario_path) -> SpriteSheet | None:
@@ -400,9 +400,8 @@ class WorldMapScene(Scene):
         """Build a BattleState from a visible enemy sprite and switch to BattleScene."""
         state = self._holder.get()
 
-        # Remove from spawner immediately so it queues for respawn
-        if self._enemy_spawner:
-            self._enemy_spawner.on_enemy_defeated(enemy)
+        # Store the enemy; it will be deactivated on the first update tick after battle ends.
+        self._engaged_enemy = enemy
 
         # Build battle state
         zone = self._encounter_manager.get_zone()
@@ -475,6 +474,12 @@ class WorldMapScene(Scene):
     # ── Update ────────────────────────────────────────────────
 
     def update(self, delta: float) -> None:
+        # Deactivate the enemy that triggered the last battle (first tick after returning).
+        if self._engaged_enemy is not None:
+            if self._enemy_spawner:
+                self._enemy_spawner.on_enemy_engaged(self._engaged_enemy)
+            self._engaged_enemy = None
+
         if self._fade_dir != 0:
             self._fade_alpha += int(FADE_SPEED * delta) * self._fade_dir
             if self._fade_dir == 1 and self._fade_alpha >= 255:

@@ -346,7 +346,6 @@ class BattleScene(Scene):
             self._check_result()
 
     def _check_result(self) -> None:
-        print(f"[DEBUG] _check_result called | phase={self._state.phase} | active={self._state.active.name if self._state.active else None}")
         result = check_result(self._state)
         if result == "victory":
             rewards = handle_victory(

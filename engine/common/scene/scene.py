@@ -14,3 +14,7 @@ class Scene:
 
     def render(self, screen: pygame.Surface) -> None:
         pass
+
+    def reset(self) -> None:
+        """Called before re-entering this scene from a fresh game/load. No-op by default."""
+        pass

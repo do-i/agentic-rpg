@@ -75,7 +75,9 @@ class NameEntryScene(Scene):
             inject_full_party(state, self._scenario_path)
 
         self._holder.set(state)
-        self._scene_manager.switch(self._registry.get("world_map"))
+        world_map = self._registry.get("world_map")
+        world_map.reset()
+        self._scene_manager.switch(world_map)
 
     # ── Render ────────────────────────────────────────────────
 
@@ -110,5 +112,5 @@ class NameEntryScene(Scene):
         screen.blit(hint, (cx - hint.get_width() // 2, cy + 80))
 
         if self._debug_party:
-            dbg = self._hint_font.render("[DEBUG] full party enabled", True, (180, 100, 100))
+            dbg = self._hint_font.render("[DEBUG] full party enabled for test mode", True, (180, 100, 100))
             screen.blit(dbg, (cx - dbg.get_width() // 2, cy + 120))
