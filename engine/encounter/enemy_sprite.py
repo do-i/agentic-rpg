@@ -76,8 +76,9 @@ class EnemySprite:
         self.is_boss        = is_boss
         self.chase_range    = chase_range
 
-        self._origin_px     = tile_x * tile_size
-        self._origin_py     = tile_y * tile_size
+        ts = tile_size
+        self._origin_px     = tile_x * ts + ts // 2 - COLLISION_OFFSET_X - COLLISION_W // 2
+        self._origin_py     = tile_y * ts + ts // 2 - COLLISION_OFFSET_Y - COLLISION_H // 2
         self._px: float     = float(self._origin_px)
         self._py: float     = float(self._origin_py)
 
