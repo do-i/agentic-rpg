@@ -29,11 +29,15 @@ from engine.world.tile_map_factory import TileMapFactory
 from engine.world.npc_loader import NpcLoader
 from engine.audio.bgm_manager import BgmManager
 from engine.audio.sfx_manager import SfxManager
+from engine.record.recorder import RecordPlaybackManager
 
 
 class AppModule(Module):
-    def __init__(self, scenario_path: str) -> None:
+    def __init__(self, scenario_path: str, mode: str = "normal", recording_file: str = "recording.pkl", playback_speed: float = 1.0) -> None:
         self._scenario_path = scenario_path
+        self._mode = mode
+        self._recording_file = recording_file
+        self._playback_speed = playback_speed
 
     @provider
     @singleton
@@ -49,6 +53,11 @@ class AppModule(Module):
     @singleton
     def provide_frame_clock(self, config: EngineConfigData) -> FrameClock:
         return FrameClock(config.fps)
+
+    @provider
+    @singleton
+    def provide_record_playback_manager(self) -> RecordPlaybackManager:
+        return RecordPlaybackManager(self._mode, self._recording_file, self._playback_speed)
 
     @provider
     @singleton
@@ -151,6 +160,7 @@ class AppModule(Module):
         item_catalog: ItemCatalog,
         effect_handler: ItemEffectHandler,
         bgm_manager: BgmManager,
+        recorder: RecordPlaybackManager,
         sfx_manager: SfxManager,
     ) -> SceneRegistry:
         registry = SceneRegistry()
@@ -187,6 +197,7 @@ class AppModule(Module):
                 screen_height=settings.screen_height,
                 tile_size=settings.tile_size,
                 fps=settings.fps,
+                recorder=recorder,
             ))
         registry.register_factory("status",
             lambda: StatusScene(
@@ -218,6 +229,8 @@ class AppModule(Module):
         clock: FrameClock,
         scene_manager: SceneManager,
         registry: SceneRegistry,
+        recorder: RecordPlaybackManager,
     ) -> Game:
+        speed = self._playback_speed if self._mode == "playback" else 1.0
         scene_manager.switch(registry.get("boot"))
-        return Game(config, clock, scene_manager)
+        return Game(config, clock, scene_manager, recorder, playback_speed=speed)

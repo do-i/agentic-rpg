@@ -1,7 +1,6 @@
 # engine/world/world_map_scene.py
 # Thin orchestrator: delegates logic to world_map_logic.
 
-import sys
 
 import pygame
 import yaml
@@ -74,6 +73,7 @@ class WorldMapScene(Scene):
         screen_height: int = 766,
         tile_size: int = 32,
         fps: int = 60,
+        recorder=None,
     ) -> None:
         self._screen_width = screen_width
         self._screen_height = screen_height
@@ -97,6 +97,7 @@ class WorldMapScene(Scene):
         self._mc_catalog = mc_catalog or MagicCoreCatalogState()
         self._bgm_manager = bgm_manager
         self._sfx_manager = sfx_manager
+        self._recorder = recorder
 
         self._renderer = WorldMapRenderer()
         self._reset_state()
@@ -245,8 +246,7 @@ class WorldMapScene(Scene):
             for event in events:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
-                        pygame.quit()
-                        sys.exit(0)
+                        pygame.event.post(pygame.event.Event(pygame.QUIT))
                     elif event.key == pygame.K_ESCAPE:
                         self._quit_confirm = False
             return
@@ -514,7 +514,7 @@ class WorldMapScene(Scene):
         if self._player is None:
             return
 
-        keys = pygame.key.get_pressed()
+        keys = self._recorder.get_key_state() if self._recorder else pygame.key.get_pressed()
         frozen = self._fade_dir != 0
         state = self._holder.get()
 

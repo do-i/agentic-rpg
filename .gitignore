@@ -4,3 +4,4 @@ build/
 *.tiled-session
 .coverage
 .claude
+recording.pkl

@@ -15,6 +15,15 @@ pip install .
 cd $project_root
 source .venv/bin/activate.fish
 python -m engine.main --scenario ./rusted_kingdoms
+
+# 2× faster
+python -m engine.main --scenario ./rusted_kingdoms --mode playback --recording-file session.pkl --playback-speed
+2.0
+
+# half speed
+python -m engine.main --scenario ./rusted_kingdoms --mode playback --recording-file session.pkl --playback-speed
+0.5
+
 ```
 
 ## Run Unit Test
