@@ -8,7 +8,7 @@ from engine.world.position_data import Position
 from engine.world.world_map_logic import (
     try_interact, dispatch_dialogue_result,
     check_portals, apply_transition,
-    load_inn_cost, load_shop_items,
+    load_inn_cost, load_shop_items, load_recipes,
 )
 from engine.world.sprite_sheet import Direction
 
@@ -238,3 +238,42 @@ class TestLoadMapData:
 
         items = load_shop_items(tmp_path, "town_01")
         assert items == []
+
+
+# ── load_recipes ──────────────────────────────────────────────
+
+class TestLoadRecipes:
+    def test_returns_empty_list_when_file_missing(self, tmp_path):
+        result = load_recipes(tmp_path)
+        assert result == []
+
+    def test_loads_recipes_from_yaml(self, tmp_path):
+        recipe_dir = tmp_path / "data" / "recipe"
+        recipe_dir.mkdir(parents=True)
+        content = "- id: antidote\n  ingredients: [herb]\n"
+        (recipe_dir / "all_recipe.yaml").write_text(content)
+        result = load_recipes(tmp_path)
+        assert len(result) == 1
+        assert result[0]["id"] == "antidote"
+
+
+# ── try_interact — no dialogue result ─────────────────────────
+
+class TestTryInteractNoResult:
+    def test_returns_none_when_all_npcs_have_no_dialogue(self):
+        player = MagicMock()
+        player.pixel_position = Position(100, 100)
+        player.facing_direction = Direction.DOWN
+
+        npc = MagicMock()
+        npc.is_present.return_value = True
+        npc.is_near.return_value = True
+        npc.pixel_position = Position(100, 132)
+        npc.dialogue_id = "empty_npc"
+
+        dialogue_engine = MagicMock()
+        dialogue_engine.resolve.return_value = None  # no dialogue resolves
+
+        result, found = try_interact(player, [npc], MagicMock(), dialogue_engine)
+        assert result is None
+        assert found is None
