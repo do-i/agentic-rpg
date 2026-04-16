@@ -32,7 +32,7 @@ def _make_filename(timestamp: str, prefix: str, slot_index: int) -> str:
 
 
 def _parse_timestamp(filename: str) -> str:
-    m = re.match(r"(\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2})", filename)
+    m = re.search(r"(\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2})", filename)
     if m:
         raw = m.group(1)
         return raw[:10] + " " + raw[11:].replace("-", ":")

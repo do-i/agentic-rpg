@@ -36,6 +36,7 @@ class LoadGameScene(Scene):
         self._slots: list[SaveSlot] = []
         self._selected = 0
         self._scroll_offset = 0
+        self._most_recent: int | None = None
         self._fonts_ready = False
 
     def _init(self) -> None:
@@ -44,11 +45,16 @@ class LoadGameScene(Scene):
         self._font_hint  = pygame.font.SysFont("Arial", 18)
         self._fonts_ready = True
         self._slots = self._game_state_manager.list_slots()
-        # start selection at first non-empty slot
+        # find most-recent non-empty slot by timestamp
+        best_ts = ""
         for i, s in enumerate(self._slots):
-            if not s.is_empty:
-                self._selected = i
-                break
+            if not s.is_empty and s.timestamp > best_ts:
+                best_ts = s.timestamp
+                self._most_recent = i
+        # start selection at most-recent slot
+        if self._most_recent is not None:
+            self._selected = self._most_recent
+            self._clamp_scroll()
 
     # ── Events ────────────────────────────────────────────────
 
@@ -118,7 +124,8 @@ class LoadGameScene(Scene):
             slot = self._slots[idx]
             row_y = my + 65 + i * SLOT_HEIGHT
             selected = (idx == self._selected)
-            self._render_row(screen, slot, mx, row_y, selected)
+            most_recent = (idx == self._most_recent)
+            self._render_row(screen, slot, mx, row_y, selected, most_recent)
 
         hint = self._font_hint.render("ENTER — Load    ESC — Back", True, (120, 120, 90))
         screen.blit(hint, (mx + 20, my + MODAL_H - 28))
@@ -130,6 +137,7 @@ class LoadGameScene(Scene):
         mx: int,
         y: int,
         selected: bool,
+        most_recent: bool = False,
     ) -> None:
         bg = (40, 40, 70) if selected else (25, 25, 45)
         pygame.draw.rect(screen, bg, (mx + 10, y, MODAL_W - 20, SLOT_HEIGHT - 4))
@@ -144,5 +152,15 @@ class LoadGameScene(Scene):
         screen.blit(label, (mx + 38, y + 8))
 
         detail_col = (160, 160, 120) if selected else (110, 110, 90)
+        detail_max_w = (MODAL_W - 20) - (150 - 10) - (90 if most_recent else 12)
         detail = self._font_slot.render(slot.display_line(), True, detail_col)
-        screen.blit(detail, (mx + 150, y + 8))
+        screen.blit(detail, (mx + 150, y + 8), area=pygame.Rect(0, 0, detail_max_w, detail.get_height()))
+
+        if most_recent:
+            pygame.draw.rect(screen, (240, 200, 60), (mx + 10, y, MODAL_W - 20, SLOT_HEIGHT - 4), 3)
+            badge_text = self._font_hint.render("LATEST", True, (20, 20, 40))
+            bw, bh = badge_text.get_size()
+            badge_x = mx + MODAL_W - bw - 20
+            badge_y = y + (SLOT_HEIGHT - 4 - bh) // 2
+            pygame.draw.rect(screen, (240, 200, 60), (badge_x - 6, badge_y - 2, bw + 12, bh + 4))
+            screen.blit(badge_text, (badge_x, badge_y))
