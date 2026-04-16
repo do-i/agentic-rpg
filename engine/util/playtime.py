@@ -40,11 +40,12 @@ class Playtime:
 
     @staticmethod
     def format(seconds: int) -> str:
-        """Returns formatted string e.g. '04d 06h 00m'."""
+        """Returns formatted string e.g. '04d 06h 00m 30s'."""
         d = seconds // 86400
         h = (seconds % 86400) // 3600
         m = (seconds % 3600) // 60
-        return f"{d:02d}d {h:02d}h {m:02d}m"
+        s = seconds % 60
+        return f"{d:02d}d {h:02d}h {m:02d}m {s:02d}s"
 
     @property
     def display(self) -> str:

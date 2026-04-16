@@ -1,6 +1,8 @@
+import json
 import pickle
 import pygame.locals as _pg_locals
 from collections import defaultdict
+from dataclasses import asdict
 from pathlib import Path
 
 import pygame
@@ -97,8 +99,11 @@ class RecordPlaybackManager:
         return self._session.seed
 
     def save(self) -> None:
-        """Pickle session to disk. No-op in normal/playback modes."""
+        """Pickle session to disk and write a JSON sidecar. No-op in normal/playback modes."""
         if self._mode != "record":
             return
         with open(self._recording_file, "wb") as f:
             pickle.dump(self._session, f)
+        json_path = self._recording_file.with_suffix(".json")
+        with open(json_path, "w") as f:
+            json.dump(asdict(self._session), f, indent=2)

@@ -13,7 +13,7 @@ class SaveSlot:
     slot_index: int          # 0 = autosave, 1-100 = player slots
     path: Path | None        # None = empty slot
     timestamp: str = ""      # "2024-03-15 14:22"
-    playtime_display: str = ""  # "04d 06h 00m"
+    playtime_display: str = ""  # "04d 06h 00m 30s"
     location: str = ""       # map display name
     protagonist_name: str = ""
     level: int = 0
