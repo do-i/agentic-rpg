@@ -66,20 +66,14 @@ class RecordPlaybackManager:
             self._frame_index += 1
             return events
 
-        # playback — consume multiple frames per tick when speed > 1
-        frames_to_consume = max(1, round(self._speed))
-        merged_events: list = []
-        accumulated_delta = 0.0
-        for _ in range(frames_to_consume):
-            if self._frame_index >= len(self._session.frames):
-                return [pygame.event.Event(pygame.QUIT)]
-            frame = self._session.frames[self._frame_index]
-            merged_events += [pygame.event.Event(e["type"], e["dict"]) for e in frame.events]
-            self._current_key_state = frame.key_state
-            accumulated_delta += frame.delta
-            self._frame_index += 1
-        self._current_delta = accumulated_delta
-        return merged_events
+        # playback — always consume exactly one recorded frame
+        if self._frame_index >= len(self._session.frames):
+            return [pygame.event.Event(pygame.QUIT)]
+        frame = self._session.frames[self._frame_index]
+        self._current_key_state = frame.key_state
+        self._current_delta = frame.delta
+        self._frame_index += 1
+        return [pygame.event.Event(e["type"], e["dict"]) for e in frame.events]
 
     @property
     def replay_delta(self) -> float:

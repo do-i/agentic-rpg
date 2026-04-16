@@ -30,14 +30,16 @@ class Game:
 
     def run(self) -> None:
         self._running = True
+        steps = max(1, round(self._playback_speed))
         while self._running:
             self._clock.tick()
-            events = self._recorder.get_events(self._clock.delta)
-            self._handle_events(events)
-            if self._recorder.replay_delta:
-                self._scene_manager.update(self._recorder.replay_delta)
-            else:
-                self._scene_manager.update(self._clock.delta * self._playback_speed)
+            for _ in range(steps):
+                events = self._recorder.get_events(self._clock.delta)
+                self._handle_events(events)
+                delta = self._recorder.replay_delta or self._clock.delta
+                self._scene_manager.update(delta)
+                if not self._running:
+                    break
             self._scene_manager.render(self._screen)
             pygame.display.flip()
         pygame.quit()
