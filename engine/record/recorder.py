@@ -31,9 +31,7 @@ class RecordPlaybackManager:
         self._current_key_state: dict | None = None
         self._session: RecordedSession
 
-        if mode == "record":
-            self._session = RecordedSession()
-        elif mode == "playback":
+        if mode == "playback":
             with open(self._recording_file, "rb") as f:
                 self._session = pickle.load(f)
             if self._session.version != RECORDING_VERSION:
@@ -41,6 +39,8 @@ class RecordPlaybackManager:
                     f"Recording version mismatch: expected {RECORDING_VERSION}, "
                     f"got {self._session.version}"
                 )
+        else:
+            self._session = RecordedSession()
 
     def get_events(self) -> list:
         """Drop-in replacement for pygame.event.get()."""
@@ -80,8 +80,8 @@ class RecordPlaybackManager:
         return pygame.key.get_pressed()
 
     def set_seed(self, seed: int) -> None:
-        """Store the RNG seed in the recording. Call before any frames are recorded."""
-        if self._mode == "record":
+        """Store the RNG seed in the session. Call before any frames are recorded."""
+        if self._mode != "playback":
             self._session.seed = seed
 
     @property
