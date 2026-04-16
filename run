@@ -48,7 +48,7 @@ case "$cmd" in
             --scenario ./rusted_kingdoms \
             --seed 1 \
             --mode playback \
-            --playback-speed 1
+            --playback-speed "$@"
         ;;
     test)
         exec python -m pytest "$@"
