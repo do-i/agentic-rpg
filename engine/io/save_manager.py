@@ -179,7 +179,7 @@ class GameStateManager:
             "meta": {
                 "timestamp":        now.strftime("%Y-%m-%d-%H-%M-%S"),
                 "playtime_seconds": state.playtime.to_seconds(),
-                "location_display": state.map.current,
+                "location_display": state.map.display_name or state.map.current,
                 "is_autosave":      is_autosave,
             },
             "party": party_data,

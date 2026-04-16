@@ -13,8 +13,10 @@ class MapState:
         current: str = "",
         position: Position | None = None,
         visited: set[str] | None = None,
+        display_name: str = "",
     ) -> None:
         self.current: str = current
+        self.display_name: str = display_name
         self.position: Position = position if position is not None else Position(0, 0)
         self._visited: set[str] = set(visited) if visited is not None else set()
 

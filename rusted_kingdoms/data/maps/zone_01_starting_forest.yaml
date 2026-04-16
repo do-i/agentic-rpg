@@ -1,4 +1,5 @@
 # data/maps/world.yaml
+name: Starting Forest
 bgm: zone.starting_forest
 
 enemy_spawn:

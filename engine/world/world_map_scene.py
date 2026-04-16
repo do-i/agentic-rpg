@@ -156,12 +156,14 @@ class WorldMapScene(Scene):
         self._npcs = self._npc_loader.load_from_map(map_yaml_path)
 
         # BGM
-        if self._bgm_manager and map_yaml_path.exists():
+        if map_yaml_path.exists():
             with open(map_yaml_path) as f:
                 map_data = yaml.safe_load(f) or {}
-            bgm_key = map_data.get("bgm")
-            if bgm_key:
-                self._bgm_manager.play_key(bgm_key)
+            state.map.display_name = map_data.get("name", map_id)
+            if self._bgm_manager:
+                bgm_key = map_data.get("bgm")
+                if bgm_key:
+                    self._bgm_manager.play_key(bgm_key)
 
         # Encounter zone + enemy spawner
         self._encounter_manager.set_zone(map_id)
