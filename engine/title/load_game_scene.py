@@ -47,8 +47,11 @@ class LoadGameScene(Scene):
         self._slots = self._game_state_manager.list_slots()
         # find most-recent non-empty slot by timestamp
         best_ts = ""
+
         for i, s in enumerate(self._slots):
+            print(i, s.timestamp)
             if not s.is_empty and s.timestamp > best_ts:
+                print(i, s)
                 best_ts = s.timestamp
                 self._most_recent = i
         # start selection at most-recent slot

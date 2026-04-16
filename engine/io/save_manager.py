@@ -1,7 +1,6 @@
 # engine/io/save_manager.py
 
 import binascii
-import re
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -18,30 +17,22 @@ if TYPE_CHECKING:
 
 AUTOSAVE_INDEX    = 0
 PLAYER_SLOT_COUNT = 100
-AUTOSAVE_PREFIX   = "autosave"
-SAVE_PREFIX       = "save"
+AUTOSAVE_PREFIX   = "autosave"  # kept for display label only
 
 
-def _crc32(data: str) -> str:
-    return f"{binascii.crc32(data.encode()) & 0xFFFFFFFF:08X}"
+def _checksum(content: str) -> str:
+    return f"{binascii.crc32(content.encode()) & 0xFFFFFFFF:08X}"
 
 
-def _make_filename(timestamp: str, prefix: str, slot_index: int) -> str:
-    crc = _crc32(timestamp + prefix)
-    return f"{prefix}-{timestamp}-{slot_index:03d}-{crc}.yaml"
+def _slot_path(saves_dir: Path, slot_index: int) -> Path:
+    return saves_dir / f"{slot_index:03d}.yaml"
 
 
-def _parse_timestamp(filename: str) -> str:
-    m = re.search(r"(\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2})", filename)
-    if m:
-        raw = m.group(1)
-        return raw[:10] + " " + raw[11:].replace("-", ":")
-    return ""
-
-
-def _slot_index_from_filename(filename: str) -> int:
-    m = re.search(r"-(\d{3})-[0-9A-F]{8}\.yaml$", filename)
-    return int(m.group(1)) if m else 0
+def _meta_ts_to_display(ts: str) -> str:
+    # "2026-04-16-10-22-30" → "2026-04-16 10:22:30"
+    if len(ts) >= 19:
+        return ts[:10] + " " + ts[11:].replace("-", ":")
+    return ts
 
 
 class GameStateManager:
@@ -56,7 +47,7 @@ class GameStateManager:
         classes_dir: Path,
         item_catalog: ItemCatalog | None = None,
     ) -> None:
-        self._dir        = Path(saves_dir).expanduser()
+        self._dir         = Path(saves_dir).expanduser()
         self._classes_dir = classes_dir
         self._item_catalog = item_catalog
         self._dir.mkdir(parents=True, exist_ok=True)
@@ -67,23 +58,16 @@ class GameStateManager:
         self,
         state: GameState,
         slot_index: int,
-        overwrite_path: Path | None = None,
+        overwrite_path: Path | None = None,  # ignored; path is always {slot:03d}.yaml
     ) -> Path:
         state.playtime.commit_session()
-
-        now        = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         is_autosave = slot_index == AUTOSAVE_INDEX
-        prefix     = AUTOSAVE_PREFIX if is_autosave else SAVE_PREFIX
-
-        if overwrite_path and overwrite_path.exists():
-            path = overwrite_path
-        else:
-            if is_autosave:
-                for old in self._dir.glob(f"{AUTOSAVE_PREFIX}-*.yaml"):
-                    old.unlink()
-            path = self._dir / _make_filename(now, prefix, slot_index)
+        path = _slot_path(self._dir, slot_index)
 
         data = self._serialize(state, is_autosave)
+        body = yaml.dump(data, allow_unicode=True, sort_keys=False)
+        data["checksum"] = _checksum(body)
+
         with open(path, "w") as f:
             yaml.dump(data, f, allow_unicode=True, sort_keys=False)
 
@@ -94,33 +78,34 @@ class GameStateManager:
     def load(self, path: Path) -> GameState:
         with open(path, "r") as f:
             data = yaml.safe_load(f)
+        data.pop("checksum", None)
         return from_save(data, self._classes_dir, self._item_catalog)
 
     # ── Slot list ─────────────────────────────────────────────
 
     def list_slots(self) -> list[SaveSlot]:
-        autosave_files = sorted(
-            self._dir.glob(f"{AUTOSAVE_PREFIX}-*.yaml"), reverse=True
-        )
-        player_files = sorted(
-            self._dir.glob(f"{SAVE_PREFIX}-*.yaml"), reverse=True
-        )
+        file_map: dict[int, Path] = {}
+        for f in self._dir.glob("[0-9][0-9][0-9].yaml"):
+            try:
+                idx = int(f.stem)
+            except ValueError:
+                continue
+            if 0 <= idx <= PLAYER_SLOT_COUNT:
+                file_map[idx] = f
 
         slots: list[SaveSlot] = []
 
-        if autosave_files:
-            slots.append(self._slot_from_file(autosave_files[0], 0, is_autosave=True))
+        if 0 in file_map:
+            slots.append(self._slot_from_file(file_map[0], 0, is_autosave=True))
         else:
             slots.append(SaveSlot(slot_index=0, path=None, is_autosave=True))
 
-        slot_map: dict[int, SaveSlot] = {}
-        for f in player_files:
-            idx = _slot_index_from_filename(f.name)
-            slot_map[idx] = self._slot_from_file(f, idx)
-
         for i in range(1, PLAYER_SLOT_COUNT + 1):
-            slots.append(slot_map[i] if i in slot_map
-                         else SaveSlot(slot_index=i, path=None))
+            slots.append(
+                self._slot_from_file(file_map[i], i)
+                if i in file_map
+                else SaveSlot(slot_index=i, path=None)
+            )
 
         return slots
 
@@ -130,15 +115,22 @@ class GameStateManager:
         self, path: Path, index: int, is_autosave: bool = False
     ) -> SaveSlot:
         try:
-            with open(path, "r") as f:
-                data = yaml.safe_load(f)
+            raw  = path.read_text()
+            data = yaml.safe_load(raw)
+
+            stored = data.pop("checksum", None)
+            if stored is not None:
+                recomputed = _checksum(yaml.dump(data, allow_unicode=True, sort_keys=False))
+                if recomputed != stored:
+                    return SaveSlot(slot_index=index, path=path, is_autosave=is_autosave)
+
             meta  = data["meta"]
             party = data["party"]
             proto = next((m for m in party if m.get("protagonist")), party[0])
             return SaveSlot(
                 slot_index=index,
                 path=path,
-                timestamp=_parse_timestamp(path.name),
+                timestamp=_meta_ts_to_display(meta.get("timestamp", "")),
                 playtime_display=Playtime.format(meta["playtime_seconds"]),
                 location=meta["location_display"],
                 protagonist_name=proto["name"],

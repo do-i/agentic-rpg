@@ -67,30 +67,35 @@ class TestSave:
         path = manager.save(state, slot_index=1)
         assert path.exists()
 
-    def test_autosave_uses_autosave_prefix(self, manager, state, saves_dir):
+    def test_autosave_filename_is_slot_number(self, manager, state, saves_dir):
         path = manager.save(state, slot_index=0)
-        assert path.name.startswith("autosave-")
+        assert path.name == "000.yaml"
 
-    def test_player_save_uses_save_prefix(self, manager, state, saves_dir):
+    def test_player_save_filename_is_slot_number(self, manager, state, saves_dir):
         path = manager.save(state, slot_index=1)
-        assert path.name.startswith("save-")
+        assert path.name == "001.yaml"
 
-    def test_autosave_replaces_previous(self, manager, state, saves_dir):
+    def test_save_embeds_checksum(self, manager, state, saves_dir):
+        path = manager.save(state, slot_index=1)
+        data = yaml.safe_load(path.read_text())
+        assert "checksum" in data
+
+    def test_autosave_overwrites_previous(self, manager, state, saves_dir):
         manager.save(state, slot_index=0)
         manager.save(state, slot_index=0)
-        files = list(saves_dir.glob("autosave-*.yaml"))
+        files = list(saves_dir.glob("[0-9][0-9][0-9].yaml"))
         assert len(files) == 1
 
-    def test_player_saves_accumulate(self, manager, state, saves_dir):
+    def test_player_saves_to_own_slot_file(self, manager, state, saves_dir):
         manager.save(state, slot_index=1)
         manager.save(state, slot_index=2)
-        files = list(saves_dir.glob("save-*.yaml"))
-        assert len(files) == 2
+        assert (saves_dir / "001.yaml").exists()
+        assert (saves_dir / "002.yaml").exists()
 
     def test_overwrite_replaces_file(self, manager, state, saves_dir):
         path = manager.save(state, slot_index=1)
         manager.save(state, slot_index=1, overwrite_path=path)
-        files = list(saves_dir.glob("save-*.yaml"))
+        files = list(saves_dir.glob("[0-9][0-9][0-9].yaml"))
         assert len(files) == 1
 
 
@@ -141,3 +146,19 @@ class TestListSlots:
     def test_slot_count_always_101(self, manager):
         slots = manager.list_slots()
         assert len(slots) == 101  # 0=autosave + 100 player
+
+    def test_corrupted_file_renders_slot_non_empty_but_broken(self, manager, state, saves_dir):
+        path = manager.save(state, slot_index=1)
+        # corrupt the checksum
+        data = yaml.safe_load(path.read_text())
+        data["checksum"] = "DEADBEEF"
+        path.write_text(yaml.dump(data, allow_unicode=True, sort_keys=False))
+        slots = manager.list_slots()
+        # slot is not empty (path exists) but has no display data
+        assert not slots[1].is_empty
+        assert slots[1].protagonist_name == ""
+
+    def test_valid_checksum_populates_slot_data(self, manager, state, saves_dir):
+        manager.save(state, slot_index=1)
+        slots = manager.list_slots()
+        assert slots[1].protagonist_name == "Aric"
