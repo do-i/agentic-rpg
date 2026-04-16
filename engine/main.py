@@ -12,11 +12,13 @@ def parse_args():
     parser.add_argument(
         "--mode",
         choices=["normal", "record", "playback"],
-        default="normal",
+        default="record",
     )
     parser.add_argument("--recording-file", default="recording.pkl")
     parser.add_argument("--playback-speed", type=float, default=1.0)
-    parser.add_argument("--seed", type=int, default=None)
+
+     # TODO after testing is done replace defualt to None
+    parser.add_argument("--seed", type=int, default=1)
     return parser.parse_args()
 
 
