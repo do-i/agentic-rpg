@@ -29,6 +29,7 @@ class RecordPlaybackManager:
         self._speed = max(playback_speed, 0.0)
         self._frame_index = 0
         self._current_key_state: dict | None = None
+        self._current_delta: float = 0.0
         self._session: RecordedSession
 
         if mode == "playback":
@@ -42,8 +43,12 @@ class RecordPlaybackManager:
         else:
             self._session = RecordedSession()
 
-    def get_events(self) -> list:
-        """Drop-in replacement for pygame.event.get()."""
+    def get_events(self, delta: float = 0.0) -> list:
+        """Drop-in replacement for pygame.event.get().
+
+        In record mode, pass the current frame's delta so it is stored.
+        In playback mode, the recorded delta is made available via replay_delta.
+        """
         if self._mode == "normal":
             return pygame.event.get()
 
@@ -55,6 +60,7 @@ class RecordPlaybackManager:
                     frame_index=self._frame_index,
                     events=serialized,
                     key_state=_serialize_keys(),
+                    delta=delta,
                 )
             )
             self._frame_index += 1
@@ -63,14 +69,22 @@ class RecordPlaybackManager:
         # playback — consume multiple frames per tick when speed > 1
         frames_to_consume = max(1, round(self._speed))
         merged_events: list = []
+        accumulated_delta = 0.0
         for _ in range(frames_to_consume):
             if self._frame_index >= len(self._session.frames):
                 return [pygame.event.Event(pygame.QUIT)]
             frame = self._session.frames[self._frame_index]
             merged_events += [pygame.event.Event(e["type"], e["dict"]) for e in frame.events]
             self._current_key_state = frame.key_state
+            accumulated_delta += frame.delta
             self._frame_index += 1
+        self._current_delta = accumulated_delta
         return merged_events
+
+    @property
+    def replay_delta(self) -> float:
+        """The recorded delta for the current playback frame. Zero in non-playback modes."""
+        return self._current_delta if self._mode == "playback" else 0.0
 
     def get_key_state(self):
         """Drop-in replacement for pygame.key.get_pressed(). Returns a defaultdict(int)."""

@@ -32,9 +32,12 @@ class Game:
         self._running = True
         while self._running:
             self._clock.tick()
-            events = self._recorder.get_events()
+            events = self._recorder.get_events(self._clock.delta)
             self._handle_events(events)
-            self._scene_manager.update(self._clock.delta * self._playback_speed)
+            if self._recorder.replay_delta:
+                self._scene_manager.update(self._recorder.replay_delta)
+            else:
+                self._scene_manager.update(self._clock.delta * self._playback_speed)
             self._scene_manager.render(self._screen)
             pygame.display.flip()
         pygame.quit()

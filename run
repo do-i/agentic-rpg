@@ -46,8 +46,9 @@ case "$cmd" in
     replay)
         exec python -m engine.main \
             --scenario ./rusted_kingdoms \
+            --seed 1 \
             --mode playback \
-            --seed "$@"
+            --playback-speed 1
         ;;
     test)
         exec python -m pytest "$@"

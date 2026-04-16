@@ -87,7 +87,6 @@ class BattleScene(Scene):
 
         self._state.build_turn_order()
         active = self._state.active
-        print(f"[BATTLE START] First active: {active.name if active else 'None'} | is_enemy={active.is_enemy if active else False}")
         if self._state.barrier_messages:
             self._enter_resolve(self._state.barrier_messages[0])
         elif active and active.is_enemy:

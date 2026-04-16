@@ -17,8 +17,7 @@ def parse_args():
     parser.add_argument("--recording-file", default="recording.pkl")
     parser.add_argument("--playback-speed", type=float, default=1.0)
 
-     # TODO after testing is done replace defualt to None
-    parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--seed", type=int, default=None)
     return parser.parse_args()
 
 
