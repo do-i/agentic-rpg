@@ -3,6 +3,9 @@
 import pytest
 from engine.battle.combatant import Combatant, StatusEffect
 from engine.battle.battle_state import BattleState, BattlePhase
+from engine.util.pseudo_random import PseudoRandom
+
+_rng = PseudoRandom(seed=0)
 
 
 def make_combatant(name="Aric", hp=100, mp=40, atk=20, def_=10,
@@ -26,22 +29,22 @@ def make_battle(party_n=2, enemy_n=2) -> BattleState:
 class TestCombatant:
     def test_apply_damage_reduces_hp(self):
         c = make_combatant(hp=100)
-        c.apply_damage(30)
+        c.apply_damage(30, _rng)
         assert c.hp == 70
 
     def test_apply_damage_clamps_to_zero(self):
         c = make_combatant(hp=20)
-        c.apply_damage(50)
+        c.apply_damage(50, _rng)
         assert c.hp == 0
 
     def test_apply_damage_sets_ko(self):
         c = make_combatant(hp=10)
-        c.apply_damage(10)
+        c.apply_damage(10, _rng)
         assert c.is_ko
 
     def test_apply_damage_returns_actual(self):
         c = make_combatant(hp=20)
-        actual = c.apply_damage(50)
+        actual = c.apply_damage(50, _rng)
         assert actual == 20
 
     def test_apply_heal_restores_hp(self):

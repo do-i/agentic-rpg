@@ -5,15 +5,14 @@
 
 from __future__ import annotations
 
-import random
-
 from engine.battle.combatant import Combatant
 from engine.battle.battle_state import BattleState
 from engine.battle.battle_logic import float_pos, enemy_rect_size, C_DMG_PHYS, C_DMG_MAGIC
+from engine.util.pseudo_random import PseudoRandom
 
 
 def resolve_enemy_turn(state: BattleState, sfx_manager=None,
-                       screen_width: int = 1280) -> str:
+                       screen_width: int = 1280, rng: PseudoRandom | None = None) -> str:
     """Execute the current enemy's turn using AI data. Returns message."""
     active = state.active
     if not active or not active.is_enemy:
@@ -23,12 +22,12 @@ def resolve_enemy_turn(state: BattleState, sfx_manager=None,
     if not targets:
         return ""
 
-    action = pick_enemy_action(active, state)
+    action = pick_enemy_action(active, state, rng)
     action_type = action.get("action", "attack")
     ability_id = action.get("id", "")
 
     # Resolve targeting
-    target_list = resolve_targeting(active, state, ability_id)
+    target_list = resolve_targeting(active, state, ability_id, rng)
     if not target_list:
         return ""
 
@@ -36,7 +35,7 @@ def resolve_enemy_turn(state: BattleState, sfx_manager=None,
         target = target_list[0]
         alive_before = not target.is_ko
         dmg = max(1, active.atk - target.def_)
-        actual = target.apply_damage(dmg)
+        actual = target.apply_damage(dmg, rng)
         state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_PHYS)
         if sfx_manager:
             sfx_manager.play("atk_impact")
@@ -51,7 +50,7 @@ def resolve_enemy_turn(state: BattleState, sfx_manager=None,
     for target in target_list:
         alive_before = not target.is_ko
         dmg = max(1, active.atk - target.def_)
-        actual = target.apply_damage(dmg)
+        actual = target.apply_damage(dmg, rng)
         state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_MAGIC)
         msg_parts.append(f"{target.name} took {actual} damage")
         if alive_before and target.is_ko:
@@ -67,7 +66,7 @@ def resolve_enemy_turn(state: BattleState, sfx_manager=None,
 
 # ── Enemy AI — action selection ──────────────────────────────
 
-def pick_enemy_action(enemy: Combatant, state: BattleState) -> dict:
+def pick_enemy_action(enemy: Combatant, state: BattleState, rng: PseudoRandom | None = None) -> dict:
     """Pick an action from the enemy's AI move list.
 
     Supports patterns:
@@ -86,10 +85,10 @@ def pick_enemy_action(enemy: Combatant, state: BattleState) -> dict:
         eligible = [m for m in moves if _check_condition(m, enemy, state)]
         if not eligible:
             return {"action": "attack"}
-        return _weighted_pick_move(eligible)
+        return _weighted_pick_move(eligible, rng)
 
     # default: random weighted
-    return _weighted_pick_move(moves)
+    return _weighted_pick_move(moves, rng)
 
 
 def _check_condition(move: dict, enemy: Combatant, state: BattleState) -> bool:
@@ -111,18 +110,19 @@ def _check_condition(move: dict, enemy: Combatant, state: BattleState) -> bool:
     return True
 
 
-def _weighted_pick_move(moves: list[dict]) -> dict:
+def _weighted_pick_move(moves: list[dict], rng: PseudoRandom | None = None) -> dict:
     """Weighted random pick from a list of move dicts."""
     if not moves:
         return {"action": "attack"}
     weights = [m.get("weight", 1) for m in moves]
-    return random.choices(moves, weights=weights, k=1)[0]
+    return rng.choices(moves, weights=weights, k=1)[0]
 
 
 # ── Enemy AI — targeting ─────────────────────────────────────
 
 def resolve_targeting(
     enemy: Combatant, state: BattleState, ability_id: str,
+    rng: PseudoRandom | None = None,
 ) -> list[Combatant]:
     """Pick target(s) for the enemy's action based on targeting data."""
     targeting = enemy.ai_data.get("targeting", {})
@@ -148,4 +148,4 @@ def resolve_targeting(
     if mode == "highest_hp":
         return [max(alive, key=lambda c: c.hp)]
     # random_alive (default)
-    return [random.choice(alive)]
+    return [rng.choice(alive)]

@@ -13,6 +13,9 @@ from engine.encounter.encounter_resolver import EncounterResolver
 from engine.battle.enemy_loader import EnemyLoader
 from engine.battle.combatant import Combatant
 from engine.common.flag_state import FlagState
+from engine.util.pseudo_random import PseudoRandom
+
+_rng = PseudoRandom(seed=0)
 
 
 # ── Helpers ───────────────────────────────────────────────────
@@ -64,7 +67,7 @@ def make_loader(*enemy_ids) -> EnemyLoader:
 
 
 def make_resolver(*enemy_ids) -> EncounterResolver:
-    return EncounterResolver(make_loader(*enemy_ids))
+    return EncounterResolver(make_loader(*enemy_ids), _rng)
 
 
 # ── load_encounter_zone ───────────────────────────────────────
@@ -245,20 +248,25 @@ class TestPickFormation:
 # ── Weighted pick ─────────────────────────────────────────────
 
 class TestWeightedPick:
+    def _resolver(self):
+        return make_resolver()
+
     def test_always_picks_single_entry(self):
+        resolver = self._resolver()
         entries = [Formation(["wolf"], 100)]
         for _ in range(20):
-            result = EncounterResolver._weighted_pick(entries)
+            result = resolver._weighted_pick(entries)
             assert result.enemy_ids == ["wolf"]
 
     def test_never_picks_zero_weight(self):
+        resolver = self._resolver()
         entries = [
             Formation(["wolf"], 0),
             Formation(["bat"],  100),
         ]
         for _ in range(20):
-            result = EncounterResolver._weighted_pick(entries)
+            result = resolver._weighted_pick(entries)
             assert result.enemy_ids == ["bat"]
 
     def test_returns_none_on_empty(self):
-        assert EncounterResolver._weighted_pick([]) is None
+        assert self._resolver()._weighted_pick([]) is None

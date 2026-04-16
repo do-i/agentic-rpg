@@ -16,6 +16,7 @@ def parse_args():
     )
     parser.add_argument("--recording-file", default="recording.pkl")
     parser.add_argument("--playback-speed", type=float, default=1.0)
+    parser.add_argument("--seed", type=int, default=None)
     return parser.parse_args()
 
 
@@ -26,5 +27,6 @@ if __name__ == "__main__":
         mode=args.mode,
         recording_file=args.recording_file,
         playback_speed=args.playback_speed,
+        seed=args.seed,
     )])
     injector.get(Game).run()

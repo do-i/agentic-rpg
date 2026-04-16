@@ -5,9 +5,9 @@
 
 from __future__ import annotations
 import math
-import random
 
 from engine.battle.combatant import Combatant
+from engine.util.pseudo_random import PseudoRandom
 from engine.party.party_state import PartyState
 from engine.party.member_state import MemberState
 from engine.party.party_state import calc_exp_next, stat_gain_at, recalc_exp_next
@@ -50,6 +50,9 @@ class RewardCalculator:
     """
     Computes EXP split, applies level-ups with stat_growth, resolves loot.
     """
+
+    def __init__(self, rng: PseudoRandom) -> None:
+        self._rng = rng
 
     def calculate(
         self,
@@ -168,7 +171,7 @@ class RewardCalculator:
                 pool = pool_entry.get("pool", [])
                 if not pool:
                     continue
-                item_id = _weighted_pick(pool)
+                item_id = _weighted_pick(pool, self._rng)
                 if item_id:
                     item_totals[item_id] = item_totals.get(item_id, 0) + 1
 
@@ -185,10 +188,10 @@ class RewardCalculator:
         return getattr(member, "hp", 1) <= 0
 
 
-def _weighted_pick(pool: list[dict]) -> str | None:
+def _weighted_pick(pool: list[dict], rng: PseudoRandom) -> str | None:
     """Pick one item id from a weighted pool. Returns None if pool is empty."""
     if not pool:
         return None
     items = [entry.get("item", "") for entry in pool]
     weights = [entry.get("weight", 1) for entry in pool]
-    return random.choices(items, weights=weights, k=1)[0]
+    return rng.choices(items, weights=weights, k=1)[0]

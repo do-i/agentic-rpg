@@ -5,6 +5,7 @@ import yaml
 
 from engine.world.npc import Npc
 from engine.world.sprite_sheet import SpriteSheet
+from engine.util.pseudo_random import PseudoRandom
 
 
 class NpcLoader:
@@ -14,9 +15,10 @@ class NpcLoader:
     Loads sprite sheet from TSX path if provided.
     """
 
-    def __init__(self, scenario_path: Path | None = None, tile_size: int = 32) -> None:
+    def __init__(self, scenario_path: Path | None = None, tile_size: int = 32, rng: PseudoRandom | None = None) -> None:
         self._scenario_path = scenario_path
         self._tile_size = tile_size
+        self._rng = rng
 
     def load_from_map(self, map_yaml_path: Path) -> list[Npc]:
         if not map_yaml_path.exists():
@@ -58,6 +60,7 @@ class NpcLoader:
             anim_speed=anim_speed,
             wander_range=wander_range,
             tile_size=self._tile_size,
+            rng=self._rng,
         )
 
     def _load_sprite(self, sprite_path: str) -> SpriteSheet | None:

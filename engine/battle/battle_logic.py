@@ -5,9 +5,8 @@
 
 from __future__ import annotations
 
-import random
-
 from engine.battle.combatant import Combatant
+from engine.util.pseudo_random import PseudoRandom
 from engine.battle.battle_state import BattleState, BattlePhase
 from engine.battle.battle_rewards import RewardCalculator
 from engine.encounter.encounter_manager import EncounterManager
@@ -44,7 +43,7 @@ def float_pos(state: BattleState, combatant: Combatant,
 
 
 def resolve_action(state: BattleState, effect_handler=None, repository=None,
-                   screen_width: int = 1280) -> str:
+                   screen_width: int = 1280, rng: PseudoRandom | None = None) -> str:
     """Execute the pending action. Returns the message to display."""
     action = state.pending_action
     if not action:
@@ -63,7 +62,7 @@ def resolve_action(state: BattleState, effect_handler=None, repository=None,
     for target in targets:
         if atype == "attack":
             dmg = max(1, source.atk - target.def_)
-            actual = target.apply_damage(dmg)
+            actual = target.apply_damage(dmg, rng)
             state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_PHYS)
             msg_parts.append(f"{source.name} attacked {target.name} for {actual} damage!")
         elif atype == "spell":
@@ -99,7 +98,7 @@ def resolve_action(state: BattleState, effect_handler=None, repository=None,
                 msg_parts.append(f"{source.name} casts {spell_name} on {target.name}!")
             else:
                 dmg = max(1, int(source.mres * coeff) - target.def_) if source else 10
-                actual = target.apply_damage(dmg)
+                actual = target.apply_damage(dmg, rng)
                 state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_MAGIC)
                 msg_parts.append(f"{source.name} casts {spell_name}! {actual} damage to {target.name}!")
         elif atype == "item":
@@ -202,7 +201,7 @@ FLEE_BASE_CHANCE = 0.30
 FLEE_ROGUE_DEX_BONUS = 0.02
 
 
-def attempt_flee(state: BattleState, holder) -> tuple[bool, str]:
+def attempt_flee(state: BattleState, holder, rng: PseudoRandom) -> tuple[bool, str]:
     """Attempt to flee from battle.
 
     Returns (success, message).
@@ -222,7 +221,7 @@ def attempt_flee(state: BattleState, holder) -> tuple[bool, str]:
 
     chance = min(chance, 1.0)
 
-    if random.random() < chance:
+    if rng.random() < chance:
         return True, "Got away safely!"
     return False, "Couldn't escape!"
 

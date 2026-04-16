@@ -7,19 +7,21 @@ from unittest.mock import patch, MagicMock
 from engine.world.npc_loader import NpcLoader
 from engine.world.npc import Npc
 from engine.world.sprite_sheet import Direction
+from engine.util.pseudo_random import PseudoRandom
 
 
 TS = 32
+_rng = PseudoRandom(seed=0)
 
 
 @pytest.fixture
 def loader() -> NpcLoader:
-    return NpcLoader()
+    return NpcLoader(rng=_rng)
 
 
 @pytest.fixture
 def loader_with_path(tmp_path) -> NpcLoader:
-    return NpcLoader(scenario_path=tmp_path)
+    return NpcLoader(scenario_path=tmp_path, rng=_rng)
 
 
 def write_map(tmp_path: Path, data: dict) -> Path:

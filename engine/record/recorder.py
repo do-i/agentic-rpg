@@ -79,6 +79,15 @@ class RecordPlaybackManager:
             return defaultdict(int, source)
         return pygame.key.get_pressed()
 
+    def set_seed(self, seed: int) -> None:
+        """Store the RNG seed in the recording. Call before any frames are recorded."""
+        if self._mode == "record":
+            self._session.seed = seed
+
+    @property
+    def session_seed(self) -> int:
+        return self._session.seed
+
     def save(self) -> None:
         """Pickle session to disk. No-op in normal/playback modes."""
         if self._mode != "record":

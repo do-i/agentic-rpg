@@ -5,13 +5,13 @@
 
 from __future__ import annotations
 
-import random
 from typing import Literal
 
 import pygame
 from pathlib import Path
 
 from engine.world.sprite_sheet import SpriteSheet, Direction
+from engine.util.pseudo_random import PseudoRandom
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -68,6 +68,7 @@ class EnemySprite:
         is_boss: bool = False,
         chase_range: int = 0,         # tiles; 0 = never chases
         sprite_sheet: SpriteSheet | None = None,
+        rng: PseudoRandom | None = None,
         wander_range: int = 4,        # tiles from spawn
         tile_size: int = 32,
     ) -> None:
@@ -82,6 +83,7 @@ class EnemySprite:
         self._px: float     = float(self._origin_px)
         self._py: float     = float(self._origin_py)
 
+        self._rng           = rng
         self._sprite_sheet  = sprite_sheet
         self._wander_range  = wander_range
         self._move_speed    = tile_size * 1.5   # px/sec
@@ -95,7 +97,7 @@ class EnemySprite:
         self._state: Literal["wandering", "chasing"] = "wandering"
         self._wander_target_px: int | None = None
         self._wander_target_py: int | None = None
-        self._wander_pause  = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
+        self._wander_pause  = self._rng.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
         self._wander_moving = False
 
         self.active: bool = True
@@ -124,12 +126,12 @@ class EnemySprite:
         self._wander_moving = False
         self._wander_target_px = None
         self._wander_target_py = None
-        self._wander_pause = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
+        self._wander_pause = self._rng.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
 
     def activate(self) -> None:
         """Mark active. Called by EnemySpawner when the respawn interval fires."""
         self.active = True
-        self._wander_pause = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
+        self._wander_pause = self._rng.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
 
     def collides_with(self, rect: tuple[int, int, int, int]) -> bool:
         cx, cy, cw, ch = self.collision_rect
@@ -206,7 +208,7 @@ class EnemySprite:
                 if self._pick_wander_target(collision_map, other_rects):
                     self._wander_moving = True
                 else:
-                    self._wander_pause = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
+                    self._wander_pause = self._rng.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
             return
 
         tx = self._wander_target_px
@@ -220,7 +222,7 @@ class EnemySprite:
                 self._px = tx
                 self._py = ty
             self._wander_moving = False
-            self._wander_pause = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
+            self._wander_pause = self._rng.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
             self._frame_index = IDLE_FRAME
             return
 
@@ -238,7 +240,7 @@ class EnemySprite:
 
         if self._is_blocked(int(new_px), int(new_py), collision_map, other_rects):
             self._wander_moving = False
-            self._wander_pause = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
+            self._wander_pause = self._rng.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
             self._frame_index = IDLE_FRAME
             return
 
@@ -253,8 +255,8 @@ class EnemySprite:
     ) -> bool:
         max_offset = self._wander_range * self._tile_size
         for _ in range(8):
-            tx = int(self._origin_px + random.randint(-max_offset, max_offset))
-            ty = int(self._origin_py + random.randint(-max_offset, max_offset))
+            tx = int(self._origin_px + self._rng.randint(-max_offset, max_offset))
+            ty = int(self._origin_py + self._rng.randint(-max_offset, max_offset))
             if not self._is_blocked(tx, ty, collision_map, other_rects):
                 self._wander_target_px = tx
                 self._wander_target_py = ty

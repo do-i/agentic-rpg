@@ -14,6 +14,9 @@ from engine.encounter.encounter_zone_data import (
     EncounterZone, EncounterSet, Formation, BossConfig,
 )
 from engine.encounter.enemy_sprite import EnemySprite
+from engine.util.pseudo_random import PseudoRandom
+
+_rng = PseudoRandom(seed=0)
 
 
 def make_zone(with_boss=False, spawn_frequency=None) -> EncounterZone:
@@ -58,6 +61,7 @@ def make_spawner(
         scenario_path=Path("/fake"),
         tile_size=32,
         boss_tile=boss_tile,
+        rng=_rng,
     )
 
 

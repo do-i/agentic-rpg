@@ -9,6 +9,9 @@ from engine.encounter.enemy_sprite import (
     IDLE_FRAME, WALK_START, WALK_END, BASE_FRAME_DUR,
 )
 from engine.world.sprite_sheet import Direction
+from engine.util.pseudo_random import PseudoRandom
+
+_rng = PseudoRandom(seed=0)
 
 
 def make_sprite(formation=None, tile_x=5, tile_y=5, is_boss=False,
@@ -20,6 +23,7 @@ def make_sprite(formation=None, tile_x=5, tile_y=5, is_boss=False,
         is_boss=is_boss,
         chase_range=chase_range,
         tile_size=tile_size,
+        rng=_rng,
     )
 
 
@@ -228,8 +232,9 @@ class TestPickWanderTarget:
         sprite = make_sprite(tile_x=5, tile_y=5)
         collision = MagicMock()
         collision.is_rect_blocked.return_value = False
-        with patch('engine.encounter.enemy_sprite.random.randint', return_value=32):
-            result = sprite._pick_wander_target(collision, [])
+        sprite._rng = MagicMock()
+        sprite._rng.randint.return_value = 32
+        result = sprite._pick_wander_target(collision, [])
         assert result is True
         assert sprite._wander_target_px is not None
         assert sprite._wander_target_py is not None

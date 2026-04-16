@@ -9,13 +9,13 @@
 
 from __future__ import annotations
 
-import random
 from pathlib import Path
 
 from engine.encounter.encounter_zone_data import EncounterZone, Formation
 from engine.encounter.encounter_resolver import EncounterResolver
 from engine.encounter.enemy_sprite import EnemySprite
 from engine.world.sprite_sheet import SpriteSheet
+from engine.util.pseudo_random import PseudoRandom
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -49,6 +49,7 @@ class EnemySpawner:
         global_interval: float,           # from settings.yaml
         resolver: EncounterResolver,
         scenario_path: Path,
+        rng: PseudoRandom,
         tile_size: int = 32,
         boss_tile: dict | None = None,    # {x, y} boss spawn position from TMX boss_enemy layer
     ) -> None:
@@ -57,6 +58,7 @@ class EnemySpawner:
         self._boss_tile     = boss_tile
         self._resolver      = resolver
         self._scenario_path = scenario_path
+        self._rng           = rng
         self._tile_size     = tile_size
 
         # Resolve base interval (map > zone > global)
@@ -175,7 +177,7 @@ class EnemySpawner:
         """Pick a random inactive enemy and activate it. No-op if all are active."""
         inactive = [e for e in self._all_enemies if not e.active]
         if inactive:
-            random.choice(inactive).activate()
+            self._rng.choice(inactive).activate()
 
     def _create_enemy(
         self,
@@ -194,6 +196,7 @@ class EnemySpawner:
             is_boss=is_boss,
             chase_range=formation.chase_range,
             sprite_sheet=sprite_sheet,
+            rng=self._rng,
             tile_size=self._tile_size,
         )
         self._all_enemies.append(enemy)

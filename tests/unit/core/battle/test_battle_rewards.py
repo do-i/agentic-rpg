@@ -1,7 +1,6 @@
 # tests/unit/core/battle/test_battle_rewards.py
 
 import pytest
-from unittest.mock import patch
 from engine.battle.battle_rewards import (
     RewardCalculator, exp_required, LevelUpResult,
     EXP_CAP, LEVEL_CAP, _weighted_pick,
@@ -9,6 +8,9 @@ from engine.battle.battle_rewards import (
 from engine.battle.combatant import Combatant
 from engine.party.party_state import PartyState
 from engine.party.member_state import MemberState
+from engine.util.pseudo_random import PseudoRandom
+
+_rng = PseudoRandom(seed=0)
 
 
 STAT_GROWTH = {
@@ -64,14 +66,14 @@ class TestExpRequired:
 
 class TestRewardCalculatorBasic:
     def test_total_exp_is_sum_of_enemy_yields(self):
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         enemies = [_make_enemy(100), _make_enemy(50)]
         party = _party_with([_make_member()])
         rewards = calc.calculate(enemies, party)
         assert rewards.total_exp == 150
 
     def test_exp_split_evenly_among_living(self):
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         enemies = [_make_enemy(100)]
         m1 = _make_member("A")
         m2 = _make_member("B")
@@ -81,7 +83,7 @@ class TestRewardCalculatorBasic:
         assert rewards.member_results[1].exp_gained == 50
 
     def test_ko_members_get_zero_exp(self):
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         enemies = [_make_enemy(100)]
         ko = _make_member("Dead", hp=0)
         alive = _make_member("Alive")
@@ -91,7 +93,7 @@ class TestRewardCalculatorBasic:
         assert rewards.member_results[1].exp_gained == 100
 
     def test_boss_flag_forwarded(self):
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         enemies = [_make_enemy(10)]
         party = _party_with([_make_member()])
         rewards = calc.calculate(enemies, party, boss_flag="boss_defeated")
@@ -100,7 +102,7 @@ class TestRewardCalculatorBasic:
 
 class TestLevelUp:
     def test_level_up_occurs(self):
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         # hero level 2 needs exp_required("hero", 2) = 400
         m = _make_member(level=1, exp=350)
         enemies = [_make_enemy(100)]
@@ -112,7 +114,7 @@ class TestLevelUp:
     def test_level_up_increases_stats(self):
         m = _make_member(level=1, exp=0)
         old_str = m.str_
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         # Give enough EXP for a level-up
         enemies = [_make_enemy(500)]
         party = _party_with([m])
@@ -121,7 +123,7 @@ class TestLevelUp:
 
     def test_hp_mp_restored_on_level_up(self):
         m = _make_member(level=1, exp=350, hp=1)
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         enemies = [_make_enemy(100)]
         party = _party_with([m])
         calc.calculate(enemies, party)
@@ -130,7 +132,7 @@ class TestLevelUp:
 
     def test_no_level_up_at_cap(self):
         m = _make_member(level=LEVEL_CAP, exp=0)
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         enemies = [_make_enemy(99999)]
         party = _party_with([m])
         rewards = calc.calculate(enemies, party)
@@ -150,7 +152,7 @@ def _make_enemy_with_drops(exp_yield=100, drops=None) -> Combatant:
 
 class TestLoot:
     def test_no_drops_returns_empty(self):
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         enemies = [_make_enemy()]
         party = _party_with([_make_member()])
         rewards = calc.calculate(enemies, party)
@@ -158,7 +160,7 @@ class TestLoot:
         assert rewards.loot.item_drops == []
 
     def test_mc_drops_from_enemy_yaml(self):
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         drops = {"mc": [{"size": "S", "qty": 2}]}
         enemies = [_make_enemy_with_drops(drops=drops)]
         party = _party_with([_make_member()])
@@ -167,7 +169,7 @@ class TestLoot:
         assert rewards.loot.mc_drops[0] == {"size": "S", "qty": 2}
 
     def test_mc_drops_aggregate_same_size(self):
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         drops = {"mc": [{"size": "S", "qty": 1}]}
         enemies = [_make_enemy_with_drops(drops=drops), _make_enemy_with_drops(drops=drops)]
         party = _party_with([_make_member()])
@@ -176,7 +178,7 @@ class TestLoot:
         assert rewards.loot.mc_drops[0] == {"size": "S", "qty": 2}
 
     def test_mc_drops_different_sizes(self):
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         e1 = _make_enemy_with_drops(drops={"mc": [{"size": "S", "qty": 1}]})
         e2 = _make_enemy_with_drops(drops={"mc": [{"size": "M", "qty": 1}]})
         party = _party_with([_make_member()])
@@ -185,7 +187,7 @@ class TestLoot:
         assert sizes == {"S", "M"}
 
     def test_mc_multiple_entries_per_enemy(self):
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         drops = {"mc": [{"size": "L", "qty": 2}, {"size": "XL", "qty": 1}]}
         enemies = [_make_enemy_with_drops(drops=drops)]
         party = _party_with([_make_member()])
@@ -194,17 +196,12 @@ class TestLoot:
         assert mc_map == {"L": 2, "XL": 1}
 
     def test_loot_pool_rolls_item(self):
-        calc = RewardCalculator()
-        drops = {"loot": [{"pool": [
-            {"item": "rat_tail", "weight": 80},
-            {"item": "rat_hide", "weight": 20},
-        ]}]}
+        calc = RewardCalculator(_rng)
+        # single-item pool — always picks rat_tail, no randomness needed
+        drops = {"loot": [{"pool": [{"item": "rat_tail", "weight": 100}]}]}
         enemies = [_make_enemy_with_drops(drops=drops)]
         party = _party_with([_make_member()])
-
-        with patch("engine.battle.battle_rewards.random.choices",
-                   return_value=["rat_tail"]):
-            rewards = calc.calculate(enemies, party)
+        rewards = calc.calculate(enemies, party)
 
         assert len(rewards.loot.item_drops) == 1
         assert rewards.loot.item_drops[0]["id"] == "rat_tail"
@@ -212,7 +209,7 @@ class TestLoot:
         assert rewards.loot.item_drops[0]["name"] == "Rat Tail"
 
     def test_loot_duplicate_items_aggregate(self):
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         drops = {"loot": [
             {"pool": [{"item": "bat_wing", "weight": 100}]},
         ]}
@@ -228,7 +225,7 @@ class TestLoot:
         assert rewards.loot.item_drops[0]["qty"] == 2
 
     def test_empty_loot_pool_no_item(self):
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         drops = {"loot": [{"pool": []}]}
         enemies = [_make_enemy_with_drops(drops=drops)]
         party = _party_with([_make_member()])
@@ -236,7 +233,7 @@ class TestLoot:
         assert rewards.loot.item_drops == []
 
     def test_combined_mc_and_loot(self):
-        calc = RewardCalculator()
+        calc = RewardCalculator(_rng)
         drops = {
             "mc": [{"size": "XS", "qty": 3}],
             "loot": [{"pool": [{"item": "golem_core", "weight": 100}]}],
@@ -252,18 +249,19 @@ class TestLoot:
 
 class TestWeightedPick:
     def test_empty_pool_returns_none(self):
-        assert _weighted_pick([]) is None
+        assert _weighted_pick([], _rng) is None
 
     def test_single_item_always_picked(self):
         pool = [{"item": "only_one", "weight": 50}]
-        assert _weighted_pick(pool) == "only_one"
+        assert _weighted_pick(pool, _rng) == "only_one"
 
     def test_respects_weights(self):
+        rng = PseudoRandom(seed=42)
         pool = [
             {"item": "common", "weight": 90},
             {"item": "rare", "weight": 10},
         ]
-        results = [_weighted_pick(pool) for _ in range(200)]
+        results = [_weighted_pick(pool, rng) for _ in range(200)]
         assert "common" in results
         # rare should appear at least once in 200 draws with 10% chance
         assert "rare" in results

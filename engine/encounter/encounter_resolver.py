@@ -1,13 +1,13 @@
 # engine/encounter/encounter_resolver.py
 
 from __future__ import annotations
-import random
 
 from engine.encounter.encounter_zone_data import EncounterZone, Formation
 from engine.battle.enemy_loader import EnemyLoader
 from engine.battle.combatant import Combatant
 from engine.battle.battle_state import BattleState
 from engine.common.flag_state import FlagState
+from engine.util.pseudo_random import PseudoRandom
 
 
 class EncounterResolver:
@@ -18,8 +18,9 @@ class EncounterResolver:
     and by WorldMapScene to build a BattleState when the player collides with one.
     """
 
-    def __init__(self, enemy_loader: EnemyLoader) -> None:
+    def __init__(self, enemy_loader: EnemyLoader, rng: PseudoRandom) -> None:
         self._enemy_loader = enemy_loader
+        self._rng = rng
 
     # ── Formation selection ───────────────────────────────────────
 
@@ -29,12 +30,11 @@ class EncounterResolver:
             return None
         return self._weighted_pick(zone.entries.entries)
 
-    @staticmethod
-    def _weighted_pick(entries: list[Formation]) -> Formation | None:
+    def _weighted_pick(self, entries: list[Formation]) -> Formation | None:
         total = sum(e.weight for e in entries)
         if total == 0:
             return None
-        roll = random.randint(1, 100)
+        roll = self._rng.randint(1, 100)
         cumulative = 0
         for entry in entries:
             cumulative += int(entry.weight * 100 / total)

@@ -28,6 +28,7 @@ from engine.item.item_effect_handler import ItemEffectHandler
 from engine.io.save_manager import GameStateManager
 from engine.audio.bgm_manager import BgmManager
 from engine.audio.sfx_manager import SfxManager
+from engine.util.pseudo_random import PseudoRandom
 
 
 class BattleScene(Scene):
@@ -49,6 +50,7 @@ class BattleScene(Scene):
         game_state_manager: GameStateManager | None = None,
         bgm_manager: BgmManager | None = None,
         sfx_manager: SfxManager | None = None,
+        rng: PseudoRandom | None = None,
         screen_width: int = 1280,
         screen_height: int = 766,
     ) -> None:
@@ -59,7 +61,8 @@ class BattleScene(Scene):
         self._boss_flag = boss_flag
         self._effect_handler = effect_handler
         self._game_state_manager = game_state_manager
-        self._reward_calc = RewardCalculator()
+        self._rng = rng
+        self._reward_calc = RewardCalculator(rng)
         self._screen_width = screen_width
         self._renderer = BattleRenderer(Path(scenario_path), screen_width, screen_height)
         self._bgm_manager = bgm_manager
@@ -325,7 +328,7 @@ class BattleScene(Scene):
         repo = self._holder.get().repository
         pending = dict(self._state.pending_action) if self._state.pending_action else {}
         alive_before = {e.name for e in self._state.enemies if not e.is_ko}
-        msg = resolve_action(self._state, self._effect_handler, repo, self._screen_width)
+        msg = resolve_action(self._state, self._effect_handler, repo, self._screen_width, self._rng)
         if self._sfx_manager:
             self._sfx_manager.play_battle_action(pending)
             newly_ko = [e for e in self._state.enemies if e.is_ko and e.name in alive_before]
@@ -339,7 +342,7 @@ class BattleScene(Scene):
         self._state.phase = BattlePhase.RESOLVE
 
     def _do_enemy_turn(self) -> None:
-        msg = resolve_enemy_turn(self._state, self._sfx_manager, self._screen_width)
+        msg = resolve_enemy_turn(self._state, self._sfx_manager, self._screen_width, self._rng)
         if msg:
             self._enter_resolve(msg, is_enemy=True)
         else:
@@ -377,7 +380,7 @@ class BattleScene(Scene):
             self._cmd_sel = 0
 
     def _attempt_run(self) -> None:
-        success, msg = attempt_flee(self._state, self._holder)
+        success, msg = attempt_flee(self._state, self._holder, self._rng)
         if self._sfx_manager:
             self._sfx_manager.play("flee" if success else "denied")
         if success:

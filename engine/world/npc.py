@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import random
 import pygame
 from pathlib import Path
 from engine.world.position_data import Position
 from engine.common.flag_state import FlagState
 from engine.world.sprite_sheet import SpriteSheet, Direction
+from engine.util.pseudo_random import PseudoRandom
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -81,7 +81,9 @@ class Npc:
         anim_speed: float = 1.0,
         wander_range: int = 2,
         tile_size: int = 32,
+        rng: PseudoRandom | None = None,
     ) -> None:
+        self._rng = rng
         self._tile_size = tile_size
         self.id = npc_id
         self.dialogue_id = dialogue_id
@@ -105,7 +107,7 @@ class Npc:
         # wander state
         self._wander_target_px: int | None = None
         self._wander_target_py: int | None = None
-        self._wander_pause = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
+        self._wander_pause = self._rng.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
         self._wander_moving = False
         self._interaction_range = tile_size * 1.5    # pixels
         self._move_speed = tile_size * 1.5           # pixels/sec base
@@ -163,7 +165,7 @@ class Npc:
         if near:
             self._frame_index = IDLE_FRAME
             self._wander_moving = False
-            self._wander_pause = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
+            self._wander_pause = self._rng.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
             return
 
         if self._anim_mode == "step":
@@ -204,7 +206,7 @@ class Npc:
                 if self._pick_wander_target(collision_map, rects):
                     self._wander_moving = True
                 else:
-                    self._wander_pause = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
+                    self._wander_pause = self._rng.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
             return
 
         # move toward target
@@ -220,7 +222,7 @@ class Npc:
                 self._px = tx
                 self._py = ty
             self._wander_moving = False
-            self._wander_pause = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
+            self._wander_pause = self._rng.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
             self._frame_index = IDLE_FRAME
             return
 
@@ -237,7 +239,7 @@ class Npc:
 
         if self._is_blocked(new_px, new_py, collision_map, rects):
             self._wander_moving = False
-            self._wander_pause = random.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
+            self._wander_pause = self._rng.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
             self._frame_index = IDLE_FRAME
             return
 
@@ -252,8 +254,8 @@ class Npc:
         max_offset = self._wander_range * self._tile_size
         rects = npc_rects or []
         for _ in range(8):
-            tx = self._origin_px + random.randint(-max_offset, max_offset)
-            ty = self._origin_py + random.randint(-max_offset, max_offset)
+            tx = self._origin_px + self._rng.randint(-max_offset, max_offset)
+            ty = self._origin_py + self._rng.randint(-max_offset, max_offset)
             if self._is_blocked(tx, ty, collision_map, rects):
                 continue
             self._wander_target_px = tx

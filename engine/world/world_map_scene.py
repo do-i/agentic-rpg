@@ -74,6 +74,7 @@ class WorldMapScene(Scene):
         tile_size: int = 32,
         fps: int = 60,
         recorder=None,
+        rng=None,
     ) -> None:
         self._screen_width = screen_width
         self._screen_height = screen_height
@@ -98,6 +99,7 @@ class WorldMapScene(Scene):
         self._bgm_manager = bgm_manager
         self._sfx_manager = sfx_manager
         self._recorder = recorder
+        self._rng = rng
 
         self._renderer = WorldMapRenderer()
         self._reset_state()
@@ -198,6 +200,7 @@ class WorldMapScene(Scene):
             global_interval=self._enemy_spawn_global_interval,
             resolver=self._encounter_resolver,
             scenario_path=scenario_path,
+            rng=self._rng,
             tile_size=self._tile_size,
             boss_tile=self._tile_map.boss_spawn_tile,
         )
@@ -443,6 +446,7 @@ class WorldMapScene(Scene):
             game_state_manager=self._game_state_manager,
             bgm_manager=self._bgm_manager,
             sfx_manager=self._sfx_manager,
+            rng=self._rng,
         )
         self._scene_manager.switch(scene)
 

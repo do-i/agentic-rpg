@@ -3,7 +3,10 @@
 import pytest
 from unittest.mock import MagicMock, patch
 
+from engine.util.pseudo_random import PseudoRandom
 from engine.battle.combatant import Combatant, StatusEffect
+
+_rng = PseudoRandom(seed=0)
 from engine.battle.battle_state import BattleState, BattlePhase
 from engine.battle.battle_rewards import RewardCalculator
 from engine.item.item_effect_handler import ItemEffectHandler, FieldItemDef
@@ -186,7 +189,7 @@ class TestResolveEnemyTurn:
         # force goblin active
         state.active_index = state.turn_order.index(goblin)
 
-        msg = resolve_enemy_turn(state)
+        msg = resolve_enemy_turn(state, rng=_rng)
 
         assert hero.hp == 90  # 100 - (15-5)
         assert "attacked" in msg
@@ -197,7 +200,7 @@ class TestResolveEnemyTurn:
         state.build_turn_order()
         state.active_index = state.turn_order.index(hero)
 
-        msg = resolve_enemy_turn(state)
+        msg = resolve_enemy_turn(state, rng=_rng)
 
         assert msg == ""
 
@@ -209,7 +212,7 @@ class TestResolveEnemyTurn:
         state.build_turn_order()
         state.active_index = state.turn_order.index(goblin)
 
-        msg = resolve_enemy_turn(state)
+        msg = resolve_enemy_turn(state, rng=_rng)
 
         assert msg == ""
 
@@ -587,28 +590,27 @@ class TestAttemptFlee:
         state = make_battle_state([make_combatant("Hero")], [boss])
         holder = _make_holder_with_party([_make_member()])
 
-        success, msg = attempt_flee(state, holder)
+        success, msg = attempt_flee(state, holder, _rng)
 
         assert not success
         assert "boss" in msg.lower()
 
+    def _mock_rng(self, roll: float) -> MagicMock:
+        rng = MagicMock(spec=PseudoRandom)
+        rng.random.return_value = roll
+        return rng
+
     def test_success_when_roll_below_chance(self):
         state = make_battle_state()
         holder = _make_holder_with_party([_make_member("warrior", dex=10)])
-
-        with patch("engine.battle.battle_logic.random.random", return_value=0.0):
-            success, msg = attempt_flee(state, holder)
-
+        success, msg = attempt_flee(state, holder, self._mock_rng(0.0))
         assert success
         assert "safely" in msg.lower()
 
     def test_failure_when_roll_above_chance(self):
         state = make_battle_state()
         holder = _make_holder_with_party([_make_member("warrior", dex=10)])
-
-        with patch("engine.battle.battle_logic.random.random", return_value=0.99):
-            success, msg = attempt_flee(state, holder)
-
+        success, msg = attempt_flee(state, holder, self._mock_rng(0.99))
         assert not success
         assert "escape" in msg.lower()
 
@@ -616,32 +618,23 @@ class TestAttemptFlee:
         """With a rogue at DEX 20, chance = 0.30 + 0.02*20 = 0.70."""
         state = make_battle_state()
         holder = _make_holder_with_party([_make_member("rogue", dex=20)])
-
         # Roll at 0.65 — should succeed with rogue bonus (0.70) but fail without
-        with patch("engine.battle.battle_logic.random.random", return_value=0.65):
-            success, _ = attempt_flee(state, holder)
-
+        success, _ = attempt_flee(state, holder, self._mock_rng(0.65))
         assert success
 
     def test_no_rogue_base_chance_only(self):
         """Without a rogue, chance is base 30%."""
         state = make_battle_state()
         holder = _make_holder_with_party([_make_member("warrior", dex=20)])
-
         # Roll at 0.35 — should fail with only base 30%
-        with patch("engine.battle.battle_logic.random.random", return_value=0.35):
-            success, _ = attempt_flee(state, holder)
-
+        success, _ = attempt_flee(state, holder, self._mock_rng(0.35))
         assert not success
 
     def test_chance_capped_at_one(self):
         """Even with absurd DEX, chance never exceeds 1.0."""
         state = make_battle_state()
         holder = _make_holder_with_party([_make_member("rogue", dex=100)])
-
-        with patch("engine.battle.battle_logic.random.random", return_value=0.99):
-            success, _ = attempt_flee(state, holder)
-
+        success, _ = attempt_flee(state, holder, self._mock_rng(0.99))
         assert success
 
     def test_multiple_rogues_stack(self):
@@ -651,11 +644,8 @@ class TestAttemptFlee:
             _make_member("rogue", dex=10),
             _make_member("rogue", dex=10),
         ])
-
         # chance = 0.30 + 0.02*10 + 0.02*10 = 0.70
-        with patch("engine.battle.battle_logic.random.random", return_value=0.65):
-            success, _ = attempt_flee(state, holder)
-
+        success, _ = attempt_flee(state, holder, self._mock_rng(0.65))
         assert success
 
 
@@ -666,7 +656,7 @@ class TestPickEnemyAction:
         enemy = make_combatant("Goblin", is_enemy=True)
         state = make_battle_state([make_combatant("Hero")], [enemy])
 
-        action = pick_enemy_action(enemy, state)
+        action = pick_enemy_action(enemy, state, _rng)
 
         assert action["action"] == "attack"
 
@@ -678,9 +668,9 @@ class TestPickEnemyAction:
         enemy = make_combatant("Goblin", is_enemy=True, ai_data=ai_data)
         state = make_battle_state([make_combatant("Hero")], [enemy])
 
-        with patch("engine.battle.battle_logic.random.choices",
-                   return_value=[ai_data["ai"]["moves"][1]]):
-            action = pick_enemy_action(enemy, state)
+        rng = MagicMock(spec=PseudoRandom)
+        rng.choices.return_value = [ai_data["ai"]["moves"][1]]
+        action = pick_enemy_action(enemy, state, rng)
 
         assert action["action"] == "ability"
         assert action["id"] == "scratch"
@@ -694,7 +684,7 @@ class TestPickEnemyAction:
         enemy = make_combatant("Boss", hp=100, hp_max=100, is_enemy=True, ai_data=ai_data)
         state = make_battle_state([make_combatant("Hero")], [enemy])
 
-        action = pick_enemy_action(enemy, state)
+        action = pick_enemy_action(enemy, state, _rng)
 
         assert action["action"] == "attack"
 
@@ -707,9 +697,9 @@ class TestPickEnemyAction:
         enemy = make_combatant("Boss", hp=30, hp_max=100, is_enemy=True, ai_data=ai_data)
         state = make_battle_state([make_combatant("Hero")], [enemy])
 
-        with patch("engine.battle.battle_logic.random.choices",
-                   return_value=[ai_data["ai"]["moves"][1]]):
-            action = pick_enemy_action(enemy, state)
+        rng = MagicMock(spec=PseudoRandom)
+        rng.choices.return_value = [ai_data["ai"]["moves"][1]]
+        action = pick_enemy_action(enemy, state, rng)
 
         assert action["id"] == "enrage"
 
@@ -723,14 +713,14 @@ class TestPickEnemyAction:
 
         # Turn 3 — special not eligible
         state.turn_count = 3
-        action = pick_enemy_action(enemy, state)
+        action = pick_enemy_action(enemy, state, _rng)
         assert action["action"] == "attack"
 
         # Turn 4 — special eligible and heavily weighted
         state.turn_count = 4
-        with patch("engine.battle.battle_logic.random.choices",
-                   return_value=[ai_data["ai"]["moves"][1]]):
-            action = pick_enemy_action(enemy, state)
+        rng = MagicMock(spec=PseudoRandom)
+        rng.choices.return_value = [ai_data["ai"]["moves"][1]]
+        action = pick_enemy_action(enemy, state, rng)
         assert action["id"] == "special"
 
     def test_conditional_no_eligible_falls_back_to_attack(self):
@@ -740,7 +730,7 @@ class TestPickEnemyAction:
         enemy = make_combatant("Boss", hp=100, hp_max=100, is_enemy=True, ai_data=ai_data)
         state = make_battle_state([make_combatant("Hero")], [enemy])
 
-        action = pick_enemy_action(enemy, state)
+        action = pick_enemy_action(enemy, state, _rng)
 
         assert action["action"] == "attack"
 
@@ -753,7 +743,7 @@ class TestResolveTargeting:
         hero = make_combatant("Hero")
         state = make_battle_state([hero], [enemy])
 
-        targets = resolve_targeting(enemy, state, "")
+        targets = resolve_targeting(enemy, state, "", _rng)
 
         assert targets == [hero]
 
@@ -764,7 +754,7 @@ class TestResolveTargeting:
         hero2 = make_combatant("Ally", hp=30, hp_max=100)
         state = make_battle_state([hero1, hero2], [enemy])
 
-        targets = resolve_targeting(enemy, state, "")
+        targets = resolve_targeting(enemy, state, "", _rng)
 
         assert targets == [hero2]
 
@@ -775,7 +765,7 @@ class TestResolveTargeting:
         hero2 = make_combatant("Ally", hp=30, hp_max=100)
         state = make_battle_state([hero1, hero2], [enemy])
 
-        targets = resolve_targeting(enemy, state, "")
+        targets = resolve_targeting(enemy, state, "", _rng)
 
         assert targets == [hero1]
 
@@ -788,7 +778,7 @@ class TestResolveTargeting:
         hero2 = make_combatant("Ally", hp=100)
         state = make_battle_state([hero1, hero2], [enemy])
 
-        targets = resolve_targeting(enemy, state, "breath")
+        targets = resolve_targeting(enemy, state, "breath", _rng)
 
         assert len(targets) == 2
         assert hero1 in targets
@@ -801,7 +791,7 @@ class TestResolveTargeting:
         enemy = make_combatant("Crab", is_enemy=True, ai_data=ai_data)
         state = make_battle_state([make_combatant("Hero")], [enemy])
 
-        targets = resolve_targeting(enemy, state, "iron_shell")
+        targets = resolve_targeting(enemy, state, "iron_shell", _rng)
 
         assert targets == [enemy]
 
@@ -814,7 +804,7 @@ class TestResolveTargeting:
         state = make_battle_state([hero], [enemy])
 
         # Non-matching ability uses default
-        targets = resolve_targeting(enemy, state, "claw_crush")
+        targets = resolve_targeting(enemy, state, "claw_crush", _rng)
 
         assert targets == [hero]
 
@@ -832,7 +822,7 @@ class TestResolveEnemyTurnWithAI:
         state.build_turn_order()
         state.active_index = state.turn_order.index(enemy)
 
-        msg = resolve_enemy_turn(state)
+        msg = resolve_enemy_turn(state, rng=_rng)
 
         assert "Fire Bolt" in msg
         assert hero.hp < 100
@@ -850,7 +840,7 @@ class TestResolveEnemyTurnWithAI:
         state.build_turn_order()
         state.active_index = state.turn_order.index(enemy)
 
-        msg = resolve_enemy_turn(state)
+        msg = resolve_enemy_turn(state, rng=_rng)
 
         assert hero1.hp < 100
         assert hero2.hp < 100
@@ -863,7 +853,7 @@ class TestResolveEnemyTurnWithAI:
         state.build_turn_order()
         state.active_index = state.turn_order.index(enemy)
 
-        msg = resolve_enemy_turn(state)
+        msg = resolve_enemy_turn(state, rng=_rng)
 
         assert hero.hp == 90
         assert "attacked" in msg

@@ -30,14 +30,17 @@ from engine.world.npc_loader import NpcLoader
 from engine.audio.bgm_manager import BgmManager
 from engine.audio.sfx_manager import SfxManager
 from engine.record.recorder import RecordPlaybackManager
+from engine.util.pseudo_random import PseudoRandom
+import random as _random
 
 
 class AppModule(Module):
-    def __init__(self, scenario_path: str, mode: str = "normal", recording_file: str = "recording.pkl", playback_speed: float = 1.0) -> None:
+    def __init__(self, scenario_path: str, mode: str = "normal", recording_file: str = "recording.pkl", playback_speed: float = 1.0, seed: int | None = None) -> None:
         self._scenario_path = scenario_path
         self._mode = mode
         self._recording_file = recording_file
         self._playback_speed = playback_speed
+        self._seed = seed
 
     @provider
     @singleton
@@ -58,6 +61,16 @@ class AppModule(Module):
     @singleton
     def provide_record_playback_manager(self) -> RecordPlaybackManager:
         return RecordPlaybackManager(self._mode, self._recording_file, self._playback_speed)
+
+    @provider
+    @singleton
+    def provide_pseudo_random(self, recorder: RecordPlaybackManager) -> PseudoRandom:
+        if self._mode == "playback":
+            seed = recorder.session_seed
+        else:
+            seed = self._seed if self._seed is not None else _random.randrange(2 ** 32)
+            recorder.set_seed(seed)
+        return PseudoRandom(seed)
 
     @provider
     @singleton
@@ -96,8 +109,8 @@ class AppModule(Module):
 
     @provider
     @singleton
-    def provide_npc_loader(self, loader: ManifestLoader, config: EngineConfigData) -> NpcLoader:
-        return NpcLoader(scenario_path=loader.scenario_path, tile_size=config.tile_size)
+    def provide_npc_loader(self, loader: ManifestLoader, config: EngineConfigData, rng: PseudoRandom) -> NpcLoader:
+        return NpcLoader(scenario_path=loader.scenario_path, tile_size=config.tile_size, rng=rng)
 
     @provider
     @singleton
@@ -108,8 +121,8 @@ class AppModule(Module):
 
     @provider
     @singleton
-    def provide_encounter_resolver(self, enemy_loader: EnemyLoader) -> EncounterResolver:
-        return EncounterResolver(enemy_loader)
+    def provide_encounter_resolver(self, enemy_loader: EnemyLoader, rng: PseudoRandom) -> EncounterResolver:
+        return EncounterResolver(enemy_loader, rng)
 
     @provider
     @singleton
@@ -162,6 +175,7 @@ class AppModule(Module):
         bgm_manager: BgmManager,
         recorder: RecordPlaybackManager,
         sfx_manager: SfxManager,
+        rng: PseudoRandom,
     ) -> SceneRegistry:
         registry = SceneRegistry()
         mc_catalog = build_mc_catalog(load_magic_cores(loader.scenario_path))
@@ -198,6 +212,7 @@ class AppModule(Module):
                 tile_size=settings.tile_size,
                 fps=settings.fps,
                 recorder=recorder,
+                rng=rng,
             ))
         registry.register_factory("status",
             lambda: StatusScene(

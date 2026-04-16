@@ -10,6 +10,9 @@ INTERACTION_RANGE = TS * 1.5  # mirrors Npc default
 from engine.world.sprite_sheet import SpriteSheet, Direction
 from engine.common.flag_state import FlagState
 from engine.world.position_data import Position
+from engine.util.pseudo_random import PseudoRandom
+
+_rng = PseudoRandom(seed=0)
 
 
 def make_npc(
@@ -27,6 +30,7 @@ def make_npc(
         present_excludes=excludes or [],
         sprite_sheet=sprite_sheet,
         default_facing=default_facing,
+        rng=_rng,
     )
 
 
