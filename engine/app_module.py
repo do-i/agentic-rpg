@@ -184,7 +184,8 @@ class AppModule(Module):
 
         registry.register_factory("title",
             lambda: TitleScene(loader, scene_manager, registry, game_state_manager,
-                               sfx_manager=sfx_manager))
+                               sfx_manager=sfx_manager,
+                               bgm_manager=bgm_manager))
         registry.register_factory("name_entry",
             lambda: NameEntryScene(loader, scene_manager, registry, holder,
                                    item_catalog=item_catalog,

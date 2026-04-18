@@ -1,3 +1,6 @@
+title:
+  default:          bgm/Chronicles_of_the_Lost_Flame_Title.mp3
+
 battle:
   normal:           bgm/Pixelated_Crusade.mp3
   boss:             bgm/Crimson_Storm_s_Echo.mp3

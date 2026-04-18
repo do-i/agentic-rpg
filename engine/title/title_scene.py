@@ -1,6 +1,7 @@
 # engine/scenes/title_scene.py
 
 import pygame
+from engine.audio.bgm_manager import BgmManager
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
@@ -17,12 +18,14 @@ class TitleScene(Scene):
         registry: SceneRegistry,
         game_state_manager: GameStateManager,
         sfx_manager=None,
+        bgm_manager: BgmManager | None = None,
     ) -> None:
         self._manifest = loader.load()
         self._scene_manager = scene_manager
         self._registry = registry
         self._game_state_manager = game_state_manager
         self._sfx_manager = sfx_manager
+        self._bgm_manager = bgm_manager
         self._title = self._manifest.get("name", "RPG")
         self._title_font = None
         self._menu_font = None
@@ -42,6 +45,9 @@ class TitleScene(Scene):
             font=self._menu_font,
             sfx_manager=self._sfx_manager,
         )
+
+        if self._bgm_manager:
+            self._bgm_manager.play_key("title.default")
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
         if self._menu is None:
