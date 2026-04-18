@@ -344,6 +344,24 @@ def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict)
         for f in encount_dir.rglob("*.yaml"):
             visit(f)
 
+    # visit all enemy files (rank files + boss move sets)
+    enemies_dir = root / "data" / "enemies"
+    if enemies_dir.exists():
+        for f in enemies_dir.rglob("*.yaml"):
+            visit(f)
+
+    # visit all class files
+    classes_dir = root / "data" / "classes"
+    if classes_dir.exists():
+        for f in classes_dir.rglob("*.yaml"):
+            visit(f)
+
+    # visit all audio index files
+    audio_dir = root / "data" / "audio"
+    if audio_dir.exists():
+        for f in audio_dir.rglob("*.yaml"):
+            visit(f)
+
     return errors, visited
 
 

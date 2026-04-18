@@ -29,7 +29,7 @@ python -m pytest tests/unit/core/state/test_map_state.py::TestMoveTo::test_updat
 PYTHONWARNINGS="ignore::RuntimeWarning" python -m pytest
 
 # Data validation
-cd tests/tools && ./validate.py
+python tools/validate.py --root rusted_kingdoms
 ```
 
 Pytest is configured in `pyproject.toml` with `-v -x` (verbose, stop on first failure). Test paths: `tests/` and `engine/`.

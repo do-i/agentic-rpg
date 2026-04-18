@@ -3,5 +3,6 @@ __pycache__/
 build/
 *.tiled-session
 .coverage
-.claude
+settings.local.json
+.vscode/
 recording*
