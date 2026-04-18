@@ -83,8 +83,15 @@ class TitleScene(Scene):
             by = (screen.get_height() - self._bg_image.get_height()) // 2
             screen.blit(self._bg_image, (bx, by))
 
-        text = self._title_font.render(self._title, True, (220, 220, 180))
+        text = self._title_font.render(self._title, True, (240, 210, 140))
         x = (screen.get_width() - text.get_width()) // 2
+        pad_x, pad_y = 24, 12
+        bg_rect = pygame.Surface(
+            (text.get_width() + pad_x * 2, text.get_height() + pad_y * 2),
+            pygame.SRCALPHA,
+        )
+        bg_rect.fill((0, 0, 0, 128))
+        screen.blit(bg_rect, (x - pad_x, 180 - pad_y))
         screen.blit(text, (x, 180))
 
         # gray out Load Game if no saves
