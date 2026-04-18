@@ -16,9 +16,10 @@ SFX_VOLUME = 0.8
 class SfxManager:
     """Manages battle and UI sound effect playback."""
 
-    def __init__(self, scenario_path: Path) -> None:
+    def __init__(self, scenario_path: Path, *, enabled: bool) -> None:
         if not pygame.mixer.get_init():
             pygame.mixer.init()
+        self._enabled = enabled
         self._sounds: dict[str, pygame.mixer.Sound] = {}
         self._load(scenario_path)
 
@@ -44,7 +45,9 @@ class SfxManager:
                     print(f"[SFX] failed to load {full_path}: {e}")
 
     def play(self, key: str) -> None:
-        """Play a sound by event key. No-op if key is not in the map."""
+        """Play a sound by event key. No-op if key is not in the map or SFX is disabled."""
+        if not self._enabled:
+            return
         sound = self._sounds.get(key)
         if sound:
             sound.play()

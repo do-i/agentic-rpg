@@ -17,9 +17,10 @@ SOUND_VOLUME = 0.3
 class BgmManager:
     """Manages background music playback."""
 
-    def __init__(self, scenario_path: Path | None = None) -> None:
+    def __init__(self, scenario_path: Path | None = None, *, enabled: bool) -> None:
         if not pygame.mixer.get_init():
             pygame.mixer.init()
+        self._enabled = enabled
         self._current: str = ""
         self._index: dict[str, Path] = {}
         pygame.mixer.music.set_volume(SOUND_VOLUME)
@@ -41,6 +42,8 @@ class BgmManager:
 
     def play(self, path: str | Path, loops: int = -1, fade_ms: int = 1000) -> None:
         """Start playing *path* if it isn't already playing."""
+        if not self._enabled:
+            return
         resolved = str(path)
         if resolved == self._current:
             return
@@ -50,6 +53,8 @@ class BgmManager:
 
     def play_key(self, key: str, loops: int = -1, fade_ms: int = 1000) -> None:
         """Resolve a logical key from bgm_index.yaml and play it."""
+        if not self._enabled:
+            return
         path = self._index.get(key)
         if path and path.exists():
             self.play(path, loops=loops, fade_ms=fade_ms)
@@ -57,7 +62,8 @@ class BgmManager:
     def stop(self, fade_ms: int = 500) -> None:
         """Fade out and stop."""
         self._current = ""
-        pygame.mixer.music.fadeout(fade_ms)
+        if self._enabled:
+            pygame.mixer.music.fadeout(fade_ms)
 
     @property
     def current(self) -> str:

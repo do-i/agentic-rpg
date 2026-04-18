@@ -24,6 +24,8 @@ class EngineConfigData:
     smooth_collision:             bool
     mc_exchange_confirm_large:    bool
     use_aoe_confirm:              bool
+    bgm_enabled:                  bool
+    sfx_enabled:                  bool
     debug_party:                  bool
     enemy_spawn_global_interval:  float
 
@@ -39,6 +41,9 @@ class EngineConfigData:
         smooth        = (data.get("movement")    or {}).get("smooth_collision", True)
         confirm_large = (data.get("shop")        or {}).get("mc_exchange_confirm_large", True)
         use_aoe       = (data.get("item")        or {}).get("use_aoe_confirm", True)
+        audio         = data.get("audio") or {}
+        bgm_enabled   = audio.get("bgm_enabled")
+        sfx_enabled   = audio.get("sfx_enabled")
         debug_party   = (data.get("debug")       or {}).get("party", False)
         global_interval = (data.get("enemy_spawn") or {}).get("global_interval", 30.0)
 
@@ -47,6 +52,10 @@ class EngineConfigData:
             missing.append("saves.dir")
         if text_speed is None:
             missing.append("dialogue.text_speed")
+        if bgm_enabled is None:
+            missing.append("audio.bgm_enabled")
+        if sfx_enabled is None:
+            missing.append("audio.sfx_enabled")
         if missing:
             raise KeyError(
                 f"Missing required settings in {path}: {', '.join(missing)}"
@@ -63,6 +72,8 @@ class EngineConfigData:
             smooth_collision=bool(smooth),
             mc_exchange_confirm_large=bool(confirm_large),
             use_aoe_confirm=bool(use_aoe),
+            bgm_enabled=bool(bgm_enabled),
+            sfx_enabled=bool(sfx_enabled),
             debug_party=bool(debug_party),
             enemy_spawn_global_interval=float(global_interval),
         )

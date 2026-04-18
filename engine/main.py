@@ -1,6 +1,7 @@
 # engine/main.py
 
 import argparse
+import pygame
 from injector import Injector
 from engine.app_module import AppModule
 from engine.game import Game
@@ -23,6 +24,7 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    pygame.init()
     injector = Injector([AppModule(
         scenario_path=args.scenario,
         mode=args.mode,

@@ -148,13 +148,13 @@ class AppModule(Module):
 
     @provider
     @singleton
-    def provide_bgm_manager(self, loader: ManifestLoader) -> BgmManager:
-        return BgmManager(loader.scenario_path)
+    def provide_bgm_manager(self, loader: ManifestLoader, config: EngineConfigData) -> BgmManager:
+        return BgmManager(loader.scenario_path, enabled=config.bgm_enabled)
 
     @provider
     @singleton
-    def provide_sfx_manager(self, loader: ManifestLoader) -> SfxManager:
-        return SfxManager(loader.scenario_path)
+    def provide_sfx_manager(self, loader: ManifestLoader, config: EngineConfigData) -> SfxManager:
+        return SfxManager(loader.scenario_path, enabled=config.sfx_enabled)
 
     @provider
     @singleton

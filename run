@@ -37,11 +37,17 @@ case "$cmd" in
         pip install -e ".[dev]"
         echo "Setup complete."
         ;;
-    play)
+    record)
         exec python -m engine.main \
             --scenario ./rusted_kingdoms \
             --seed 1 \
             --mode record
+        ;;
+    play)
+        exec python -m engine.main \
+            --scenario ./rusted_kingdoms \
+            --seed 1 \
+            --mode normal
         ;;
     replay)
         exec python -m engine.main \
