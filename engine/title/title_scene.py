@@ -21,6 +21,7 @@ class TitleScene(Scene):
         bgm_manager: BgmManager | None = None,
     ) -> None:
         self._manifest = loader.load()
+        self._scenario_path = loader.scenario_path
         self._scene_manager = scene_manager
         self._registry = registry
         self._game_state_manager = game_state_manager
@@ -31,10 +32,15 @@ class TitleScene(Scene):
         self._menu_font = None
         self._menu = None
         self._has_saves: bool = False
+        self._bg_image: pygame.Surface | None = None
 
     def _init_fonts(self) -> None:
         self._title_font = pygame.font.SysFont("Arial", 64, bold=True)
         self._menu_font  = pygame.font.SysFont("Arial", 36)
+
+        bg_path = self._scenario_path / "assets" / "images" / "title_bg" / "title_image.webp"
+        if bg_path.exists():
+            self._bg_image = pygame.image.load(str(bg_path)).convert_alpha()
 
         # check if any non-empty save slots exist
         slots = self._game_state_manager.list_slots()
@@ -71,6 +77,11 @@ class TitleScene(Scene):
             self._init_fonts()
 
         screen.fill((10, 10, 30))
+
+        if self._bg_image is not None:
+            bx = (screen.get_width()  - self._bg_image.get_width())  // 2
+            by = (screen.get_height() - self._bg_image.get_height()) // 2
+            screen.blit(self._bg_image, (bx, by))
 
         text = self._title_font.render(self._title, True, (220, 220, 180))
         x = (screen.get_width() - text.get_width()) // 2
