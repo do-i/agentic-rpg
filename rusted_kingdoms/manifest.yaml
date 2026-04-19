@@ -5,6 +5,9 @@ id: my_rpg_story
 name: "Chronicles of the Lost Flame"
 version: "1.0.0"
 
+title:
+  image: assets/images/title_bg/title_lost_flame.webp
+
 protagonist:
   id: aric
   name: "Aric"

@@ -51,9 +51,7 @@ class LoadGameScene(Scene):
             if not s.is_empty and s.timestamp > best_ts:
                 best_ts = s.timestamp
                 self._most_recent = i
-        if self._most_recent is not None:
-            self._selected = self._most_recent
-            self._clamp_scroll()
+        self._clamp_scroll()
 
     # ── Events ────────────────────────────────────────────────
 

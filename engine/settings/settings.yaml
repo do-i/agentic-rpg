@@ -33,4 +33,3 @@ debug:
 
 enemy_spawn:
   global_interval: 30.0   # seconds between spawn ticks (overridden per-map or per-zone)
-

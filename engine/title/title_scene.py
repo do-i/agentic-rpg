@@ -27,20 +27,19 @@ class TitleScene(Scene):
         self._game_state_manager = game_state_manager
         self._sfx_manager = sfx_manager
         self._bgm_manager = bgm_manager
-        self._title = self._manifest.get("name", "RPG")
-        self._title_font = None
         self._menu_font = None
         self._menu = None
         self._has_saves: bool = False
         self._bg_image: pygame.Surface | None = None
 
     def _init_fonts(self) -> None:
-        self._title_font = pygame.font.SysFont("Arial", 64, bold=True)
-        self._menu_font  = pygame.font.SysFont("Arial", 36)
+        self._menu_font = pygame.font.SysFont("Arial", 30)
 
-        bg_path = self._scenario_path / "assets" / "images" / "title_bg" / "title_image.webp"
-        if bg_path.exists():
-            self._bg_image = pygame.image.load(str(bg_path)).convert_alpha()
+        image_ref = self._manifest.get("title", {}).get("image")
+        if image_ref:
+            bg_path = self._scenario_path / image_ref
+            if bg_path.exists():
+                self._bg_image = pygame.image.load(str(bg_path)).convert_alpha()
 
         # check if any non-empty save slots exist
         slots = self._game_state_manager.list_slots()
@@ -49,6 +48,10 @@ class TitleScene(Scene):
         self._menu = Menu(
             items=["New Game", "Load Game", "Quit"],
             font=self._menu_font,
+            color_normal=(170, 140, 100),
+            color_selected=(220, 140, 60),
+            color_disabled=(80, 70, 55),
+            line_height=42,
             sfx_manager=self._sfx_manager,
         )
 
@@ -83,20 +86,31 @@ class TitleScene(Scene):
             by = (screen.get_height() - self._bg_image.get_height()) // 2
             screen.blit(self._bg_image, (bx, by))
 
-        text = self._title_font.render(self._title, True, (240, 210, 140))
-        x = (screen.get_width() - text.get_width()) // 2
-        pad_x, pad_y = 24, 12
-        bg_rect = pygame.Surface(
-            (text.get_width() + pad_x * 2, text.get_height() + pad_y * 2),
-            pygame.SRCALPHA,
-        )
-        bg_rect.fill((0, 0, 0, 128))
-        screen.blit(bg_rect, (x - pad_x, 180 - pad_y))
-        screen.blit(text, (x, 180))
-
         # gray out Load Game if no saves
         if not self._has_saves:
             self._menu.set_item_disabled("Load Game", True)
 
-        menu_x = (screen.get_width() - 200) // 2
-        self._menu.render(screen, menu_x, 380)
+        # Menu fills bottom 30% of the screen, centered, with a 50%-opacity box.
+        menu_area_top = int(screen.get_height() * 0.70)
+        menu_area_h = screen.get_height() - menu_area_top
+        line_h = 42
+        cursor_w = 40
+        pad_x, pad_y = 30, 20
+        max_text_w = max(
+            self._menu_font.size(item)[0] for item in ["New Game", "Load Game", "Quit"]
+        )
+        box_w = max_text_w + cursor_w + pad_x * 2
+        box_h = 3 * line_h + pad_y * 2
+        box_x = (screen.get_width() - box_w) // 2
+        box_y = menu_area_top + (menu_area_h - box_h) // 2
+
+        box_surf = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
+        pygame.draw.rect(
+            box_surf,
+            (0, 0, 0, 28),
+            box_surf.get_rect(),
+            border_radius=12,
+        )
+        screen.blit(box_surf, (box_x, box_y))
+
+        self._menu.render(screen, box_x + pad_x, box_y + pad_y)
