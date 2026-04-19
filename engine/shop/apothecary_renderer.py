@@ -157,12 +157,15 @@ class ApothecaryRenderer:
                 draw_cursor_arrow(screen, rx, row_y, ROW_H, C_HEADER, self._font_row)
 
             # status icon
-            if unlocked:
-                icon = "●" if ready else "○"
-                icon_c = C_READY if ready else C_MISSING
-            else:
-                icon = "🔒"
+            if not unlocked:
+                icon = " "
                 icon_c = C_LOCKED
+            elif ready:
+                icon = " "
+                icon_c = C_READY
+            else:
+                icon = " "
+                icon_c = C_MISSING
             icon_s = self._font_row.render(icon, True, icon_c)
             screen.blit(icon_s, (rx + 28, row_y + (ROW_H - icon_s.get_height()) // 2))
 
