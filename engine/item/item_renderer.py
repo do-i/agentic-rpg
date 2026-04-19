@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import pygame
+from engine.common.font_provider import get_fonts
 from engine.item.item_entry_state import ItemEntry
 from engine.item.item_logic import TABS, actions_for, display_name
 from engine.item.magic_core_catalog_state import MagicCoreCatalogState
@@ -76,15 +77,16 @@ class ItemRenderer:
         self._fonts_ready = False
 
     def _init_fonts(self) -> None:
-        self._font_title  = pygame.font.SysFont("Arial", 20, bold=True)
-        self._font_tab    = pygame.font.SysFont("Arial", 14, bold=True)
-        self._font_item   = pygame.font.SysFont("Arial", 14)
-        self._font_qty    = pygame.font.SysFont("Arial", 13)
-        self._font_detail = pygame.font.SysFont("Arial", 14)
-        self._font_btn    = pygame.font.SysFont("Arial", 14, bold=True)
-        self._font_hint   = pygame.font.SysFont("Arial", 13)
-        self._font_gp     = pygame.font.SysFont("Arial", 16)
-        self._font_new    = pygame.font.SysFont("Arial", 11, bold=True)
+        f = get_fonts()
+        self._font_title  = f.get(20, bold=True)
+        self._font_tab    = f.get(14, bold=True)
+        self._font_item   = f.get(14)
+        self._font_qty    = f.get(13)
+        self._font_detail = f.get(14)
+        self._font_btn    = f.get(14, bold=True)
+        self._font_hint   = f.get(13)
+        self._font_gp     = f.get(16)
+        self._font_new    = f.get(11, bold=True)
         self._fonts_ready = True
 
     @property

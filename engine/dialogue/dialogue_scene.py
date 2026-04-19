@@ -3,6 +3,7 @@
 import pygame
 from engine.common.scene.scene import Scene
 from engine.dialogue.dialogue_engine import DialogueResult
+from engine.common.font_provider import get_fonts
 
 # Typewriter speeds — characters revealed per second
 TEXT_SPEEDS = {
@@ -51,9 +52,10 @@ class DialogueScene(Scene):
         self._advance()  # prime first line
 
     def _init_fonts(self) -> None:
-        self._font_text    = pygame.font.SysFont("Arial", 22)
-        self._font_speaker = pygame.font.SysFont("Arial", 18, bold=True)
-        self._font_hint    = pygame.font.SysFont("Arial", 16)
+        f = get_fonts()
+        self._font_text    = f.get(22)
+        self._font_speaker = f.get(18, bold=True)
+        self._font_hint    = f.get(16)
         self._fonts_ready  = True
 
     # ── State machine ─────────────────────────────────────────

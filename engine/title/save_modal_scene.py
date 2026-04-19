@@ -2,6 +2,7 @@
 
 import pygame
 from engine.common.scene.scene import Scene
+from engine.common.font_provider import get_fonts
 from engine.io.save_manager import GameStateManager
 from engine.common.game_state import GameState
 from engine.common.save_slot_data import SaveSlot
@@ -49,11 +50,12 @@ class SaveModalScene(Scene):
         self._fonts_ready = False
 
     def _init_fonts(self) -> None:
-        self._font_title  = pygame.font.SysFont("Arial", 28, bold=True)
-        self._font_slot   = pygame.font.SysFont("Arial", 22)
-        self._font_small  = pygame.font.SysFont("Arial", 17)
-        self._font_hint   = pygame.font.SysFont("Arial", 18)
-        self._font_toast  = pygame.font.SysFont("Arial", 26, bold=True)
+        f = get_fonts()
+        self._font_title  = f.get(28, bold=True)
+        self._font_slot   = f.get(22)
+        self._font_small  = f.get(17)
+        self._font_hint   = f.get(18)
+        self._font_toast  = f.get(26, bold=True)
         self._fonts_ready = True
         self._slots = self._game_state_manager.list_slots()
 

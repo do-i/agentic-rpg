@@ -28,6 +28,15 @@ audio:
   bgm_enabled: true   # enable/disable background music
   sfx_enabled: true   # enable/disable sound effects
 
+fonts:
+  path: null   # relative to scenario root; null = system monospace fallback
+               # example: assets/fonts/rusted_kingdoms_font.ttf
+  sizes:
+    small:  14
+    medium: 18
+    large:  22
+    xlarge: 28
+
 debug:
   party: true   # true = add all party members at new game start
 

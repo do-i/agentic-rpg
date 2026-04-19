@@ -2,6 +2,7 @@
 
 import pygame
 from engine.audio.bgm_manager import BgmManager
+from engine.common.font_provider import get_fonts
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
@@ -33,7 +34,7 @@ class TitleScene(Scene):
         self._bg_image: pygame.Surface | None = None
 
     def _init_fonts(self) -> None:
-        self._menu_font = pygame.font.SysFont("Arial", 30)
+        self._menu_font = get_fonts().get(30)
 
         image_ref = self._manifest.get("title", {}).get("image")
         if image_ref:

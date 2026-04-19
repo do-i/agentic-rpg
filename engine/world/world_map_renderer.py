@@ -8,6 +8,7 @@ from __future__ import annotations
 import pygame
 
 from engine.world.world_map_logic import _is_player_facing
+from engine.common.font_provider import get_fonts
 
 
 class WorldMapRenderer:
@@ -75,9 +76,9 @@ class WorldMapRenderer:
 
     def _render_quit_confirm(self, screen: pygame.Surface) -> None:
         if self._quit_font is None:
-            self._quit_font = pygame.font.SysFont("Arial", 20, bold=True)
+            self._quit_font = get_fonts().get(20, bold=True)
         font = self._quit_font
-        hint_font = pygame.font.SysFont("Arial", 16)
+        hint_font = get_fonts().get(16)
 
         w, h = 320, 110
         x = (screen.get_width() - w) // 2

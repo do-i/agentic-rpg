@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import pygame
+from engine.common.font_provider import get_fonts
 
 from engine.shop.shop_constants import (
     C_BG, C_DIM, C_GP, C_HINT, C_MUTED, C_TEXT,
@@ -37,14 +38,15 @@ class MagicCoreShopRenderer:
         self._fonts_ready = False
 
     def _init_fonts(self) -> None:
-        self._font_title   = pygame.font.SysFont("Arial", 24, bold=True)
-        self._font_row     = pygame.font.SysFont("Arial", 18)
-        self._font_gp      = pygame.font.SysFont("Arial", 18)
-        self._font_qty     = pygame.font.SysFont("Arial", 22, bold=True)
-        self._font_arrow   = pygame.font.SysFont("Arial", 22)
-        self._font_hint    = pygame.font.SysFont("Arial", 15)
-        self._font_toast   = pygame.font.SysFont("Arial", 22, bold=True)
-        self._font_confirm = pygame.font.SysFont("Arial", 17)
+        f = get_fonts()
+        self._font_title   = f.get(24, bold=True)
+        self._font_row     = f.get(18)
+        self._font_gp      = f.get(18)
+        self._font_qty     = f.get(22, bold=True)
+        self._font_arrow   = f.get(22)
+        self._font_hint    = f.get(15)
+        self._font_toast   = f.get(22, bold=True)
+        self._font_confirm = f.get(17)
         self._fonts_ready = True
 
     # ── Main entry point ─────────────────────────────────────

@@ -31,6 +31,7 @@ from engine.audio.bgm_manager import BgmManager
 from engine.audio.sfx_manager import SfxManager
 from engine.record.recorder import RecordPlaybackManager
 from engine.util.pseudo_random import PseudoRandom
+from engine.common.font_provider import FontProvider, init_fonts
 import random as _random
 
 
@@ -46,6 +47,16 @@ class AppModule(Module):
     @singleton
     def provide_engine_settings(self) -> EngineConfigData:
         return EngineConfigData.load()
+
+    @provider
+    @singleton
+    def provide_font_provider(self, config: EngineConfigData, loader: ManifestLoader) -> FontProvider:
+        resolved: str | None = None
+        if config.font_path:
+            p = loader.scenario_path / config.font_path
+            if p.exists():
+                resolved = str(p)
+        return init_fonts(resolved, config.font_sizes)
 
     @provider
     @singleton
@@ -246,6 +257,7 @@ class AppModule(Module):
         scene_manager: SceneManager,
         registry: SceneRegistry,
         recorder: RecordPlaybackManager,
+        font_provider: FontProvider,
     ) -> Game:
         speed = self._playback_speed if self._mode == "playback" else 1.0
         scene_manager.switch(registry.get("boot"))

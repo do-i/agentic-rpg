@@ -8,6 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pygame
+from engine.common.font_provider import get_fonts
 
 from engine.battle.combatant import Combatant
 from engine.battle.constants import ENEMY_SIZES
@@ -31,15 +32,16 @@ class BattleAssetCache:
     def init_fonts(self) -> None:
         if self._fonts_ready:
             return
-        self.font_name  = pygame.font.SysFont("Arial", 14, bold=True)
-        self.font_stat  = pygame.font.SysFont("Arial", 12)
-        self.font_cmd   = pygame.font.SysFont("Arial", 16)
-        self.font_sub   = pygame.font.SysFont("Arial", 14)
-        self.font_turn  = pygame.font.SysFont("Arial", 13)
-        self.font_msg   = pygame.font.SysFont("Arial", 18)
-        self.font_dmg   = pygame.font.SysFont("Arial", 26, bold=True)
-        self.font_enemy = pygame.font.SysFont("Arial", 13, bold=True)
-        self.font_badge = pygame.font.SysFont("Arial", 9,  bold=True)
+        f = get_fonts()
+        self.font_name  = f.get(14, bold=True)
+        self.font_stat  = f.get(12)
+        self.font_cmd   = f.get(16)
+        self.font_sub   = f.get(14)
+        self.font_turn  = f.get(13)
+        self.font_msg   = f.get(18)
+        self.font_dmg   = f.get(26, bold=True)
+        self.font_enemy = f.get(13, bold=True)
+        self.font_badge = f.get(9,  bold=True)
         self._fonts_ready = True
 
     # ── Portraits ─────────────────────────────────────────────

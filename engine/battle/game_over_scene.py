@@ -7,6 +7,7 @@ from __future__ import annotations
 import pygame
 
 from engine.common.scene.scene import Scene
+from engine.common.font_provider import get_fonts
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
@@ -48,9 +49,10 @@ class GameOverScene(Scene):
         self._fade_done = False
 
     def _init_fonts(self) -> None:
-        self._font_title = pygame.font.SysFont("Arial", 56, bold=True)
-        self._font_menu  = pygame.font.SysFont("Arial", 28)
-        self._font_hint  = pygame.font.SysFont("Arial", 16)
+        f = get_fonts()
+        self._font_title = f.get(56, bold=True)
+        self._font_menu  = f.get(28)
+        self._font_hint  = f.get(16)
         self._fonts_ready = True
 
         slots = self._game_state_manager.list_slots()

@@ -28,6 +28,9 @@ class EngineConfigData:
     sfx_enabled:                  bool
     debug_party:                  bool
     enemy_spawn_global_interval:  float
+    # fonts
+    font_path:  str | None
+    font_sizes: dict[str, int]
 
     @classmethod
     def load(cls, path: Path = SETTINGS_PATH) -> "EngineConfigData":
@@ -46,6 +49,9 @@ class EngineConfigData:
         sfx_enabled   = audio.get("sfx_enabled")
         debug_party   = (data.get("debug")       or {}).get("party", False)
         global_interval = (data.get("enemy_spawn") or {}).get("global_interval", 30.0)
+        fonts_cfg     = data.get("fonts") or {}
+        font_path     = fonts_cfg.get("path")   # None or relative str
+        font_sizes    = fonts_cfg.get("sizes") or {"small": 14, "medium": 18, "large": 22, "xlarge": 28}
 
         missing = []
         if saves_dir is None:
@@ -76,4 +82,6 @@ class EngineConfigData:
             sfx_enabled=bool(sfx_enabled),
             debug_party=bool(debug_party),
             enemy_spawn_global_interval=float(global_interval),
+            font_path=font_path if isinstance(font_path, str) else None,
+            font_sizes=dict(font_sizes),
         )

@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import pygame
+from engine.common.font_provider import get_fonts
 from engine.party.member_state import MemberState
 
 # ── Colors ────────────────────────────────────────────────────
@@ -82,13 +83,14 @@ class TargetSelectOverlay:
     # ── Font init ─────────────────────────────────────────────
 
     def _init_fonts(self) -> None:
-        self._font_title  = pygame.font.SysFont("Arial", 18, bold=True)
-        self._font_name   = pygame.font.SysFont("Arial", 16, bold=True)
-        self._font_arrow  = pygame.font.SysFont("Arial", 16)
-        self._font_class  = pygame.font.SysFont("Arial", 13)
-        self._font_stat   = pygame.font.SysFont("Arial", 13)
-        self._font_hint   = pygame.font.SysFont("Arial", 14)
-        self._font_warn   = pygame.font.SysFont("Arial", 14, bold=True)
+        f = get_fonts()
+        self._font_title  = f.get(18, bold=True)
+        self._font_name   = f.get(16, bold=True)
+        self._font_arrow  = f.get(16)
+        self._font_class  = f.get(13)
+        self._font_stat   = f.get(13)
+        self._font_hint   = f.get(14)
+        self._font_warn   = f.get(14, bold=True)
         self._fonts_ready = True
 
     # ── Events ────────────────────────────────────────────────

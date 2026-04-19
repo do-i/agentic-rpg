@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import pygame
+from engine.common.font_provider import get_fonts
 
 from engine.party.member_state import MemberState
 from engine.party.party_state import exp_pct
@@ -82,16 +83,17 @@ class StatusRenderer:
             return None
 
     def _init_fonts(self) -> None:
-        self._font_title = pygame.font.SysFont("Arial", 20, bold=True)
-        self._font_name  = pygame.font.SysFont("Arial", 18, bold=True)
-        self._font_class = pygame.font.SysFont("Arial", 15)
-        self._font_level = pygame.font.SysFont("Arial", 15)
-        self._font_stat  = pygame.font.SysFont("Arial", 14)
-        self._font_hint  = pygame.font.SysFont("Arial", 14)
-        self._font_gp    = pygame.font.SysFont("Arial", 17)
-        self._font_spell = pygame.font.SysFont("Arial", 15)
-        self._font_spell_title = pygame.font.SysFont("Arial", 16, bold=True)
-        self._font_toast = pygame.font.SysFont("Arial", 18, bold=True)
+        f = get_fonts()
+        self._font_title = f.get(20, bold=True)
+        self._font_name  = f.get(18, bold=True)
+        self._font_class = f.get(15)
+        self._font_level = f.get(15)
+        self._font_stat  = f.get(14)
+        self._font_hint  = f.get(14)
+        self._font_gp    = f.get(17)
+        self._font_spell = f.get(15)
+        self._font_spell_title = f.get(16, bold=True)
+        self._font_toast = f.get(18, bold=True)
         self._fonts_ready = True
 
     # ── Main render ───────────────────────────────────────────

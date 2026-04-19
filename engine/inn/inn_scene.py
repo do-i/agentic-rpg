@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pygame
+from engine.common.font_provider import get_fonts
 
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
@@ -69,10 +70,11 @@ class InnScene(Scene):
     # ── Init ──────────────────────────────────────────────────
 
     def _init_fonts(self) -> None:
-        self._font_title  = pygame.font.SysFont("Arial", 22, bold=True)
-        self._font_row    = pygame.font.SysFont("Arial", 16)
-        self._font_hint   = pygame.font.SysFont("Arial", 15)
-        self._font_toast  = pygame.font.SysFont("Arial", 22, bold=True)
+        f = get_fonts()
+        self._font_title  = f.get(22, bold=True)
+        self._font_row    = f.get(16)
+        self._font_hint   = f.get(15)
+        self._font_toast  = f.get(22, bold=True)
         self._fonts_ready = True
 
     def _init_sprite(self) -> None:

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import pygame
 from engine.common.scene.scene import Scene
+from engine.common.font_provider import get_fonts
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.battle.battle_rewards import BattleRewards, LevelUpResult
@@ -57,12 +58,13 @@ class PostBattleScene(Scene):
     # ── Font init ─────────────────────────────────────────────
 
     def _init_fonts(self) -> None:
-        self._font_title  = pygame.font.SysFont("Arial", 22, bold=True)
-        self._font_name   = pygame.font.SysFont("Arial", 16, bold=True)
-        self._font_stat   = pygame.font.SysFont("Arial", 14)
-        self._font_lvup   = pygame.font.SysFont("Arial", 15, bold=True)
-        self._font_loot   = pygame.font.SysFont("Arial", 14)
-        self._font_hint   = pygame.font.SysFont("Arial", 14)
+        f = get_fonts()
+        self._font_title  = f.get(22, bold=True)
+        self._font_name   = f.get(16, bold=True)
+        self._font_stat   = f.get(14)
+        self._font_lvup   = f.get(15, bold=True)
+        self._font_loot   = f.get(14)
+        self._font_hint   = f.get(14)
         self._fonts_ready = True
 
     # ── Events ────────────────────────────────────────────────

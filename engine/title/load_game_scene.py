@@ -2,6 +2,7 @@
 
 import pygame
 from engine.common.scene.scene import Scene
+from engine.common.font_provider import get_fonts
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.io.save_manager import GameStateManager
@@ -40,10 +41,11 @@ class LoadGameScene(Scene):
         self._fonts_ready = False
 
     def _init(self) -> None:
-        self._font_title = pygame.font.SysFont("Arial", 32, bold=True)
-        self._font_slot  = pygame.font.SysFont("Arial", 22)
-        self._font_small = pygame.font.SysFont("Arial", 17)
-        self._font_hint  = pygame.font.SysFont("Arial", 18)
+        f = get_fonts()
+        self._font_title = f.get(32, bold=True)
+        self._font_slot  = f.get(22)
+        self._font_small = f.get(17)
+        self._font_hint  = f.get(18)
         self._fonts_ready = True
         self._slots = self._game_state_manager.list_slots()
         best_ts = ""

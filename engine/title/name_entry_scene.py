@@ -2,6 +2,7 @@
 
 import pygame
 from engine.common.scene.scene import Scene
+from engine.common.font_provider import get_fonts
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.item.item_catalog import ItemCatalog
@@ -45,9 +46,10 @@ class NameEntryScene(Scene):
         self._hint_font    = None
 
     def _init_fonts(self) -> None:
-        self._prompt_font = pygame.font.SysFont("Arial", 36)
-        self._input_font  = pygame.font.SysFont("Arial", 48, bold=True)
-        self._hint_font   = pygame.font.SysFont("Arial", 24)
+        f = get_fonts()
+        self._prompt_font = f.get(36)
+        self._input_font  = f.get(48, bold=True)
+        self._hint_font   = f.get(24)
 
     # ── Events ────────────────────────────────────────────────
 

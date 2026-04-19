@@ -5,6 +5,7 @@ from __future__ import annotations
 import pygame
 from pathlib import Path
 from engine.world.position_data import Position
+from engine.common.font_provider import get_fonts
 from engine.common.flag_state import FlagState
 from engine.world.sprite_sheet import SpriteSheet, Direction
 from engine.util.pseudo_random import PseudoRandom
@@ -296,7 +297,7 @@ class Npc:
             pygame.draw.rect(screen, NPC_COLOR, (sx, sy, NPC_SIZE, NPC_SIZE))
 
         if near:
-            font = pygame.font.SysFont("Arial", 18, bold=True)
+            font = get_fonts().get(18, bold=True)
             indicator = font.render("!", True, INDICATOR_COLOR)
             screen.blit(indicator, (sx + 16 - indicator.get_width() // 2, sy - 22))
 

@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Callable
 
 import pygame
+from engine.common.font_provider import get_fonts
 
 from engine.shop.shop_constants import (
     C_DIM, C_GP, C_HINT, C_MUTED, C_TEXT, C_TOAST, C_WARN,
@@ -39,12 +40,13 @@ class ItemShopRenderer:
         self._fonts_ready = False
 
     def _init_fonts(self) -> None:
-        self._font_title  = pygame.font.SysFont("Arial", 22, bold=True)
-        self._font_row    = pygame.font.SysFont("Arial", 16)
-        self._font_qty    = pygame.font.SysFont("Arial", 20, bold=True)
-        self._font_arrow  = pygame.font.SysFont("Arial", 20)
-        self._font_hint   = pygame.font.SysFont("Arial", 15)
-        self._font_toast  = pygame.font.SysFont("Arial", 20, bold=True)
+        f = get_fonts()
+        self._font_title  = f.get(22, bold=True)
+        self._font_row    = f.get(16)
+        self._font_qty    = f.get(20, bold=True)
+        self._font_arrow  = f.get(20)
+        self._font_hint   = f.get(15)
+        self._font_toast  = f.get(20, bold=True)
         self._fonts_ready = True
 
     # ── Main entry point ─────────────────────────────────────

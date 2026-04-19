@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Callable
 
 import pygame
+from engine.common.font_provider import get_fonts
 
 from engine.shop.shop_constants import (
     C_DIM, C_DIVIDER, C_GP, C_HINT, C_LOCKED, C_MUTED, C_TEXT, C_TOAST,
@@ -41,12 +42,13 @@ class ApothecaryRenderer:
         self._fonts_ready = False
 
     def _init_fonts(self) -> None:
-        self._font_title    = pygame.font.SysFont("Arial", 22, bold=True)
-        self._font_row      = pygame.font.SysFont("Arial", 16)
-        self._font_detail    = pygame.font.SysFont("Arial", 16)
-        self._font_detail_b  = pygame.font.SysFont("Arial", 16, bold=True)
-        self._font_hint      = pygame.font.SysFont("Arial", 15)
-        self._font_toast     = pygame.font.SysFont("Arial", 20, bold=True)
+        f = get_fonts()
+        self._font_title    = f.get(22, bold=True)
+        self._font_row      = f.get(16)
+        self._font_detail    = f.get(16)
+        self._font_detail_b  = f.get(16, bold=True)
+        self._font_hint      = f.get(15)
+        self._font_toast     = f.get(20, bold=True)
         self._fonts_ready = True
 
     # ── Main entry point ─────────────────────────────────────
