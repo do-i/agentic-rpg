@@ -40,7 +40,7 @@ class TestEngineConfigData:
 
     def test_loads_display_overrides(self, tmp_path):
         p = write_settings(tmp_path, {**VALID,
-            "display": {"screen_width": 800, "screen_height": 600, "fps": 30, "window_title": "Test"},
+            "display": {"screen_width": 800, "screen_height": 600, "fps": 30},
             "tiles": {"tile_size": 16},
         })
         s = EngineConfigData.load(p)
@@ -48,7 +48,6 @@ class TestEngineConfigData:
         assert s.screen_height == 600
         assert s.fps == 30
         assert s.tile_size == 16
-        assert s.window_title == "Test"
 
     def test_raises_when_saves_dir_missing(self, tmp_path):
         p = write_settings(tmp_path, {"dialogue": {"text_speed": "fast"}})

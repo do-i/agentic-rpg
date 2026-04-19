@@ -18,6 +18,7 @@ class Game:
         clock: FrameClock,
         scene_manager: SceneManager,
         recorder: RecordPlaybackManager,
+        window_title: str,
         playback_speed: float = 1.0,
     ) -> None:
         pygame.init()
@@ -25,7 +26,7 @@ class Game:
             (config.screen_width, config.screen_height),
             pygame.SCALED | pygame.RESIZABLE,
         )
-        pygame.display.set_caption(config.window_title)
+        pygame.display.set_caption(window_title)
         self._clock = clock
         self._scene_manager = scene_manager
         self._recorder = recorder

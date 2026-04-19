@@ -51,9 +51,11 @@ class AppModule(Module):
     @provider
     @singleton
     def provide_font_provider(self, config: EngineConfigData, loader: ManifestLoader) -> FontProvider:
+        manifest = loader.load()
+        font_path = (manifest.get("font") or {}).get("path")
         resolved: str | None = None
-        if config.font_path:
-            p = loader.scenario_path / config.font_path
+        if isinstance(font_path, str):
+            p = loader.scenario_path / font_path
             if p.exists():
                 resolved = str(p)
         return init_fonts(resolved, config.font_sizes)
@@ -258,7 +260,9 @@ class AppModule(Module):
         registry: SceneRegistry,
         recorder: RecordPlaybackManager,
         font_provider: FontProvider,
+        loader: ManifestLoader,
     ) -> Game:
         speed = self._playback_speed if self._mode == "playback" else 1.0
         scene_manager.switch(registry.get("boot"))
-        return Game(config, clock, scene_manager, recorder, playback_speed=speed)
+        window_title = loader.load().get("window_title", "")
+        return Game(config, clock, scene_manager, recorder, window_title=window_title, playback_speed=speed)

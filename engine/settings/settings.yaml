@@ -4,7 +4,6 @@ display:
   screen_width: 1280
   screen_height: 766
   fps: 60
-  window_title: "Rusted Kingdoms"
 
 tiles:
   tile_size: 32
@@ -29,13 +28,11 @@ audio:
   sfx_enabled: true   # enable/disable sound effects
 
 fonts:
-  path: null   # relative to scenario root; null = system monospace fallback
-               # example: assets/fonts/rusted_kingdoms_font.ttf
   sizes:
     small:  14
-    medium: 18
-    large:  22
-    xlarge: 28
+    medium: 20
+    large:  24
+    xlarge: 32
 
 debug:
   party: true   # true = add all party members at new game start

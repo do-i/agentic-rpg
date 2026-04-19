@@ -15,7 +15,6 @@ class EngineConfigData:
     screen_width:  int
     screen_height: int
     fps:           int
-    window_title:  str
     # tiles
     tile_size: int
     # runtime
@@ -29,7 +28,6 @@ class EngineConfigData:
     debug_party:                  bool
     enemy_spawn_global_interval:  float
     # fonts
-    font_path:  str | None
     font_sizes: dict[str, int]
 
     @classmethod
@@ -50,7 +48,6 @@ class EngineConfigData:
         debug_party   = (data.get("debug")       or {}).get("party", False)
         global_interval = (data.get("enemy_spawn") or {}).get("global_interval", 30.0)
         fonts_cfg     = data.get("fonts") or {}
-        font_path     = fonts_cfg.get("path")   # None or relative str
         font_sizes    = fonts_cfg.get("sizes") or {"small": 14, "medium": 18, "large": 22, "xlarge": 28}
 
         missing = []
@@ -71,7 +68,6 @@ class EngineConfigData:
             screen_width=display.get("screen_width",  1280),
             screen_height=display.get("screen_height", 766),
             fps=display.get("fps", 60),
-            window_title=display.get("window_title", ""),
             tile_size=tiles.get("tile_size", 32),
             saves_dir=saves_dir,
             text_speed=text_speed,
@@ -82,6 +78,5 @@ class EngineConfigData:
             sfx_enabled=bool(sfx_enabled),
             debug_party=bool(debug_party),
             enemy_spawn_global_interval=float(global_interval),
-            font_path=font_path if isinstance(font_path, str) else None,
             font_sizes=dict(font_sizes),
         )
