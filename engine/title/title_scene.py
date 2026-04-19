@@ -36,11 +36,22 @@ class TitleScene(Scene):
     def _init_fonts(self) -> None:
         self._menu_font = get_fonts().get(30)
 
-        image_ref = self._manifest.get("title", {}).get("image")
+        title_cfg = self._manifest.get("title", {})
+        image_ref = title_cfg.get("image")
         if image_ref:
             bg_path = self._scenario_path / image_ref
             if bg_path.exists():
                 self._bg_image = pygame.image.load(str(bg_path)).convert_alpha()
+
+        cursor_icon = None
+        cursor_ref = title_cfg.get("cursor_icon")
+        if cursor_ref:
+            cursor_path = self._scenario_path / cursor_ref
+            if cursor_path.exists():
+                raw = pygame.image.load(str(cursor_path)).convert_alpha()
+                w = max(1, int(raw.get_width() * 0.3))
+                h = max(1, int(raw.get_height() * 0.3))
+                cursor_icon = pygame.transform.smoothscale(raw, (w, h))
 
         # check if any non-empty save slots exist
         slots = self._game_state_manager.list_slots()
@@ -54,6 +65,7 @@ class TitleScene(Scene):
             color_disabled=(80, 70, 55),
             line_height=42,
             sfx_manager=self._sfx_manager,
+            cursor_icon=cursor_icon,
         )
 
         if self._bgm_manager:
@@ -95,7 +107,7 @@ class TitleScene(Scene):
         menu_area_top = int(screen.get_height() * 0.70)
         menu_area_h = screen.get_height() - menu_area_top
         line_h = 42
-        cursor_w = 40
+        cursor_w = self._menu.cursor_width
         pad_x, pad_y = 30, 20
         max_text_w = max(
             self._menu_font.size(item)[0] for item in ["New Game", "Load Game", "Quit"]

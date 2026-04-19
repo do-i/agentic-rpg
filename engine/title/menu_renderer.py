@@ -3,6 +3,10 @@
 import pygame
 
 
+_DEFAULT_CURSOR_W = 40
+_CURSOR_PAD = 10
+
+
 class Menu:
     def __init__(
         self,
@@ -13,6 +17,7 @@ class Menu:
         color_disabled: tuple = (90, 90, 80),
         line_height: int = 48,
         sfx_manager=None,
+        cursor_icon: pygame.Surface | None = None,
     ) -> None:
         self._items = items
         self._font = font
@@ -23,6 +28,13 @@ class Menu:
         self._selected = 0
         self._disabled: set[str] = set()
         self._sfx_manager = sfx_manager
+        self._cursor_icon = cursor_icon
+
+    @property
+    def cursor_width(self) -> int:
+        if self._cursor_icon is not None:
+            return self._cursor_icon.get_width() + _CURSOR_PAD
+        return _DEFAULT_CURSOR_W
 
     def set_item_disabled(self, item: str, disabled: bool) -> None:
         if disabled:
@@ -61,6 +73,7 @@ class Menu:
             self._sfx_manager.play("hover")
 
     def render(self, screen: pygame.Surface, x: int, y: int) -> None:
+        text_x = x + self.cursor_width
         for i, item in enumerate(self._items):
             is_selected = (i == self._selected)
             is_disabled = item in self._disabled
@@ -72,9 +85,13 @@ class Menu:
             else:
                 color = self._color_normal
 
-            if is_selected and not is_disabled:
-                cursor = self._font.render(" ", True, color)
-                screen.blit(cursor, (x, y + i * self._line_height))
+            line_y = y + i * self._line_height
+
+            if is_selected and not is_disabled and self._cursor_icon is not None:
+                ch = self._cursor_icon.get_height()
+                line_h = self._font.get_height()
+                iy = line_y + (line_h - ch) // 2
+                screen.blit(self._cursor_icon, (x, iy))
 
             text = self._font.render(item, True, color)
-            screen.blit(text, (x + 40, y + i * self._line_height))
+            screen.blit(text, (text_x, line_y))

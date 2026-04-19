@@ -186,7 +186,7 @@ class ApothecaryRenderer:
                     f"{out_name} ×{out_qty}", True, C_DIM)
                 screen.blit(sub, (rx + 50, row_y + ROW_H - sub.get_height() - 4))
             else:
-                sub = self._font_hint.render("???", True, C_LOCKED)
+                sub = self._font_hint.render("-----", True, C_LOCKED)
                 screen.blit(sub, (rx + 50, row_y + ROW_H - sub.get_height() - 4))
 
             # GP cost (only if unlocked)

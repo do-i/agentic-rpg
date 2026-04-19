@@ -8,6 +8,7 @@ window_title: "Rusted Kingdoms"
 
 title:
   image: assets/images/title_bg/title_lost_flame.webp
+  cursor_icon: assets/images/icons/arrow-head-orange-right.webp
 
 font:
   path: assets/fonts/Philosopher-Regular.ttf
