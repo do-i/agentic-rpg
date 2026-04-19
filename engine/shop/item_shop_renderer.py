@@ -8,14 +8,16 @@ from typing import Callable
 
 import pygame
 from engine.common.font_provider import get_fonts
+from engine.common.item_selection_view import (
+    ItemRow, ItemSelectionTheme, ItemSelectionView,
+)
 
 from engine.shop.shop_constants import (
     C_DIM, C_GP, C_HINT, C_MUTED, C_TEXT, C_TOAST, C_WARN,
-    HEADER_H, MODAL_W, ROW_GAP,
+    HEADER_H, MODAL_W,
 )
 from engine.shop.shop_renderer import (
-    draw_cursor_arrow, draw_dim_overlay, draw_footer, draw_list_row_box,
-    draw_modal_box, draw_popup, draw_scroll_hints, draw_shop_header,
+    draw_dim_overlay, draw_footer, draw_modal_box, draw_popup, draw_shop_header,
 )
 
 # ── Colors (item-shop-specific) ──────────────────────────────
@@ -27,10 +29,18 @@ C_SEL_BDR = (180, 160, 255)
 # ── Layout (item-shop-specific) ──────────────────────────────
 PAD          = 24
 SPRITE_SIZE  = 64
-ROW_H        = 44
 FOOTER_H     = 36
-VISIBLE_ROWS = 6
+VISIBLE_ROWS = 7
 POPUP_W      = 360
+
+
+def _theme() -> ItemSelectionTheme:
+    return ItemSelectionTheme(
+        sel_bg=C_SEL_BG, sel_bdr=C_SEL_BDR,
+        cursor=C_HEADER, title_sel=C_TEXT, title_norm=C_MUTED, title_lock=C_DIM,
+        subtitle=C_DIM, subtitle_lk=C_DIM,
+        right=C_GP, right_lock=C_DIM,
+    )
 
 
 class ItemShopRenderer:
@@ -38,6 +48,7 @@ class ItemShopRenderer:
 
     def __init__(self) -> None:
         self._fonts_ready = False
+        self._view = ItemSelectionView(_theme())
 
     def _init_fonts(self) -> None:
         f = get_fonts()
@@ -69,8 +80,9 @@ class ItemShopRenderer:
         if not self._fonts_ready:
             self._init_fonts()
 
-        rows   = min(len(avail), VISIBLE_ROWS) if avail else 1
-        body_h = rows * (ROW_H + ROW_GAP) + 12
+        full_rows = min(len(avail), VISIBLE_ROWS) if avail else 1
+        has_overflow = len(avail) > VISIBLE_ROWS
+        body_h = self._view.list_height(full_rows, has_overflow) + 12
         mh     = HEADER_H + body_h + FOOTER_H + PAD * 2
 
         mx = (screen.get_width()  - MODAL_W) // 2
@@ -91,10 +103,18 @@ class ItemShopRenderer:
             sprite_surf=sprite_surf,
             sprite_size=SPRITE_SIZE,
         )
-        self._draw_list(
-            screen, mx, my + HEADER_H + PAD, state, avail, list_sel,
-            scroll, gp, owned_qty, display_name,
-        )
+
+        list_y = my + HEADER_H + PAD
+        list_h = self._view.list_height(VISIBLE_ROWS, has_overflow)
+        list_rect = pygame.Rect(mx, list_y, MODAL_W, list_h)
+
+        if not avail:
+            empty = self._font_hint.render("No items available.", True, C_DIM)
+            screen.blit(empty, (mx + PAD, list_y + 16))
+        else:
+            rows = [self._build_row(item, gp, owned_qty, display_name) for item in avail]
+            self._view.render(screen, list_rect, rows, list_sel, scroll, active=(state == "list"))
+
         draw_footer(
             screen, mx, my + mh - FOOTER_H - 4, MODAL_W, PAD,
             "select · ENTER buy · ESC close", self._font_hint,
@@ -110,61 +130,23 @@ class ItemShopRenderer:
                 self._font_toast, self._font_hint,
             )
 
-    # ── List ─────────────────────────────────────────────────
+    # ── Row model ────────────────────────────────────────────
 
-    def _draw_list(
+    def _build_row(
         self,
-        screen: pygame.Surface,
-        mx: int,
-        y: int,
-        state: str,
-        avail: list[dict],
-        list_sel: int,
-        scroll: int,
+        item: dict,
         gp: int,
         owned_qty: Callable[[str], int],
         display_name: Callable[[dict], str],
-    ) -> None:
-        if not avail:
-            empty = self._font_hint.render("No items available.", True, C_DIM)
-            screen.blit(empty, (mx + PAD, y + 16))
-            return
-
-        for i in range(VISIBLE_ROWS):
-            idx = scroll + i
-            if idx >= len(avail):
-                break
-            item       = avail[idx]
-            sel        = (idx == list_sel) and state == "list"
-            price      = item.get("buy_price", 0)
-            affordable = price <= gp
-            row_y      = y + i * (ROW_H + ROW_GAP)
-            rx         = mx + 10
-            rw         = MODAL_W - 20
-
-            draw_list_row_box(screen, rx, row_y, rw, ROW_H, sel, C_SEL_BG, C_SEL_BDR)
-
-            if sel:
-                draw_cursor_arrow(screen, rx, row_y, ROW_H, C_HEADER, self._font_row)
-
-            name   = display_name(item)
-            name_c = C_DIM if not affordable else (C_TEXT if sel else C_MUTED)
-            lbl    = self._font_row.render(name, True, name_c)
-            screen.blit(lbl, (rx + 28, row_y + 6))
-
-            owned = owned_qty(item["id"])
-            own_s = self._font_hint.render(f"owned: {owned}", True, C_DIM)
-            screen.blit(own_s, (rx + 28, row_y + ROW_H - own_s.get_height() - 4))
-
-            price_c = C_DIM if not affordable else C_GP
-            price_s = self._font_row.render(f"{price:,} GP", True, price_c)
-            screen.blit(price_s, (rx + rw - price_s.get_width() - 16,
-                                   row_y + (ROW_H - price_s.get_height()) // 2))
-
-        draw_scroll_hints(
-            screen, mx, y, MODAL_W,
-            scroll, len(avail), VISIBLE_ROWS, ROW_H, ROW_GAP,
-            self._font_hint,
+    ) -> ItemRow:
+        price = item.get("buy_price", 0)
+        affordable = price <= gp
+        owned = owned_qty(item["id"])
+        return ItemRow(
+            title=display_name(item),
+            subtitle=f"owned: {owned}",
+            right_text=f"{price:,} GP",
+            locked=not affordable,
         )
 
     # ── Qty overlay ──────────────────────────────────────────

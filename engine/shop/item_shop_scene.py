@@ -12,6 +12,7 @@ from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
 from engine.party.repository_state import ITEM_QTY_CAP
 from engine.world.sprite_sheet import SpriteSheet, Direction
+from engine.common.item_selection_view import ItemSelectionView
 from engine.shop.item_shop_renderer import ItemShopRenderer, SPRITE_SIZE, VISIBLE_ROWS
 
 QTY_STEP_SMALL = 1
@@ -175,10 +176,9 @@ class ItemShopScene(Scene):
             self._do_buy()
 
     def _clamp_scroll(self) -> None:
-        if self._list_sel < self._scroll:
-            self._scroll = self._list_sel
-        elif self._list_sel >= self._scroll + VISIBLE_ROWS:
-            self._scroll = self._list_sel - VISIBLE_ROWS + 1
+        self._scroll = ItemSelectionView.clamp_scroll(
+            self._list_sel, self._scroll, len(self._available()), VISIBLE_ROWS,
+        )
 
     # ── Buy ───────────────────────────────────────────────────
 

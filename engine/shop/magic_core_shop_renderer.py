@@ -6,14 +6,16 @@ from __future__ import annotations
 
 import pygame
 from engine.common.font_provider import get_fonts
+from engine.common.item_selection_view import (
+    ItemRow, ItemSelectionTheme, ItemSelectionView,
+)
 
 from engine.shop.shop_constants import (
     C_BG, C_DIM, C_GP, C_HINT, C_MUTED, C_TEXT,
-    HEADER_H, MODAL_W, ROW_GAP,
+    HEADER_H, MODAL_W,
 )
 from engine.shop.shop_renderer import (
-    draw_cursor_arrow, draw_dim_overlay, draw_footer, draw_list_row_box,
-    draw_modal_box, draw_shop_header,
+    draw_dim_overlay, draw_footer, draw_modal_box, draw_shop_header,
 )
 
 # ── Colors (magic-core-shop-specific) ────────────────────────
@@ -26,9 +28,18 @@ C_CONFIRM_BDR = (180, 70, 70)
 C_CONFIRM_TXT = (220, 180, 180)
 
 # ── Layout (magic-core-shop-specific) ────────────────────────
-PAD      = 28
-ROW_H    = 52
-FOOTER_H = 32
+PAD          = 28
+FOOTER_H     = 32
+VISIBLE_ROWS = 7
+
+
+def _theme() -> ItemSelectionTheme:
+    return ItemSelectionTheme(
+        sel_bg=C_SEL_BG, sel_bdr=C_SEL_BDR,
+        cursor=C_HEADER, title_sel=C_TEXT, title_norm=C_MUTED, title_lock=C_DIM,
+        subtitle=C_DIM, subtitle_lk=C_DIM,
+        right=C_GP, right_lock=C_DIM,
+    )
 
 
 class MagicCoreShopRenderer:
@@ -36,6 +47,7 @@ class MagicCoreShopRenderer:
 
     def __init__(self) -> None:
         self._fonts_ready = False
+        self._view = ItemSelectionView(_theme())
 
     def _init_fonts(self) -> None:
         f = get_fonts()
@@ -67,9 +79,10 @@ class MagicCoreShopRenderer:
 
         draw_dim_overlay(screen)
 
-        mw     = MODAL_W
-        rows   = max(len(avail), 1)
-        body_h = rows * (ROW_H + ROW_GAP) + 12
+        mw = MODAL_W
+        full_rows = min(len(avail), VISIBLE_ROWS) if avail else 1
+        has_overflow = len(avail) > VISIBLE_ROWS
+        body_h = self._view.list_height(full_rows, has_overflow) + 12
         mh     = HEADER_H + body_h + FOOTER_H + PAD * 2
 
         mx = (screen.get_width()  - mw) // 2
@@ -87,7 +100,20 @@ class MagicCoreShopRenderer:
             font_row=self._font_gp,
             pad=PAD,
         )
-        self._draw_list(screen, mx, my + HEADER_H + PAD, mw, state, avail, list_sel)
+
+        list_y = my + HEADER_H + PAD
+        list_h = self._view.list_height(VISIBLE_ROWS, has_overflow)
+        list_rect = pygame.Rect(mx, list_y, mw, list_h)
+
+        if not avail:
+            empty = self._font_hint.render(
+                "No Magic Cores in inventory.", True, C_DIM)
+            screen.blit(empty, (mx + PAD, list_y + 16))
+        else:
+            rows = [self._build_row(item) for item in avail]
+            self._view.render(screen, list_rect, rows, list_sel, scroll=0,
+                              active=(state == "list"))
+
         draw_footer(
             screen, mx, my + mh - FOOTER_H - 4, mw, PAD,
             "select · ENTER exchange · ESC close", self._font_hint,
@@ -100,48 +126,14 @@ class MagicCoreShopRenderer:
         elif state == "popup":
             self._draw_popup(screen, popup_text)
 
-    # ── List ─────────────────────────────────────────────────
+    # ── Row model ────────────────────────────────────────────
 
-    def _draw_list(
-        self,
-        screen: pygame.Surface,
-        mx: int,
-        y: int,
-        mw: int,
-        state: str,
-        avail: list[tuple[str, str, int, int]],
-        list_sel: int,
-    ) -> None:
-        if not avail:
-            empty = self._font_hint.render(
-                "No Magic Cores in inventory.", True, C_DIM)
-            screen.blit(empty, (mx + PAD, y + 16))
-            return
-
-        for i, (item_id, label, rate, qty) in enumerate(avail):
-            sel   = (i == list_sel) and state == "list"
-            row_y = y + i * (ROW_H + ROW_GAP)
-            rx    = mx + 10
-            rw    = mw - 20
-
-            draw_list_row_box(screen, rx, row_y, rw, ROW_H, sel, C_SEL_BG, C_SEL_BDR)
-
-            if sel:
-                draw_cursor_arrow(screen, rx, row_y, ROW_H, C_HEADER, self._font_row)
-
-            # label + qty
-            lbl = self._font_row.render(label, True, C_TEXT if sel else C_MUTED)
-            screen.blit(lbl, (rx + 28, row_y + 8))
-
-            qty_s = self._font_row.render(f"x  {qty}", True, C_HEADER)
-            screen.blit(qty_s, (rx + 28, row_y + ROW_H - qty_s.get_height() - 8))
-
-            # rate + total
-            rate_s = self._font_row.render(
-                f"{rate:,} GP each       {qty * rate:,} GP total",
-                True, C_GP_GAIN if sel else C_GP)
-            screen.blit(rate_s, (rx + rw - rate_s.get_width() - 16,
-                                  row_y + (ROW_H - rate_s.get_height()) // 2))
+    def _build_row(self, item: tuple[str, str, int, int]) -> ItemRow:
+        _id, label, rate, qty = item
+        return ItemRow(
+            title=f"{label}  x {qty}",
+            right_text=f"{rate:,} GP",
+        )
 
     # ── Qty overlay ──────────────────────────────────────────
 

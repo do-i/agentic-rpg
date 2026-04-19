@@ -7,6 +7,9 @@ from __future__ import annotations
 
 import pygame
 from engine.common.font_provider import get_fonts
+from engine.common.item_selection_view import (
+    ItemRow, ItemSelectionTheme, ItemSelectionView,
+)
 from engine.item.item_entry_state import ItemEntry
 from engine.item.item_logic import TABS, actions_for, display_name
 from engine.item.magic_core_catalog_state import MagicCoreCatalogState
@@ -59,7 +62,7 @@ FOOTER_H        = 30
 
 LIST_W          = 480
 ITEM_ROW_H      = 36
-ITEM_ROW_GAP    = 2
+ITEM_ROW_GAP    = 4
 VISIBLE_ROWS    = 14
 
 BTN_W           = 110
@@ -75,6 +78,21 @@ class ItemRenderer:
         self._effect_handler = effect_handler
         self._mc_catalog = mc_catalog
         self._fonts_ready = False
+        theme = ItemSelectionTheme(
+            sel_bg=LIST_SEL_BG, sel_bdr=LIST_SEL_BDR,
+            norm_bdr=LIST_NORM_BDR, row_bg=LIST_BG,
+            cursor=HEADER_COLOR,
+            title_sel=TEXT_PRIMARY, title_norm=TEXT_SECONDARY, title_lock=TEXT_DIM,
+            subtitle=MUTED, subtitle_lk=TEXT_DIM,
+            right=HEADER_COLOR, right_lock=MUTED,
+        )
+        self._view = ItemSelectionView(
+            theme,
+            row_h=ITEM_ROW_H,
+            row_gap=ITEM_ROW_GAP,
+            font_size=14,
+            sub_font_size=11,
+        )
 
     def _init_fonts(self) -> None:
         f = get_fonts()
@@ -168,60 +186,29 @@ class ItemRenderer:
         pygame.draw.rect(screen, LIST_BG, (x, y, w, h), border_radius=6)
         pygame.draw.rect(screen, DIVIDER, (x, y, w, h), 1, border_radius=6)
 
-        tab = TABS[tab_index]
-
         if not items:
             empty = self._font_detail.render("No items.", True, TEXT_DIM)
             screen.blit(empty, (x + 16, y + 16))
             return
 
-        row_y = y + 6
-        for i in range(VISIBLE_ROWS):
-            idx = scroll + i
-            if idx >= len(items):
-                break
-            entry  = items[idx]
-            sel    = (idx == list_sel)
-            rx, rw = x + 6, w - 12
-
-            if sel and not in_tab:
-                bg  = LIST_SEL_BG
-                bdr = LIST_SEL_BDR
-            else:
-                bg  = LIST_BG
-                bdr = LIST_NORM_BDR
-            pygame.draw.rect(screen, bg,  (rx, row_y, rw, ITEM_ROW_H), border_radius=4)
-            pygame.draw.rect(screen, bdr, (rx, row_y, rw, ITEM_ROW_H), 1, border_radius=4)
-
-            if sel and not in_action and not in_tab:
-                cur = self._font_item.render(" ", True, HEADER_COLOR)
-                screen.blit(cur, (rx + 4, row_y + (ITEM_ROW_H - cur.get_height()) // 2))
-
-            badge_x = rx + 20
-            if tab == "New" and idx < 3:
-                badge = self._font_new.render("NEW", True, TEXT_NEW)
-                screen.blit(badge, (badge_x, row_y + (ITEM_ROW_H - badge.get_height()) // 2))
-                badge_x += badge.get_width() + 6
-
-            name = display_name(entry, self._mc_catalog)
-            locked_marker = ""
-            name_col  = TEXT_DIM if entry.locked else (TEXT_PRIMARY if (sel and not in_tab) else TEXT_SECONDARY)
-            name_surf = self._font_item.render(name + locked_marker, True, name_col)
-            screen.blit(name_surf, (badge_x, row_y + (ITEM_ROW_H - name_surf.get_height()) // 2))
-
-            qty_surf = self._font_qty.render(
-                f"x {entry.qty}", True, HEADER_COLOR if (sel and not in_tab) else MUTED)
-            screen.blit(qty_surf, (rx + rw - qty_surf.get_width() - 10,
-                                   row_y + (ITEM_ROW_H - qty_surf.get_height()) // 2))
-
-            row_y += ITEM_ROW_H + ITEM_ROW_GAP
-
-        if scroll > 0:
-            up = self._font_hint.render(" ", True, MUTED)
-            screen.blit(up, (x + w - up.get_width() - 8, y + 4))
-        if scroll + VISIBLE_ROWS < len(items):
-            dn = self._font_hint.render(" ", True, MUTED)
-            screen.blit(dn, (x + w - dn.get_width() - 8, y + h - dn.get_height() - 4))
+        tab = TABS[tab_index]
+        rows = [
+            ItemRow(
+                title=display_name(entry, self._mc_catalog),
+                right_text=f"x {entry.qty}",
+                locked=entry.locked,
+                badge="NEW" if (tab == "New" and idx < 3) else None,
+                badge_color=TEXT_NEW,
+            )
+            for idx, entry in enumerate(items)
+        ]
+        has_overflow = len(items) > VISIBLE_ROWS
+        list_rect_h = self._view.list_height(VISIBLE_ROWS, has_overflow)
+        list_rect = pygame.Rect(x + 6, y + 6, w - 12, list_rect_h)
+        self._view.render(
+            screen, list_rect, rows, list_sel, scroll,
+            active=not in_tab,
+        )
 
     # ── Detail panel ──────────────────────────────────────────
 

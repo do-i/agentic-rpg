@@ -10,10 +10,7 @@ from engine.shop.shop_constants import (
     C_BG,
     C_DIVIDER,
     C_HINT,
-    C_NORM_BDR,
-    C_ROW_BG,
     HEADER_H,
-    MODAL_W,
 )
 
 
@@ -73,34 +70,6 @@ def draw_shop_header(
     )
 
 
-def draw_list_row_box(
-    screen: pygame.Surface,
-    rx: int,
-    row_y: int,
-    rw: int,
-    row_h: int,
-    selected: bool,
-    sel_bg: tuple[int, int, int],
-    sel_bdr: tuple[int, int, int],
-) -> None:
-    bg = sel_bg if selected else C_ROW_BG
-    bdr = sel_bdr if selected else C_NORM_BDR
-    pygame.draw.rect(screen, bg, (rx, row_y, rw, row_h), border_radius=4)
-    pygame.draw.rect(screen, bdr, (rx, row_y, rw, row_h), 1, border_radius=4)
-
-
-def draw_cursor_arrow(
-    screen: pygame.Surface,
-    rx: int,
-    row_y: int,
-    row_h: int,
-    color: tuple[int, int, int],
-    font: pygame.font.Font,
-) -> None:
-    cur = font.render(" ", True, color)
-    screen.blit(cur, (rx + 8, row_y + (row_h - cur.get_height()) // 2))
-
-
 def draw_footer(
     screen: pygame.Surface,
     mx: int,
@@ -135,22 +104,3 @@ def draw_popup(
     screen.blit(hint, (px + (popup_w - hint.get_width()) // 2, py + ph - 28))
 
 
-def draw_scroll_hints(
-    screen: pygame.Surface,
-    mx: int,
-    y: int,
-    mw: int,
-    scroll: int,
-    total_items: int,
-    visible_rows: int,
-    row_h: int,
-    row_gap: int,
-    font_hint: pygame.font.Font,
-) -> None:
-    if scroll > 0:
-        up = font_hint.render(" ", True, C_HINT)
-        screen.blit(up, (mx + mw - 30, y - 4))
-    if scroll + visible_rows < total_items:
-        bottom_y = y + visible_rows * (row_h + row_gap) - 18
-        dn = font_hint.render(" ", True, C_HINT)
-        screen.blit(dn, (mx + mw - 30, bottom_y))
