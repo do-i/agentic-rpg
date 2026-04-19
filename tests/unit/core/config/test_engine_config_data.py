@@ -13,20 +13,25 @@ def write_settings(tmp_path: Path, data: dict) -> Path:
     return p
 
 
+_AUDIO = {"bgm_enabled": True, "sfx_enabled": True}
+_FONTS = {"sizes": {"small": 12, "medium": 16, "large": 20, "xlarge": 28}}
+
 VALID = {
     "saves": {"dir": "~/user_save_data"},
     "dialogue": {"text_speed": "fast"},
+    "audio": _AUDIO,
+    "fonts": _FONTS,
 }
 
 
 class TestEngineConfigData:
     def test_loads_saves_dir(self, tmp_path):
-        p = write_settings(tmp_path, {"saves": {"dir": "/custom/path"}, "dialogue": {"text_speed": "fast"}})
+        p = write_settings(tmp_path, {**VALID, "saves": {"dir": "/custom/path"}})
         s = EngineConfigData.load(p)
         assert s.saves_dir == "/custom/path"
 
     def test_loads_text_speed(self, tmp_path):
-        p = write_settings(tmp_path, {"saves": {"dir": "~/x"}, "dialogue": {"text_speed": "slow"}})
+        p = write_settings(tmp_path, {**VALID, "dialogue": {"text_speed": "slow"}})
         s = EngineConfigData.load(p)
         assert s.text_speed == "slow"
 

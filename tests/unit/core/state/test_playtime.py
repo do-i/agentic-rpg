@@ -57,20 +57,20 @@ class TestSession:
 
 class TestFormat:
     def test_zero(self):
-        assert Playtime.format(0) == "00d 00h 00m"
+        assert Playtime.format(0) == "00d 00h 00m 00s"
 
     def test_one_hour(self):
-        assert Playtime.format(3600) == "00d 01h 00m"
+        assert Playtime.format(3600) == "00d 01h 00m 00s"
 
     def test_one_day(self):
-        assert Playtime.format(86400) == "01d 00h 00m"
+        assert Playtime.format(86400) == "01d 00h 00m 00s"
 
     def test_mixed(self):
-        assert Playtime.format(367200) == "04d 06h 00m"
+        assert Playtime.format(367200) == "04d 06h 00m 00s"
 
     def test_display_property(self):
         p = Playtime(playtime_seconds=3600)
-        assert p.display == "00d 01h 00m"
+        assert p.display == "00d 01h 00m 00s"
 
 
 # ── Serialization ─────────────────────────────────────────────

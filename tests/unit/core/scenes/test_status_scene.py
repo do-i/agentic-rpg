@@ -12,11 +12,13 @@ from engine.party.party_state import PartyState
 from engine.party.party_state import exp_pct
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
+from engine.common.font_provider import init_fonts
 
 
 @pytest.fixture(autouse=True)
 def init_pygame():
     pygame.init()
+    init_fonts(None, {"small": 12, "medium": 16, "large": 20, "xlarge": 28})
     yield
     pygame.quit()
 
