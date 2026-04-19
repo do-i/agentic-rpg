@@ -10,7 +10,7 @@ title:
   image: assets/images/title_bg/title_lost_flame.webp
 
 font:
-  path: assets/fonts/Quintessential-Regular.ttf
+  path: assets/fonts/Philosopher-Regular.ttf
 
 protagonist:
   id: aric

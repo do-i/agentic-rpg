@@ -29,9 +29,9 @@ audio:
 
 fonts:
   sizes:
-    small:  14
-    medium: 20
-    large:  24
+    small:  20
+    medium: 24
+    large:  28
     xlarge: 32
 
 debug:
