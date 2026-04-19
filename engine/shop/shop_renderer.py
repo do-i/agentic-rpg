@@ -97,7 +97,7 @@ def draw_cursor_arrow(
     color: tuple[int, int, int],
     font: pygame.font.Font,
 ) -> None:
-    cur = font.render("\u25b6", True, color)
+    cur = font.render(" ", True, color)
     screen.blit(cur, (rx + 8, row_y + (row_h - cur.get_height()) // 2))
 
 
@@ -148,9 +148,9 @@ def draw_scroll_hints(
     font_hint: pygame.font.Font,
 ) -> None:
     if scroll > 0:
-        up = font_hint.render("\u25b2", True, C_HINT)
+        up = font_hint.render(" ", True, C_HINT)
         screen.blit(up, (mx + mw - 30, y - 4))
     if scroll + visible_rows < total_items:
         bottom_y = y + visible_rows * (row_h + row_gap) - 18
-        dn = font_hint.render("\u25bc", True, C_HINT)
+        dn = font_hint.render(" ", True, C_HINT)
         screen.blit(dn, (mx + mw - 30, bottom_y))

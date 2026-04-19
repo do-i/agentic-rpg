@@ -179,7 +179,7 @@ class SaveModalScene(Scene):
             dn = self._font_hint.render(" ", True, (140, 140, 100))
             screen.blit(dn, (mx + MODAL_W - 30, my + MODAL_H - 40))
 
-        hint = self._font_hint.render("ENTER — Save    ESC — Cancel", True, (120, 120, 90))
+        hint = self._font_hint.render("ENTER - Save    ESC - Cancel", True, (120, 120, 90))
         screen.blit(hint, (mx + 20, my + MODAL_H - 28))
 
         if self._confirm_pending:
@@ -239,7 +239,7 @@ class SaveModalScene(Scene):
         pygame.draw.rect(screen, (200, 80, 80), (bx, by, bw, bh), 2)
         msg = self._font_slot.render("Overwrite this save?", True, (220, 180, 180))
         screen.blit(msg, (bx + 20, by + 18))
-        hint = self._font_hint.render("ENTER / Y — Confirm    ESC / N — Cancel", True, (160, 120, 120))
+        hint = self._font_hint.render("ENTER / Y - Confirm    ESC / N - Cancel", True, (160, 120, 120))
         screen.blit(hint, (bx + 20, by + 60))
 
     def _render_popup(self, screen: pygame.Surface) -> None:

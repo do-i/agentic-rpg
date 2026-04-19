@@ -86,7 +86,7 @@ def actions_for(entry: ItemEntry, effect_handler: ItemEffectHandler) -> list[str
         actions.append("Use")
     if not entry.locked:
         actions.append("Discard")
-    return actions or ["—"]
+    return actions or ["-"]
 
 
 def display_name(entry: ItemEntry, mc_catalog: MagicCoreCatalogState | None = None) -> str:

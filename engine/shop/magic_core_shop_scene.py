@@ -207,7 +207,7 @@ class MagicCoreShopScene(Scene):
         repo.remove_item(item_id, qty)
         repo.add_gp(total)
 
-        self._popup_text  = f"Exchanged {qty} × {label}    +{total:,} GP"
+        self._popup_text  = f"Exchanged {qty} x {label}    +{total:,} GP"
         self._state       = "popup"
         self._clamp_list_sel()
 

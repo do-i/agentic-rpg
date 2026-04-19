@@ -159,7 +159,7 @@ class TargetSelectOverlay:
 
     def _draw_header(self, screen: pygame.Surface, mx: int, my: int) -> None:
         title = self._font_title.render(
-            f"Use  {self._item_label}  —  Select Target", True, C_HEADER)
+            f"Use  {self._item_label}  -  Select Target", True, C_HEADER)
         screen.blit(title, (mx + PAD, my + (HEADER_H - title.get_height()) // 2))
         pygame.draw.line(screen, (55, 55, 78),
                          (mx + 8, my + HEADER_H),
@@ -205,7 +205,7 @@ class TargetSelectOverlay:
             self._draw_bar_row(screen, "MP", member.mp, member.mp_max,
                                bx, y + 32, C_MP)
         else:
-            no_mp = self._font_stat.render("MP  —", True, C_DIM)
+            no_mp = self._font_stat.render("MP  -", True, C_DIM)
             screen.blit(no_mp, (bx, y + 32))
 
     def _draw_bar_row(self, screen: pygame.Surface,

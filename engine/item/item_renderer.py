@@ -194,7 +194,7 @@ class ItemRenderer:
             pygame.draw.rect(screen, bdr, (rx, row_y, rw, ITEM_ROW_H), 1, border_radius=4)
 
             if sel and not in_action and not in_tab:
-                cur = self._font_item.render("\u25b6", True, HEADER_COLOR)
+                cur = self._font_item.render(" ", True, HEADER_COLOR)
                 screen.blit(cur, (rx + 4, row_y + (ITEM_ROW_H - cur.get_height()) // 2))
 
             badge_x = rx + 20
@@ -204,23 +204,23 @@ class ItemRenderer:
                 badge_x += badge.get_width() + 6
 
             name = display_name(entry, self._mc_catalog)
-            locked_marker = " \U0001f512" if entry.locked else ""
+            locked_marker = ""
             name_col  = TEXT_DIM if entry.locked else (TEXT_PRIMARY if (sel and not in_tab) else TEXT_SECONDARY)
             name_surf = self._font_item.render(name + locked_marker, True, name_col)
             screen.blit(name_surf, (badge_x, row_y + (ITEM_ROW_H - name_surf.get_height()) // 2))
 
             qty_surf = self._font_qty.render(
-                f"\u00d7 {entry.qty}", True, HEADER_COLOR if (sel and not in_tab) else MUTED)
+                f"x {entry.qty}", True, HEADER_COLOR if (sel and not in_tab) else MUTED)
             screen.blit(qty_surf, (rx + rw - qty_surf.get_width() - 10,
                                    row_y + (ITEM_ROW_H - qty_surf.get_height()) // 2))
 
             row_y += ITEM_ROW_H + ITEM_ROW_GAP
 
         if scroll > 0:
-            up = self._font_hint.render("\u25b2", True, MUTED)
+            up = self._font_hint.render(" ", True, MUTED)
             screen.blit(up, (x + w - up.get_width() - 8, y + 4))
         if scroll + VISIBLE_ROWS < len(items):
-            dn = self._font_hint.render("\u25bc", True, MUTED)
+            dn = self._font_hint.render(" ", True, MUTED)
             screen.blit(dn, (x + w - dn.get_width() - 8, y + h - dn.get_height() - 4))
 
     # ── Detail panel ──────────────────────────────────────────
@@ -303,7 +303,7 @@ class ItemRenderer:
         pygame.draw.rect(screen, (30, 15, 20), (ox, oy, ow, oh), border_radius=6)
         pygame.draw.rect(screen, (180, 70, 70), (ox, oy, ow, oh), 2, border_radius=6)
         msg  = self._font_detail.render(f"Discard {name}?", True, (220, 180, 180))
-        hint = self._font_hint.render("ENTER / Y \u2014 Confirm    ESC / N \u2014 Cancel", True, (160, 120, 120))
+        hint = self._font_hint.render("ENTER / Y - Confirm    ESC / N - Cancel", True, (160, 120, 120))
         screen.blit(msg,  (ox + 20, oy + 18))
         screen.blit(hint, (ox + 20, oy + 58))
 
@@ -317,7 +317,7 @@ class ItemRenderer:
         msg  = self._font_detail.render(
             f"Use {name} on the whole party?", True, C_CONFIRM_TXT)
         hint = self._font_hint.render(
-            "ENTER / Y \u2014 Confirm    ESC / N \u2014 Cancel", True, MUTED)
+            "ENTER / Y - Confirm    ESC / N - Cancel", True, MUTED)
         screen.blit(msg,  (ox + 20, oy + 18))
         screen.blit(hint, (ox + 20, oy + 58))
 
@@ -327,5 +327,5 @@ class ItemRenderer:
         fy = screen.get_height() - FOOTER_H
         pygame.draw.line(screen, DIVIDER, (PAD, fy), (screen.get_width() - PAD, fy))
         hint = self._font_hint.render(
-            "\u2191\u2193 navigate \u00b7 Q/E tab \u00b7 \u2192 actions \u00b7 I close", True, MUTED)
+            "navigate \u00b7 Q/E tab \u00b7 actions \u00b7 I close", True, MUTED)
         screen.blit(hint, (PAD, fy + 8))

@@ -183,7 +183,7 @@ class ApothecaryRenderer:
                 out_qty = output.get("qty", 1)
                 out_name = item_name(out_id)
                 sub = self._font_hint.render(
-                    f"{out_name} ×{out_qty}", True, C_DIM)
+                    f"{out_name} x{out_qty}", True, C_DIM)
                 screen.blit(sub, (rx + 50, row_y + ROW_H - sub.get_height() - 4))
             else:
                 sub = self._font_hint.render("-----", True, C_LOCKED)
@@ -252,7 +252,7 @@ class ApothecaryRenderer:
         cy += 28
 
         # output
-        out_s = self._font_detail.render(f"Output:  {out_name} ×{out_qty}", True, C_READY)
+        out_s = self._font_detail.render(f"Output:  {out_name} x{out_qty}", True, C_READY)
         screen.blit(out_s, (ox + 20, cy))
         cy += 24
 
@@ -273,7 +273,7 @@ class ApothecaryRenderer:
             name = item_name(item_id)
             has_enough = owned >= req_qty
             color = C_TEXT if has_enough else C_WARN
-            txt = f"  {name}  ×{req_qty}  (owned: {owned})"
+            txt = f"  {name}  x{req_qty}  (owned: {owned})"
             s = self._font_detail.render(txt, True, color)
             screen.blit(s, (ox + 28, cy))
             cy += line_h
@@ -287,7 +287,7 @@ class ApothecaryRenderer:
             name = mc_name(size)
             has_enough = owned >= req_qty
             color = C_TEXT if has_enough else C_WARN
-            txt = f"  {name}  ×{req_qty}  (owned: {owned})"
+            txt = f"  {name}  x{req_qty}  (owned: {owned})"
             s = self._font_detail.render(txt, True, color)
             screen.blit(s, (ox + 28, cy))
             cy += line_h

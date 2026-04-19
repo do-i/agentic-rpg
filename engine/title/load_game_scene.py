@@ -128,7 +128,7 @@ class LoadGameScene(Scene):
                 most_recent=(idx == self._most_recent),
             )
 
-        hint = self._font_hint.render("ENTER — Load    ESC — Back", True, (120, 120, 90))
+        hint = self._font_hint.render("ENTER - Load    ESC - Back", True, (120, 120, 90))
         screen.blit(hint, (mx + 20, my + MODAL_H - 28))
 
     def _render_row(

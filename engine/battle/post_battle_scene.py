@@ -134,7 +134,7 @@ class PostBattleScene(Scene):
             # EXP share
             exp_col = C_DIM if result.exp_gained == 0 else C_EXP
             es = self._font_stat.render(
-                f"+{result.exp_gained} EXP" if result.exp_gained else "—",
+                f"+{result.exp_gained} EXP" if result.exp_gained else "-",
                 True, exp_col)
             screen.blit(es, (PAD + 220, y + 10))
 
@@ -164,19 +164,19 @@ class PostBattleScene(Scene):
         if loot.mc_drops:
             for mc in loot.mc_drops:
                 mc_s = self._font_loot.render(
-                    f"  Magic Core ({mc['size']})  ×{mc['qty']}", True, C_MC)
+                    f"  Magic Core ({mc['size']})  x{mc['qty']}", True, C_MC)
                 screen.blit(mc_s, (PAD + 12, y))
                 y += mc_s.get_height() + 4
 
         if loot.item_drops:
             for item in loot.item_drops:
                 it_s = self._font_loot.render(
-                    f"  {item['name']}  ×{item.get('qty', 1)}", True, C_ITEM)
+                    f"  {item['name']}  x{item.get('qty', 1)}", True, C_ITEM)
                 screen.blit(it_s, (PAD + 12, y))
                 y += it_s.get_height() + 4
 
         if not loot.mc_drops and not loot.item_drops:
-            none_s = self._font_loot.render("  —", True, C_DIM)
+            none_s = self._font_loot.render("  -", True, C_DIM)
             screen.blit(none_s, (PAD + 12, y))
 
         # ── Continue hint ─────────────────────────────────────

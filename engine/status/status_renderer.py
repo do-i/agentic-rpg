@@ -148,7 +148,7 @@ class StatusRenderer:
         pygame.draw.rect(screen, bdr, (PAD_X, y, row_w, ROW_H), 1, border_radius=4)
 
         if selected:
-            cur = self._font_stat.render("\u25b6", True, HEADER_COLOR)
+            cur = self._font_stat.render(" ", True, HEADER_COLOR)
             screen.blit(cur, (PAD_X + 6, y + ROW_H // 2 - cur.get_height() // 2))
 
         x = PAD_X + COL_GUTTER
@@ -224,7 +224,7 @@ class StatusRenderer:
                              (x + lbl_w + 5, mp_y + 4, int(bar_w * mp_pct), BAR_H), border_radius=3)
         else:
             screen.blit(self._font_stat.render("MP", True, TEXT_DIM), (x, mp_y))
-            screen.blit(self._font_stat.render("\u2014", True, TEXT_DIM), (x + lbl_w + 4, mp_y))
+            screen.blit(self._font_stat.render("-", True, TEXT_DIM), (x + lbl_w + 4, mp_y))
 
         return x + COL_HPMP_W + 25
 
@@ -252,7 +252,7 @@ class StatusRenderer:
             ry = cy + i * line_h
             screen.blit(self._font_stat.render(lbl, True, MUTED), (x, ry))
             screen.blit(self._font_stat.render(
-                val or "\u2014", True, TEXT_SECONDARY if val else TEXT_DIM), (x + 50, ry))
+                val or "-", True, TEXT_SECONDARY if val else TEXT_DIM), (x + 50, ry))
 
     # ── Spell menu overlay ────────────────────────────────────
 
@@ -278,7 +278,7 @@ class StatusRenderer:
         pygame.draw.rect(screen, C_SPELL_BG,  (x, y, w, h), border_radius=6)
         pygame.draw.rect(screen, C_SPELL_BDR, (x, y, w, h), 2, border_radius=6)
 
-        title = self._font_spell_title.render(f"{caster.name} \u2014 Spells", True, HEADER_COLOR)
+        title = self._font_spell_title.render(f"{caster.name} - Spells", True, HEADER_COLOR)
         screen.blit(title, (x + pad, y + pad))
 
         mp_s = self._font_spell.render(f"MP {caster.mp}/{caster.mp_max}", True, C_MP_COST)
@@ -292,7 +292,7 @@ class StatusRenderer:
 
             if sel:
                 pygame.draw.rect(screen, C_SPELL_SEL, (x + 4, ry, w - 8, row_h), border_radius=3)
-                cur = self._font_spell.render("\u25b6", True, HEADER_COLOR)
+                cur = self._font_spell.render(" ", True, HEADER_COLOR)
                 screen.blit(cur, (x + 10, ry + (row_h - cur.get_height()) // 2))
 
             name_c = C_SPELL_DIS if disabled else (TEXT_PRIMARY if sel else TEXT_SECONDARY)
@@ -325,5 +325,5 @@ class StatusRenderer:
         fy = screen.get_height() - FOOTER_H
         pygame.draw.line(screen, (51, 51, 51),
                          (PAD_X, fy), (screen.get_width() - PAD_X, fy))
-        hint = self._font_hint.render("\u2191\u2193 select \u00b7 ENTER spells \u00b7 S close", True, MUTED)
+        hint = self._font_hint.render("select \u00b7 ENTER spells \u00b7 S close", True, MUTED)
         screen.blit(hint, (PAD_X, fy + 8))

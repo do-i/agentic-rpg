@@ -133,7 +133,7 @@ class MagicCoreShopRenderer:
             lbl = self._font_row.render(label, True, C_TEXT if sel else C_MUTED)
             screen.blit(lbl, (rx + 28, row_y + 8))
 
-            qty_s = self._font_row.render(f"×  {qty}", True, C_HEADER)
+            qty_s = self._font_row.render(f"x  {qty}", True, C_HEADER)
             screen.blit(qty_s, (rx + 28, row_y + ROW_H - qty_s.get_height() - 8))
 
             # rate + total
@@ -209,12 +209,12 @@ class MagicCoreShopRenderer:
         pygame.draw.rect(screen, C_CONFIRM_BDR, (ox, oy, ow, oh), 2, border_radius=6)
 
         msg = self._font_confirm.render(
-            f"Exchange {qty} × {label} for {total:,} GP?",
+            f"Exchange {qty} x {label} for {total:,} GP?",
             True, C_CONFIRM_TXT)
         screen.blit(msg, (ox + 20, oy + 20))
 
         hint = self._font_hint.render(
-            "ENTER / Y — Confirm    ESC / N — Cancel", True, C_HINT)
+            "ENTER / Y - Confirm    ESC / N - Cancel", True, C_HINT)
         screen.blit(hint, (ox + 20, oy + 64))
 
     # ── Popup ────────────────────────────────────────────────

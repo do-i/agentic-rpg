@@ -197,7 +197,7 @@ class TestActionsFor:
     def test_non_usable_locked_shows_dash(self):
         handler = MagicMock()
         entry = make_entry(tags={"material"}, locked=True)
-        assert actions_for(entry, handler) == ["\u2014"]
+        assert actions_for(entry, handler) == ["-"]
 
 
 # ── display_name ──────────────────────────────────────────────

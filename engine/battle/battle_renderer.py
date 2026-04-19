@@ -300,7 +300,7 @@ class BattleRenderer:
                 f"Select target for {label}", True, (204, 170, 255)),
                 (panel_x, ENEMY_AREA_H + 34))
             screen.blit(self._assets.font_stat.render(
-                "\u2191\u2193 choose \u00b7 ENTER confirm \u00b7 ESC cancel", True, C_TEXT_MUT),
+                "choose \u00b7 ENTER confirm \u00b7 ESC cancel", True, C_TEXT_MUT),
                 (panel_x, ENEMY_AREA_H + 56))
         else:
             show_sel = (phase == BattlePhase.PLAYER_TURN)
@@ -325,13 +325,13 @@ class BattleRenderer:
                    else (200, 160, 255) if sel else C_TEXT_MUT)
 
             if sel and not disabled:
-                screen.blit(self._assets.font_cmd.render("\u25b6", True, (200, 160, 255)), (x - 16, row_y))
+                screen.blit(self._assets.font_cmd.render(" ", True, (200, 160, 255)), (x - 16, row_y))
             screen.blit(self._assets.font_cmd.render(label, True, col), (x, row_y))
 
             if label == "Spell" and disabled:
-                screen.blit(self._assets.font_stat.render("\u2014", True, C_TEXT_DIM), (x + 60, row_y + 2))
+                screen.blit(self._assets.font_stat.render("-", True, C_TEXT_DIM), (x + 60, row_y + 2))
             elif label in ("Item", "Spell") and not disabled:
-                screen.blit(self._assets.font_stat.render("\u2192", True, C_TEXT_DIM), (x + 60, row_y + 2))
+                screen.blit(self._assets.font_stat.render(" ", True, C_TEXT_DIM), (x + 60, row_y + 2))
 
     def _draw_submenu(self, screen: pygame.Surface, x: int, y: int,
                       sub_items: list[dict], sub_sel: int) -> None:
@@ -348,7 +348,7 @@ class BattleRenderer:
 
             col = C_TEXT_DIM if disabled else (C_TEXT if sel else C_TEXT_MUT)
             if sel and not disabled:
-                screen.blit(self._assets.font_sub.render("\u25b6", True, (200, 160, 255)), (x - 14, row_y))
+                screen.blit(self._assets.font_sub.render(" ", True, (200, 160, 255)), (x - 14, row_y))
             screen.blit(self._assets.font_sub.render(item["label"], True, col), (x, row_y))
 
             if "mp_cost" in item:
@@ -357,7 +357,7 @@ class BattleRenderer:
                     C_TEXT_DIM if disabled else C_MP_LABEL), (x + 160, row_y + 1))
             elif "qty" in item:
                 screen.blit(self._assets.font_stat.render(
-                    f"\u00d7{item['qty']}", True, C_TEXT_MUT), (x + 160, row_y + 1))
+                    f"x{item['qty']}", True, C_TEXT_MUT), (x + 160, row_y + 1))
 
         screen.blit(self._assets.font_stat.render("ESC back", True, C_TEXT_DIM),
                     (x, y + len(sub_items) * 28 + 8))
