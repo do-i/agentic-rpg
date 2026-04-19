@@ -1,12 +1,15 @@
 # engine/settings/engine_config_data.py
 
 from __future__ import annotations
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 import yaml
 
 
 SETTINGS_PATH = Path(__file__).parent / "settings.yaml"
+
+_REQUIRED_FONT_SIZES = ("small", "medium", "large", "xlarge")
 
 
 @dataclass(frozen=True)
@@ -48,7 +51,14 @@ class EngineConfigData:
         debug_party   = (data.get("debug")       or {}).get("party", False)
         global_interval = (data.get("enemy_spawn") or {}).get("global_interval", 30.0)
         fonts_cfg     = data.get("fonts") or {}
-        font_sizes    = fonts_cfg.get("sizes") or {"small": 14, "medium": 18, "large": 22, "xlarge": 28}
+        font_sizes    = fonts_cfg.get("sizes") or {}
+        missing_sizes = [k for k in _REQUIRED_FONT_SIZES if k not in font_sizes]
+        if missing_sizes:
+            print(
+                f"[ERROR] Missing required font sizes in {path}: "
+                f"fonts.sizes.{{{', '.join(missing_sizes)}}}",
+                file=sys.stderr,
+            )
 
         missing = []
         if saves_dir is None:

@@ -31,19 +31,19 @@ class FontProvider:
 
     @property
     def small(self) -> pygame.font.Font:
-        return self.get(self._sizes.get("small", 14))
+        return self.get(self._sizes["small"])
 
     @property
     def medium(self) -> pygame.font.Font:
-        return self.get(self._sizes.get("medium", 18))
+        return self.get(self._sizes["medium"])
 
     @property
     def large(self) -> pygame.font.Font:
-        return self.get(self._sizes.get("large", 22))
+        return self.get(self._sizes["large"])
 
     @property
     def xlarge(self) -> pygame.font.Font:
-        return self.get(self._sizes.get("xlarge", 28))
+        return self.get(self._sizes["xlarge"])
 
 
 def init_fonts(font_path: str | None, sizes: dict[str, int]) -> FontProvider:
