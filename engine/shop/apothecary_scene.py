@@ -33,6 +33,7 @@ class ApothecaryScene(Scene):
         on_close: callable,
         recipes: list[dict],
         sprite_path: Path,
+        icon_paths: dict[str, Path] | None = None,
         sfx_manager=None,
     ) -> None:
         self._holder        = holder
@@ -41,6 +42,7 @@ class ApothecaryScene(Scene):
         self._on_close      = on_close
         self._recipes       = recipes
         self._sprite_path   = sprite_path
+        self._icon_paths    = icon_paths or {}
         self._sfx_manager   = sfx_manager
 
         self._state        = "list"   # list | detail | popup
@@ -49,6 +51,8 @@ class ApothecaryScene(Scene):
         self._popup_text   = ""
         self._sprite_surf: pygame.Surface | None = None
         self._sprite: SpriteSheet | None = None
+        self._icons: dict[str, pygame.Surface] = {}
+        self._icons_ready = False
         self._renderer = ApothecaryRenderer()
 
     # ── Init ──────────────────────────────────────────────────
@@ -60,6 +64,19 @@ class ApothecaryScene(Scene):
             self._sprite_surf = pygame.transform.scale(frame, (SPRITE_SIZE, SPRITE_SIZE))
         except Exception:
             self._sprite_surf = None
+
+    def _init_icons(self) -> None:
+        target_h = 28
+        for key, path in self._icon_paths.items():
+            if not path.exists():
+                continue
+            raw = pygame.image.load(str(path)).convert_alpha()
+            if raw.get_height() == 0:
+                continue
+            scale = target_h / raw.get_height()
+            new_size = (max(1, int(raw.get_width() * scale)), target_h)
+            self._icons[key] = pygame.transform.smoothscale(raw, new_size)
+        self._icons_ready = True
 
     # ── Data ──────────────────────────────────────────────────
 
@@ -224,6 +241,8 @@ class ApothecaryScene(Scene):
     def render(self, screen: pygame.Surface) -> None:
         if self._sprite_surf is None and self._sprite is None:
             self._init_sprite()
+        if not self._icons_ready:
+            self._init_icons()
 
         self._renderer.render(
             screen,
@@ -234,6 +253,7 @@ class ApothecaryScene(Scene):
             popup_text=self._popup_text,
             gp=self._holder.get().repository.gp,
             sprite_surf=self._sprite_surf,
+            icons=self._icons,
             is_unlocked=self._is_unlocked,
             has_inputs=self._has_inputs,
             can_afford=self._can_afford,

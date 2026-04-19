@@ -12,6 +12,12 @@ title:
 font:
   path: assets/fonts/Philosopher-Regular.ttf
 
+apothecary:
+  icons:
+    locked:  assets/images/icons/lock-locked-red-small.webp
+    ready:   assets/images/icons/lock-unlocked-green-small.webp
+    missing: assets/images/icons/lock-unlocked-yellow-small.webp
+
 protagonist:
   id: aric
   name: "Aric"

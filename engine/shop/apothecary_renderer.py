@@ -71,6 +71,7 @@ class ApothecaryRenderer:
         mc_name: Callable[[str], str],
         owned_qty: Callable[[str], int],
         selected: dict | None,
+        icons: dict[str, pygame.Surface] | None = None,
     ) -> None:
         if not self._fonts_ready:
             self._init_fonts()
@@ -100,6 +101,7 @@ class ApothecaryRenderer:
         self._draw_list(
             screen, mx, my + HEADER_H + PAD, state, recipes, list_sel,
             scroll, gp, is_unlocked, has_inputs, can_afford, item_name,
+            icons or {},
         )
         draw_footer(
             screen, mx, my + mh - FOOTER_H - 4, MODAL_W, PAD,
@@ -133,6 +135,7 @@ class ApothecaryRenderer:
         has_inputs: Callable[[dict], bool],
         can_afford: Callable[[dict], bool],
         item_name: Callable[[str], str],
+        icons: dict[str, pygame.Surface],
     ) -> None:
         if not recipes:
             empty = self._font_hint.render("No recipes available.", True, C_DIM)
@@ -158,16 +161,14 @@ class ApothecaryRenderer:
 
             # status icon
             if not unlocked:
-                icon = " "
-                icon_c = C_LOCKED
+                icon_key = "locked"
             elif ready:
-                icon = " "
-                icon_c = C_READY
+                icon_key = "ready"
             else:
-                icon = " "
-                icon_c = C_MISSING
-            icon_s = self._font_row.render(icon, True, icon_c)
-            screen.blit(icon_s, (rx + 28, row_y + (ROW_H - icon_s.get_height()) // 2))
+                icon_key = "missing"
+            icon_surf = icons.get(icon_key)
+            if icon_surf is not None:
+                screen.blit(icon_surf, (rx + 28, row_y + (ROW_H - icon_surf.get_height()) // 2))
 
             # scroll name (always visible)
             scroll_name = recipe.get("scroll_name", recipe["id"])

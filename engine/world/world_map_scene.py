@@ -386,6 +386,12 @@ class WorldMapScene(Scene):
     def _open_apothecary(self) -> None:
         recipes = load_recipes(self._loader.scenario_path)
         sprite_path = self._loader.scenario_path / "assets" / "sprites" / "npc" / "female_wiz_01.tsx"
+        manifest = self._loader.load()
+        icon_cfg = manifest.get("apothecary", {}).get("icons", {})
+        icon_paths = {
+            key: self._loader.scenario_path / rel
+            for key, rel in icon_cfg.items()
+        }
         self._apothecary = ApothecaryScene(
             holder=self._holder,
             scene_manager=self._scene_manager,
@@ -393,6 +399,7 @@ class WorldMapScene(Scene):
             on_close=self._close_apothecary,
             recipes=recipes,
             sprite_path=sprite_path,
+            icon_paths=icon_paths,
             sfx_manager=self._sfx_manager,
         )
 
