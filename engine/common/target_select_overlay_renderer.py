@@ -180,7 +180,7 @@ class TargetSelectOverlay:
         pygame.draw.rect(screen, bdr, (rx, y, rw, ROW_H), 1, border_radius=4)
 
         if selected:
-            cur = self._font_arrow.render("▶", True, C_HEADER)
+            cur = self._font_arrow.render(" ", True, C_HEADER)
             screen.blit(cur, (rx + 8, y + (ROW_H - cur.get_height()) // 2))
 
         # name + class
@@ -231,5 +231,5 @@ class TargetSelectOverlay:
         pygame.draw.line(screen, (55, 55, 78),
                          (mx + 8, y), (mx + MODAL_W - 8, y))
         hint = self._font_hint.render(
-            "↑↓ select · ENTER confirm · ESC cancel", True, C_HINT)
+            "select · ENTER confirm · ESC cancel", True, C_HINT)
         screen.blit(hint, (mx + PAD, y + 8))

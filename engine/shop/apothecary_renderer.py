@@ -103,7 +103,7 @@ class ApothecaryRenderer:
         )
         draw_footer(
             screen, mx, my + mh - FOOTER_H - 4, MODAL_W, PAD,
-            "↑↓ select · ENTER view · ESC close", self._font_hint,
+            "select · ENTER view · ESC close", self._font_hint,
         )
 
         if state == "detail" and selected:
@@ -179,7 +179,7 @@ class ApothecaryRenderer:
                 out_qty = output.get("qty", 1)
                 out_name = item_name(out_id)
                 sub = self._font_hint.render(
-                    f"→ {out_name} ×{out_qty}", True, C_DIM)
+                    f"{out_name} ×{out_qty}", True, C_DIM)
                 screen.blit(sub, (rx + 50, row_y + ROW_H - sub.get_height() - 4))
             else:
                 sub = self._font_hint.render("???", True, C_LOCKED)

@@ -142,7 +142,7 @@ class DialogueScene(Scene):
 
         # advance indicator
         if self._line_done and self._line_index < len(self._lines):
-            indicator = self._font_hint.render("▼ SPACE / ENTER", True, (180, 180, 100))
+            indicator = self._font_hint.render("SPACE / ENTER", True, (180, 180, 100))
             screen.blit(indicator, (BOX_MARGIN + box_w - indicator.get_width() - 12, box_y + BOX_H - 24))
 
     def _render_wrapped(

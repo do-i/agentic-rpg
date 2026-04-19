@@ -138,7 +138,7 @@ class GameOverScene(Scene):
             y = menu_y + i * 44
 
             if selected and not disabled:
-                cursor = self._font_menu.render("▶  ", True, C_SELECTED)
+                cursor = self._font_menu.render("   ", True, C_SELECTED)
                 screen.blit(cursor, (x - cursor.get_width(), y))
 
             screen.blit(text, (x, y))

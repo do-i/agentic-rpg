@@ -90,7 +90,7 @@ class MagicCoreShopRenderer:
         self._draw_list(screen, mx, my + HEADER_H + PAD, mw, state, avail, list_sel)
         draw_footer(
             screen, mx, my + mh - FOOTER_H - 4, mw, PAD,
-            "↑↓ select · ENTER exchange · ESC close", self._font_hint,
+            "select · ENTER exchange · ESC close", self._font_hint,
         )
 
         if state == "qty" and selected:
@@ -138,7 +138,7 @@ class MagicCoreShopRenderer:
 
             # rate + total
             rate_s = self._font_row.render(
-                f"{rate:,} GP each    →    {qty * rate:,} GP total",
+                f"{rate:,} GP each       {qty * rate:,} GP total",
                 True, C_GP_GAIN if sel else C_GP)
             screen.blit(rate_s, (rx + rw - rate_s.get_width() - 16,
                                   row_y + (ROW_H - rate_s.get_height()) // 2))
@@ -169,9 +169,9 @@ class MagicCoreShopRenderer:
         screen.blit(lbl, (ox + 20, oy + 14))
 
         # quantity selector — arrows use non-bold font for glyph compatibility
-        left_s  = self._font_arrow.render("◀", True, C_TEXT)
+        left_s  = self._font_arrow.render(" ", True, C_TEXT)
         num_s   = self._font_qty.render(f"  {qty}  ", True, C_TEXT)
-        right_s = self._font_arrow.render("▶", True, C_TEXT)
+        right_s = self._font_arrow.render(" ", True, C_TEXT)
         total_w = left_s.get_width() + num_s.get_width() + right_s.get_width()
         cx = ox + ow // 2 - total_w // 2
         cy = oy + 44
@@ -182,11 +182,11 @@ class MagicCoreShopRenderer:
         max_s = self._font_hint.render(f"max {max_qty}", True, C_DIM)
         screen.blit(max_s, (ox + ow - max_s.get_width() - 16, oy + 52))
 
-        total_s = self._font_gp.render(f"→  {total:,} GP", True, C_GP_GAIN)
+        total_s = self._font_gp.render(f"   {total:,} GP", True, C_GP_GAIN)
         screen.blit(total_s, (ox + 20, oy + 95))
 
         hint = self._font_hint.render(
-            "← / → qty ±1    ↑ / ↓ qty ±10    ENTER confirm    ESC back",
+            "qty ±1    qty ±10    ENTER confirm    ESC back",
             True, C_HINT)
         screen.blit(hint, (ox + ow // 2 - hint.get_width() // 2, oy + oh - 22))
 

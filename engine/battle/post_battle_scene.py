@@ -142,7 +142,7 @@ class PostBattleScene(Scene):
             if has_lvup:
                 lu = result.level_ups[-1]
                 lv_s = self._font_lvup.render(
-                    f"LEVEL UP!  {lu.old_level} → {lu.new_level}", True, C_LEVELUP)
+                    f"LEVEL UP!  {lu.old_level}  {lu.new_level}", True, C_LEVELUP)
                 screen.blit(lv_s, (PAD + 360, y + 6))
 
                 gain_s = self._font_stat.render(

@@ -97,7 +97,7 @@ class ItemShopRenderer:
         )
         draw_footer(
             screen, mx, my + mh - FOOTER_H - 4, MODAL_W, PAD,
-            "↑↓ select · ENTER buy · ESC close", self._font_hint,
+            "select · ENTER buy · ESC close", self._font_hint,
         )
 
         if state == "qty" and selected:
@@ -195,9 +195,9 @@ class ItemShopRenderer:
         screen.blit(lbl, (ox + 20, oy + 12))
 
         # qty selector — arrows use non-bold font for glyph compatibility
-        left_s  = self._font_arrow.render("◀", True, C_TEXT)
+        left_s  = self._font_arrow.render(" ", True, C_TEXT)
         num_s   = self._font_qty.render(f"  {qty}  ", True, C_TEXT)
-        right_s = self._font_arrow.render("▶", True, C_TEXT)
+        right_s = self._font_arrow.render(" ", True, C_TEXT)
         total_w = left_s.get_width() + num_s.get_width() + right_s.get_width()
         cx = ox + ow // 2 - total_w // 2
         cy = oy + 38
@@ -215,6 +215,6 @@ class ItemShopRenderer:
             screen.blit(warn, (ox + ow - warn.get_width() - 20, oy + 80))
 
         hint = self._font_hint.render(
-            "← → qty ±1    ↑ ↓ qty ±5    ENTER confirm    ESC back",
+            "qty ±1    qty ±5    ENTER confirm    ESC back",
             True, C_HINT)
         screen.blit(hint, (ox + ow // 2 - hint.get_width() // 2, oy + oh - 20))

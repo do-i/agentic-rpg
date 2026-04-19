@@ -173,10 +173,10 @@ class SaveModalScene(Scene):
 
         # Scroll arrows
         if self._scroll_offset > 0:
-            up = self._font_hint.render("▲", True, (140, 140, 100))
+            up = self._font_hint.render(" ", True, (140, 140, 100))
             screen.blit(up, (mx + MODAL_W - 30, my + PLAYER_ROW_Y - 2))
         if self._scroll_offset + VISIBLE_SLOTS < len(self._slots) - 1:
-            dn = self._font_hint.render("▼", True, (140, 140, 100))
+            dn = self._font_hint.render(" ", True, (140, 140, 100))
             screen.blit(dn, (mx + MODAL_W - 30, my + MODAL_H - 40))
 
         hint = self._font_hint.render("ENTER — Save    ESC — Cancel", True, (120, 120, 90))

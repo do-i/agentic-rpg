@@ -73,7 +73,7 @@ class Menu:
                 color = self._color_normal
 
             if is_selected and not is_disabled:
-                cursor = self._font.render("▶", True, color)
+                cursor = self._font.render(" ", True, color)
                 screen.blit(cursor, (x, y + i * self._line_height))
 
             text = self._font.render(item, True, color)
