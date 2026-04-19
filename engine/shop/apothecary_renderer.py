@@ -33,6 +33,7 @@ ROW_H        = 44
 FOOTER_H     = 36
 VISIBLE_ROWS = 6
 POPUP_W      = 360
+PEEK_RATIO   = 0.40   # fraction of next row shown when list overflows
 
 
 class ApothecaryRenderer:
@@ -77,7 +78,8 @@ class ApothecaryRenderer:
             self._init_fonts()
 
         rows   = min(len(recipes), VISIBLE_ROWS) if recipes else 1
-        body_h = rows * (ROW_H + ROW_GAP) + 12
+        peek_h = int(ROW_H * PEEK_RATIO) if len(recipes) > VISIBLE_ROWS else 0
+        body_h = rows * (ROW_H + ROW_GAP) + peek_h + 12
         mh     = HEADER_H + body_h + FOOTER_H + PAD * 2
 
         mx = (screen.get_width()  - MODAL_W) // 2
@@ -142,67 +144,103 @@ class ApothecaryRenderer:
             screen.blit(empty, (mx + PAD, y + 16))
             return
 
+        rx = mx + 10
+        rw = MODAL_W - 20
+
         for i in range(VISIBLE_ROWS):
             idx = scroll + i
             if idx >= len(recipes):
                 break
-            recipe = recipes[idx]
-            sel = (idx == list_sel) and state == "list"
-            unlocked = is_unlocked(recipe)
-            ready = unlocked and has_inputs(recipe) and can_afford(recipe)
             row_y = y + i * (ROW_H + ROW_GAP)
-            rx = mx + 10
-            rw = MODAL_W - 20
+            self._draw_recipe_row(
+                screen, recipes[idx], idx, list_sel, state,
+                row_y, rx, rw, is_unlocked, has_inputs,
+                can_afford, item_name, icons,
+            )
 
-            draw_list_row_box(screen, rx, row_y, rw, ROW_H, sel, C_SEL_BG, C_SEL_BDR)
-
-            if sel:
-                draw_cursor_arrow(screen, rx, row_y, ROW_H, C_HEADER, self._font_row)
-
-            # status icon
-            if not unlocked:
-                icon_key = "locked"
-            elif ready:
-                icon_key = "ready"
-            else:
-                icon_key = "missing"
-            icon_surf = icons.get(icon_key)
-            if icon_surf is not None:
-                screen.blit(icon_surf, (rx + 28, row_y + (ROW_H - icon_surf.get_height()) // 2))
-
-            # scroll name (always visible)
-            scroll_name = recipe.get("scroll_name", recipe["id"])
-            name_c = C_LOCKED if not unlocked else (C_TEXT if sel else C_MUTED)
-            lbl = self._font_row.render(scroll_name, True, name_c)
-            screen.blit(lbl, (rx + 50, row_y + 6))
-
-            # output item name (only if unlocked)
-            if unlocked:
-                output = recipe.get("output", {})
-                out_id = output.get("item", "")
-                out_qty = output.get("qty", 1)
-                out_name = item_name(out_id)
-                sub = self._font_hint.render(
-                    f"{out_name} x{out_qty}", True, C_DIM)
-                screen.blit(sub, (rx + 50, row_y + ROW_H - sub.get_height() - 4))
-            else:
-                sub = self._font_hint.render("-----", True, C_LOCKED)
-                screen.blit(sub, (rx + 50, row_y + ROW_H - sub.get_height() - 4))
-
-            # GP cost (only if unlocked)
-            if unlocked:
-                gp_cost = recipe.get("gp_cost", 0)
-                affordable = can_afford(recipe)
-                price_c = C_DIM if not affordable else C_GP
-                price_s = self._font_row.render(f"{gp_cost:,} GP", True, price_c)
-                screen.blit(price_s, (rx + rw - price_s.get_width() - 16,
-                                       row_y + (ROW_H - price_s.get_height()) // 2))
+        # Partial peek of next row to indicate overflow.
+        peek_idx = scroll + VISIBLE_ROWS
+        if peek_idx < len(recipes):
+            peek_h = int(ROW_H * PEEK_RATIO)
+            peek_row_y = y + VISIBLE_ROWS * (ROW_H + ROW_GAP)
+            prev_clip = screen.get_clip()
+            screen.set_clip(pygame.Rect(0, peek_row_y, screen.get_width(), peek_h))
+            self._draw_recipe_row(
+                screen, recipes[peek_idx], peek_idx, list_sel, state,
+                peek_row_y, rx, rw, is_unlocked, has_inputs,
+                can_afford, item_name, icons,
+            )
+            screen.set_clip(prev_clip)
 
         draw_scroll_hints(
             screen, mx, y, MODAL_W,
             scroll, len(recipes), VISIBLE_ROWS, ROW_H, ROW_GAP,
             self._font_hint,
         )
+
+    def _draw_recipe_row(
+        self,
+        screen: pygame.Surface,
+        recipe: dict,
+        idx: int,
+        list_sel: int,
+        state: str,
+        row_y: int,
+        rx: int,
+        rw: int,
+        is_unlocked: Callable[[dict], bool],
+        has_inputs: Callable[[dict], bool],
+        can_afford: Callable[[dict], bool],
+        item_name: Callable[[str], str],
+        icons: dict[str, pygame.Surface],
+    ) -> None:
+        sel = (idx == list_sel) and state == "list"
+        unlocked = is_unlocked(recipe)
+        ready = unlocked and has_inputs(recipe) and can_afford(recipe)
+
+        draw_list_row_box(screen, rx, row_y, rw, ROW_H, sel, C_SEL_BG, C_SEL_BDR)
+
+        if sel:
+            draw_cursor_arrow(screen, rx, row_y, ROW_H, C_HEADER, self._font_row)
+
+        # status icon
+        if not unlocked:
+            icon_key = "locked"
+        elif ready:
+            icon_key = "ready"
+        else:
+            icon_key = "missing"
+        icon_surf = icons.get(icon_key)
+        if icon_surf is not None:
+            screen.blit(icon_surf, (rx + 28, row_y + (ROW_H - icon_surf.get_height()) // 2))
+
+        # scroll name (always visible)
+        scroll_name = recipe.get("scroll_name", recipe["id"])
+        name_c = C_LOCKED if not unlocked else (C_TEXT if sel else C_MUTED)
+        lbl = self._font_row.render(scroll_name, True, name_c)
+        screen.blit(lbl, (rx + 50, row_y + 6))
+
+        # output item name (only if unlocked)
+        if unlocked:
+            output = recipe.get("output", {})
+            out_id = output.get("item", "")
+            out_qty = output.get("qty", 1)
+            out_name = item_name(out_id)
+            sub = self._font_hint.render(
+                f"{out_name} x{out_qty}", True, C_DIM)
+            screen.blit(sub, (rx + 50, row_y + ROW_H - sub.get_height() - 4))
+        else:
+            sub = self._font_hint.render("-----", True, C_LOCKED)
+            screen.blit(sub, (rx + 50, row_y + ROW_H - sub.get_height() - 4))
+
+        # GP cost (only if unlocked)
+        if unlocked:
+            gp_cost = recipe.get("gp_cost", 0)
+            affordable = can_afford(recipe)
+            price_c = C_DIM if not affordable else C_GP
+            price_s = self._font_row.render(f"{gp_cost:,} GP", True, price_c)
+            screen.blit(price_s, (rx + rw - price_s.get_width() - 16,
+                                   row_y + (ROW_H - price_s.get_height()) // 2))
 
     # ── Detail overlay ───────────────────────────────────────
 

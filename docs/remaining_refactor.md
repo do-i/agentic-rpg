@@ -4,6 +4,7 @@
 - attribute each tile (for AI agent)
 - change encounter system enemy is visible
 - find a auto pygame test method
+- Make menu item selection a common component (shop, apothecary, party item, magicCore) 
 
 ## Battle Hit Effects — Plan
 
