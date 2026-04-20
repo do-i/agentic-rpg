@@ -86,7 +86,7 @@ class EnemySprite:
         self._rng           = rng
         self._sprite_sheet  = sprite_sheet
         self._wander_range  = wander_range
-        self._move_speed    = tile_size * 1.5   # px/sec
+        self._move_speed    = tile_size * 3.5   # px/sec
 
         # Animation
         self._facing_dir    = Direction.DOWN
