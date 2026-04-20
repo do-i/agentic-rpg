@@ -7,12 +7,14 @@ from __future__ import annotations
 
 from engine.battle.combatant import Combatant
 from engine.battle.battle_state import BattleState
+from engine.battle.battle_fx import BattleFx
 from engine.battle.battle_logic import float_pos, enemy_rect_size, C_DMG_PHYS, C_DMG_MAGIC
 from engine.util.pseudo_random import PseudoRandom
 
 
 def resolve_enemy_turn(state: BattleState, sfx_manager=None,
-                       screen_width: int = 1280, rng: PseudoRandom | None = None) -> str:
+                       screen_width: int = 1280, rng: PseudoRandom | None = None,
+                       fx: BattleFx | None = None) -> str:
     """Execute the current enemy's turn using AI data. Returns message."""
     active = state.active
     if not active or not active.is_enemy:
@@ -37,6 +39,8 @@ def resolve_enemy_turn(state: BattleState, sfx_manager=None,
         dmg = max(1, active.atk - target.def_)
         actual = target.apply_damage(dmg, rng)
         state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_PHYS)
+        if fx:
+            fx.hit(target)
         if sfx_manager:
             sfx_manager.play("atk_impact")
             if alive_before and target.is_ko:
@@ -52,6 +56,8 @@ def resolve_enemy_turn(state: BattleState, sfx_manager=None,
         dmg = max(1, active.atk - target.def_)
         actual = target.apply_damage(dmg, rng)
         state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_MAGIC)
+        if fx:
+            fx.hit(target)
         msg_parts.append(f"{target.name} took {actual} damage")
         if alive_before and target.is_ko:
             newly_ko = True

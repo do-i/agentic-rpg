@@ -24,6 +24,7 @@ from engine.battle.battle_logic import (
 )
 from engine.battle.battle_enemy_logic import resolve_enemy_turn
 from engine.battle.battle_renderer import BattleRenderer
+from engine.battle.battle_fx import BattleFx
 from engine.item.item_effect_handler import ItemEffectHandler
 from engine.io.save_manager import GameStateManager
 from engine.audio.bgm_manager import BgmManager
@@ -69,6 +70,7 @@ class BattleScene(Scene):
         self._bgm_started = False
         self._sfx_manager = sfx_manager
         self._encounter_sfx_played = False
+        self._fx = BattleFx()
 
         # Resolve battle BGM key (played lazily on first render)
         self._bgm_key: str | None = None
@@ -327,7 +329,8 @@ class BattleScene(Scene):
         repo = self._holder.get().repository
         pending = dict(self._state.pending_action) if self._state.pending_action else {}
         alive_before = {e.name for e in self._state.enemies if not e.is_ko}
-        msg = resolve_action(self._state, self._effect_handler, repo, self._screen_width, self._rng)
+        msg = resolve_action(self._state, self._effect_handler, repo,
+                             self._screen_width, self._rng, fx=self._fx)
         if self._sfx_manager:
             self._sfx_manager.play_battle_action(pending)
             newly_ko = [e for e in self._state.enemies if e.is_ko and e.name in alive_before]
@@ -341,7 +344,8 @@ class BattleScene(Scene):
         self._state.phase = BattlePhase.RESOLVE
 
     def _do_enemy_turn(self) -> None:
-        msg = resolve_enemy_turn(self._state, self._sfx_manager, self._screen_width, self._rng)
+        msg = resolve_enemy_turn(self._state, self._sfx_manager,
+                                 self._screen_width, self._rng, fx=self._fx)
         if msg:
             self._enter_resolve(msg, is_enemy=True)
         else:
@@ -394,6 +398,7 @@ class BattleScene(Scene):
 
     def update(self, delta: float) -> None:
         self._state.update_floats(delta)
+        self._fx.update(delta)
         if self._state.phase == BattlePhase.ENEMY_TURN:
             self._do_enemy_turn()
 
@@ -413,4 +418,5 @@ class BattleScene(Scene):
             self._target_pool, self._target_sel,
             self._resolve_msg,
             self._resolve_is_enemy,
+            fx=self._fx,
         )

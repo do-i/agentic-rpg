@@ -11,6 +11,7 @@ import pygame
 
 from engine.battle.combatant import Combatant
 from engine.battle.battle_state import BattleState, BattlePhase
+from engine.battle.battle_fx import BattleFx
 from engine.battle.constants import ENEMY_AREA_H, ENEMY_LAYOUTS, ROW_H
 from engine.battle.battle_asset_cache import BattleAssetCache
 from engine.battle.battle_renderer_constants import (
@@ -49,7 +50,8 @@ class BattleRenderer:
                sub_items: list[dict], sub_sel: int,
                target_pool: list[Combatant], target_sel: int,
                resolve_msg: str,
-               resolve_is_enemy: bool = False) -> None:
+               resolve_is_enemy: bool = False,
+               fx: BattleFx | None = None) -> None:
         self._assets.init_fonts()
 
         bg = self._assets.load_background(state.background) if state.background else None
@@ -59,10 +61,11 @@ class BattleRenderer:
         else:
             screen.fill(C_BG)
 
-        self._draw_enemy_area(screen, state, target_pool, target_sel, has_bg=bg is not None)
+        self._draw_enemy_area(screen, state, target_pool, target_sel,
+                              has_bg=bg is not None, fx=fx)
         self._draw_bottom_panel(screen, state, cmd_items, cmd_sel,
                                 sub_items, sub_sel, target_pool, target_sel,
-                                resolve_msg, resolve_is_enemy)
+                                resolve_msg, resolve_is_enemy, fx=fx)
         self._draw_damage_floats(screen, state)
 
     def _draw_message_panel(self, screen: pygame.Surface, resolve_msg: str,
@@ -79,7 +82,7 @@ class BattleRenderer:
 
     def _draw_enemy_area(self, screen: pygame.Surface, state: BattleState,
                          target_pool: list[Combatant], target_sel: int,
-                         has_bg: bool = False) -> None:
+                         has_bg: bool = False, fx: BattleFx | None = None) -> None:
         if not has_bg:
             pygame.draw.rect(screen, C_FLOOR,
                              (0, ENEMY_AREA_H - 60, self._screen_w, 60))
@@ -95,14 +98,18 @@ class BattleRenderer:
         for i, enemy in enumerate(enemies):
             ox, oy = offsets[i]
             self._draw_enemy(screen, enemy, cx + ox, cy + oy, i,
-                             state, target_pool, target_sel)
+                             state, target_pool, target_sel, fx=fx)
 
     def _draw_enemy(self, screen: pygame.Surface, enemy: Combatant,
                     cx: int, cy: int, index: int,
                     state: BattleState,
-                    target_pool: list[Combatant], target_sel: int) -> None:
+                    target_pool: list[Combatant], target_sel: int,
+                    fx: BattleFx | None = None) -> None:
         w, h = self._assets.enemy_rect_size(enemy)
         rx, ry = cx - w // 2, cy - h // 2
+
+        shake_dx = fx.shake_offset(enemy) if fx else 0
+        sx, sy = rx + shake_dx, ry
 
         sprite = self._assets.load_enemy_sprite(enemy)
         if sprite is not None:
@@ -110,12 +117,15 @@ class BattleRenderer:
             if enemy.is_ko:
                 img = img.copy()
                 img.set_alpha(80)
-            screen.blit(img, (rx, ry))
+            screen.blit(img, (sx, sy))
+            self._apply_flash(screen, enemy, sx, sy,
+                              img.get_width(), img.get_height(), fx, sprite=img)
         else:
             base_col = (30, 30, 40) if enemy.is_ko else (42, 58, 90)
             bdr_col  = (50, 50, 60) if enemy.is_ko else (74, 106, 154)
-            pygame.draw.rect(screen, base_col, (rx, ry, w, h), border_radius=4)
-            pygame.draw.rect(screen, bdr_col,  (rx, ry, w, h), 1, border_radius=4)
+            pygame.draw.rect(screen, base_col, (sx, sy, w, h), border_radius=4)
+            pygame.draw.rect(screen, bdr_col,  (sx, sy, w, h), 1, border_radius=4)
+            self._apply_flash(screen, enemy, sx, sy, w, h, fx)
 
         bar_w = w
         bar_x = cx - bar_w // 2
@@ -155,29 +165,32 @@ class BattleRenderer:
                            sub_items: list[dict], sub_sel: int,
                            target_pool: list[Combatant], target_sel: int,
                            resolve_msg: str,
-                           resolve_is_enemy: bool = False) -> None:
+                           resolve_is_enemy: bool = False,
+                           fx: BattleFx | None = None) -> None:
         pygame.draw.line(screen, C_PANEL_LINE,
                          (0, ENEMY_AREA_H), (self._screen_w, ENEMY_AREA_H))
         pygame.draw.line(screen, C_PANEL_LINE,
                          (self.party_w, ENEMY_AREA_H), (self.party_w, self._screen_h))
         pygame.draw.line(screen, C_PANEL_LINE,
                          (self.msg_x, ENEMY_AREA_H), (self.msg_x, self._screen_h))
-        self._draw_party_panel(screen, state, target_pool, target_sel)
+        self._draw_party_panel(screen, state, target_pool, target_sel, fx=fx)
         self._draw_command_panel(screen, state, cmd_items, cmd_sel,
                                 sub_items, sub_sel)
         self._draw_message_panel(screen, resolve_msg, resolve_is_enemy)
 
     def _draw_party_panel(self, screen: pygame.Surface, state: BattleState,
-                          target_pool: list[Combatant], target_sel: int) -> None:
+                          target_pool: list[Combatant], target_sel: int,
+                          fx: BattleFx | None = None) -> None:
         panel_y = ENEMY_AREA_H + 8
         for i, member in enumerate(state.party):
             self._draw_party_row(screen, member, panel_y + i * (ROW_H + 2),
-                                 state, target_pool, target_sel)
+                                 state, target_pool, target_sel, fx=fx)
 
     def _draw_party_row(self, screen: pygame.Surface,
                         member: Combatant, y: int,
                         state: BattleState,
-                        target_pool: list[Combatant], target_sel: int) -> None:
+                        target_pool: list[Combatant], target_sel: int,
+                        fx: BattleFx | None = None) -> None:
         active    = state.active
         is_active = active is not None and active is member and not member.is_enemy
         is_target = (state.phase == BattlePhase.SELECT_TARGET
@@ -197,16 +210,20 @@ class BattleRenderer:
 
         px = rx + 6
         py = y + (ROW_H - 2 - PORTRAIT_SIZE) // 2
+        shake_dx = fx.shake_offset(member) if fx else 0
+        ppx = px + shake_dx
         img = self._assets.load_portrait(member.id)
         if img:
-            screen.blit(img, (px, py))
+            screen.blit(img, (ppx, py))
         else:
             col = (58, 42, 42) if is_active else (42, 42, 58)
-            pygame.draw.rect(screen, col, (px, py, PORTRAIT_SIZE, PORTRAIT_SIZE), border_radius=3)
+            pygame.draw.rect(screen, col, (ppx, py, PORTRAIT_SIZE, PORTRAIT_SIZE), border_radius=3)
             init = "".join(w[0].upper() for w in member.name.split()[:2])
             s = self._assets.font_badge.render(init, True, C_TEXT_MUT)
-            screen.blit(s, (px + PORTRAIT_SIZE // 2 - s.get_width() // 2,
+            screen.blit(s, (ppx + PORTRAIT_SIZE // 2 - s.get_width() // 2,
                              py + PORTRAIT_SIZE // 2 - s.get_height() // 2))
+        self._apply_flash(screen, member, ppx, py,
+                          PORTRAIT_SIZE, PORTRAIT_SIZE, fx, sprite=img)
 
         if member.status_effects:
             effect = member.status_effects[0]
@@ -361,6 +378,30 @@ class BattleRenderer:
 
         screen.blit(self._assets.font_stat.render("ESC back", True, C_TEXT_DIM),
                     (x, y + len(sub_items) * 28 + 8))
+
+    # ── Hit-flash overlay ─────────────────────────────────────
+
+    def _apply_flash(self, screen: pygame.Surface, target: Combatant,
+                     x: int, y: int, w: int, h: int,
+                     fx: BattleFx | None,
+                     sprite: pygame.Surface | None = None) -> None:
+        """Additive white (or colored) overlay that fades out over the flash duration."""
+        if fx is None:
+            return
+        alpha = fx.flash_alpha(target)
+        if alpha <= 0:
+            return
+        r, g, b = fx.flash_color(target)
+        scale = alpha / 255.0
+        tint = (int(r * scale), int(g * scale), int(b * scale))
+        if sprite is not None:
+            overlay = sprite.copy()
+            overlay.fill(tint, special_flags=pygame.BLEND_RGB_ADD)
+            screen.blit(overlay, (x, y))
+        else:
+            overlay = pygame.Surface((w, h), pygame.SRCALPHA)
+            overlay.fill((r, g, b, alpha))
+            screen.blit(overlay, (x, y))
 
     # ── Damage floats ─────────────────────────────────────────
 
