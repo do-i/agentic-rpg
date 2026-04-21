@@ -25,7 +25,8 @@ from engine.encounter.enemy_sprite import EnemySprite
 from engine.item.item_effect_handler import ItemEffectHandler
 from engine.item.magic_core_catalog_state import MagicCoreCatalogState
 from engine.world.world_map_logic import (
-    FADE_SPEED, try_interact, dispatch_dialogue_result,
+    FADE_SPEED, try_interact, try_interact_item_box, apply_item_box_loot,
+    dispatch_dialogue_result,
     check_portals, apply_transition,
     load_inn_cost, load_shop_items, load_recipes, _is_player_facing,
 )
@@ -38,6 +39,10 @@ from engine.world.player import Player
 from engine.world.sprite_sheet import SpriteSheet
 from engine.world.npc import Npc
 from engine.world.npc_loader import NpcLoader
+from engine.world.item_box import ItemBox
+from engine.world.item_box_loader import ItemBoxLoader
+from engine.world.item_box_scene import ItemBoxScene
+from engine.item.item_catalog import ItemCatalog
 from engine.world.world_map_renderer import WorldMapRenderer
 from engine.audio.bgm_manager import BgmManager
 from engine.audio.sfx_manager import SfxManager
@@ -59,6 +64,8 @@ class WorldMapScene(Scene):
         game_state_manager: GameStateManager,
         dialogue_engine: DialogueEngine,
         npc_loader: NpcLoader,
+        item_box_loader: ItemBoxLoader,
+        item_catalog: ItemCatalog,
         encounter_manager: EncounterManager,
         encounter_resolver: EncounterResolver | None = None,
         enemy_spawn_global_interval: float = 30.0,
@@ -89,6 +96,8 @@ class WorldMapScene(Scene):
         self._game_state_manager = game_state_manager
         self._dialogue_engine = dialogue_engine
         self._npc_loader = npc_loader
+        self._item_box_loader = item_box_loader
+        self._item_catalog = item_catalog
         self._encounter_manager = encounter_manager
         self._encounter_resolver = encounter_resolver
         self._enemy_spawn_global_interval = enemy_spawn_global_interval
@@ -109,6 +118,7 @@ class WorldMapScene(Scene):
         self._camera: Camera | None = None
         self._player: Player | None = None
         self._npcs: list[Npc] = []
+        self._item_boxes: list[ItemBox] = []
         self._enemy_spawner: EnemySpawner | None = None
         self._engaged_enemy: EnemySprite | None = None
 
@@ -118,6 +128,7 @@ class WorldMapScene(Scene):
         self._inn: InnScene | None = None
         self._item_shop: ItemShopScene | None = None
         self._apothecary: ApothecaryScene | None = None
+        self._item_box_modal: ItemBoxScene | None = None
         self._quit_confirm: bool = False
 
         self._fade_alpha: int = 255
@@ -154,6 +165,7 @@ class WorldMapScene(Scene):
 
         map_yaml_path = scenario_path / "data" / "maps" / f"{map_id}.yaml"
         self._npcs = self._npc_loader.load_from_map(map_yaml_path)
+        self._item_boxes = self._item_box_loader.load_from_map(map_yaml_path)
 
         # BGM
         if map_yaml_path.exists():
@@ -247,6 +259,9 @@ class WorldMapScene(Scene):
         if self._apothecary:
             self._apothecary.handle_events(events)
             return
+        if self._item_box_modal:
+            self._item_box_modal.handle_events(events)
+            return
         if self._quit_confirm:
             for event in events:
                 if event.type == pygame.KEYDOWN:
@@ -284,6 +299,15 @@ class WorldMapScene(Scene):
 
     def _try_interact(self) -> None:
         state = self._holder.get()
+
+        box = try_interact_item_box(
+            self._player, self._item_boxes, state.flags,
+            state.opened_boxes, state.map.current,
+        )
+        if box is not None:
+            self._open_item_box(box)
+            return
+
         result, npc = try_interact(
             self._player, self._npcs, state.flags, self._dialogue_engine,
         )
@@ -294,6 +318,19 @@ class WorldMapScene(Scene):
                 text_speed=self._text_speed,
                 portrait=npc.portrait if npc else None,
             )
+
+    def _open_item_box(self, box: ItemBox) -> None:
+        self._item_box_modal = ItemBoxScene(
+            box=box,
+            item_catalog=self._item_catalog,
+            on_confirm=self._confirm_item_box,
+            sfx_manager=self._sfx_manager,
+        )
+
+    def _confirm_item_box(self, box: ItemBox) -> None:
+        state = self._holder.get()
+        apply_item_box_loot(box, state.repository, state.opened_boxes, state.map.current)
+        self._item_box_modal = None
 
     def _on_dialogue_complete(self, on_complete: dict) -> None:
         self._dialogue = None
@@ -522,6 +559,9 @@ class WorldMapScene(Scene):
         if self._apothecary:
             self._apothecary.update(delta)
             return
+        if self._item_box_modal:
+            self._item_box_modal.update(delta)
+            return
         if self._quit_confirm:
             return
         if self._player is None:
@@ -531,12 +571,17 @@ class WorldMapScene(Scene):
         frozen = self._fade_dir != 0
         state = self._holder.get()
 
-        # Build collision rects — only NPCs block the player as solid walls.
+        # Build collision rects — NPCs and item boxes block the player as solid walls.
         # Enemy sprites are trigger volumes: player walks into them to start battle.
         npc_rects = [
             npc.collision_rect
             for npc in self._npcs
             if npc.is_present(state.flags)
+        ]
+        npc_rects += [
+            box.collision_rect
+            for box in self._item_boxes
+            if box.is_present(state.flags)
         ]
 
         self._player.update(keys, self._tile_map.collision_map, frozen, npc_rects=npc_rects)
@@ -579,14 +624,19 @@ class WorldMapScene(Scene):
 
         state = self._holder.get()
         visible_npcs = [npc for npc in self._npcs if npc.is_present(state.flags)]
+        visible_boxes = [b for b in self._item_boxes if b.is_present(state.flags)]
         enemy_sprites = self._enemy_spawner.active_enemies if self._enemy_spawner else []
 
         overlays = [
             o for o in (
                 self._save_modal, self._dialogue, self._mc_shop,
                 self._inn, self._item_shop, self._apothecary,
+                self._item_box_modal,
             ) if o is not None
         ]
+
+        map_id = state.map.current
+        box_opened = {b.id: state.opened_boxes.is_opened(map_id, b.id) for b in visible_boxes}
 
         self._renderer.render(
             screen,
@@ -599,4 +649,6 @@ class WorldMapScene(Scene):
             self._dialogue,
             self._fade_alpha,
             self._quit_confirm,
+            item_boxes=visible_boxes,
+            box_opened=box_opened,
         )

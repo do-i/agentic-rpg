@@ -29,7 +29,12 @@ class WorldMapRenderer:
         dialogue,
         fade_alpha: int,
         quit_confirm: bool,
+        item_boxes: list | None = None,
+        box_opened: dict | None = None,
     ) -> None:
+        item_boxes = item_boxes or []
+        box_opened = box_opened or {}
+
         screen.fill((0, 0, 0))
         tile_map.render(screen, camera.offset_x, camera.offset_y)
 
@@ -54,9 +59,24 @@ class WorldMapRenderer:
         def render_enemy(sprite):
             sprite.render(screen, camera.offset_x, camera.offset_y)
 
-        drawables = [(player_pos.y, render_player)]
-        drawables += [(npc._py, lambda n=npc: render_npc(n)) for npc in npcs]
-        drawables += [(e.pixel_y, lambda s=e: render_enemy(s)) for e in enemy_sprites]
+        def render_box(box):
+            near = (box.is_near(player_pos)
+                    and _is_player_facing(player, box.pixel_position)
+                    and dialogue is None)
+            box.render(
+                screen,
+                camera.offset_x,
+                camera.offset_y,
+                opened=box_opened.get(box.id, False),
+                near=near,
+            )
+
+        # Sort by bottom-of-sprite so tall (64px) entities and short (32px)
+        # chests interleave correctly.
+        drawables = [(player_pos.y + 64, render_player)]
+        drawables += [(npc._py + 64, lambda n=npc: render_npc(n)) for npc in npcs]
+        drawables += [(e.pixel_y + 64, lambda s=e: render_enemy(s)) for e in enemy_sprites]
+        drawables += [(b.sort_y, lambda bx=b: render_box(bx)) for b in item_boxes]
 
         for _, draw in sorted(drawables, key=lambda d: d[0]):
             draw()

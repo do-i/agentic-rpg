@@ -12,6 +12,7 @@ from engine.world.position_data import Position
 from engine.common.game_state_holder import GameStateHolder
 from engine.io.save_manager import GameStateManager
 from engine.dialogue.dialogue_engine import DialogueEngine
+from engine.world.item_box import ItemBox
 from engine.world.npc import Npc
 from engine.world.player import Player, COLLISION_W, COLLISION_H
 from engine.world.sprite_sheet import Direction
@@ -66,6 +67,51 @@ def try_interact(player: Player, npcs: list[Npc], flags, dialogue_engine: Dialog
         if result:
             return result, npc
     return None, None
+
+
+def apply_item_box_loot(box: ItemBox, repository, opened_boxes, map_id: str) -> None:
+    """Transfer a chest's contents into the party repository and mark it opened."""
+    for item_id, qty in box.loot_items:
+        repository.add_item(item_id, qty)
+    for mc_id, qty in box.loot_magic_cores:
+        entry = repository.add_item(mc_id, qty)
+        entry.tags.add("magic_core")
+    opened_boxes.mark_opened(map_id, box.id)
+
+
+def try_interact_item_box(
+    player: Player,
+    item_boxes: list[ItemBox],
+    flags,
+    opened_boxes,
+    map_id: str,
+) -> ItemBox | None:
+    """Return the nearest present, unopened ItemBox the player is facing, or None."""
+    if player is None:
+        return None
+    player_pos = player.pixel_position
+
+    candidates: list[ItemBox] = []
+    for box in item_boxes:
+        if not box.is_present(flags):
+            continue
+        if opened_boxes.is_opened(map_id, box.id):
+            continue
+        if not box.is_near(player_pos):
+            continue
+        if not _is_player_facing(player, box.pixel_position):
+            continue
+        candidates.append(box)
+
+    if not candidates:
+        return None
+
+    def _dist_sq(b: ItemBox) -> int:
+        bp = b.pixel_position
+        return (bp.x - player_pos.x) ** 2 + (bp.y - player_pos.y) ** 2
+
+    candidates.sort(key=_dist_sq)
+    return candidates[0]
 
 
 def dispatch_dialogue_result(on_complete: dict, flags, repository, dialogue_engine: DialogueEngine) -> dict:

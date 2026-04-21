@@ -174,6 +174,14 @@ def collect_flags(root: Path) -> tuple[dict[str, list[str]], dict[str, list[str]
                 for flag in present.get("excludes", []):
                     add_consumed(flag, str(rel))
 
+            # item_box present conditions
+            for box in data.get("item_boxes", []):
+                present = box.get("present", {})
+                for flag in present.get("requires", []):
+                    add_consumed(flag, str(rel))
+                for flag in present.get("excludes", []):
+                    add_consumed(flag, str(rel))
+
     # recipe files — unlock_flag
     recipe_dir = root / "data" / "recipe"
     if recipe_dir.exists():
@@ -195,12 +203,19 @@ def collect_flags(root: Path) -> tuple[dict[str, list[str]], dict[str, list[str]
 # Pass 1 — Forward traversal (broken links)
 # ─────────────────────────────────────────────
 
-def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict) -> tuple[list[str], set[Path]]:
+VALID_MC_SIZES = {"xs", "s", "m", "l", "xl"}
+
+
+def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict) -> tuple[list[str], list[str], set[Path]]:
     errors = []
+    warnings = []
     visited: set[Path] = set()
 
     def err(msg):
         errors.append(msg)
+
+    def warn(msg):
+        warnings.append(msg)
 
     def visit(path: Path):
         visited.add(path.resolve())
@@ -208,7 +223,7 @@ def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict)
     manifest_path = root / "manifest.yaml"
     if not manifest_path.exists():
         err(f"CRITICAL: manifest.yaml not found at {root}")
-        return errors, visited
+        return errors, warnings, visited
 
     visit(manifest_path)
     manifest = load_yaml(manifest_path)
@@ -280,6 +295,31 @@ def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict)
                         err(f"[map:{rel}] npc '{npc.get('id')}' dialogue not found: '{dlg}'")
                     else:
                         visit(dialogue_reg[dlg])
+
+            # item_boxes — loot id/size checks, unique ids, empty-loot warning
+            seen_box_ids: set[str] = set()
+            for box in data.get("item_boxes", []):
+                box_id = box.get("id", "?")
+                if box_id in seen_box_ids:
+                    err(f"[map:{rel}] duplicate item_box id: '{box_id}'")
+                seen_box_ids.add(box_id)
+
+                loot = box.get("loot", {}) or {}
+                items = loot.get("items") or []
+                mcs   = loot.get("magic_cores") or []
+
+                for item in items:
+                    iid = item.get("id")
+                    if iid and iid not in item_reg:
+                        err(f"[map:{rel}] item_box '{box_id}' loot.items id not in registry: '{iid}'")
+
+                for mc in mcs:
+                    size = str(mc.get("size", "")).lower()
+                    if size not in VALID_MC_SIZES:
+                        err(f"[map:{rel}] item_box '{box_id}' invalid magic_core size: '{size}'")
+
+                if not items and not mcs:
+                    warn(f"[map:{rel}] item_box '{box_id}' has empty loot")
 
     # dialogue files — on_complete references
     dialogue_dir = root / "data" / "dialogue"
@@ -362,7 +402,7 @@ def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict)
         for f in audio_dir.rglob("*.yaml"):
             visit(f)
 
-    return errors, visited
+    return errors, warnings, visited
 
 
 # ─────────────────────────────────────────────
@@ -424,7 +464,7 @@ def main():
     dialogue_reg = build_dialogue_registry(root)
 
     # Pass 1 — broken links
-    link_errors, visited = forward_pass(root, item_reg, char_reg, dialogue_reg)
+    link_errors, link_warnings, visited = forward_pass(root, item_reg, char_reg, dialogue_reg)
 
     # Pass 2 — unreachable files
     unreachable = unreachable_pass(root, visited)
@@ -447,6 +487,14 @@ def main():
         exit_code = 1
     else:
         print("  ✓ None")
+
+    if link_warnings:
+        print()
+        print("=" * 60)
+        print("WARNINGS")
+        print("=" * 60)
+        for w in link_warnings:
+            print(f"  ⚠  {w}")
 
     print()
     print("=" * 60)

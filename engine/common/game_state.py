@@ -2,6 +2,7 @@
 
 from engine.common.flag_state import FlagState
 from engine.common.map_state import MapState
+from engine.common.opened_boxes_state import OpenedBoxesState
 from engine.util.playtime import Playtime
 from engine.party.party_state import PartyState
 from engine.party.repository_state import RepositoryState
@@ -14,11 +15,12 @@ class GameState:
     """
 
     def __init__(self) -> None:
-        self.flags      = FlagState()
-        self.map        = MapState()
-        self.playtime   = Playtime()
-        self.party      = PartyState()
-        self.repository = RepositoryState()
+        self.flags        = FlagState()
+        self.map          = MapState()
+        self.playtime     = Playtime()
+        self.party        = PartyState()
+        self.repository   = RepositoryState()
+        self.opened_boxes = OpenedBoxesState()
 
     def __repr__(self) -> str:
         return (

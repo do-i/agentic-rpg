@@ -35,3 +35,18 @@ npcs:
     sprite: assets/sprites/npc/knight_01.tsx
     present:
       excludes: [boss_zone09_defeated]
+
+item_boxes:
+  - id: forest_chest_01
+    position: [47, 30]
+    loot:
+      items:
+        - id: potion
+          qty: 2
+        - id: antidote
+          qty: 1
+      magic_cores:
+        - size: m
+          qty: 3
+        - size: s
+          qty: 10

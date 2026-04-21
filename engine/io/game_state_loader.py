@@ -9,6 +9,7 @@ import yaml
 from engine.common.game_state import GameState
 from engine.common.flag_state import FlagState
 from engine.common.map_state import MapState
+from engine.common.opened_boxes_state import OpenedBoxesState
 from engine.party.member_state import MemberState
 from engine.world.position_data import Position
 from engine.party.party_state import calc_exp_next
@@ -91,9 +92,10 @@ def from_save(
 ) -> GameState:
     state = GameState()
     state.repository.catalog = item_catalog
-    state.flags    = FlagState.from_set(set(save["flags"]))
-    state.map      = MapState.from_dict(save["map"])
-    state.playtime = Playtime.from_seconds(save["meta"]["playtime_seconds"])
+    state.flags        = FlagState.from_set(set(save["flags"]))
+    state.map          = MapState.from_dict(save["map"])
+    state.opened_boxes = OpenedBoxesState.from_list(save.get("opened_boxes", []))
+    state.playtime     = Playtime.from_seconds(save["meta"]["playtime_seconds"])
     state.playtime.start_session()
 
     # -- Party --

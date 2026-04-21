@@ -189,4 +189,5 @@ class GameStateManager:
             },
             "flags": state.flags.to_list(),
             "map":   state.map.to_dict(),
+            "opened_boxes": state.opened_boxes.to_list(),
         }

@@ -27,6 +27,7 @@ from engine.world.world_map_logic import load_magic_cores
 from engine.io.manifest_loader import ManifestLoader
 from engine.world.tile_map_factory import TileMapFactory
 from engine.world.npc_loader import NpcLoader
+from engine.world.item_box_loader import ItemBoxLoader
 from engine.audio.bgm_manager import BgmManager
 from engine.audio.sfx_manager import SfxManager
 from engine.record.recorder import RecordPlaybackManager
@@ -127,6 +128,11 @@ class AppModule(Module):
 
     @provider
     @singleton
+    def provide_item_box_loader(self, loader: ManifestLoader, config: EngineConfigData) -> ItemBoxLoader:
+        return ItemBoxLoader(manifest_loader=loader, tile_size=config.tile_size)
+
+    @provider
+    @singleton
     def provide_enemy_loader(self, loader: ManifestLoader) -> EnemyLoader:
         enemies_dir = loader.scenario_path / "data" / "enemies"
         classes_dir = loader.scenario_path / "data" / "classes"
@@ -181,6 +187,7 @@ class AppModule(Module):
         game_state_manager: GameStateManager,
         dialogue_engine: DialogueEngine,
         npc_loader: NpcLoader,
+        item_box_loader: ItemBoxLoader,
         encounter_manager: EncounterManager,
         encounter_resolver: EncounterResolver,
         item_catalog: ItemCatalog,
@@ -211,6 +218,8 @@ class AppModule(Module):
                 holder, loader, tile_map_factory,
                 scene_manager, registry,
                 game_state_manager, dialogue_engine, npc_loader,
+                item_box_loader=item_box_loader,
+                item_catalog=item_catalog,
                 encounter_manager=encounter_manager,
                 encounter_resolver=encounter_resolver,
                 enemy_spawn_global_interval=settings.enemy_spawn_global_interval,

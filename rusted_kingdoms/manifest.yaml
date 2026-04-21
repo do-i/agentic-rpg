@@ -19,6 +19,9 @@ apothecary:
     ready:   assets/images/icons/lock-unlocked-green-small.webp
     missing: assets/images/icons/lock-unlocked-yellow-small.webp
 
+item_box:
+  sprite: assets/sprites/objects/item_box.tsx
+
 protagonist:
   id: aric
   name: "Aric"

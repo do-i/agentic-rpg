@@ -60,28 +60,6 @@ pip install -e ".[dev]"
 cd tests/tools
 ./validate.py
 ```
-
-## Issue and Solutions
-
-### Font not found error
-
-```
- in _init_fonts
-    self._title_font = pygame.font.SysFont("Arial", 64, bold=True)
-                       ^^^^^^^^^^^^^^^^^^^
-  File ".../engine/.venv_engine/lib/python3.14/site-packages/pygame/__init__.py", line 70, in __getattr__
-    raise NotImplementedError(missing_msg)
-NotImplementedError: font module not available (ImportError: cannot import name 'Font' from partially initialized module 'pygame.font'
-```
-
-Solution
-```sh
-# Install font packages
-sudo pacman -S sdl2 sdl2_ttf sdl2_image sdl2_mixer
-pip uninstall pygame
-pip cache purge
-pip install .
-```
 ## Credits and Attribution
 
 This project uses character sprites and assets from the Liberated Pixel Cup (LPC) collection.
