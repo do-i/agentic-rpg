@@ -63,6 +63,7 @@ abilities:
     type: heal
     description: "Restores 25% of own max HP."
     mp_cost: 6
+    heal_coeff: 1.0
     heal_pct: 0.25
     target: self
 

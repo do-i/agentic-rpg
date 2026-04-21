@@ -125,3 +125,13 @@ class TestNpcLoader:
         })
         npcs = loader.load_from_map(p)
         assert npcs[0]._sprite_sheet is None
+
+    def test_missing_id_raises(self, loader, tmp_path):
+        p = write_map(tmp_path, {"npcs": [{"position": [1, 1]}]})
+        with pytest.raises(KeyError, match="id"):
+            loader.load_from_map(p)
+
+    def test_missing_position_raises(self, loader, tmp_path):
+        p = write_map(tmp_path, {"npcs": [{"id": "n"}]})
+        with pytest.raises(KeyError, match="position"):
+            loader.load_from_map(p)

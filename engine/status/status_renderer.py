@@ -287,7 +287,7 @@ class StatusRenderer:
         ry = y + pad + 28
         for i, spell in enumerate(spells):
             sel      = (i == spell_sel)
-            cost     = spell.get("mp_cost", 0)
+            cost     = spell["mp_cost"]
             disabled = cost > caster.mp
 
             if sel:

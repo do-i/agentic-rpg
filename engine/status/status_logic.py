@@ -31,7 +31,7 @@ def field_spells(member: MemberState, scenario_path: str) -> list[dict]:
     for ab in abilities:
         if ab.get("type") not in FIELD_SPELL_TYPES:
             continue
-        if ab.get("unlock_level", 1) > member.level:
+        if ab["unlock_level"] > member.level:
             continue
         result.append(ab)
     return result
@@ -49,7 +49,7 @@ def valid_targets(spell: dict, members: list[MemberState]) -> list[MemberState]:
 
 def apply_spell(spell: dict, caster: MemberState, target: MemberState) -> str:
     """Apply spell effect. Returns result message."""
-    caster.mp = max(0, caster.mp - spell.get("mp_cost", 0))
+    caster.mp = max(0, caster.mp - spell["mp_cost"])
     spell_type = spell.get("type")
 
     if spell_type == "heal":
@@ -57,7 +57,7 @@ def apply_spell(spell: dict, caster: MemberState, target: MemberState) -> str:
             pct = spell["revive_hp_pct"]
             target.hp = max(1, int(target.hp_max * pct))
             return f"{target.name} revived!"
-        coeff = spell.get("heal_coeff", 1.0)
+        coeff = spell["heal_coeff"]
         amount = int(caster.int_ * coeff)
         before = target.hp
         target.hp = min(target.hp_max, target.hp + amount)
@@ -75,8 +75,8 @@ def apply_spell(spell: dict, caster: MemberState, target: MemberState) -> str:
 
 def apply_spell_all(spell: dict, caster: MemberState, members: list[MemberState]) -> str:
     """Apply AoE heal to all alive members."""
-    caster.mp = max(0, caster.mp - spell.get("mp_cost", 0))
-    coeff = spell.get("heal_coeff", 1.0)
+    caster.mp = max(0, caster.mp - spell["mp_cost"])
+    coeff = spell["heal_coeff"]
     amount = int(caster.int_ * coeff)
     total = 0
     for m in members:

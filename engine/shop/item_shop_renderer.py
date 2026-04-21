@@ -139,7 +139,7 @@ class ItemShopRenderer:
         owned_qty: Callable[[str], int],
         display_name: Callable[[dict], str],
     ) -> ItemRow:
-        price = item.get("buy_price", 0)
+        price = item["buy_price"]
         affordable = price <= gp
         owned = owned_qty(item["id"])
         return ItemRow(
@@ -162,7 +162,7 @@ class ItemShopRenderer:
         gp: int,
         display_name: Callable[[dict], str],
     ) -> None:
-        price = sel.get("buy_price", 0)
+        price = sel["buy_price"]
         total = qty * price
 
         ow, oh = MODAL_W - 40, 120

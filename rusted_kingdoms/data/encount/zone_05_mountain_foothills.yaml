@@ -5,20 +5,28 @@ density: 0.14
 entries:
   - formation: [stone_golem, stone_golem]
     weight: 30
+    chase_range: 0
   - formation: [plague_rat, plague_rat]
     weight: 25
+    chase_range: 0
   - formation: [stone_golem, plague_rat]
     weight: 20
+    chase_range: 0
   - formation: [iron_golem, iron_golem]
     weight: 20
+    chase_range: 0
   - formation: [iron_golem, rock_crab]
     weight: 15
+    chase_range: 0
   - formation: [rock_crab]
     weight: 10
+    chase_range: 0
   - formation: [sand_worm]
     weight: 10
+    chase_range: 0
   - formation: [wind_elemental]
     weight: 5
+    chase_range: 0
 
 barrier_enemies:
   - id: wind_elemental

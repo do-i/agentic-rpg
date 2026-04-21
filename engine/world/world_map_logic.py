@@ -138,13 +138,14 @@ def check_portals(tile_map: TileMap, player: Player) -> dict | None:
 def apply_transition(holder: GameStateHolder, game_state_manager: GameStateManager,
                      player: Player, transition: dict) -> None:
     """Save state and update map position for a transition."""
+    if "position" not in transition:
+        raise KeyError(f"transition missing required field 'position': {transition!r}")
     state = holder.get()
     state.map.set_position(player.tile_position)
     game_state_manager.save(state, slot_index=0)
 
     new_map = transition.get("map", state.map.current)
-    pos = transition.get("position", [0, 0])
-    state.map.move_to(new_map, Position.from_list(pos))
+    state.map.move_to(new_map, Position.from_list(transition["position"]))
 
 
 def load_inn_cost(scenario_path: Path, map_id: str) -> int:
@@ -152,7 +153,10 @@ def load_inn_cost(scenario_path: Path, map_id: str) -> int:
     map_yaml = scenario_path / "data" / "maps" / f"{map_id}.yaml"
     with open(map_yaml) as f:
         map_data = yaml.safe_load(f)
-    return map_data.get("inn", {}).get("cost", 50)
+    inn = map_data.get("inn") or {}
+    if "cost" not in inn:
+        raise KeyError(f"{map_id}.yaml: inn.cost is required")
+    return inn["cost"]
 
 
 def load_shop_items(scenario_path: Path, map_id: str) -> list[dict]:
@@ -183,4 +187,4 @@ def load_magic_cores(scenario_path: Path) -> list[dict]:
         return []
     with open(mc_path) as f:
         items = yaml.safe_load(f) or []
-    return sorted(items, key=lambda d: d.get("exchange_rate", 0), reverse=True)
+    return sorted(items, key=lambda d: d["exchange_rate"], reverse=True)

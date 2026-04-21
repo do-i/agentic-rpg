@@ -111,3 +111,15 @@ class TestLoadFromMap:
         })
         box = loader.load_from_map(p)[0]
         assert box._sprite is None
+
+    def test_missing_id_raises(self, tmp_path):
+        loader = make_loader(tmp_path)
+        p = write_map(tmp_path, {"item_boxes": [{"position": [0, 0], "loot": {}}]})
+        with pytest.raises(KeyError, match="id"):
+            loader.load_from_map(p)
+
+    def test_missing_position_raises(self, tmp_path):
+        loader = make_loader(tmp_path)
+        p = write_map(tmp_path, {"item_boxes": [{"id": "c", "loot": {}}]})
+        with pytest.raises(KeyError, match="position"):
+            loader.load_from_map(p)

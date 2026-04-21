@@ -13,16 +13,24 @@ from engine.encounter.encounter_zone_data import (
 )
 
 
+def _require(data: dict, key: str, ctx: str):
+    if key not in data:
+        raise KeyError(f"{ctx}: missing required field {key!r}")
+    return data[key]
+
+
 def load_encounter_zone(path: Path) -> EncounterZone:
     """Parse a single encount YAML file into an EncounterZone."""
     with open(path, "r") as f:
         data = yaml.safe_load(f)
 
+    ctx = f"encount file {path.name}"
+
     entries = [
         Formation(
             enemy_ids=entry["formation"],
             weight=entry["weight"],
-            chase_range=int(entry.get("chase_range", 0)),
+            chase_range=int(_require(entry, "chase_range", f"{ctx} entry")),
         )
         for entry in data.get("entries", [])
     ]
@@ -42,7 +50,7 @@ def load_encounter_zone(path: Path) -> EncounterZone:
         BarrierEnemy(
             enemy_id=b["id"],
             requires_item=b.get("requires_item", ""),
-            blocked_message=b.get("blocked_message", "A mysterious force blocks your attack."),
+            blocked_message=_require(b, "blocked_message", f"{ctx} barrier"),
         )
         for b in data.get("barrier_enemies", [])
     ]
@@ -52,7 +60,7 @@ def load_encounter_zone(path: Path) -> EncounterZone:
     return EncounterZone(
         zone_id=data.get("id", path.stem),
         name=data.get("name", ""),
-        density=float(data.get("density", 0.5)),
+        density=float(_require(data, "density", ctx)),
         entries=EncounterSet(entries=entries),
         boss=boss,
         barrier_enemies=barriers,

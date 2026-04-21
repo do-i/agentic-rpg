@@ -35,6 +35,17 @@ BAT_DOC = {
 }
 
 
+def minimal_enemy_doc(enemy_id: str, **overrides) -> dict:
+    """Smallest legal enemy doc — all required fields present."""
+    doc = {
+        "id": enemy_id,
+        "name": enemy_id.replace("_", " ").title(),
+        "hp": 10, "atk": 5, "def": 3, "mres": 2, "dex": 8, "exp": 0,
+    }
+    doc.update(overrides)
+    return doc
+
+
 @pytest.fixture
 def enemies_dir(tmp_path):
     d = tmp_path / "enemies"
@@ -98,19 +109,29 @@ class TestLoad:
         assert c.name == "Bat"
 
 
-# ── _build defaults ───────────────────────────────────────────
+# ── _build required-field validation ──────────────────────────
 
-class TestBuildDefaults:
-    def test_minimal_enemy_uses_defaults(self, tmp_path):
+class TestBuildRequired:
+    def test_missing_required_field_raises(self, tmp_path):
         d = tmp_path / "e"
         d.mkdir()
-        (d / "enemies_rank_1_SS.yaml").write_text("id: minimal\n")
+        (d / "enemies_rank_1_SS.yaml").write_text("id: incomplete\n")
         loader = EnemyLoader(d)
-        c = loader.load("minimal")
-        assert c.name == "minimal"
+        with pytest.raises(KeyError, match="incomplete"):
+            loader.load("incomplete")
+
+    def test_minimal_legal_enemy_loads(self, tmp_path):
+        d = tmp_path / "e"
+        d.mkdir()
+        doc = minimal_enemy_doc("basic")
+        (d / "enemies_rank_1_SS.yaml").write_text(yaml.dump(doc))
+        loader = EnemyLoader(d)
+        c = loader.load("basic")
+        assert c.name == "Basic"
         assert c.hp == 10
-        assert c.atk == 5
         assert c.exp_yield == 0
+        assert c.boss is False          # absent boss → not a boss
+        assert c.sprite_scale == 100    # absent sprite_scale → default
 
 
 # ── AI loading ────────────────────────────────────────────────
@@ -129,12 +150,7 @@ class TestAiLoading:
             "targeting": {"prefer": "random"},
         }
         (d / "boss_ai.yaml").write_text(yaml.dump(ai_content))
-        enemy_doc = {
-            "id": "spider_boss",
-            "name": "Spider Boss",
-            "hp": 100,
-            "ai_ref": "boss_ai.yaml",
-        }
+        enemy_doc = minimal_enemy_doc("spider_boss", hp=100, ai_ref="boss_ai.yaml")
         (d / "enemies_rank_8_F.yaml").write_text(yaml.dump(enemy_doc))
 
         loader = EnemyLoader(d)
@@ -145,12 +161,12 @@ class TestAiLoading:
     def test_missing_ai_ref_falls_back_to_inline(self, tmp_path):
         d = tmp_path / "enemies"
         d.mkdir()
-        enemy_doc = {
-            "id": "ghost",
-            "hp": 30,
-            "ai_ref": "nonexistent_ai.yaml",
-            "ai": {"attack_weight": 0.5},
-        }
+        enemy_doc = minimal_enemy_doc(
+            "ghost",
+            hp=30,
+            ai_ref="nonexistent_ai.yaml",
+            ai={"attack_weight": 0.5},
+        )
         (d / "enemies_rank_1_SS.yaml").write_text(yaml.dump(enemy_doc))
 
         loader = EnemyLoader(d)

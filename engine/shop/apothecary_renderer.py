@@ -170,7 +170,7 @@ class ApothecaryRenderer:
             out_id = output.get("item", "")
             out_qty = output.get("qty", 1)
             subtitle = f"{item_name(out_id)} x{out_qty}"
-            right_text = f"{recipe.get('gp_cost', 0):,} GP"
+            right_text = f"{recipe['gp_cost']:,} GP"
         else:
             subtitle = "-----"
             right_text = None
@@ -206,7 +206,7 @@ class ApothecaryRenderer:
         item_inputs = inputs.get("items", [])
         mc_inputs = inputs.get("mc", [])
         input_count = len(item_inputs) + len(mc_inputs)
-        gp_cost = sel.get("gp_cost", 0)
+        gp_cost = sel["gp_cost"]
         output = sel.get("output", {})
         out_id = output.get("item", "")
         out_qty = output.get("qty", 1)

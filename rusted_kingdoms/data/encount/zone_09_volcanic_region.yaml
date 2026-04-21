@@ -5,20 +5,28 @@ density: 0.16
 entries:
   - formation: [lava_serpent, lava_serpent]
     weight: 30
+    chase_range: 0
   - formation: [fire_elemental, lava_serpent]
     weight: 25
+    chase_range: 0
   - formation: [cerberus]
     weight: 20
+    chase_range: 0
   - formation: [vile_imp, vile_imp]
     weight: 20
+    chase_range: 0
   - formation: [chimera]
     weight: 15
+    chase_range: 0
   - formation: [magma_golem]
     weight: 10
+    chase_range: 0
   - formation: [lava_lizard]
     weight: 10
+    chase_range: 0
   - formation: [magma_golem, lava_lizard]
     weight: 5
+    chase_range: 0
 
 boss:
   id: flame_dragon

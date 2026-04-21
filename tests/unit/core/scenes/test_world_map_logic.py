@@ -212,13 +212,13 @@ class TestLoadMapData:
         cost = load_inn_cost(tmp_path, "town_01")
         assert cost == 75
 
-    def test_load_inn_cost_default(self, tmp_path):
+    def test_load_inn_cost_missing_raises(self, tmp_path):
         maps_dir = tmp_path / "data" / "maps"
         maps_dir.mkdir(parents=True)
         (maps_dir / "town_01.yaml").write_text("npcs: []\n")
 
-        cost = load_inn_cost(tmp_path, "town_01")
-        assert cost == 50
+        with pytest.raises(KeyError, match="inn.cost"):
+            load_inn_cost(tmp_path, "town_01")
 
     def test_load_shop_items(self, tmp_path):
         maps_dir = tmp_path / "data" / "maps"

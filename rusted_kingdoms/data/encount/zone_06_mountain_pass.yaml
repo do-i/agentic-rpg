@@ -5,20 +5,28 @@ density: 0.14
 entries:
   - formation: [iron_golem, griffon]
     weight: 30
+    chase_range: 0
   - formation: [griffon, griffon]
     weight: 25
+    chase_range: 0
   - formation: [iron_gargoyle, iron_gargoyle]
     weight: 20
+    chase_range: 0
   - formation: [iron_golem, frost_wolf]
     weight: 15
+    chase_range: 0
   - formation: [griffon, iron_gargoyle]
     weight: 15
+    chase_range: 0
   - formation: [frost_wolf]
     weight: 10
+    chase_range: 0
   - formation: [harpy]
     weight: 10
+    chase_range: 0
   - formation: [dark_knight]
     weight: 5
+    chase_range: 0
 
 boss:
   id: frost_dragon

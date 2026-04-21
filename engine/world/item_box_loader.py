@@ -55,8 +55,13 @@ class ItemBoxLoader:
         return [self._parse(entry) for entry in data.get("item_boxes", [])]
 
     def _parse(self, entry: dict) -> ItemBox:
-        box_id = entry.get("id", "unknown")
-        position = entry.get("position", [0, 0])
+        for key in ("id", "position"):
+            if key not in entry:
+                raise KeyError(
+                    f"item_box entry missing required field {key!r}: {entry!r}"
+                )
+        box_id = entry["id"]
+        position = entry["position"]
         present = entry.get("present", {}) or {}
         loot = entry.get("loot", {}) or {}
 

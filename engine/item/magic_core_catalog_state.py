@@ -16,14 +16,18 @@ class MagicCoreCatalogState:
 def build_mc_catalog(mc_data: list[dict]) -> MagicCoreCatalogState:
     """Build a MagicCoreCatalogState from loaded magic core YAML entries.
 
-    Each entry should have keys: id, name, exchange_rate.
+    Each entry must have keys: id, name, exchange_rate.
     Entries are expected pre-sorted by exchange_rate descending.
     """
     cat = MagicCoreCatalogState()
     for entry in mc_data:
         mc_id = entry["id"]
         name = entry["name"]
-        rate = entry.get("exchange_rate", 0)
+        if "exchange_rate" not in entry:
+            raise KeyError(
+                f"magic core {mc_id!r}: missing required field 'exchange_rate'"
+            )
+        rate = entry["exchange_rate"]
         cat.ids.add(mc_id)
         cat.order.append(mc_id)
         cat.labels[mc_id] = name

@@ -5,20 +5,28 @@ density: 0.15
 entries:
   - formation: [venom_spider, venom_spider]
     weight: 30
+    chase_range: 0
   - formation: [bone_archer, dark_skeleton]
     weight: 25
+    chase_range: 0
   - formation: [dark_skeleton, dark_skeleton]
     weight: 20
+    chase_range: 0
   - formation: [iron_gargoyle, iron_gargoyle]
     weight: 20
+    chase_range: 0
   - formation: [fungus_spore, fungus_spore]
     weight: 15
+    chase_range: 0
   - formation: [cave_golem]
     weight: 10
+    chase_range: 0
   - formation: [blood_bat, blood_bat]
     weight: 10
+    chase_range: 0
   - formation: [cave_golem, blood_bat]
     weight: 5
+    chase_range: 0
 
 boss:
   id: stone_dragon

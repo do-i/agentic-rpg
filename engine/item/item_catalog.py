@@ -57,6 +57,10 @@ class ItemCatalog:
                 item_id = entry.get("id")
                 if not item_id:
                     continue
+                if "name" not in entry:
+                    raise KeyError(
+                        f"item {item_id!r} ({path.name}): missing required field 'name'"
+                    )
                 item_type = entry.get("type", "")
                 explicit_tags = set(entry.get("tags", []))
                 default_tags = _TYPE_TAGS.get(item_type, set())
@@ -64,7 +68,7 @@ class ItemCatalog:
 
                 self._defs[item_id] = ItemDef(
                     id=item_id,
-                    name=entry.get("name", item_id.replace("_", " ").title()),
+                    name=entry["name"],
                     type=item_type,
                     tags=all_tags,
                     sell_price=entry.get("sell_price", 0) or 0,

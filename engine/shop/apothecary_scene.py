@@ -107,7 +107,7 @@ class ApothecaryScene(Scene):
         return True
 
     def _can_afford(self, recipe: dict) -> bool:
-        return self._holder.get().repository.gp >= recipe.get("gp_cost", 0)
+        return self._holder.get().repository.gp >= recipe["gp_cost"]
 
     def _can_craft(self, recipe: dict) -> bool:
         return self._is_unlocked(recipe) and self._has_inputs(recipe) and self._can_afford(recipe)
@@ -203,7 +203,7 @@ class ApothecaryScene(Scene):
 
     def _do_craft(self, recipe: dict) -> None:
         repo = self._holder.get().repository
-        gp_cost = recipe.get("gp_cost", 0)
+        gp_cost = recipe["gp_cost"]
         inputs = recipe.get("inputs", {})
 
         # consume GP

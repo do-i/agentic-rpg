@@ -134,7 +134,7 @@ class StatusScene(Scene):
             self._spell_sel = new
         elif key == pygame.K_RETURN:
             spell = spells[self._spell_sel]
-            cost = spell.get("mp_cost", 0)
+            cost = spell["mp_cost"]
             if cost > self._spell_caster.mp:
                 return
             target_type = spell.get("target", "single_ally")

@@ -33,9 +33,12 @@ class NpcLoader:
         return [self._parse_npc(entry) for entry in data.get("npcs", [])]
 
     def _parse_npc(self, entry: dict) -> Npc:
-        npc_id         = entry.get("id", "unknown")
+        for key in ("id", "position"):
+            if key not in entry:
+                raise KeyError(f"npc entry missing required field {key!r}: {entry!r}")
+        npc_id         = entry["id"]
         dialogue       = entry.get("dialogue", npc_id)
-        position       = entry.get("position", [0, 0])
+        position       = entry["position"]
         present        = entry.get("present", {}) or {}
         default_facing = entry.get("default_facing", "down")
         sprite_tsx     = entry.get("sprite")

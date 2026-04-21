@@ -184,7 +184,7 @@ class BattleScene(Scene):
         for ab in active.abilities:
             if ab.get("type") not in ("spell", "heal", "buff", "debuff", "utility"):
                 continue
-            cost = ab.get("mp_cost", 0)
+            cost = ab["mp_cost"]
             self._sub_items.append({
                 "label":    ab["name"],
                 "mp_cost":  cost,

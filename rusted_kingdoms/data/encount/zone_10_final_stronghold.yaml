@@ -5,20 +5,28 @@ density: 0.18
 entries:
   - formation: [ancient_golem, ancient_golem]
     weight: 30
+    chase_range: 0
   - formation: [lich, ancient_golem]
     weight: 25
+    chase_range: 0
   - formation: [chaos_elemental, lich]
     weight: 20
+    chase_range: 0
   - formation: [dark_elemental, dark_elemental]
     weight: 20
+    chase_range: 0
   - formation: [fallen_angel]
     weight: 15
+    chase_range: 0
   - formation: [specter]
     weight: 10
+    chase_range: 0
   - formation: [death_knight]
     weight: 10
+    chase_range: 0
   - formation: [specter, death_knight]
     weight: 5
+    chase_range: 0
 
 boss:
   id: dullahan

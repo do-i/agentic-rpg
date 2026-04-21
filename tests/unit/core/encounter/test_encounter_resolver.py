@@ -79,9 +79,9 @@ class TestLoadEncounterZone:
             "name": "Starting Forest",
             "density": 0.70,
             "entries": [
-                {"formation": ["wild_wolf"], "weight": 70},
-                {"formation": ["cave_bat"],  "weight": 30},
-                {"formation": ["venom_bat"], "weight": 100},
+                {"formation": ["wild_wolf"], "weight": 70, "chase_range": 0},
+                {"formation": ["cave_bat"],  "weight": 30, "chase_range": 0},
+                {"formation": ["venom_bat"], "weight": 100, "chase_range": 0},
             ],
         }
         p = tmp_path / "zone_01.yaml"
@@ -95,7 +95,7 @@ class TestLoadEncounterZone:
         data = {
             "id": "zone_01", "name": "Z", "density": 0.5,
             "spawn_frequency": 15.0,
-            "entries": [{"formation": ["wolf"], "weight": 100}],
+            "entries": [{"formation": ["wolf"], "weight": 100, "chase_range": 0}],
         }
         p = tmp_path / "z.yaml"
         p.write_text(yaml.dump(data))
@@ -107,19 +107,39 @@ class TestLoadEncounterZone:
             "id": "zone_01", "name": "Z", "density": 0.5,
             "entries": [
                 {"formation": ["wolf"], "weight": 100, "chase_range": 4},
-                {"formation": ["bat"], "weight": 50},
+                {"formation": ["bat"], "weight": 50, "chase_range": 0},
             ],
         }
         p = tmp_path / "z.yaml"
         p.write_text(yaml.dump(data))
         zone = load_encounter_zone(p)
         assert zone.entries.entries[0].chase_range == 4
-        assert zone.entries.entries[1].chase_range == 0  # default
+        assert zone.entries.entries[1].chase_range == 0
+
+    def test_missing_chase_range_raises(self, tmp_path):
+        data = {
+            "id": "zone_01", "name": "Z", "density": 0.5,
+            "entries": [{"formation": ["wolf"], "weight": 100}],
+        }
+        p = tmp_path / "z.yaml"
+        p.write_text(yaml.dump(data))
+        with pytest.raises(KeyError, match="chase_range"):
+            load_encounter_zone(p)
+
+    def test_missing_density_raises(self, tmp_path):
+        data = {
+            "id": "zone_01", "name": "Z",
+            "entries": [{"formation": ["wolf"], "weight": 100, "chase_range": 0}],
+        }
+        p = tmp_path / "z.yaml"
+        p.write_text(yaml.dump(data))
+        with pytest.raises(KeyError, match="density"):
+            load_encounter_zone(p)
 
     def test_loads_boss(self, tmp_path):
         data = {
             "id": "zone_01", "name": "Z", "density": 0.10,
-            "entries": [{"formation": ["wolf"], "weight": 100}],
+            "entries": [{"formation": ["wolf"], "weight": 100, "chase_range": 0}],
             "boss": {
                 "id": "forest_spider_giant",
                 "name": "Forest Spider (Giant)",
@@ -137,7 +157,7 @@ class TestLoadEncounterZone:
     def test_loads_barrier_enemies(self, tmp_path):
         data = {
             "id": "zone_04", "name": "Ruins", "density": 0.13,
-            "entries": [{"formation": ["ghost"], "weight": 100}],
+            "entries": [{"formation": ["ghost"], "weight": 100, "chase_range": 0}],
             "barrier_enemies": [
                 {"id": "ghost", "requires_item": "veil_breaker",
                  "blocked_message": "A mysterious force blocks your attack."},

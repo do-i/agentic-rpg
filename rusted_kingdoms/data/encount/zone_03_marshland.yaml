@@ -5,22 +5,31 @@ density: 0.13
 entries:
   - formation: [marsh_rat, marsh_rat]
     weight: 30
+    chase_range: 0
   - formation: [marsh_serpent]
     weight: 25
+    chase_range: 0
   - formation: [mandrake]
     weight: 20
+    chase_range: 0
   - formation: [water_elemental]
     weight: 15
+    chase_range: 0
   - formation: [mud_crab]
     weight: 10
+    chase_range: 0
   - formation: [marsh_frog, bog_leech]
     weight: 10
+    chase_range: 0
   - formation: [plague_rat, plague_rat]
     weight: 10
+    chase_range: 0
   - formation: [marsh_frog]
     weight: 10
+    chase_range: 0
   - formation: [bog_leech]
     weight: 10
+    chase_range: 0
 
 boss:
   id: mud_crab_king

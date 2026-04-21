@@ -5,22 +5,31 @@ density: 0.15
 entries:
   - formation: [shadow_wolf, shadow_wolf]
     weight: 30
+    chase_range: 0
   - formation: [phantom, phantom]
     weight: 25
+    chase_range: 0
   - formation: [wraith, shadow_wolf]
     weight: 20
+    chase_range: 0
   - formation: [rot_zombie, rot_zombie]
     weight: 20
+    chase_range: 0
   - formation: [cursed_gargoyle, rot_zombie]
     weight: 15
+    chase_range: 0
   - formation: [banshee]
     weight: 10
+    chase_range: 0
   - formation: [shadow_imp]
     weight: 10
+    chase_range: 0
   - formation: [blighted_treant]
     weight: 10
+    chase_range: 0
   - formation: [shadow_imp, blighted_treant]
     weight: 5
+    chase_range: 0
 
 boss:
   id: succubus

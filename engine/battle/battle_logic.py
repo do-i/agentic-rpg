@@ -73,10 +73,10 @@ def resolve_action(state: BattleState, effect_handler=None, repository=None,
             ab = action.get("data", {})
             spell_type = ab.get("type", "spell")
             coeff = ab.get("spell_coeff") or ab.get("heal_coeff") or 1.0
-            spell_name = ab.get("name", "Spell")
+            spell_name = ab["name"]
 
             if source and target == targets[0]:
-                source.mp = max(0, source.mp - ab.get("mp_cost", 0))
+                source.mp = max(0, source.mp - ab["mp_cost"])
 
             if spell_type == "heal" and ab.get("revive_hp_pct"):
                 if target.is_ko:

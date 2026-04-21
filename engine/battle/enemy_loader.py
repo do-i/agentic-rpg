@@ -35,13 +35,10 @@ class EnemyLoader:
         if not self._enemies_dir.exists():
             return
         for path in self._enemies_dir.glob("enemies_rank_*.yaml"):
-            try:
-                with open(path, "r") as f:
-                    for doc in yaml.safe_load_all(f):
-                        if isinstance(doc, dict) and "id" in doc:
-                            self._index[doc["id"]] = path
-            except Exception:
-                pass
+            with open(path, "r") as f:
+                for doc in yaml.safe_load_all(f):
+                    if isinstance(doc, dict) and "id" in doc:
+                        self._index[doc["id"]] = path
 
     # ── Load ──────────────────────────────────────────────────
 
@@ -49,35 +46,40 @@ class EnemyLoader:
         path = self._index.get(enemy_id)
         if not path:
             return None
-        try:
-            with open(path, "r") as f:
-                for doc in yaml.safe_load_all(f):
-                    if isinstance(doc, dict) and doc.get("id") == enemy_id:
-                        return self._build(doc)
-        except Exception:
-            pass
+        with open(path, "r") as f:
+            for doc in yaml.safe_load_all(f):
+                if isinstance(doc, dict) and doc.get("id") == enemy_id:
+                    return self._build(doc)
         return None
+
+    _REQUIRED = ("name", "hp", "atk", "def", "mres", "dex", "exp")
 
     def _build(self, data: dict) -> Combatant:
         enemy_id = data["id"]
+        missing = [k for k in self._REQUIRED if k not in data]
+        if missing:
+            raise KeyError(
+                f"enemy {enemy_id!r}: missing required fields "
+                f"{missing} (from rank YAML)"
+            )
         ai_data = self._load_ai_data(data)
 
         return Combatant(
             id=enemy_id,
-            name=data.get("name", enemy_id),
-            hp=data.get("hp", 10),
-            hp_max=data.get("hp", 10),
+            name=data["name"],
+            hp=data["hp"],
+            hp_max=data["hp"],
             mp=0,       # enemies don't manage MP — docs/10-Enemy.md
             mp_max=0,
-            atk=data.get("atk", 5),
-            def_=data.get("def", 3),
-            mres=data.get("mres", 2),
-            dex=data.get("dex", 8),
+            atk=data["atk"],
+            def_=data["def"],
+            mres=data["mres"],
+            dex=data["dex"],
             is_enemy=True,
-            boss=data.get("boss", False),
+            boss=data.get("boss", False),          # absent = not a boss
             sprite_id=enemy_id,
-            sprite_scale=data.get("sprite_scale", 100),
-            exp_yield=data.get("exp", 0),
+            sprite_scale=data.get("sprite_scale", 100),  # visual tweak only
+            exp_yield=data["exp"],
             drops=data.get("drops", {}),
             ai_data=ai_data,
         )

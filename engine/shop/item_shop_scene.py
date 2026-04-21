@@ -126,7 +126,7 @@ class ItemShopScene(Scene):
             self._clamp_scroll()
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             sel = self._selected()
-            if sel and sel.get("buy_price", 0) <= self._holder.get().repository.gp:
+            if sel and sel["buy_price"] <= self._holder.get().repository.gp:
                 if self._sfx_manager:
                     self._sfx_manager.play("confirm")
                 self._qty   = 1
@@ -141,7 +141,7 @@ class ItemShopScene(Scene):
         if not sel:
             self._state = "list"
             return
-        price  = sel.get("buy_price", 0)
+        price  = sel["buy_price"]
         owned  = self._owned_qty(sel["id"])
         repo   = self._holder.get().repository
         max_q  = repo.item_qty_cap - owned
@@ -187,7 +187,7 @@ class ItemShopScene(Scene):
         if not sel:
             return
         item_id = sel["id"]
-        price   = sel.get("buy_price", 0)
+        price   = sel["buy_price"]
         total   = price * self._qty
         repo    = self._holder.get().repository
 

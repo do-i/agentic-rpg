@@ -110,4 +110,4 @@ class EncounterManager:
                 data = yaml.safe_load(f)
             all_abs = data.get("abilities", [])
             self._class_cache[class_name] = all_abs
-        return [ab for ab in all_abs if ab.get("unlock_level", 1) <= level]
+        return [ab for ab in all_abs if ab["unlock_level"] <= level]
