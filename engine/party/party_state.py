@@ -40,27 +40,47 @@ class PartyState:
 
 # ── Stat calculation helpers ─────────────────────────────────
 
-# EXP formula constants — mirrors battle_rewards.py
-_CLASS_EXP_BASE: dict[str, int] = {
+# Default cap — authoritative value lives in the scenario balance YAML
+# and is injected into RewardCalculator at runtime.
+LEVEL_CAP = 100
+
+# Stat keys that have growth tables in class YAML
+GROWTH_STATS = ("str", "dex", "con", "int")
+
+# Fallback EXP curve for legacy callers that pass a bare class_name string
+# instead of a MemberState. Matches the values shipped in the rusted_kingdoms
+# scenario class YAMLs; production callers should pass MemberState so the
+# per-class curve is read directly from the scenario.
+_FALLBACK_EXP_BASE:   dict[str, int] = {
     "hero":     100,
     "warrior":  110,
     "sorcerer":  95,
     "cleric":    95,
     "rogue":     90,
 }
-_EXP_FACTOR = 2.0
-LEVEL_CAP   = 100
-
-# Stat keys that have growth tables in class YAML
-GROWTH_STATS = ("str", "dex", "con", "int")
+_FALLBACK_EXP_FACTOR = 2.0
 
 
-def calc_exp_next(class_name: str, level: int) -> int:
-    """EXP required to reach level+1. Returns 0 at level cap."""
-    if level >= LEVEL_CAP:
+def calc_exp_next(
+    member_or_class: MemberState | str,
+    level: int,
+    level_cap: int = LEVEL_CAP,
+) -> int:
+    """EXP required to reach level+1. Returns 0 at level cap.
+
+    Accepts either a MemberState (preferred — uses exp_base/exp_factor
+    cached from the class YAML) or a bare class_name string (legacy).
+    """
+    if level >= level_cap:
         return 0
-    base = _CLASS_EXP_BASE.get(class_name.lower(), 100)
-    return int(base * math.pow(level + 1, _EXP_FACTOR))
+    if isinstance(member_or_class, MemberState):
+        base   = member_or_class.exp_base   or _FALLBACK_EXP_BASE.get(
+            member_or_class.class_name.lower(), 100)
+        factor = member_or_class.exp_factor or _FALLBACK_EXP_FACTOR
+    else:
+        base   = _FALLBACK_EXP_BASE.get(member_or_class.lower(), 100)
+        factor = _FALLBACK_EXP_FACTOR
+    return int(base * math.pow(level + 1, factor))
 
 
 def stat_gain_at(member: MemberState, stat: str, level: int) -> int:
@@ -75,9 +95,9 @@ def stat_gain_at(member: MemberState, stat: str, level: int) -> int:
     return table[(level - 1) % len(table)]
 
 
-def recalc_exp_next(member: MemberState) -> None:
+def recalc_exp_next(member: MemberState, level_cap: int = LEVEL_CAP) -> None:
     """Call after any level or class_name change."""
-    member.exp_next = calc_exp_next(member.class_name, member.level)
+    member.exp_next = calc_exp_next(member, member.level, level_cap=level_cap)
 
 
 def exp_pct(member: MemberState) -> float:

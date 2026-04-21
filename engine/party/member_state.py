@@ -49,15 +49,20 @@ class MemberState:
         self.equipped    = equipped
         self.exp_next    = exp_next
 
-        # stat_growth loaded from class YAML — None until load_stat_growth() called
+        # stat_growth loaded from class YAML — None until load_class_data() called
         self.stat_growth: dict[str, list[int]] | None = None
+        self.exp_base:   int = 0
+        self.exp_factor: float = 0.0
 
-    def load_stat_growth(self, class_data: dict) -> None:
+    def load_class_data(self, class_data: dict) -> None:
         """
-        Cache stat_growth from the class YAML dict.
+        Cache class-derived data (stat_growth, exp curve) from the class YAML.
         Call at party join and after load_game.
         Expected class_data shape:
-            {"stat_growth": {"str": [...], "dex": [...], "con": [...], "int": [...]}}
+            {
+              "stat_growth": {"str": [...], "dex": [...], "con": [...], "int": [...]},
+              "exp_base": <int>, "exp_factor": <float>,
+            }
         """
         growth = class_data.get("stat_growth", {})
         self.stat_growth = {
@@ -66,6 +71,14 @@ class MemberState:
             "con": growth["con"],
             "int": growth["int"],
         }
+        if "exp_base" in class_data:
+            self.exp_base = int(class_data["exp_base"])
+        if "exp_factor" in class_data:
+            self.exp_factor = float(class_data["exp_factor"])
+
+    # Kept for backward compatibility — tests and legacy callers.
+    def load_stat_growth(self, class_data: dict) -> None:
+        self.load_class_data(class_data)
 
     def __repr__(self) -> str:
         tag = " [protagonist]" if self.protagonist else ""

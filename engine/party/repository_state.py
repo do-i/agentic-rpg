@@ -11,7 +11,8 @@ from engine.item.item_entry_state import ItemEntry
 if TYPE_CHECKING:
     from engine.item.item_catalog import ItemCatalog
 
-# Caps defined in design docs
+# Default caps — authoritative values live in the scenario balance YAML
+# and flow in through the `balance` parameter.
 GP_CAP = 8_000_000
 ITEM_QTY_CAP = 100
 MAX_TAGS_PER_ITEM = 5
@@ -23,10 +24,35 @@ class RepositoryState:
     Supports add/remove, sell, tag editing, lock, and tag-based filtering.
     """
 
-    def __init__(self, gp: int = 0, catalog: ItemCatalog | None = None) -> None:
+    def __init__(self, gp: int = 0, catalog: ItemCatalog | None = None,
+                 balance=None) -> None:
         self._gp: int = gp
         self._items: dict[str, ItemEntry] = {}
         self._catalog: ItemCatalog | None = catalog
+        self._gp_cap       = balance.gp_cap            if balance else GP_CAP
+        self._item_qty_cap = balance.item_qty_cap      if balance else ITEM_QTY_CAP
+        self._max_tags     = balance.max_tags_per_item if balance else MAX_TAGS_PER_ITEM
+
+    def configure_caps(self, balance) -> None:
+        """Apply cap values from BalanceData. Called post-construction when
+        the repo was made by GameState() before balance was available."""
+        self._gp_cap       = balance.gp_cap
+        self._item_qty_cap = balance.item_qty_cap
+        self._max_tags     = balance.max_tags_per_item
+
+    # ── Caps ──────────────────────────────────────────────────
+
+    @property
+    def gp_cap(self) -> int:
+        return self._gp_cap
+
+    @property
+    def item_qty_cap(self) -> int:
+        return self._item_qty_cap
+
+    @property
+    def max_tags_per_item(self) -> int:
+        return self._max_tags
 
     # ── GP ────────────────────────────────────────────────────
 
@@ -35,7 +61,7 @@ class RepositoryState:
         return self._gp
 
     def add_gp(self, amount: int) -> None:
-        self._gp = min(self._gp + amount, GP_CAP)
+        self._gp = min(self._gp + amount, self._gp_cap)
 
     def spend_gp(self, amount: int) -> bool:
         """Returns False if insufficient funds."""
@@ -58,7 +84,7 @@ class RepositoryState:
         """Add qty of item_id. Auto-populates metadata from catalog if set."""
         if item_id in self._items:
             self._items[item_id].qty = min(
-                self._items[item_id].qty + qty, ITEM_QTY_CAP
+                self._items[item_id].qty + qty, self._item_qty_cap
             )
         else:
             entry = ItemEntry(item_id, qty)
@@ -113,13 +139,13 @@ class RepositoryState:
     # ── Tags ──────────────────────────────────────────────────
 
     def add_tag(self, item_id: str, tag: str) -> bool:
-        """Add a tag to an item. Respects MAX_TAGS_PER_ITEM. Returns success."""
+        """Add a tag to an item. Respects max_tags_per_item. Returns success."""
         entry = self._items.get(item_id)
         if not entry:
             return False
         if tag in entry.tags:
             return True
-        if len(entry.tags) >= MAX_TAGS_PER_ITEM:
+        if len(entry.tags) >= self._max_tags:
             return False
         entry.tags.add(tag)
         return True

@@ -10,7 +10,6 @@ from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
-from engine.party.repository_state import ITEM_QTY_CAP
 from engine.world.sprite_sheet import SpriteSheet, Direction
 from engine.common.item_selection_view import ItemSelectionView
 from engine.shop.item_shop_renderer import ItemShopRenderer, SPRITE_SIZE, VISIBLE_ROWS
@@ -144,8 +143,9 @@ class ItemShopScene(Scene):
             return
         price  = sel.get("buy_price", 0)
         owned  = self._owned_qty(sel["id"])
-        max_q  = ITEM_QTY_CAP - owned
-        gp     = self._holder.get().repository.gp
+        repo   = self._holder.get().repository
+        max_q  = repo.item_qty_cap - owned
+        gp     = repo.gp
         if price > 0:
             max_q = min(max_q, gp // price)
         max_q = max(max_q, 1)

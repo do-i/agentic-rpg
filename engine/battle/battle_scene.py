@@ -54,6 +54,7 @@ class BattleScene(Scene):
         rng: PseudoRandom | None = None,
         screen_width: int = 1280,
         screen_height: int = 766,
+        balance=None,
     ) -> None:
         self._state = battle_state
         self._scene_manager = scene_manager
@@ -63,7 +64,8 @@ class BattleScene(Scene):
         self._effect_handler = effect_handler
         self._game_state_manager = game_state_manager
         self._rng = rng
-        self._reward_calc = RewardCalculator(rng)
+        self._balance = balance
+        self._reward_calc = RewardCalculator(rng, balance)
         self._screen_width = screen_width
         self._renderer = BattleRenderer(Path(scenario_path), screen_width, screen_height)
         self._bgm_manager = bgm_manager
@@ -383,7 +385,7 @@ class BattleScene(Scene):
             self._cmd_sel = 0
 
     def _attempt_run(self) -> None:
-        success, msg = attempt_flee(self._state, self._holder, self._rng)
+        success, msg = attempt_flee(self._state, self._holder, self._rng, self._balance)
         if self._sfx_manager:
             self._sfx_manager.play("flee" if success else "denied")
         if success:

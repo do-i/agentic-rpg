@@ -246,6 +246,15 @@ def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict)
         else:
             visit(p)
 
+    # manifest → refs.balance
+    balance_ref = manifest.get("refs", {}).get("balance")
+    if balance_ref:
+        balance_path = root / balance_ref
+        if not balance_path.exists():
+            err(f"[manifest] refs.balance not found: {balance_ref}")
+        else:
+            visit(balance_path)
+
     # manifest → refs.party
     party_ref = manifest.get("refs", {}).get("party")
     if party_ref:

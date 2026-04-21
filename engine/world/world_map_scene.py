@@ -80,6 +80,9 @@ class WorldMapScene(Scene):
         screen_height: int = 766,
         tile_size: int = 32,
         fps: int = 60,
+        player_speed: int = 5,
+        debug_collision: bool = False,
+        balance=None,
         recorder=None,
         rng=None,
     ) -> None:
@@ -88,6 +91,9 @@ class WorldMapScene(Scene):
         self._tile_size = tile_size
         self._fps = fps
         self._smooth_collision = smooth_collision
+        self._player_speed = player_speed
+        self._debug_collision = debug_collision
+        self._balance = balance
         self._holder = holder
         self._loader = loader
         self._tile_map_factory = tile_map_factory
@@ -161,7 +167,12 @@ class WorldMapScene(Scene):
             smooth_collision=self._smooth_collision,
             tile_size=self._tile_size,
             fps=self._fps,
+            player_speed=self._player_speed,
+            debug_collision=self._debug_collision,
         )
+
+        if self._balance is not None:
+            state.repository.configure_caps(self._balance)
 
         map_yaml_path = scenario_path / "data" / "maps" / f"{map_id}.yaml"
         self._npcs = self._npc_loader.load_from_map(map_yaml_path)
@@ -217,6 +228,7 @@ class WorldMapScene(Scene):
             rng=self._rng,
             tile_size=self._tile_size,
             boss_tile=self._tile_map.boss_spawn_tile,
+            balance=self._balance,
         )
 
     def _load_protagonist_sprite(self, manifest: dict, scenario_path) -> SpriteSheet | None:
@@ -493,6 +505,7 @@ class WorldMapScene(Scene):
             bgm_manager=self._bgm_manager,
             sfx_manager=self._sfx_manager,
             rng=self._rng,
+            balance=self._balance,
         )
         self._scene_manager.switch(scene)
 

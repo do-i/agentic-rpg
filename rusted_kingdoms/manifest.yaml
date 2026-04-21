@@ -53,5 +53,6 @@ refs:
   enemies:    data/enemies/
   encount:    data/encount/
   recipe:     data/recipe/
+  balance:    data/balance.yaml
   assets:     assets/
   tmx:        assets/maps/

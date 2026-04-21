@@ -70,9 +70,9 @@ def from_new_game(
         con=char_data["con"],
         int_=char_data["int"],
         equipped=char_data.get("equipped", {}),
-        exp_next=calc_exp_next(class_name, 1),
     )
-    member.load_stat_growth(class_data)
+    member.load_class_data(class_data)
+    member.exp_next = calc_exp_next(member, member.level)
     state.party.add_member(member)
 
     start = manifest["start"]
@@ -103,10 +103,6 @@ def from_save(
         class_name = m["class"]
         class_data = _load_class_data(classes_dir, class_name)
 
-        exp_next = m.get("exp_next")
-        if exp_next is None:
-            exp_next = calc_exp_next(class_name, m["level"])
-
         member = MemberState(
             member_id=m["id"],
             name=m["name"],
@@ -114,7 +110,6 @@ def from_save(
             class_name=class_name,
             level=m["level"],
             exp=m["exp"],
-            exp_next=exp_next,
             hp=m["hp"],
             hp_max=m["hp_max"],
             mp=m["mp"],
@@ -125,7 +120,9 @@ def from_save(
             int_=m["int"],
             equipped=m["equipped"],
         )
-        member.load_stat_growth(class_data)
+        member.load_class_data(class_data)
+        exp_next = m.get("exp_next")
+        member.exp_next = exp_next if exp_next is not None else calc_exp_next(member, member.level)
         state.party.add_member(member)
 
     # -- Repository — GP + items --

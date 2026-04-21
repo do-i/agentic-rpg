@@ -8,9 +8,12 @@ import math
 
 from engine.battle.combatant import Combatant
 from engine.util.pseudo_random import PseudoRandom
-from engine.party.party_state import PartyState
+from engine.party.party_state import (
+    PartyState, calc_exp_next, stat_gain_at, recalc_exp_next,
+    _FALLBACK_EXP_BASE, _FALLBACK_EXP_FACTOR,
+)
 from engine.party.member_state import MemberState
-from engine.party.party_state import calc_exp_next, stat_gain_at, recalc_exp_next
+from engine.settings.balance_data import BalanceData
 from engine.battle.battle_rewards_data import (
     LevelUpResult,
     MemberExpResult,
@@ -26,24 +29,21 @@ __all__ = [
     "LootResult",
     "BattleRewards",
     "RewardCalculator",
+    "EXP_CAP",
+    "LEVEL_CAP",
 ]
 
+# Default caps — authoritative values come from the scenario balance YAML
+# and flow into RewardCalculator via DI.
 EXP_CAP   = 1_000_000
 LEVEL_CAP = 100
 
-CLASS_EXP_BASE = {
-    "hero":     100,
-    "warrior":  110,
-    "sorcerer":  95,
-    "cleric":    95,
-    "rogue":     90,
-}
-EXP_FACTOR = 2.0
-
 
 def exp_required(class_name: str, level: int) -> int:
-    base = CLASS_EXP_BASE.get(class_name.lower(), 100)
-    return int(base * math.pow(level, EXP_FACTOR))
+    """Legacy helper that accepts a bare class_name. Uses the fallback
+    per-class EXP base + factor from party_state (kept for tests)."""
+    base = _FALLBACK_EXP_BASE.get(class_name.lower(), 100)
+    return int(base * math.pow(level, _FALLBACK_EXP_FACTOR))
 
 
 class RewardCalculator:
@@ -51,8 +51,10 @@ class RewardCalculator:
     Computes EXP split, applies level-ups with stat_growth, resolves loot.
     """
 
-    def __init__(self, rng: PseudoRandom) -> None:
-        self._rng = rng
+    def __init__(self, rng: PseudoRandom, balance: BalanceData | None = None) -> None:
+        self._rng       = rng
+        self._level_cap = balance.level_cap if balance else LEVEL_CAP
+        self._exp_cap   = balance.exp_cap   if balance else EXP_CAP
 
     def calculate(
         self,
@@ -91,14 +93,14 @@ class RewardCalculator:
     # ── EXP & level-up ───────────────────────────────────────
 
     def _apply_exp(self, member: MemberState, amount: int) -> list[LevelUpResult]:
-        if member.level >= LEVEL_CAP:
+        if member.level >= self._level_cap:
             return []
 
-        member.exp = min(member.exp + amount, EXP_CAP)
+        member.exp = min(member.exp + amount, self._exp_cap)
         level_ups  = []
 
-        while member.level < LEVEL_CAP:
-            needed = exp_required(member.class_name, member.level + 1)
+        while member.level < self._level_cap:
+            needed = self._exp_required(member, member.level + 1)
             if member.exp < needed:
                 break
 
@@ -126,7 +128,7 @@ class RewardCalculator:
             member.hp = member.hp_max   # full restore on level-up
             member.mp = member.mp_max
 
-            recalc_exp_next(member)
+            recalc_exp_next(member, level_cap=self._level_cap)
 
             level_ups.append(LevelUpResult(
                 member_id=member.id,
@@ -142,6 +144,14 @@ class RewardCalculator:
             ))
 
         return level_ups
+
+    def _exp_required(self, member: MemberState, level: int) -> int:
+        """EXP required to *reach* the given level. Uses the member's
+        per-class exp_base/exp_factor if loaded, else the fallback table."""
+        base   = member.exp_base   or _FALLBACK_EXP_BASE.get(
+            member.class_name.lower(), 100)
+        factor = member.exp_factor or _FALLBACK_EXP_FACTOR
+        return int(base * math.pow(level, factor))
 
     # ── Loot ─────────────────────────────────────────────────
 

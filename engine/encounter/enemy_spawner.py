@@ -23,7 +23,8 @@ if TYPE_CHECKING:
     from engine.party.party_state import PartyState
     from engine.world.collision import CollisionMap
 
-# Modifier constants
+# Fallback modifier values — authoritative values live in the scenario
+# balance YAML and flow in through the `balance` parameter.
 ROGUE_CHASE_REDUCTION      = 2   # tiles
 STEALTH_CLOAK_REDUCTION    = 3   # tiles
 LURE_CHARM_INTERVAL_MULT   = 0.5 # halves the spawn interval
@@ -52,6 +53,7 @@ class EnemySpawner:
         rng: PseudoRandom,
         tile_size: int = 32,
         boss_tile: dict | None = None,    # {x, y} boss spawn position from TMX boss_enemy layer
+        balance=None,                     # BalanceData — spawner modifier values
     ) -> None:
         self._zone          = zone
         self._spawn_tiles   = spawn_tiles
@@ -60,6 +62,9 @@ class EnemySpawner:
         self._scenario_path = scenario_path
         self._rng           = rng
         self._tile_size     = tile_size
+        self._rogue_chase_reduction    = balance.rogue_chase_reduction    if balance else ROGUE_CHASE_REDUCTION
+        self._stealth_cloak_reduction  = balance.stealth_cloak_reduction  if balance else STEALTH_CLOAK_REDUCTION
+        self._lure_charm_interval_mult = balance.lure_charm_interval_mult if balance else LURE_CHARM_INTERVAL_MULT
 
         # Resolve base interval (map > zone > global)
         if map_interval is not None:
@@ -162,12 +167,12 @@ class EnemySpawner:
 
         for member in party.members:
             if member.class_name.lower() == "rogue":
-                chase_reduction += ROGUE_CHASE_REDUCTION
+                chase_reduction += self._rogue_chase_reduction
                 acc = member.equipped.get("accessory", "")
                 if acc == "stealth_cloak":
-                    chase_reduction += STEALTH_CLOAK_REDUCTION
+                    chase_reduction += self._stealth_cloak_reduction
                 elif acc == "lure_charm":
-                    interval_mult = min(interval_mult, LURE_CHARM_INTERVAL_MULT)
+                    interval_mult = min(interval_mult, self._lure_charm_interval_mult)
 
         return interval_mult, chase_reduction
 

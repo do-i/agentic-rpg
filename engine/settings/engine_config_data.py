@@ -29,6 +29,7 @@ class EngineConfigData:
     bgm_enabled:                  bool
     sfx_enabled:                  bool
     debug_party:                  bool
+    debug_collision:              bool
     enemy_spawn_global_interval:  float
     # fonts
     font_sizes: dict[str, int]
@@ -48,7 +49,9 @@ class EngineConfigData:
         audio         = data.get("audio") or {}
         bgm_enabled   = audio.get("bgm_enabled")
         sfx_enabled   = audio.get("sfx_enabled")
-        debug_party   = (data.get("debug")       or {}).get("party", False)
+        debug_cfg     = data.get("debug") or {}
+        debug_party   = debug_cfg.get("party", False)
+        debug_coll    = debug_cfg.get("collision", False)
         global_interval = (data.get("enemy_spawn") or {}).get("global_interval", 30.0)
         fonts_cfg     = data.get("fonts") or {}
         font_sizes    = fonts_cfg.get("sizes") or {}
@@ -87,6 +90,7 @@ class EngineConfigData:
             bgm_enabled=bool(bgm_enabled),
             sfx_enabled=bool(sfx_enabled),
             debug_party=bool(debug_party),
+            debug_collision=bool(debug_coll),
             enemy_spawn_global_interval=float(global_interval),
             font_sizes=dict(font_sizes),
         )

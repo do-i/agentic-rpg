@@ -3,6 +3,7 @@
 from injector import Module, singleton, provider
 
 from engine.settings.engine_config_data import EngineConfigData
+from engine.settings.balance_data import BalanceData
 from engine.util.frame_clock import FrameClock
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
@@ -65,6 +66,11 @@ class AppModule(Module):
     @singleton
     def provide_manifest_loader(self) -> ManifestLoader:
         return ManifestLoader(self._scenario_path)
+
+    @provider
+    @singleton
+    def provide_balance_data(self, loader: ManifestLoader) -> BalanceData:
+        return BalanceData.load(loader.scenario_path, loader.load())
 
     @provider
     @singleton
@@ -180,6 +186,7 @@ class AppModule(Module):
     def provide_scene_registry(
         self,
         settings: EngineConfigData,
+        balance: BalanceData,
         loader: ManifestLoader,
         scene_manager: SceneManager,
         holder: GameStateHolder,
@@ -234,6 +241,9 @@ class AppModule(Module):
                 screen_height=settings.screen_height,
                 tile_size=settings.tile_size,
                 fps=settings.fps,
+                player_speed=balance.player_speed,
+                debug_collision=settings.debug_collision,
+                balance=balance,
                 recorder=recorder,
                 rng=rng,
             ))

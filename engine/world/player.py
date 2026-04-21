@@ -6,7 +6,11 @@ from engine.world.collision import CollisionMap
 from engine.world.sprite_sheet import Direction, SpriteSheet
 from engine.world.animation_controller import AnimationController
 
-PLAYER_SPEED  = 5
+# Fallback defaults — authoritative values live in scenario balance YAML
+# / engine settings; injected via Player.__init__.
+PLAYER_SPEED    = 5
+DEBUG_COLLISION = False
+
 PLAYER_WIDTH  = 64
 PLAYER_HEIGHT = 64
 
@@ -15,7 +19,6 @@ COLLISION_H = 18
 COLLISION_OFFSET_X = (PLAYER_WIDTH  - COLLISION_W) // 2   # 22
 COLLISION_OFFSET_Y =  PLAYER_HEIGHT - COLLISION_H  - 5    # 41
 
-DEBUG_COLLISION = True
 PLAYER_COLOR    = (220, 80, 80)
 
 DIRECTION_MAP: dict[int, tuple[int, int]] = {
@@ -80,9 +83,13 @@ class Player:
         smooth_collision: bool = True,
         tile_size: int = 32,
         fps: int = 60,
+        player_speed: int = PLAYER_SPEED,
+        debug_collision: bool = DEBUG_COLLISION,
     ) -> None:
         self._tile_size = tile_size
         self._fps = fps
+        self._speed = player_speed
+        self._debug_collision = debug_collision
         ts = tile_size
         self._x: float = float(
             start.x * ts + ts // 2 - COLLISION_OFFSET_X - COLLISION_W // 2
@@ -149,11 +156,11 @@ class Player:
         # normalise diagonal speed
         if dx != 0 and dy != 0:
             factor = 0.7071
-            dx_move = dx * factor * PLAYER_SPEED
-            dy_move = dy * factor * PLAYER_SPEED
+            dx_move = dx * factor * self._speed
+            dy_move = dy * factor * self._speed
         else:
-            dx_move = dx * PLAYER_SPEED
-            dy_move = dy * PLAYER_SPEED
+            dx_move = dx * self._speed
+            dy_move = dy * self._speed
 
         npc_rects = npc_rects or []
 
@@ -232,7 +239,7 @@ class Player:
             pygame.draw.rect(screen, PLAYER_COLOR,
                              (screen_x, screen_y, PLAYER_WIDTH, PLAYER_HEIGHT))
 
-        if DEBUG_COLLISION:
+        if self._debug_collision:
             col_x = int(self._x) + COLLISION_OFFSET_X - offset_x
             col_y = int(self._y) + COLLISION_OFFSET_Y - offset_y
             pygame.draw.rect(screen, (255, 0, 0),

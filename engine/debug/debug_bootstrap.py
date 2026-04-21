@@ -62,7 +62,7 @@ def inject_full_party(state: GameState, scenario_path: Path) -> None:
             con=char_data["con"],
             int_=char_data["int"],
             equipped=char_data["equipped"],
-            exp_next=calc_exp_next(class_name, char_data["level"]),
         )
-        member.load_stat_growth(class_data)
+        member.load_class_data(class_data)
+        member.exp_next = calc_exp_next(member, member.level)
         state.party.add_member(member)

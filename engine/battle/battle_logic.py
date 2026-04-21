@@ -203,27 +203,34 @@ def check_result(state: BattleState) -> str:
 
 
 # ── Flee ─────────────────────────────────────────────────────
+# Fallback defaults — authoritative values live in the scenario balance YAML
+# and flow in through the `balance` parameter.
 FLEE_BASE_CHANCE = 0.30
 FLEE_ROGUE_DEX_BONUS = 0.02
 
 
-def attempt_flee(state: BattleState, holder, rng: PseudoRandom) -> tuple[bool, str]:
+def attempt_flee(state: BattleState, holder, rng: PseudoRandom,
+                 balance=None) -> tuple[bool, str]:
     """Attempt to flee from battle.
 
     Returns (success, message).
     Boss battles always block flee.
-    Formula: 30% base + 2% per Rogue DEX in the party.
+    Formula: base_chance + dex_bonus per Rogue DEX in the party.
+    Values sourced from balance.yaml when `balance` is supplied.
     """
     # Boss battles: cannot flee
     if any(e.boss for e in state.enemies):
         return False, "Can't escape from a boss!"
 
+    base_chance    = balance.flee_base_chance     if balance else FLEE_BASE_CHANCE
+    rogue_dex_bonus = balance.flee_rogue_dex_bonus if balance else FLEE_ROGUE_DEX_BONUS
+
     # Calculate flee chance
-    chance = FLEE_BASE_CHANCE
+    chance = base_chance
     party = holder.get().party
     for member in party.members:
         if member.class_name.lower() == "rogue":
-            chance += FLEE_ROGUE_DEX_BONUS * member.dex
+            chance += rogue_dex_bonus * member.dex
 
     chance = min(chance, 1.0)
 
