@@ -41,18 +41,22 @@ class EngineConfigData:
 
         display       = data.get("display") or {}
         tiles         = data.get("tiles")   or {}
+        screen_width  = display.get("screen_width")
+        screen_height = display.get("screen_height")
+        fps           = display.get("fps")
+        tile_size     = tiles.get("tile_size")
         saves_dir     = (data.get("saves")    or {}).get("dir")
         text_speed    = (data.get("dialogue") or {}).get("text_speed")
-        smooth        = (data.get("movement")    or {}).get("smooth_collision", True)
-        confirm_large = (data.get("shop")        or {}).get("mc_exchange_confirm_large", True)
-        use_aoe       = (data.get("item")        or {}).get("use_aoe_confirm", True)
+        smooth        = (data.get("movement") or {}).get("smooth_collision")
+        confirm_large = (data.get("shop")     or {}).get("mc_exchange_confirm_large")
+        use_aoe       = (data.get("item")     or {}).get("use_aoe_confirm")
         audio         = data.get("audio") or {}
         bgm_enabled   = audio.get("bgm_enabled")
         sfx_enabled   = audio.get("sfx_enabled")
         debug_cfg     = data.get("debug") or {}
         debug_party   = debug_cfg.get("party", False)
         debug_coll    = debug_cfg.get("collision", False)
-        global_interval = (data.get("enemy_spawn") or {}).get("global_interval", 30.0)
+        global_interval = (data.get("enemy_spawn") or {}).get("global_interval")
         fonts_cfg     = data.get("fonts") or {}
         font_sizes    = fonts_cfg.get("sizes") or {}
         missing_sizes = [k for k in _REQUIRED_FONT_SIZES if k not in font_sizes]
@@ -64,24 +68,40 @@ class EngineConfigData:
             )
 
         missing = []
+        if screen_width is None:
+            missing.append("display.screen_width")
+        if screen_height is None:
+            missing.append("display.screen_height")
+        if fps is None:
+            missing.append("display.fps")
+        if tile_size is None:
+            missing.append("tiles.tile_size")
         if saves_dir is None:
             missing.append("saves.dir")
         if text_speed is None:
             missing.append("dialogue.text_speed")
+        if smooth is None:
+            missing.append("movement.smooth_collision")
+        if confirm_large is None:
+            missing.append("shop.mc_exchange_confirm_large")
+        if use_aoe is None:
+            missing.append("item.use_aoe_confirm")
         if bgm_enabled is None:
             missing.append("audio.bgm_enabled")
         if sfx_enabled is None:
             missing.append("audio.sfx_enabled")
+        if global_interval is None:
+            missing.append("enemy_spawn.global_interval")
         if missing:
             raise KeyError(
                 f"Missing required settings in {path}: {', '.join(missing)}"
             )
 
         return cls(
-            screen_width=display.get("screen_width",  1280),
-            screen_height=display.get("screen_height", 766),
-            fps=display.get("fps", 60),
-            tile_size=tiles.get("tile_size", 32),
+            screen_width=screen_width,
+            screen_height=screen_height,
+            fps=fps,
+            tile_size=tile_size,
             saves_dir=saves_dir,
             text_speed=text_speed,
             smooth_collision=bool(smooth),
