@@ -15,7 +15,7 @@ class NpcLoader:
     Loads sprite sheet from TSX path if provided.
     """
 
-    def __init__(self, scenario_path: Path | None = None, tile_size: int = 32, rng: PseudoRandom | None = None) -> None:
+    def __init__(self, tile_size: int, scenario_path: Path | None = None, rng: PseudoRandom | None = None) -> None:
         self._scenario_path = scenario_path
         self._tile_size = tile_size
         self._rng = rng

@@ -42,20 +42,20 @@ TS = 32
 
 class TestCollisionMapInit:
     def test_empty_map_has_no_blocked_tiles(self):
-        c = CollisionMap(make_empty_tmx())
+        c = CollisionMap(make_empty_tmx(), TS)
         assert not c.is_blocked(0, 0)
 
     def test_blocked_tile_is_detected(self):
-        c = CollisionMap(make_tmx({(3, 5)}))
+        c = CollisionMap(make_tmx({(3, 5)}), TS)
         assert c.is_blocked(3, 5)
 
     def test_unblocked_tile_is_not_blocked(self):
-        c = CollisionMap(make_tmx({(3, 5)}))
+        c = CollisionMap(make_tmx({(3, 5)}), TS)
         assert not c.is_blocked(4, 5)
 
     def test_multiple_blocked_tiles(self):
         blocked = {(1, 1), (2, 2), (5, 8)}
-        c = CollisionMap(make_tmx(blocked))
+        c = CollisionMap(make_tmx(blocked), TS)
         for tx, ty in blocked:
             assert c.is_blocked(tx, ty)
 
@@ -64,19 +64,19 @@ class TestCollisionMapInit:
 
 class TestIsBlockedPx:
     def test_pixel_maps_to_correct_tile(self):
-        c = CollisionMap(make_tmx({(2, 3)}))
+        c = CollisionMap(make_tmx({(2, 3)}), TS)
         assert c.is_blocked_px(2 * TS, 3 * TS)
 
     def test_pixel_inside_blocked_tile(self):
-        c = CollisionMap(make_tmx({(2, 3)}))
+        c = CollisionMap(make_tmx({(2, 3)}), TS)
         assert c.is_blocked_px(2 * TS + 10, 3 * TS + 10)
 
     def test_pixel_outside_blocked_tile(self):
-        c = CollisionMap(make_tmx({(2, 3)}))
+        c = CollisionMap(make_tmx({(2, 3)}), TS)
         assert not c.is_blocked_px(3 * TS, 3 * TS)
 
     def test_pixel_zero_zero_on_passable(self):
-        c = CollisionMap(make_empty_tmx())
+        c = CollisionMap(make_empty_tmx(), TS)
         assert not c.is_blocked_px(0, 0)
 
 
@@ -84,28 +84,28 @@ class TestIsBlockedPx:
 
 class TestIsRectBlocked:
     def test_rect_fully_on_passable(self):
-        c = CollisionMap(make_empty_tmx())
+        c = CollisionMap(make_empty_tmx(), TS)
         assert not c.is_rect_blocked(0, 0, 24, 24)
 
     def test_top_left_corner_blocked(self):
-        c = CollisionMap(make_tmx({(0, 0)}))
+        c = CollisionMap(make_tmx({(0, 0)}), TS)
         assert c.is_rect_blocked(0, 0, 24, 24)
 
     def test_top_right_corner_blocked(self):
-        c = CollisionMap(make_tmx({(1, 0)}))
+        c = CollisionMap(make_tmx({(1, 0)}), TS)
         # rect from px=16 width=24 → right edge at px=39 → tile 1
         assert c.is_rect_blocked(16, 0, 24, 24)
 
     def test_bottom_left_corner_blocked(self):
-        c = CollisionMap(make_tmx({(0, 1)}))
+        c = CollisionMap(make_tmx({(0, 1)}), TS)
         assert c.is_rect_blocked(0, 16, 24, 24)
 
     def test_bottom_right_corner_blocked(self):
-        c = CollisionMap(make_tmx({(1, 1)}))
+        c = CollisionMap(make_tmx({(1, 1)}), TS)
         assert c.is_rect_blocked(16, 16, 24, 24)
 
     def test_rect_entirely_clear(self):
-        c = CollisionMap(make_tmx({(5, 5)}))
+        c = CollisionMap(make_tmx({(5, 5)}), TS)
         assert not c.is_rect_blocked(0, 0, 24, 24)
 
 
@@ -120,7 +120,7 @@ class TestLayerFiltering:
         tmx = MagicMock(spec=pytmx.TiledMap)
         tmx.layers = [layer]
 
-        c = CollisionMap(tmx)
+        c = CollisionMap(tmx, TS)
         assert not c.is_blocked(0, 0)
 
     def test_non_tile_layer_ignored(self):
@@ -130,5 +130,5 @@ class TestLayerFiltering:
         tmx = MagicMock(spec=pytmx.TiledMap)
         tmx.layers = [obj_layer]
 
-        c = CollisionMap(tmx)
+        c = CollisionMap(tmx, TS)
         assert not c.is_blocked(0, 0)

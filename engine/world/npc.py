@@ -74,6 +74,8 @@ class Npc:
         dialogue_id: str,
         tile_x: int,
         tile_y: int,
+        tile_size: int,
+        *,
         present_requires: list[str] | None = None,
         present_excludes: list[str] | None = None,
         sprite_sheet: SpriteSheet | None = None,
@@ -81,7 +83,6 @@ class Npc:
         anim_mode: str = "still",
         anim_speed: float = 1.0,
         wander_range: int = 2,
-        tile_size: int = 32,
         rng: PseudoRandom | None = None,
     ) -> None:
         self._rng = rng

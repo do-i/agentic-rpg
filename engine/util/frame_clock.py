@@ -6,7 +6,7 @@ import pygame
 # Time-based game mechanics — status effect duration, poison tick, tent/inn recovery — need a separate concept:
 # GameClock — tracks in-game time, independent of frame rate.
 class FrameClock:
-    def __init__(self, fps: int = 60) -> None:
+    def __init__(self, fps: int) -> None:
         self._fps = fps
         self._clock = pygame.time.Clock()
         self._delta: float = 0.0

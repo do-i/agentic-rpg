@@ -498,6 +498,8 @@ class WorldMapScene(Scene):
             scene_manager=self._scene_manager,
             registry=self._registry,
             holder=self._holder,
+            screen_width=self._screen_width,
+            screen_height=self._screen_height,
             scenario_path=str(self._loader.scenario_path),
             boss_flag=boss_flag,
             effect_handler=self._effect_handler,

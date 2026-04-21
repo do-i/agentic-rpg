@@ -45,6 +45,9 @@ class BattleScene(Scene):
         scene_manager: SceneManager,
         registry: SceneRegistry,
         holder: GameStateHolder,
+        screen_width: int,
+        screen_height: int,
+        *,
         scenario_path: str = "",
         boss_flag: str = "",
         effect_handler: ItemEffectHandler | None = None,
@@ -52,8 +55,6 @@ class BattleScene(Scene):
         bgm_manager: BgmManager | None = None,
         sfx_manager: SfxManager | None = None,
         rng: PseudoRandom | None = None,
-        screen_width: int = 1280,
-        screen_height: int = 766,
         balance=None,
     ) -> None:
         self._state = battle_state
@@ -331,8 +332,9 @@ class BattleScene(Scene):
         repo = self._holder.get().repository
         pending = dict(self._state.pending_action) if self._state.pending_action else {}
         alive_before = {e.name for e in self._state.enemies if not e.is_ko}
-        msg = resolve_action(self._state, self._effect_handler, repo,
-                             self._screen_width, self._rng, fx=self._fx)
+        msg = resolve_action(self._state, self._screen_width,
+                             effect_handler=self._effect_handler, repository=repo,
+                             rng=self._rng, fx=self._fx)
         if self._sfx_manager:
             self._sfx_manager.play_battle_action(pending)
             newly_ko = [e for e in self._state.enemies if e.is_ko and e.name in alive_before]
@@ -346,8 +348,9 @@ class BattleScene(Scene):
         self._state.phase = BattlePhase.RESOLVE
 
     def _do_enemy_turn(self) -> None:
-        msg = resolve_enemy_turn(self._state, self._sfx_manager,
-                                 self._screen_width, self._rng, fx=self._fx)
+        msg = resolve_enemy_turn(self._state, self._screen_width,
+                                 sfx_manager=self._sfx_manager,
+                                 rng=self._rng, fx=self._fx)
         if msg:
             self._enter_resolve(msg, is_enemy=True)
         else:

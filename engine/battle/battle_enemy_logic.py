@@ -12,8 +12,9 @@ from engine.battle.battle_logic import float_pos, enemy_rect_size, C_DMG_PHYS, C
 from engine.util.pseudo_random import PseudoRandom
 
 
-def resolve_enemy_turn(state: BattleState, sfx_manager=None,
-                       screen_width: int = 1280, rng: PseudoRandom | None = None,
+def resolve_enemy_turn(state: BattleState, screen_width: int,
+                       sfx_manager=None,
+                       rng: PseudoRandom | None = None,
                        fx: BattleFx | None = None) -> str:
     """Execute the current enemy's turn using AI data. Returns message."""
     active = state.active

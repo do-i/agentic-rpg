@@ -27,7 +27,7 @@ def enemy_rect_size(enemy: Combatant) -> tuple[int, int]:
 
 
 def float_pos(state: BattleState, combatant: Combatant,
-              screen_width: int = 1280) -> tuple[int, int]:
+              screen_width: int) -> tuple[int, int]:
     """Screen position for a damage float over the given combatant."""
     if combatant.is_enemy:
         n = len(state.enemies)
@@ -43,8 +43,9 @@ def float_pos(state: BattleState, combatant: Combatant,
         return party_w - 60, ENEMY_AREA_H + 8 + idx * (ROW_H + 2) + 5
 
 
-def resolve_action(state: BattleState, effect_handler=None, repository=None,
-                   screen_width: int = 1280, rng: PseudoRandom | None = None,
+def resolve_action(state: BattleState, screen_width: int,
+                   effect_handler=None, repository=None,
+                   rng: PseudoRandom | None = None,
                    fx: BattleFx | None = None) -> str:
     """Execute the pending action. Returns the message to display."""
     action = state.pending_action

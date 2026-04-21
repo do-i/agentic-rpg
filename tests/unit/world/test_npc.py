@@ -26,6 +26,7 @@ def make_npc(
         dialogue_id="test_dialogue",
         tile_x=tile_x,
         tile_y=tile_y,
+        tile_size=TS,
         present_requires=requires or [],
         present_excludes=excludes or [],
         sprite_sheet=sprite_sheet,

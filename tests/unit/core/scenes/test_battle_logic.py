@@ -23,6 +23,8 @@ from engine.battle.battle_enemy_logic import (
 )
 from engine.battle.constants import ENEMY_SIZES
 
+SCREEN_W = 1280
+
 
 def make_combatant(name="Hero", hp=100, hp_max=100, mp=50, mp_max=50,
                    atk=20, def_=5, mres=10, dex=10, is_enemy=False,
@@ -52,7 +54,7 @@ class TestResolveAction:
         state = make_battle_state([hero], [goblin])
         state.pending_action = {"type": "attack", "source": hero, "targets": [goblin]}
 
-        msg = resolve_action(state)
+        msg = resolve_action(state, SCREEN_W)
 
         assert goblin.hp == 35  # 50 - (20-5)
         assert "attacked" in msg
@@ -64,7 +66,7 @@ class TestResolveAction:
         state = make_battle_state([hero], [goblin])
         state.pending_action = {"type": "attack", "source": hero, "targets": [goblin]}
 
-        resolve_action(state)
+        resolve_action(state, SCREEN_W)
 
         assert goblin.hp == 49  # min 1 damage
 
@@ -78,7 +80,7 @@ class TestResolveAction:
             "type": "spell", "data": spell, "source": hero, "targets": [ally],
         }
 
-        msg = resolve_action(state)
+        msg = resolve_action(state, SCREEN_W)
 
         assert ally.hp == 90  # 50 + int(20 * 2.0)
         assert hero.mp == 20  # 30 - 10
@@ -94,7 +96,7 @@ class TestResolveAction:
             "type": "spell", "data": spell, "source": hero, "targets": [dead],
         }
 
-        msg = resolve_action(state)
+        msg = resolve_action(state, SCREEN_W)
 
         assert dead.hp == 50  # 100 * 0.5
         assert not dead.is_ko
@@ -110,7 +112,7 @@ class TestResolveAction:
             "type": "spell", "data": spell, "source": hero, "targets": [poisoned],
         }
 
-        msg = resolve_action(state)
+        msg = resolve_action(state, SCREEN_W)
 
         assert not poisoned.status_effects
         assert "cured" in msg.lower()
@@ -124,7 +126,7 @@ class TestResolveAction:
             "type": "spell", "data": spell, "source": hero, "targets": [goblin],
         }
 
-        resolve_action(state)
+        resolve_action(state, SCREEN_W)
 
         # dmg = max(1, int(15 * 2.0) - 3) = 27
         assert goblin.hp == 23
@@ -138,7 +140,7 @@ class TestResolveAction:
             "type": "item", "data": {"id": "potion"}, "source": hero, "targets": [ally],
         }
 
-        msg = resolve_action(state)
+        msg = resolve_action(state, SCREEN_W)
 
         assert ally.hp == 150
         assert "Healed" in msg
@@ -147,7 +149,7 @@ class TestResolveAction:
         state = make_battle_state()
         state.pending_action = None
 
-        msg = resolve_action(state)
+        msg = resolve_action(state, SCREEN_W)
 
         assert msg == ""
 
@@ -160,7 +162,7 @@ class TestResolveAction:
             "type": "spell", "data": spell, "source": hero, "targets": [ally],
         }
 
-        msg = resolve_action(state)
+        msg = resolve_action(state, SCREEN_W)
 
         assert "Protect" in msg
 
@@ -173,7 +175,7 @@ class TestResolveAction:
             "type": "spell", "data": spell, "source": hero, "targets": [goblin],
         }
 
-        msg = resolve_action(state)
+        msg = resolve_action(state, SCREEN_W)
 
         assert "Slow" in msg
 
@@ -189,7 +191,7 @@ class TestResolveEnemyTurn:
         # force goblin active
         state.active_index = state.turn_order.index(goblin)
 
-        msg = resolve_enemy_turn(state, rng=_rng)
+        msg = resolve_enemy_turn(state, SCREEN_W, rng=_rng)
 
         assert hero.hp == 90  # 100 - (15-5)
         assert "attacked" in msg
@@ -200,7 +202,7 @@ class TestResolveEnemyTurn:
         state.build_turn_order()
         state.active_index = state.turn_order.index(hero)
 
-        msg = resolve_enemy_turn(state, rng=_rng)
+        msg = resolve_enemy_turn(state, SCREEN_W, rng=_rng)
 
         assert msg == ""
 
@@ -212,7 +214,7 @@ class TestResolveEnemyTurn:
         state.build_turn_order()
         state.active_index = state.turn_order.index(goblin)
 
-        msg = resolve_enemy_turn(state, rng=_rng)
+        msg = resolve_enemy_turn(state, SCREEN_W, rng=_rng)
 
         assert msg == ""
 
@@ -380,7 +382,7 @@ class TestFloatPos:
         goblin = make_combatant("Goblin", is_enemy=True)
         state = make_battle_state([make_combatant("Hero")], [goblin])
 
-        x, y = float_pos(state, goblin)
+        x, y = float_pos(state, goblin, SCREEN_W)
 
         assert isinstance(x, int)
         assert isinstance(y, int)
@@ -389,7 +391,7 @@ class TestFloatPos:
         hero = make_combatant("Hero")
         state = make_battle_state([hero], [make_combatant("Goblin", is_enemy=True)])
 
-        x, y = float_pos(state, hero)
+        x, y = float_pos(state, hero, SCREEN_W)
 
         assert isinstance(x, int)
         assert isinstance(y, int)
@@ -420,7 +422,7 @@ class TestResolveActionItems:
             "type": "item", "data": {"id": "potion"}, "source": hero, "targets": [ally],
         }
 
-        msg = resolve_action(state, effect_handler=handler, repository=repo)
+        msg = resolve_action(state, SCREEN_W, effect_handler=handler, repository=repo)
 
         assert ally.hp == 150
         assert "Potion" in msg
@@ -440,7 +442,7 @@ class TestResolveActionItems:
             "type": "item", "data": {"id": "hi_potion"}, "source": hero, "targets": [ally],
         }
 
-        resolve_action(state, effect_handler=handler, repository=repo)
+        resolve_action(state, SCREEN_W, effect_handler=handler, repository=repo)
 
         assert ally.hp == 300  # capped at max
         assert repo.get_item("hi_potion").qty == 2
@@ -460,7 +462,7 @@ class TestResolveActionItems:
             "type": "item", "data": {"id": "antidote"}, "source": hero, "targets": [ally],
         }
 
-        msg = resolve_action(state, effect_handler=handler, repository=repo)
+        msg = resolve_action(state, SCREEN_W, effect_handler=handler, repository=repo)
 
         assert not ally.has_status(StatusEffect.POISON)
         assert "Cured" in msg or "Antidote" in msg
@@ -481,7 +483,7 @@ class TestResolveActionItems:
             "type": "item", "data": {"id": "life_crystal"}, "source": hero, "targets": [dead],
         }
 
-        msg = resolve_action(state, effect_handler=handler, repository=repo)
+        msg = resolve_action(state, SCREEN_W, effect_handler=handler, repository=repo)
 
         assert dead.hp == 200  # 100% of hp_max
         assert not dead.is_ko
@@ -505,7 +507,7 @@ class TestResolveActionItems:
             "type": "item", "data": {"id": "phoenix_wing"}, "source": hero, "targets": [dead],
         }
 
-        resolve_action(state, effect_handler=handler, repository=repo)
+        resolve_action(state, SCREEN_W, effect_handler=handler, repository=repo)
 
         assert dead.hp == 30  # 30% of 100
         assert not dead.is_ko
@@ -524,7 +526,7 @@ class TestResolveActionItems:
             "type": "item", "data": {"id": "ether"}, "source": hero, "targets": [hero],
         }
 
-        resolve_action(state, effect_handler=handler, repository=repo)
+        resolve_action(state, SCREEN_W, effect_handler=handler, repository=repo)
 
         assert hero.mp == 60
         assert repo.get_item("ether").qty == 1
@@ -542,7 +544,7 @@ class TestResolveActionItems:
             "type": "item", "data": {"id": "elixir"}, "source": hero, "targets": [hero],
         }
 
-        resolve_action(state, effect_handler=handler, repository=repo)
+        resolve_action(state, SCREEN_W, effect_handler=handler, repository=repo)
 
         assert hero.hp == 100
         assert hero.mp == 50
@@ -562,7 +564,7 @@ class TestResolveActionItems:
             "type": "item", "data": {"id": "potion"}, "source": hero, "targets": [ally],
         }
 
-        resolve_action(state, effect_handler=handler, repository=repo)
+        resolve_action(state, SCREEN_W, effect_handler=handler, repository=repo)
 
         assert repo.get_item("potion") is None
         assert len(repo.items) == 0
@@ -822,7 +824,7 @@ class TestResolveEnemyTurnWithAI:
         state.build_turn_order()
         state.active_index = state.turn_order.index(enemy)
 
-        msg = resolve_enemy_turn(state, rng=_rng)
+        msg = resolve_enemy_turn(state, SCREEN_W, rng=_rng)
 
         assert "Fire Bolt" in msg
         assert hero.hp < 100
@@ -840,7 +842,7 @@ class TestResolveEnemyTurnWithAI:
         state.build_turn_order()
         state.active_index = state.turn_order.index(enemy)
 
-        msg = resolve_enemy_turn(state, rng=_rng)
+        msg = resolve_enemy_turn(state, SCREEN_W, rng=_rng)
 
         assert hero1.hp < 100
         assert hero2.hp < 100
@@ -853,7 +855,7 @@ class TestResolveEnemyTurnWithAI:
         state.build_turn_order()
         state.active_index = state.turn_order.index(enemy)
 
-        msg = resolve_enemy_turn(state, rng=_rng)
+        msg = resolve_enemy_turn(state, SCREEN_W, rng=_rng)
 
         assert hero.hp == 90
         assert "attacked" in msg

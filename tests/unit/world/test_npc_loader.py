@@ -16,12 +16,12 @@ _rng = PseudoRandom(seed=0)
 
 @pytest.fixture
 def loader() -> NpcLoader:
-    return NpcLoader(rng=_rng)
+    return NpcLoader(tile_size=TS, rng=_rng)
 
 
 @pytest.fixture
 def loader_with_path(tmp_path) -> NpcLoader:
-    return NpcLoader(scenario_path=tmp_path, rng=_rng)
+    return NpcLoader(tile_size=TS, scenario_path=tmp_path, rng=_rng)
 
 
 def write_map(tmp_path: Path, data: dict) -> Path:

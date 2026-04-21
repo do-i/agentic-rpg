@@ -12,7 +12,7 @@ class CollisionMap:
     Any non-zero tile GID in that layer = impassable.
     """
 
-    def __init__(self, tmx_data: pytmx.TiledMap, tile_size: int = 32) -> None:
+    def __init__(self, tmx_data: pytmx.TiledMap, tile_size: int) -> None:
         self._tile_size = tile_size
         self._blocked: set[tuple[int, int]] = set()
         self._load(tmx_data)
