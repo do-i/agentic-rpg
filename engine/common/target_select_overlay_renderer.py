@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import pygame
+from engine.common.color_constants import HP_LOW_THRESHOLD
 from engine.common.font_provider import get_fonts
 from engine.party.member_state import MemberState
 
@@ -27,8 +28,6 @@ C_WARN_BG     = (40, 30, 15)
 C_WARN_BDR    = (200, 160, 60)
 C_WARN_TXT    = (230, 200, 100)
 C_HINT        = (100, 100, 118)
-
-HP_LOW_THRESHOLD = 0.35
 
 # ── Layout ────────────────────────────────────────────────────
 MODAL_W    = 640

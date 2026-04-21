@@ -5,19 +5,21 @@ from engine.world.position_data import Position
 from engine.world.collision import CollisionMap
 from engine.world.sprite_sheet import Direction, SpriteSheet
 from engine.world.animation_controller import AnimationController
+from engine.world.character_sprite_constants import (
+    CHAR_SPRITE_SIZE,
+    COLLISION_W,
+    COLLISION_H,
+    COLLISION_OFFSET_X,
+    COLLISION_OFFSET_Y,
+)
 
 # Fallback defaults — authoritative values live in scenario balance YAML
 # / engine settings; injected via Player.__init__.
 PLAYER_SPEED    = 5
 DEBUG_COLLISION = False
 
-PLAYER_WIDTH  = 64
-PLAYER_HEIGHT = 64
-
-COLLISION_W = 20
-COLLISION_H = 18
-COLLISION_OFFSET_X = (PLAYER_WIDTH  - COLLISION_W) // 2   # 22
-COLLISION_OFFSET_Y =  PLAYER_HEIGHT - COLLISION_H  - 5    # 41
+PLAYER_WIDTH  = CHAR_SPRITE_SIZE
+PLAYER_HEIGHT = CHAR_SPRITE_SIZE
 
 PLAYER_COLOR    = (220, 80, 80)
 

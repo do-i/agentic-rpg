@@ -9,30 +9,26 @@ from engine.common.font_provider import get_fonts
 from engine.common.flag_state import FlagState
 from engine.world.sprite_sheet import SpriteSheet, Direction
 from engine.util.pseudo_random import PseudoRandom
+from engine.world.character_sprite_constants import (
+    CHAR_SPRITE_SIZE as NPC_SIZE,
+    COLLISION_W as NPC_COLLISION_W,
+    COLLISION_H as NPC_COLLISION_H,
+    COLLISION_OFFSET_X as NPC_COLLISION_OFFSET_X,
+    COLLISION_OFFSET_Y as NPC_COLLISION_OFFSET_Y,
+    IDLE_FRAME,
+    WALK_START,
+    WALK_END,
+    BASE_FRAME_DUR,
+    WANDER_PAUSE_MIN,
+    WANDER_PAUSE_MAX,
+)
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from engine.world.collision import CollisionMap
 
-NPC_SIZE = 64
 NPC_COLOR = (80, 160, 220)
 INDICATOR_COLOR = (255, 220, 50)
-
-# Animation frames
-IDLE_FRAME     = 0
-WALK_START     = 1
-WALK_END       = 8
-BASE_FRAME_DUR = 0.15  # seconds per frame at speed 1.0
-
-# Wander timing
-WANDER_PAUSE_MIN = 1.0   # seconds between moves
-WANDER_PAUSE_MAX = 3.5
-
-# Collision rect — same footprint convention as player
-NPC_COLLISION_W = 20
-NPC_COLLISION_H = 18
-NPC_COLLISION_OFFSET_X = (NPC_SIZE - NPC_COLLISION_W) // 2   # 22
-NPC_COLLISION_OFFSET_Y = NPC_SIZE - NPC_COLLISION_H - 5      # 41
 
 _FACING_MAP = {
     "up":    Direction.UP,

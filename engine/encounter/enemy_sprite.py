@@ -12,29 +12,26 @@ from pathlib import Path
 
 from engine.world.sprite_sheet import SpriteSheet, Direction
 from engine.util.pseudo_random import PseudoRandom
+from engine.world.character_sprite_constants import (
+    CHAR_SPRITE_SIZE as ENEMY_SIZE,
+    COLLISION_W,
+    COLLISION_H,
+    COLLISION_OFFSET_X,
+    COLLISION_OFFSET_Y,
+    IDLE_FRAME,
+    WALK_START,
+    WALK_END,
+    BASE_FRAME_DUR,
+    WANDER_PAUSE_MIN,
+    WANDER_PAUSE_MAX,
+)
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from engine.world.collision import CollisionMap
 
-# Sprite/render constants — identical footprint to Npc
-ENEMY_SIZE            = 64
 ENEMY_COLOR           = (200, 60, 60)   # red placeholder rect
 ENEMY_BOSS_COLOR      = (160, 0, 200)   # purple for bosses
-COLLISION_W           = 20
-COLLISION_H           = 18
-COLLISION_OFFSET_X    = (ENEMY_SIZE - COLLISION_W) // 2   # 22
-COLLISION_OFFSET_Y    = ENEMY_SIZE - COLLISION_H - 5      # 41
-
-# Animation
-IDLE_FRAME     = 0
-WALK_START     = 1
-WALK_END       = 8
-BASE_FRAME_DUR = 0.15   # seconds per frame
-
-# Wander timing
-WANDER_PAUSE_MIN = 1.0
-WANDER_PAUSE_MAX = 3.5
 
 _DIR_DX = {Direction.LEFT: -1, Direction.RIGHT: 1, Direction.UP: 0,  Direction.DOWN: 0}
 _DIR_DY = {Direction.UP:   -1, Direction.DOWN:  1, Direction.LEFT: 0, Direction.RIGHT: 0}

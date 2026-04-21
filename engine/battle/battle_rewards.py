@@ -10,7 +10,7 @@ from engine.battle.combatant import Combatant
 from engine.util.pseudo_random import PseudoRandom
 from engine.party.party_state import (
     PartyState, calc_exp_next, stat_gain_at, recalc_exp_next,
-    _FALLBACK_EXP_BASE, _FALLBACK_EXP_FACTOR,
+    _FALLBACK_EXP_BASE, _FALLBACK_EXP_FACTOR, LEVEL_CAP,
 )
 from engine.party.member_state import MemberState
 from engine.settings.balance_data import BalanceData
@@ -33,10 +33,10 @@ __all__ = [
     "LEVEL_CAP",
 ]
 
-# Default caps — authoritative values come from the scenario balance YAML
-# and flow into RewardCalculator via DI.
-EXP_CAP   = 1_000_000
-LEVEL_CAP = 100
+# Default EXP cap — authoritative value comes from the scenario balance YAML
+# and flows into RewardCalculator via DI. LEVEL_CAP is re-exported from
+# party_state to keep it single-sourced.
+EXP_CAP = 1_000_000
 
 
 def exp_required(class_name: str, level: int) -> int:
