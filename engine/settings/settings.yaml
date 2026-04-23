@@ -24,8 +24,8 @@ item:
   use_aoe_confirm: true   # confirm before applying all_alive items (Tent, Rest Capsule)
 
 audio:
-  bgm_enabled: true   # enable/disable background music
-  sfx_enabled: true   # enable/disable sound effects
+  bgm_enabled: false   # enable/disable background music
+  sfx_enabled: false   # enable/disable sound effects
 
 fonts:
   sizes:

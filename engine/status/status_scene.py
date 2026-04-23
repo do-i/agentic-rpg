@@ -56,6 +56,9 @@ class StatusScene(Scene):
     def _fonts_ready(self) -> bool:
         return self._renderer.fonts_ready
 
+    def set_return_scene(self, name: str) -> None:
+        self._return_scene_name = name
+
     # ── Events ────────────────────────────────────────────────
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:

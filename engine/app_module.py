@@ -10,6 +10,7 @@ from engine.common.scene.scene_registry import SceneRegistry
 from engine.game import Game
 from engine.title.boot_scene import BootScene
 from engine.item.item_scene import ItemScene
+from engine.field_menu.field_menu_scene import FieldMenuScene
 from engine.title.title_scene import TitleScene
 from engine.title.name_entry_scene import NameEntryScene
 from engine.world.world_map_scene import WorldMapScene
@@ -264,6 +265,15 @@ class AppModule(Module):
                 effect_handler=effect_handler,
                 mc_catalog=mc_catalog,
                 use_aoe_confirm=settings.use_aoe_confirm,
+                sfx_manager=sfx_manager,
+            ))
+        registry.register_factory("field_menu",
+            lambda: FieldMenuScene(
+                holder=holder,
+                scene_manager=scene_manager,
+                registry=registry,
+                game_state_manager=game_state_manager,
+                return_scene_name="world_map",
                 sfx_manager=sfx_manager,
             ))
 

@@ -295,6 +295,13 @@ class WorldMapScene(Scene):
                     self._try_interact()
                 elif event.key == pygame.K_i:
                     self._scene_manager.switch(self._registry.get("items"))
+                elif event.key == pygame.K_m:
+                    self._open_field_menu()
+
+    def _open_field_menu(self) -> None:
+        state = self._holder.get()
+        state.map.set_position(self._player.tile_position)
+        self._scene_manager.switch(self._registry.get("field_menu"))
 
     def _open_save_modal(self) -> None:
         state = self._holder.get()

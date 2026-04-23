@@ -113,6 +113,9 @@ class ItemScene(Scene):
     def _close(self) -> None:
         self._scene_manager.switch(self._registry.get(self._return_scene_name))
 
+    def set_return_scene(self, name: str) -> None:
+        self._return_scene_name = name
+
     def _handle_tab_key(self, key: int) -> None:
         if key == pygame.K_LEFT:
             self._tab_index = (self._tab_index - 1) % len(TABS)
