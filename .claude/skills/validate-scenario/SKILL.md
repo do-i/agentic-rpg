@@ -8,6 +8,25 @@ version: 0.1.0
 
 Run both checks in sequence and interpret the results.
 
+## Constraints
+
+The engine treats YAML as the single source of truth for scenario data. Validation should surface, not mask, data problems.
+
+- **Never recommend fixing a validator failure by adding a Python-side fallback.** If a field is missing, the fix is in the YAML.
+- **Never hardcode method parameter defaults** when patching loader code in response to a failure. Every tunable value must be required — by the schema (raise on missing) or by explicit caller/DI wiring.
+- **When a required value is missing or `None`, raise `ValueError` naming the YAML file, property path, and an example.** Prefer this over a `.get("key", <fallback>)` quiet path. Example:
+
+  ```python
+  if zone.get("density") is None:
+      raise ValueError(
+          f"Encounter zone {zone_id!r} is missing 'density'. "
+          f"Define it in rusted_kingdoms/data/encount/{zone_id}.yaml under density "
+          f"(e.g., 0.15 for a 15% step-encounter chance)."
+      )
+  ```
+
+If validation is "passing" but you spot a `.get("key", <default>)` or a method-signature default that shadows YAML-owned data, call it out as a latent bug even if the validator is silent about it.
+
 ## Commands
 
 ```sh
