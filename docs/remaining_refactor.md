@@ -2,11 +2,7 @@
 
 - Create more TMX (map files)
 - attribute each tile (for AI agent)
-- change encounter system enemy is visible
-- find a auto pygame test method
-- enemy does not chase player
 - update SKILLs: constraints: Do not hardcode any method parameter default values. Any values come from yaml files should be explicitly defined in yaml. If value is None, raise error with helpful message where the value should be define with example. yaml file name, propery name possible value.
-- refactor codebase to remove all hardcoded default values
 
 ## Battle Hit Effects — Follow-ups
 
