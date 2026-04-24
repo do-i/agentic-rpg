@@ -11,6 +11,7 @@ from engine.game import Game
 from engine.title.boot_scene import BootScene
 from engine.item.item_scene import ItemScene
 from engine.field_menu.field_menu_scene import FieldMenuScene
+from engine.equipment.equip_scene import EquipScene
 from engine.title.title_scene import TitleScene
 from engine.title.name_entry_scene import NameEntryScene
 from engine.world.world_map_scene import WorldMapScene
@@ -155,10 +156,15 @@ class AppModule(Module):
     def provide_encounter_manager(
         self,
         loader: ManifestLoader,
+        item_catalog: ItemCatalog,
     ) -> EncounterManager:
         encount_dir = loader.scenario_path / "data" / "encount"
         classes_dir = loader.scenario_path / "data" / "classes"
-        return EncounterManager(encount_dir=encount_dir, classes_dir=classes_dir)
+        return EncounterManager(
+            encount_dir=encount_dir,
+            classes_dir=classes_dir,
+            item_catalog=item_catalog,
+        )
 
     @provider
     @singleton
@@ -273,6 +279,15 @@ class AppModule(Module):
                 scene_manager=scene_manager,
                 registry=registry,
                 game_state_manager=game_state_manager,
+                return_scene_name="world_map",
+                sfx_manager=sfx_manager,
+            ))
+        registry.register_factory("equip",
+            lambda: EquipScene(
+                holder=holder,
+                scene_manager=scene_manager,
+                registry=registry,
+                catalog=item_catalog,
                 return_scene_name="world_map",
                 sfx_manager=sfx_manager,
             ))

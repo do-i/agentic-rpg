@@ -29,9 +29,9 @@ int: 5
 # int: 20
 equipped:
   weapon: oak_staff
-  shield: none
-  helmet: circlet_silver
-  body: robe_silk
-  accessory: none
+  shield: ""
+  helmet: silver_circlet
+  body: cloth_robe
+  accessory: ""
 abilities_unlocked: [fire_bolt, aqua_shot]
 status_effects: []

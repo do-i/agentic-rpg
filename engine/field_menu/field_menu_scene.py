@@ -70,7 +70,7 @@ class FieldMenuScene(Scene):
         self._entries: list[MenuEntry] = [
             MenuEntry("Items",     KIND_SCENE_SWITCH, "items"),
             MenuEntry("Status",    KIND_SCENE_SWITCH, "status"),
-            MenuEntry("Equipment", KIND_DISABLED,     None),
+            MenuEntry("Equipment", KIND_SCENE_SWITCH, "equip"),
             MenuEntry("Spells",    KIND_DISABLED,     None),
             MenuEntry("Save",      KIND_OVERLAY,      "save"),
         ]

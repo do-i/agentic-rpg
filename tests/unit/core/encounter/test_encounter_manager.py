@@ -151,6 +151,45 @@ class TestFillParty:
         assert combatant.name == "Aric"
         assert not combatant.is_enemy
 
+    def test_combatant_stats_use_base_when_no_catalog(self, manager):
+        member = make_member()   # str_=10 dex=8 con=9 int_=6
+        party = MagicMock()
+        party.members = [member]
+        battle_state = MagicMock()
+        manager.fill_party(battle_state, party)
+        c = battle_state.party[0]
+        assert c.atk == 10 and c.dex == 8 and c.def_ == 9 and c.mres == 6
+
+    def test_combatant_stats_include_equipment_bonuses(self, encount_dir, classes_dir, tmp_path):
+        from engine.item.item_catalog import ItemCatalog
+        items_dir = tmp_path / "items"
+        items_dir.mkdir()
+        (items_dir / "weapons.yaml").write_text(
+            "- id: iron_sword\n"
+            "  name: Iron Sword\n"
+            "  type: weapon\n"
+            "  slot_category: sword\n"
+            "  stats: {str: 4, dex: -1}\n"
+            "  buy_price: 350\n"
+            "  sell_price: 175\n"
+        )
+        catalog = ItemCatalog(items_dir)
+        mgr = EncounterManager(
+            encount_dir=encount_dir, classes_dir=classes_dir, item_catalog=catalog,
+        )
+        member = make_member()       # str=10 dex=8 con=9 int=6
+        member.equipment_slots = {"weapon": ["sword"]}
+        member.equipped = {"weapon": "iron_sword"}
+
+        party = MagicMock(); party.members = [member]
+        battle_state = MagicMock()
+        mgr.fill_party(battle_state, party)
+        c = battle_state.party[0]
+        assert c.atk == 14      # 10 + 4
+        assert c.dex == 7       # 8 - 1
+        assert c.def_ == 9      # unchanged
+        assert c.mres == 6      # unchanged
+
 
 # ── _load_class_abilities ─────────────────────────────────────
 

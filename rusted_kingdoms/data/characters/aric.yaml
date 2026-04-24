@@ -17,10 +17,10 @@ dex: 17
 con: 28
 int: 5
 equipped:
-  weapon: short_sword
-  shield: wooden_shield
-  helmet: leather_cap
+  weapon: iron_sword
+  shield: buckler
+  helmet: leather_hat
   body: leather_vest
-  accessory: none
+  accessory: ""
 abilities_unlocked: []
 status_effects: []

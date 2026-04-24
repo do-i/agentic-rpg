@@ -53,15 +53,19 @@ class MemberState:
         self.stat_growth: dict[str, list[int]] | None = None
         self.exp_base:   int = 0
         self.exp_factor: float = 0.0
+        # Class's equipment_slots: {slot_name: [allowed_categories]} (or ["all"]).
+        # Empty dict means load_class_data hasn't run yet.
+        self.equipment_slots: dict[str, list[str]] = {}
 
     def load_class_data(self, class_data: dict) -> None:
         """
-        Cache class-derived data (stat_growth, exp curve) from the class YAML.
+        Cache class-derived data (stat_growth, exp curve, equipment_slots) from the class YAML.
         Call at party join and after load_game.
         Expected class_data shape:
             {
               "stat_growth": {"str": [...], "dex": [...], "con": [...], "int": [...]},
               "exp_base": <int>, "exp_factor": <float>,
+              "equipment_slots": {"weapon": [...], "shield": [...], ...}
             }
         """
         growth = class_data.get("stat_growth", {})
@@ -75,6 +79,8 @@ class MemberState:
             self.exp_base = int(class_data["exp_base"])
         if "exp_factor" in class_data:
             self.exp_factor = float(class_data["exp_factor"])
+        slots = class_data.get("equipment_slots") or {}
+        self.equipment_slots = {str(k): list(v or []) for k, v in slots.items()}
 
     # Kept for backward compatibility — tests and legacy callers.
     def load_stat_growth(self, class_data: dict) -> None:

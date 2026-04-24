@@ -18,8 +18,8 @@ int: 9
 equipped:
   weapon: oak_staff
   shield: buckler
-  helmet: circlet_wood
-  body: robe_linen
-  accessory: none
+  helmet: silver_circlet
+  body: cloth_robe
+  accessory: ""
 abilities_unlocked: [heal]
 status_effects: []

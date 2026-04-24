@@ -29,9 +29,9 @@ int: 5
 # int: 5
 equipped:
   weapon: iron_sword
-  shield: iron_shield
+  shield: kite_shield
   helmet: iron_helm
   body: chainmail
-  accessory: none
+  accessory: ""
 abilities_unlocked: [shield_bash, taunt]
 status_effects: []

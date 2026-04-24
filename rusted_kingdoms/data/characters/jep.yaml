@@ -18,9 +18,9 @@ int: 5
 equipped:
   weapon: dagger
   shield: buckler
-  helmet: hood_leather
+  helmet: cloth_hood
   body: leather_vest
-  accessory: none
+  accessory: ""
 abilities_unlocked: []
 status_effects: []
 
