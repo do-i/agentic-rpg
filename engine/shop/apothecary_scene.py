@@ -109,7 +109,20 @@ class ApothecaryScene(Scene):
     def _can_afford(self, recipe: dict) -> bool:
         return self._holder.get().repository.gp >= recipe["gp_cost"]
 
+    def _is_duplicate_blocked(self, recipe: dict) -> bool:
+        """Unique-output recipes (e.g. key items like veil_breaker) are blocked
+        once the player already owns the output — prevents crafting duplicates
+        while still letting the recipe stay visible in the list."""
+        if not recipe.get("unique_output"):
+            return False
+        out_id = recipe.get("output", {}).get("item")
+        if not out_id:
+            return False
+        return self._owned_qty(out_id) >= 1
+
     def _can_craft(self, recipe: dict) -> bool:
+        if self._is_duplicate_blocked(recipe):
+            return False
         return self._is_unlocked(recipe) and self._has_inputs(recipe) and self._can_afford(recipe)
 
     def _selected(self) -> dict | None:
@@ -170,10 +183,12 @@ class ApothecaryScene(Scene):
             self._clamp_scroll()
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             sel = self._selected()
-            if sel and self._is_unlocked(sel):
+            if sel and self._is_unlocked(sel) and not self._is_duplicate_blocked(sel):
                 if self._sfx_manager:
                     self._sfx_manager.play("confirm")
                 self._state = "detail"
+            elif self._sfx_manager:
+                self._sfx_manager.play("cancel")
         elif key == pygame.K_ESCAPE:
             if self._sfx_manager:
                 self._sfx_manager.play("cancel")
@@ -262,4 +277,5 @@ class ApothecaryScene(Scene):
             mc_name=self._mc_name,
             owned_qty=self._owned_qty,
             selected=self._selected(),
+            is_duplicate_blocked=self._is_duplicate_blocked,
         )

@@ -82,6 +82,7 @@ class ApothecaryRenderer:
         mc_name: Callable[[str], str],
         owned_qty: Callable[[str], int],
         selected: dict | None,
+        is_duplicate_blocked: Callable[[dict], bool] | None = None,
         icons: dict[str, pygame.Surface] | None = None,
     ) -> None:
         if not self._fonts_ready:
@@ -119,8 +120,12 @@ class ApothecaryRenderer:
             empty = self._font_hint.render("No recipes available.", True, C_DIM)
             screen.blit(empty, (mx + PAD, list_y + 16))
         else:
+            dup_blocked = is_duplicate_blocked or (lambda _r: False)
             rows = [
-                self._build_row(r, is_unlocked, has_inputs, can_afford, item_name, icons or {})
+                self._build_row(
+                    r, is_unlocked, has_inputs, can_afford, item_name,
+                    icons or {}, dup_blocked,
+                )
                 for r in recipes
             ]
             self._view.render(screen, list_rect, rows, list_sel, scroll, active=(state == "list"))
@@ -151,9 +156,11 @@ class ApothecaryRenderer:
         can_afford: Callable[[dict], bool],
         item_name: Callable[[str], str],
         icons: dict[str, pygame.Surface],
+        is_duplicate_blocked: Callable[[dict], bool],
     ) -> ItemRow:
-        unlocked = is_unlocked(recipe)
-        ready    = unlocked and has_inputs(recipe) and can_afford(recipe)
+        unlocked   = is_unlocked(recipe)
+        dup_blocked = unlocked and is_duplicate_blocked(recipe)
+        ready      = unlocked and not dup_blocked and has_inputs(recipe) and can_afford(recipe)
 
         if not unlocked:
             icon_key = "locked"
@@ -169,8 +176,12 @@ class ApothecaryRenderer:
             output = recipe.get("output", {})
             out_id = output.get("item", "")
             out_qty = output.get("qty", 1)
-            subtitle = f"{item_name(out_id)} x{out_qty}"
-            right_text = f"{recipe['gp_cost']:,} GP"
+            if dup_blocked:
+                subtitle = f"{item_name(out_id)} — Owned"
+                right_text = None
+            else:
+                subtitle = f"{item_name(out_id)} x{out_qty}"
+                right_text = f"{recipe['gp_cost']:,} GP"
         else:
             subtitle = "-----"
             right_text = None
@@ -180,7 +191,7 @@ class ApothecaryRenderer:
             subtitle=subtitle,
             icon=icon_surf,
             right_text=right_text,
-            locked=not unlocked,
+            locked=(not unlocked) or dup_blocked,
         )
 
     # ── Detail overlay ───────────────────────────────────────

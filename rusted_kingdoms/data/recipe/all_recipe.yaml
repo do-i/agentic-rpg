@@ -50,6 +50,7 @@
 - id: recipe_veil_breaker
   scroll_name: "Alchemist's Lens"
   output: { item: veil_breaker, qty: 1 }
+  unique_output: true           # guard: once player owns one, row stays visible but ungreyed/uncraftable
   inputs:
     mc:
       - { size: M, qty: 1 }
