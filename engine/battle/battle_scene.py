@@ -21,6 +21,7 @@ from engine.battle.game_over_scene import GameOverScene
 from engine.battle.battle_logic import (
     resolve_action, handle_victory, handle_defeat,
     check_result, advance_to_next_turn, attempt_flee,
+    tick_active_end_of_turn, skip_if_incapacitated,
 )
 from engine.battle.battle_enemy_logic import resolve_enemy_turn
 from engine.battle.battle_renderer import BattleRenderer
@@ -173,6 +174,11 @@ class BattleScene(Scene):
             }
             self._do_resolve()
         elif label == "Spell":
+            if active and active.is_silenced:
+                if self._sfx_manager:
+                    self._sfx_manager.play("denied")
+                self._enter_resolve(f"{active.name} is silenced!")
+                return
             if active and active.mp_max > 0:
                 self._open_spell_menu(active)
         elif label == "Item":
@@ -381,7 +387,25 @@ class BattleScene(Scene):
             ))
             return
 
+        tick_msg = tick_active_end_of_turn(self._state, self._screen_width)
+        # Burn DOT may have just KO'd the active combatant or wiped a side.
+        post_tick = check_result(self._state)
+        if post_tick != "continue":
+            if tick_msg:
+                self._enter_resolve(tick_msg, is_enemy=self._state.active.is_enemy if self._state.active else False)
+                return
+            self._check_result()
+            return
+
         advance_to_next_turn(self._state)
+        skip_msg = skip_if_incapacitated(self._state)
+        msg = tick_msg
+        if skip_msg:
+            msg = f"{msg}  {skip_msg}" if msg else skip_msg
+        if msg:
+            self._enter_resolve(msg)
+            return
+
         if self._state.phase == BattlePhase.ENEMY_TURN:
             self._do_enemy_turn()
         else:

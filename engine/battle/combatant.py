@@ -9,10 +9,30 @@ from engine.util.pseudo_random import PseudoRandom
 
 
 class StatusEffect(Enum):
-    POISON  = auto()
-    SLEEP   = auto()
-    STUN    = auto()
-    SILENCE = auto()
+    POISON    = auto()
+    SLEEP     = auto()
+    STUN      = auto()
+    SILENCE   = auto()
+    BURN      = auto()
+    FREEZE    = auto()
+    KNOCKBACK = auto()
+
+
+@dataclass
+class ActiveStatus:
+    """One status effect applied to a combatant with per-tick state.
+
+    `damage_per_turn` — burn DOT resolved at application time.
+    `atk_modifier`   — knockback multiplier on source ATK (e.g. 0.80).
+    """
+    effect:          StatusEffect
+    duration_turns:  int
+    damage_per_turn: int = 0
+    atk_modifier:    float = 1.0
+
+
+# Effects that prevent the combatant from acting on their turn.
+SKIP_TURN_EFFECTS = (StatusEffect.STUN, StatusEffect.FREEZE, StatusEffect.SLEEP)
 
 
 @dataclass
@@ -38,7 +58,7 @@ class Combatant:
     sprite_scale: int = 100     # enemies — enlarge sprite by this %, 100 = no change
 
     # battle-only state
-    status_effects: list[StatusEffect] = field(default_factory=list)
+    status_effects: list[ActiveStatus] = field(default_factory=list)
     is_ko:     bool = False
     defending: bool = False
 
@@ -61,6 +81,26 @@ class Combatant:
     @property
     def is_alive(self) -> bool:
         return not self.is_ko and self.hp > 0
+
+    @property
+    def effective_atk(self) -> int:
+        """ATK after applying all active knockback modifiers."""
+        mult = 1.0
+        for s in self.status_effects:
+            if s.effect is StatusEffect.KNOCKBACK:
+                mult *= s.atk_modifier
+        return max(1, int(self.atk * mult))
+
+    @property
+    def is_silenced(self) -> bool:
+        return self.has_status(StatusEffect.SILENCE)
+
+    @property
+    def skip_turn_reason(self) -> StatusEffect | None:
+        for s in self.status_effects:
+            if s.effect in SKIP_TURN_EFFECTS:
+                return s.effect
+        return None
 
     def apply_damage(self, amount: int, rng: PseudoRandom) -> int:
         """Clamps to 0, sets KO flag. Returns actual damage dealt.
@@ -85,18 +125,46 @@ class Combatant:
         return self.hp - before
 
     def has_status(self, effect: StatusEffect) -> bool:
-        return effect in self.status_effects
+        return any(s.effect is effect for s in self.status_effects)
 
-    def add_status(self, effect: StatusEffect) -> None:
-        if effect not in self.status_effects:
-            self.status_effects.append(effect)
+    def add_status(self, active_status: ActiveStatus) -> None:
+        """Apply a status. If the same effect is already present, refresh it
+        (replace duration and modifiers — does not stack)."""
+        for i, s in enumerate(self.status_effects):
+            if s.effect is active_status.effect:
+                self.status_effects[i] = active_status
+                return
+        self.status_effects.append(active_status)
 
     def remove_status(self, effect: StatusEffect) -> None:
-        if effect in self.status_effects:
-            self.status_effects.remove(effect)
+        self.status_effects = [s for s in self.status_effects if s.effect is not effect]
 
     def clear_all_status(self) -> None:
         self.status_effects.clear()
+
+    def tick_end_of_turn(self) -> int:
+        """Called at the end of this combatant's turn.
+
+        Applies burn DOT to self and decrements all status durations. Removes
+        expired statuses. Returns the total DOT damage inflicted this tick
+        (caller renders the float / KO check).
+        """
+        dot_damage = 0
+        for s in self.status_effects:
+            if s.effect is StatusEffect.BURN and s.damage_per_turn > 0:
+                dot_damage += s.damage_per_turn
+
+        if dot_damage > 0:
+            actual = min(dot_damage, self.hp)
+            self.hp = max(0, self.hp - dot_damage)
+            if self.hp == 0:
+                self.is_ko = True
+            dot_damage = actual
+
+        for s in self.status_effects:
+            s.duration_turns -= 1
+        self.status_effects = [s for s in self.status_effects if s.duration_turns > 0]
+        return dot_damage
 
     def __repr__(self) -> str:
         tag = "[KO]" if self.is_ko else f"HP{self.hp}/{self.hp_max}"

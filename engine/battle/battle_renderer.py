@@ -226,7 +226,7 @@ class BattleRenderer:
                           PORTRAIT_SIZE, PORTRAIT_SIZE, fx, sprite=img)
 
         if member.status_effects:
-            effect = member.status_effects[0]
+            effect = member.status_effects[0].effect
             if effect in STATUS_COLORS:
                 bg_col, text_col, label = STATUS_COLORS[effect]
                 bs = self._assets.font_badge.render(label, True, text_col)

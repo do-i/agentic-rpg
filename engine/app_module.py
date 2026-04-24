@@ -12,6 +12,7 @@ from engine.title.boot_scene import BootScene
 from engine.item.item_scene import ItemScene
 from engine.field_menu.field_menu_scene import FieldMenuScene
 from engine.equipment.equip_scene import EquipScene
+from engine.spell.spell_scene import SpellScene
 from engine.title.title_scene import TitleScene
 from engine.title.name_entry_scene import NameEntryScene
 from engine.world.world_map_scene import WorldMapScene
@@ -288,6 +289,15 @@ class AppModule(Module):
                 scene_manager=scene_manager,
                 registry=registry,
                 catalog=item_catalog,
+                return_scene_name="world_map",
+                sfx_manager=sfx_manager,
+            ))
+        registry.register_factory("spells",
+            lambda: SpellScene(
+                holder=holder,
+                scene_manager=scene_manager,
+                registry=registry,
+                scenario_path=str(loader.scenario_path),
                 return_scene_name="world_map",
                 sfx_manager=sfx_manager,
             ))

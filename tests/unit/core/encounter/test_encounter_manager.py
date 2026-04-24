@@ -134,7 +134,7 @@ class TestFillParty:
         party.members = [member]
         battle_state = MagicMock()
 
-        manager.fill_party(battle_state, party)
+        manager.fill_party(battle_state, party, set())
 
         assert len(battle_state.party) == 1
         battle_state.build_turn_order.assert_called_once()
@@ -145,7 +145,7 @@ class TestFillParty:
         party.members = [member]
         battle_state = MagicMock()
 
-        manager.fill_party(battle_state, party)
+        manager.fill_party(battle_state, party, set())
 
         combatant = battle_state.party[0]
         assert combatant.name == "Aric"
@@ -156,7 +156,7 @@ class TestFillParty:
         party = MagicMock()
         party.members = [member]
         battle_state = MagicMock()
-        manager.fill_party(battle_state, party)
+        manager.fill_party(battle_state, party, set())
         c = battle_state.party[0]
         assert c.atk == 10 and c.dex == 8 and c.def_ == 9 and c.mres == 6
 
@@ -183,7 +183,7 @@ class TestFillParty:
 
         party = MagicMock(); party.members = [member]
         battle_state = MagicMock()
-        mgr.fill_party(battle_state, party)
+        mgr.fill_party(battle_state, party, set())
         c = battle_state.party[0]
         assert c.atk == 14      # 10 + 4
         assert c.dex == 7       # 8 - 1
@@ -196,29 +196,86 @@ class TestFillParty:
 class TestLoadClassAbilities:
     def test_returns_empty_when_no_classes_dir(self, encount_dir):
         mgr = EncounterManager(encount_dir=encount_dir)
-        abilities = mgr._load_class_abilities("hero", level=5)
+        abilities = mgr._load_class_abilities("hero", level=5, flags=set())
         assert abilities == []
 
     def test_returns_empty_when_class_file_missing(self, manager):
-        abilities = manager._load_class_abilities("unknown_class", level=5)
+        abilities = manager._load_class_abilities("unknown_class", level=5, flags=set())
         assert abilities == []
 
     def test_filters_by_unlock_level(self, manager):
         # level=2: only unlock_level<=2 → only "slash" (unlock_level=1)
-        abilities = manager._load_class_abilities("hero", level=2)
+        abilities = manager._load_class_abilities("hero", level=2, flags=set())
         ids = [a["id"] for a in abilities]
         assert "slash" in ids
         assert "power_strike" not in ids
 
     def test_includes_all_unlocked_at_higher_level(self, manager):
-        abilities = manager._load_class_abilities("hero", level=5)
+        abilities = manager._load_class_abilities("hero", level=5, flags=set())
         ids = [a["id"] for a in abilities]
         assert "slash" in ids
         assert "power_strike" in ids
 
     def test_caches_class_data(self, manager):
-        first = manager._load_class_abilities("hero", level=5)
-        # Second call hits cache (same object in cache)
-        second = manager._load_class_abilities("hero", level=5)
+        first = manager._load_class_abilities("hero", level=5, flags=set())
+        second = manager._load_class_abilities("hero", level=5, flags=set())
         assert first == second
         assert "hero" in manager._class_cache
+
+
+CLASS_WITH_ULTIMATE_YAML = """\
+stat_growth:
+  hp: [10]
+  mp: [5]
+  str: [2]
+  dex: [2]
+  con: [2]
+  int: [2]
+abilities:
+  - id: fire_bolt
+    unlock_level: 1
+  - id: fireball
+    unlock_level: 10
+  - id: meteor
+    unlock_level: 46
+    unlock_flag: story_ultimate_fire
+"""
+
+
+class TestUnlockFlagGating:
+    @pytest.fixture
+    def mgr_with_ultimate(self, encount_dir, tmp_path):
+        classes_dir = tmp_path / "classes_ult"
+        classes_dir.mkdir()
+        (classes_dir / "sorcerer.yaml").write_text(CLASS_WITH_ULTIMATE_YAML)
+        return EncounterManager(encount_dir=encount_dir, classes_dir=classes_dir)
+
+    def test_ultimate_excluded_without_flag(self, mgr_with_ultimate):
+        abilities = mgr_with_ultimate._load_class_abilities(
+            "sorcerer", level=50, flags=set(),
+        )
+        ids = [a["id"] for a in abilities]
+        assert "fire_bolt" in ids
+        assert "fireball" in ids
+        assert "meteor" not in ids
+
+    def test_ultimate_included_with_flag(self, mgr_with_ultimate):
+        abilities = mgr_with_ultimate._load_class_abilities(
+            "sorcerer", level=50, flags={"story_ultimate_fire"},
+        )
+        ids = [a["id"] for a in abilities]
+        assert "meteor" in ids
+
+    def test_ultimate_excluded_below_unlock_level_even_with_flag(self, mgr_with_ultimate):
+        abilities = mgr_with_ultimate._load_class_abilities(
+            "sorcerer", level=45, flags={"story_ultimate_fire"},
+        )
+        ids = [a["id"] for a in abilities]
+        assert "meteor" not in ids
+
+    def test_unrelated_flag_does_not_unlock(self, mgr_with_ultimate):
+        abilities = mgr_with_ultimate._load_class_abilities(
+            "sorcerer", level=50, flags={"story_quest_started"},
+        )
+        ids = [a["id"] for a in abilities]
+        assert "meteor" not in ids

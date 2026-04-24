@@ -497,7 +497,9 @@ class WorldMapScene(Scene):
             return
 
         boss_flag = getattr(battle_state, "boss_flag", "")
-        battle_state = self._encounter_manager.fill_party(battle_state, state.party)
+        battle_state = self._encounter_manager.fill_party(
+            battle_state, state.party, set(state.flags.to_list()),
+        )
         state.map.set_position(self._player.tile_position)
 
         scene = BattleScene(

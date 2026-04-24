@@ -1,9 +1,17 @@
 # tests/unit/core/battle/test_combatant.py
 
 import pytest
-from engine.battle.combatant import Combatant, StatusEffect
+from engine.battle.combatant import ActiveStatus, Combatant, StatusEffect
 from engine.battle.battle_state import BattleState, BattlePhase
 from engine.util.pseudo_random import PseudoRandom
+
+
+def poison(duration: int = 3) -> ActiveStatus:
+    return ActiveStatus(effect=StatusEffect.POISON, duration_turns=duration)
+
+
+def sleep(duration: int = 3) -> ActiveStatus:
+    return ActiveStatus(effect=StatusEffect.SLEEP, duration_turns=duration)
 
 _rng = PseudoRandom(seed=0)
 
@@ -74,21 +82,22 @@ class TestCombatant:
 
     def test_status_add_remove(self):
         c = make_combatant()
-        c.add_status(StatusEffect.POISON)
+        c.add_status(poison())
         assert c.has_status(StatusEffect.POISON)
         c.remove_status(StatusEffect.POISON)
         assert not c.has_status(StatusEffect.POISON)
 
     def test_status_no_duplicate(self):
         c = make_combatant()
-        c.add_status(StatusEffect.SLEEP)
-        c.add_status(StatusEffect.SLEEP)
-        assert c.status_effects.count(StatusEffect.SLEEP) == 1
+        c.add_status(sleep(duration=2))
+        c.add_status(sleep(duration=4))
+        assert len(c.status_effects) == 1
+        assert c.status_effects[0].duration_turns == 4  # refresh, not stack
 
     def test_clear_all_status(self):
         c = make_combatant()
-        c.add_status(StatusEffect.POISON)
-        c.add_status(StatusEffect.SLEEP)
+        c.add_status(poison())
+        c.add_status(sleep())
         c.clear_all_status()
         assert c.status_effects == []
 

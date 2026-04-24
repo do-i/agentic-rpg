@@ -5,13 +5,64 @@
 
 from __future__ import annotations
 
-from engine.battle.combatant import Combatant
+from engine.battle.combatant import (
+    ActiveStatus, Combatant, StatusEffect, SKIP_TURN_EFFECTS,
+)
 from engine.util.pseudo_random import PseudoRandom
 from engine.battle.battle_state import BattleState, BattlePhase
 from engine.battle.battle_rewards import RewardCalculator
 from engine.battle.battle_fx import BattleFx
 from engine.encounter.encounter_manager import EncounterManager
 from engine.battle.constants import ENEMY_AREA_H, ENEMY_LAYOUTS, ENEMY_SIZES, ROW_H
+
+
+# Mapping from spell yaml `side_effects.type` to Combatant StatusEffect.
+SIDE_EFFECT_KINDS = {
+    "burn":      StatusEffect.BURN,
+    "freeze":    StatusEffect.FREEZE,
+    "stun":      StatusEffect.STUN,
+    "silence":   StatusEffect.SILENCE,
+    "knockback": StatusEffect.KNOCKBACK,
+}
+
+
+def roll_and_apply_side_effects(
+    side_effects: list[dict],
+    source: Combatant,
+    target: Combatant,
+    rng: PseudoRandom | None,
+) -> list[str]:
+    """Roll each side_effect's chance and apply ActiveStatus on hit.
+
+    Burn's `damage_per_turn` is derived from caster ATK as `max(1, atk // 10)`,
+    matching the scenario YAML formula `max(1, floor(enemy_atk * 0.10))`.
+    Returns a list of human-readable application messages.
+    """
+    msgs: list[str] = []
+    if not side_effects or target.is_ko:
+        return msgs
+    for se in side_effects:
+        kind = se.get("type")
+        effect = SIDE_EFFECT_KINDS.get(kind)
+        if effect is None:
+            continue
+        chance = float(se.get("chance", 0.0))
+        roll = rng.random() if rng is not None else 0.0
+        if roll >= chance:
+            continue
+        duration = int(se["duration_turns"])
+        dot = 0
+        if effect is StatusEffect.BURN:
+            dot = max(1, (source.atk if source else 0) // 10)
+        atk_mod = float(se.get("atk_modifier", 1.0))
+        target.add_status(ActiveStatus(
+            effect=effect,
+            duration_turns=duration,
+            damage_per_turn=dot,
+            atk_modifier=atk_mod,
+        ))
+        msgs.append(f"{target.name} is {kind}ed!")
+    return msgs
 # ── Float colors ──────────────────────────────────────────────
 C_DMG_PHYS  = (255, 180, 80)
 C_DMG_MAGIC = (140, 180, 255)
@@ -64,7 +115,8 @@ def resolve_action(state: BattleState, screen_width: int,
 
     for target in targets:
         if atype == "attack":
-            dmg = max(1, source.atk - target.def_)
+            src_atk = source.effective_atk if source else 0
+            dmg = max(1, src_atk - target.def_)
             actual = target.apply_damage(dmg, rng)
             state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_PHYS)
             if fx:
@@ -108,6 +160,10 @@ def resolve_action(state: BattleState, screen_width: int,
                 if fx:
                     fx.hit(target)
                 msg_parts.append(f"{source.name} casts {spell_name}! {actual} damage to {target.name}!")
+
+            side_effects = ab.get("side_effects") or []
+            for se_msg in roll_and_apply_side_effects(side_effects, source, target, rng):
+                msg_parts.append(se_msg)
         elif atype == "item":
             item_id = action.get("data", {}).get("id", "")
             item_label = item_id.replace("_", " ").title()
@@ -240,6 +296,22 @@ def attempt_flee(state: BattleState, holder, rng: PseudoRandom,
     return False, "Couldn't escape!"
 
 
+def tick_active_end_of_turn(state: BattleState, screen_width: int) -> str:
+    """Tick end-of-turn statuses on the currently active combatant.
+
+    Applies BURN DOT, decrements durations, removes expired statuses. Returns
+    a message describing DOT damage (empty if none).
+    """
+    active = state.active
+    if active is None or not active.is_alive:
+        return ""
+    dot = active.tick_end_of_turn()
+    if dot <= 0:
+        return ""
+    state.add_float(str(dot), *float_pos(state, active, screen_width), C_DMG_MAGIC)
+    return f"{active.name} takes {dot} burn damage!"
+
+
 def advance_to_next_turn(state: BattleState) -> None:
     """Advance to the next turn and set the phase accordingly."""
     state.advance_turn()
@@ -250,3 +322,22 @@ def advance_to_next_turn(state: BattleState) -> None:
         state.phase = BattlePhase.ENEMY_TURN
     else:
         state.phase = BattlePhase.PLAYER_TURN
+
+
+def skip_if_incapacitated(state: BattleState) -> str:
+    """If the active combatant has a skip-turn status, consume the turn.
+
+    Ticks their end-of-turn (so the stun/freeze duration decreases), advances
+    the turn, and returns a message. Returns "" when the active can act.
+    """
+    active = state.active
+    if active is None or not active.is_alive:
+        return ""
+    reason = active.skip_turn_reason
+    if reason is None:
+        return ""
+    name = reason.name.lower()
+    active.tick_end_of_turn()
+    msg = f"{active.name} can't move ({name})!"
+    advance_to_next_turn(state)
+    return msg

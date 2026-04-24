@@ -54,17 +54,13 @@ class TestEntries:
         labels = [e.label for e in scene._entries]
         assert labels == ["Items", "Status", "Equipment", "Spells", "Save"]
 
-    def test_spells_is_disabled(self):
-        scene, *_ = make_scene()
-        kinds = {e.label: e.kind for e in scene._entries}
-        assert kinds["Spells"] == KIND_DISABLED
-
-    def test_items_status_equipment_dispatch_by_scene_switch(self):
+    def test_items_status_equipment_spells_dispatch_by_scene_switch(self):
         scene, *_ = make_scene()
         kinds = {e.label: e.kind for e in scene._entries}
         assert kinds["Items"] == KIND_SCENE_SWITCH
         assert kinds["Status"] == KIND_SCENE_SWITCH
         assert kinds["Equipment"] == KIND_SCENE_SWITCH
+        assert kinds["Spells"] == KIND_SCENE_SWITCH
 
     def test_save_is_overlay(self):
         scene, *_ = make_scene()
@@ -133,12 +129,14 @@ class TestSelect:
         scene.handle_events(_key(pygame.K_RETURN))   # must not raise
         scene_manager.switch.assert_called_once_with(sub_scene)
 
-    def test_disabled_entry_does_not_switch(self):
+    def test_spells_switches_to_spell_scene(self):
         scene, _, scene_manager, registry, _ = make_scene()
-        scene._selected = 3   # Spells — disabled
+        spell_scene = MagicMock()
+        registry.get.return_value = spell_scene
+        scene._selected = 3   # Spells
         scene.handle_events(_key(pygame.K_RETURN))
-        registry.get.assert_not_called()
-        scene_manager.switch.assert_not_called()
+        registry.get.assert_called_once_with("spells")
+        spell_scene.set_return_scene.assert_called_once_with("field_menu")
 
     def test_equipment_switches_to_equip_scene(self):
         scene, _, scene_manager, registry, _ = make_scene()

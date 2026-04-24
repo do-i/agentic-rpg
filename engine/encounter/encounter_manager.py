@@ -77,13 +77,15 @@ class EncounterManager:
 
     # ── Party fill ────────────────────────────────────────────────
 
-    def fill_party(self, state: BattleState, party: PartyState) -> BattleState:
-        state.party = [self._member_to_combatant(m) for m in party.members]
+    def fill_party(
+        self, state: BattleState, party: PartyState, flags: set[str]
+    ) -> BattleState:
+        state.party = [self._member_to_combatant(m, flags) for m in party.members]
         state.build_turn_order()
         return state
 
-    def _member_to_combatant(self, member: MemberState) -> Combatant:
-        abilities = self._load_class_abilities(member.class_name, member.level)
+    def _member_to_combatant(self, member: MemberState, flags: set[str]) -> Combatant:
+        abilities = self._load_class_abilities(member.class_name, member.level, flags)
         totals = (
             stat_totals(member, self._item_catalog)
             if self._item_catalog is not None
@@ -105,8 +107,14 @@ class EncounterManager:
             abilities=abilities,
         )
 
-    def _load_class_abilities(self, class_name: str, level: int) -> list[dict]:
-        """Load abilities from class YAML, filtered by unlock_level."""
+    def _load_class_abilities(
+        self, class_name: str, level: int, flags: set[str]
+    ) -> list[dict]:
+        """Load abilities from class YAML, filtered by unlock_level and unlock_flag.
+
+        An ability with `unlock_flag` set is only returned when that flag is
+        present in `flags`. Abilities without `unlock_flag` are unaffected.
+        """
         if class_name in self._class_cache:
             all_abs = self._class_cache[class_name]
         else:
@@ -119,4 +127,12 @@ class EncounterManager:
                 data = yaml.safe_load(f)
             all_abs = data.get("abilities", [])
             self._class_cache[class_name] = all_abs
-        return [ab for ab in all_abs if ab["unlock_level"] <= level]
+        result = []
+        for ab in all_abs:
+            if ab["unlock_level"] > level:
+                continue
+            unlock_flag = ab.get("unlock_flag")
+            if unlock_flag and unlock_flag not in flags:
+                continue
+            result.append(ab)
+        return result

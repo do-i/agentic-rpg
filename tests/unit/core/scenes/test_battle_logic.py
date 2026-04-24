@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 from engine.util.pseudo_random import PseudoRandom
-from engine.battle.combatant import Combatant, StatusEffect
+from engine.battle.combatant import ActiveStatus, Combatant, StatusEffect
 
 _rng = PseudoRandom(seed=0)
 from engine.battle.battle_state import BattleState, BattlePhase
@@ -105,7 +105,7 @@ class TestResolveAction:
     def test_utility_spell_clears_status(self):
         hero = make_combatant("Hero", mp=20, mres=10)
         poisoned = make_combatant("Ally", hp=80, hp_max=100)
-        poisoned.add_status(StatusEffect.POISON)
+        poisoned.add_status(ActiveStatus(effect=StatusEffect.POISON, duration_turns=3))
         state = make_battle_state([hero, poisoned], [make_combatant("Goblin", is_enemy=True)])
         spell = {"name": "Esuna", "type": "utility", "mp_cost": 5}
         state.pending_action = {
@@ -456,7 +456,7 @@ class TestResolveActionItems:
 
         hero = make_combatant("Hero")
         ally = make_combatant("Ally", hp=80, hp_max=100)
-        ally.add_status(StatusEffect.POISON)
+        ally.add_status(ActiveStatus(effect=StatusEffect.POISON, duration_turns=3))
         state = make_battle_state([hero, ally], [make_combatant("Goblin", is_enemy=True)])
         state.pending_action = {
             "type": "item", "data": {"id": "antidote"}, "source": hero, "targets": [ally],
@@ -905,3 +905,218 @@ class TestCheckCondition:
         state.turn_count = 4
         move = {"condition": {"hp_pct_below": 0.5, "turn_mod": {"every": 4}}}
         assert _check_condition(move, enemy, state) is False
+
+
+# ── Spell side_effects ────────────────────────────────────────
+
+from engine.battle.battle_logic import (
+    roll_and_apply_side_effects,
+    tick_active_end_of_turn,
+    skip_if_incapacitated,
+)
+
+
+class _FixedRng:
+    """Deterministic RNG. `random()` walks through `rolls`; uniform/choice stubbed."""
+
+    def __init__(self, rolls: list[float] | None = None) -> None:
+        self._rolls = list(rolls or [])
+        self._i = 0
+
+    def random(self) -> float:
+        if self._i >= len(self._rolls):
+            return 0.0
+        val = self._rolls[self._i]
+        self._i += 1
+        return val
+
+    def uniform(self, a: float, b: float) -> float:
+        return (a + b) / 2
+
+    def randint(self, a: int, b: int) -> int:
+        return a
+
+    def choice(self, seq):
+        return seq[0]
+
+    def choices(self, population, weights=None, k: int = 1):
+        return [population[0]] * k
+
+
+class TestRollAndApplySideEffects:
+    def test_applies_when_roll_under_chance(self):
+        src = make_combatant("Sorc", atk=30)
+        tgt = make_combatant("Goblin", is_enemy=True)
+        se = [{"type": "burn", "chance": 0.5, "duration_turns": 3,
+               "damage_per_turn": "formula_ignored"}]
+        rng = _FixedRng([0.1])
+        msgs = roll_and_apply_side_effects(se, src, tgt, rng)
+        assert tgt.has_status(StatusEffect.BURN)
+        status = [s for s in tgt.status_effects if s.effect is StatusEffect.BURN][0]
+        assert status.duration_turns == 3
+        assert status.damage_per_turn == 3  # max(1, 30 // 10)
+        assert "burn" in msgs[0].lower()
+
+    def test_skips_when_roll_above_chance(self):
+        src = make_combatant("Sorc", atk=30)
+        tgt = make_combatant("Goblin", is_enemy=True)
+        se = [{"type": "burn", "chance": 0.2, "duration_turns": 3}]
+        rng = _FixedRng([0.9])
+        msgs = roll_and_apply_side_effects(se, src, tgt, rng)
+        assert not tgt.has_status(StatusEffect.BURN)
+        assert msgs == []
+
+    def test_knockback_stores_atk_modifier(self):
+        src = make_combatant("Sorc")
+        tgt = make_combatant("Goblin", is_enemy=True, atk=20)
+        se = [{"type": "knockback", "chance": 1.0, "duration_turns": 1,
+               "atk_modifier": 0.8}]
+        roll_and_apply_side_effects(se, src, tgt, _FixedRng([0.0]))
+        assert tgt.has_status(StatusEffect.KNOCKBACK)
+        assert tgt.effective_atk == 16  # 20 * 0.8
+
+    def test_does_not_apply_to_ko_target(self):
+        src = make_combatant("Sorc")
+        tgt = make_combatant("Goblin", hp=0, is_enemy=True)
+        tgt.is_ko = True
+        se = [{"type": "stun", "chance": 1.0, "duration_turns": 1}]
+        roll_and_apply_side_effects(se, src, tgt, _FixedRng([0.0]))
+        assert not tgt.has_status(StatusEffect.STUN)
+
+    def test_unknown_side_effect_ignored(self):
+        src = make_combatant("Sorc")
+        tgt = make_combatant("Goblin", is_enemy=True)
+        se = [{"type": "mystery", "chance": 1.0, "duration_turns": 3}]
+        msgs = roll_and_apply_side_effects(se, src, tgt, _FixedRng([0.0]))
+        assert msgs == []
+        assert tgt.status_effects == []
+
+    def test_multiple_side_effects_rolled_independently(self):
+        src = make_combatant("Sorc", atk=40)
+        tgt = make_combatant("Goblin", is_enemy=True)
+        se = [
+            {"type": "burn",   "chance": 0.5, "duration_turns": 3},
+            {"type": "stun",   "chance": 0.5, "duration_turns": 1},
+        ]
+        rng = _FixedRng([0.1, 0.9])   # burn succeeds, stun fails
+        roll_and_apply_side_effects(se, src, tgt, rng)
+        assert tgt.has_status(StatusEffect.BURN)
+        assert not tgt.has_status(StatusEffect.STUN)
+
+
+class TestTickEndOfTurn:
+    def test_burn_applies_dot_and_decrements(self):
+        tgt = make_combatant("Goblin", hp=50, hp_max=50, is_enemy=True)
+        tgt.add_status(ActiveStatus(
+            effect=StatusEffect.BURN, duration_turns=2, damage_per_turn=5,
+        ))
+        state = make_battle_state([make_combatant("Hero")], [tgt])
+        state.turn_order = [tgt]
+        state.active_index = 0
+        msg = tick_active_end_of_turn(state, SCREEN_W)
+        assert tgt.hp == 45
+        assert "5" in msg and "burn" in msg.lower()
+        status = [s for s in tgt.status_effects if s.effect is StatusEffect.BURN][0]
+        assert status.duration_turns == 1
+
+    def test_expired_status_removed(self):
+        tgt = make_combatant("Goblin", hp=50, is_enemy=True)
+        tgt.add_status(ActiveStatus(
+            effect=StatusEffect.STUN, duration_turns=1,
+        ))
+        state = make_battle_state([make_combatant("Hero")], [tgt])
+        state.turn_order = [tgt]
+        state.active_index = 0
+        tick_active_end_of_turn(state, SCREEN_W)
+        assert not tgt.has_status(StatusEffect.STUN)
+
+    def test_no_active_returns_empty_message(self):
+        state = make_battle_state()
+        state.turn_order = []
+        assert tick_active_end_of_turn(state, SCREEN_W) == ""
+
+    def test_burn_can_ko(self):
+        tgt = make_combatant("Goblin", hp=3, hp_max=50, is_enemy=True)
+        tgt.add_status(ActiveStatus(
+            effect=StatusEffect.BURN, duration_turns=3, damage_per_turn=5,
+        ))
+        state = make_battle_state([make_combatant("Hero")], [tgt])
+        state.turn_order = [tgt]
+        state.active_index = 0
+        tick_active_end_of_turn(state, SCREEN_W)
+        assert tgt.is_ko
+
+
+class TestSkipIfIncapacitated:
+    def test_stun_skips_turn_and_advances(self):
+        hero = make_combatant("Hero", dex=20)
+        ally = make_combatant("Ally", dex=10)
+        hero.add_status(ActiveStatus(effect=StatusEffect.STUN, duration_turns=1))
+        state = BattleState(party=[hero, ally], enemies=[])
+        state.turn_order = [hero, ally]
+        state.active_index = 0
+        msg = skip_if_incapacitated(state)
+        assert "can't move" in msg.lower()
+        assert state.active is ally
+        # stun duration was consumed during the skip
+        assert not hero.has_status(StatusEffect.STUN)
+
+    def test_no_skip_when_healthy(self):
+        hero = make_combatant("Hero")
+        state = BattleState(party=[hero], enemies=[])
+        state.turn_order = [hero]
+        state.active_index = 0
+        assert skip_if_incapacitated(state) == ""
+        assert state.active is hero
+
+    def test_freeze_also_skips(self):
+        hero = make_combatant("Hero")
+        ally = make_combatant("Ally")
+        hero.add_status(ActiveStatus(effect=StatusEffect.FREEZE, duration_turns=1))
+        state = BattleState(party=[hero, ally], enemies=[])
+        state.turn_order = [hero, ally]
+        state.active_index = 0
+        msg = skip_if_incapacitated(state)
+        assert "can't move" in msg.lower()
+
+    def test_silence_does_not_skip(self):
+        hero = make_combatant("Hero")
+        hero.add_status(ActiveStatus(effect=StatusEffect.SILENCE, duration_turns=2))
+        state = BattleState(party=[hero], enemies=[])
+        state.turn_order = [hero]
+        state.active_index = 0
+        assert skip_if_incapacitated(state) == ""
+
+
+class TestCombatantStatusIntegration:
+    def test_effective_atk_unchanged_without_knockback(self):
+        c = make_combatant("Hero", atk=20)
+        assert c.effective_atk == 20
+
+    def test_effective_atk_multiplies_by_knockback(self):
+        c = make_combatant("Hero", atk=20)
+        c.add_status(ActiveStatus(
+            effect=StatusEffect.KNOCKBACK, duration_turns=2, atk_modifier=0.5,
+        ))
+        assert c.effective_atk == 10
+
+    def test_effective_atk_floors_at_one(self):
+        c = make_combatant("Hero", atk=1)
+        c.add_status(ActiveStatus(
+            effect=StatusEffect.KNOCKBACK, duration_turns=2, atk_modifier=0.1,
+        ))
+        assert c.effective_atk == 1
+
+    def test_is_silenced(self):
+        c = make_combatant("Hero")
+        assert not c.is_silenced
+        c.add_status(ActiveStatus(
+            effect=StatusEffect.SILENCE, duration_turns=1,
+        ))
+        assert c.is_silenced
+
+    def test_skip_turn_reason(self):
+        c = make_combatant("Hero")
+        assert c.skip_turn_reason is None
+        c.add_status(ActiveStatus(effect=StatusEffect.FREEZE, duration_turns=1))
+        assert c.skip_turn_reason is StatusEffect.FREEZE

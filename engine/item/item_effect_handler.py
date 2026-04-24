@@ -16,6 +16,12 @@ from engine.item.item_defs_data import FieldItemDef, UseResult
 __all__ = ["FieldItemDef", "UseResult", "ItemEffectHandler"]
 
 
+def _status_name(s) -> str:
+    """Status entries are ActiveStatus on Combatants; enum names live on .effect."""
+    effect = getattr(s, "effect", s)
+    return effect.name
+
+
 class ItemEffectHandler:
     """
     Loads field_use.yaml and applies item effects to MemberState(s).
@@ -134,7 +140,7 @@ class ItemEffectHandler:
                 if hasattr(member, "status_effects"):
                     member.status_effects = [
                         s for s in member.status_effects
-                        if s.name.lower() != status.lower()
+                        if _status_name(s).lower() != status.lower()
                     ]
             if warn_parts:
                 return f"{member.name}'s {' and '.join(warn_parts)} already full."
@@ -147,7 +153,7 @@ class ItemEffectHandler:
                 before = len(member.status_effects)
                 member.status_effects = [
                     s for s in member.status_effects
-                    if s.name.lower() != status.lower()
+                    if _status_name(s).lower() != status.lower()
                 ]
                 if len(member.status_effects) < before:
                     cured_any = True

@@ -14,10 +14,13 @@ BAR_H         = 6
 
 # ── Status effect badge colors ────────────────────────────────
 STATUS_COLORS = {
-    StatusEffect.POISON:  ((51, 102, 51),  (170, 255, 170), "PSN"),
-    StatusEffect.SLEEP:   ((68, 68, 170),  (204, 204, 255), "zzz"),
-    StatusEffect.STUN:    ((120, 90, 20),  (255, 220, 100), "STN"),
-    StatusEffect.SILENCE: ((100, 60, 100), (220, 180, 220), "SIL"),
+    StatusEffect.POISON:    ((51, 102, 51),  (170, 255, 170), "PSN"),
+    StatusEffect.SLEEP:     ((68, 68, 170),  (204, 204, 255), "zzz"),
+    StatusEffect.STUN:      ((120, 90, 20),  (255, 220, 100), "STN"),
+    StatusEffect.SILENCE:   ((100, 60, 100), (220, 180, 220), "SIL"),
+    StatusEffect.BURN:      ((140, 40, 40),  (255, 170, 120), "BRN"),
+    StatusEffect.FREEZE:    ((40, 80, 140),  (180, 220, 255), "FRZ"),
+    StatusEffect.KNOCKBACK: ((90, 90, 120),  (210, 210, 230), "KBK"),
 }
 
 # ── Colors ────────────────────────────────────────────────────
