@@ -79,6 +79,7 @@ class Npc:
         anim_mode: str = "still",
         anim_speed: float = 1.0,
         wander_range: int = 2,
+        interaction_range_tiles: float = 1.5,
         rng: PseudoRandom | None = None,
     ) -> None:
         self._rng = rng
@@ -107,7 +108,7 @@ class Npc:
         self._wander_target_py: int | None = None
         self._wander_pause = self._rng.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
         self._wander_moving = False
-        self._interaction_range = tile_size * 1.5    # pixels
+        self._interaction_range = tile_size * interaction_range_tiles  # pixels
         self._move_speed = tile_size * 1.5           # pixels/sec base
 
     @property

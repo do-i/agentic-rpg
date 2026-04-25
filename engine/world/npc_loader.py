@@ -47,6 +47,7 @@ class NpcLoader:
         anim_mode      = anim.get("mode", "still")
         anim_speed     = anim.get("speed", 1.0)
         wander_range   = anim.get("range", 2)
+        interaction_range_tiles = entry.get("interaction_range", 1.5)
 
         sprite_sheet = self._load_sprite(sprite_tsx) if sprite_tsx else None
 
@@ -62,6 +63,7 @@ class NpcLoader:
             anim_mode=anim_mode,
             anim_speed=anim_speed,
             wander_range=wander_range,
+            interaction_range_tiles=interaction_range_tiles,
             tile_size=self._tile_size,
             rng=self._rng,
         )
