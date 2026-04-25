@@ -1,9 +1,6 @@
-id: town_01_ardel
+id: town_01_ardel_shop_01
 name: Ardel Village
 bgm: town.default
-inn:
-  cost: 50
-  position: [8, 5]
 
 shop:
   items:
@@ -39,25 +36,27 @@ shop:
       unlock_flag: story_quest_started
 
 npcs:
-  - id: guide_ellen
-    name: "Guide Ellen"
-    type: guide
-    availability: 0.30
-    dialogue: guide_ardel
-    excuses: guide_excuses
-    position: [5, 6]
-    sprite: assets/sprites/npc/teen_wiz_01.tsx
+  - id: mc_shop_keeper
+    dialogue: mc_shop_intro
+    position: [10, 3]
+    sprite: assets/sprites/npc/male_blond_01.tsx
     default_facing: down
     animation:
-      mode: wander
-      speed: 1.8
-      range: 5
-  - id: inn_keeper
-    dialogue: inn_ardel
-    position: [8, 5]
-    sprite: assets/sprites/npc/female_blue_01.tsx
+      mode: step
+      speed: 0.8
+  - id: item_shop_keeper
+    dialogue: item_shop_ardel
+    position: [6, 3]
+    sprite: assets/sprites/npc/teen_halfmessy_01.tsx
     default_facing: down
     animation:
       mode: step
       speed: 0.7
-
+  - id: apothecary
+    dialogue: apothecary_ardel
+    position: [8, 3]
+    sprite: assets/sprites/npc/female_wiz_01.tsx
+    default_facing: down
+    animation:
+      mode: step
+      speed: 0.6
