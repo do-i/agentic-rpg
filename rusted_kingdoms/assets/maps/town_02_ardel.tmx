@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="14" height="8" tilewidth="32" tileheight="32" infinite="0" nextlayerid="2" nextobjectid="1">
+ <tileset firstgid="1" source="../tilesets/stone_tile_stares_16x16.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="14" height="8">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+217,217,217,217,217,217,217,217,217,217,0,0,0,0,
+233,233,233,233,233,233,233,233,233,233,0,0,0,0,
+249,249,249,249,249,249,249,249,249,249,0,0,0,0,
+105,107,2147483776,128,105,106,106,106,106,107,0,0,0,0,
+121,123,0,0,121,122,122,122,122,123,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+</map>

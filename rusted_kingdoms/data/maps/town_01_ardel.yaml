@@ -45,20 +45,13 @@ npcs:
     availability: 0.30
     dialogue: guide_ardel
     excuses: guide_excuses
-    position: [5, 3]
+    position: [5, 6]
     sprite: assets/sprites/npc/teen_wiz_01.tsx
     default_facing: down
     animation:
       mode: wander
       speed: 1.8
       range: 5
-  - id: elder
-    dialogue: elder_intro
-    position: [12, 8]
-    sprite: assets/sprites/npc/male_old_02.tsx
-    default_facing: down
-    animation:
-      mode: still
   - id: mc_shop_keeper
     dialogue: mc_shop_intro
     position: [15, 6]
