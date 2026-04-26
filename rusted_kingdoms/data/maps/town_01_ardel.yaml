@@ -52,13 +52,4 @@ npcs:
       mode: wander
       speed: 1.8
       range: 5
-  - id: inn_keeper
-    dialogue: inn_ardel
-    position: [8, 5]
-    sprite: assets/sprites/npc/female_blue_01.tsx
-    default_facing: down
-    interaction_range: 2.5
-    animation:
-      mode: step
-      speed: 0.7
 
