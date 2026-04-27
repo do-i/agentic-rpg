@@ -18,8 +18,6 @@ from engine.world.player import Player, COLLISION_W, COLLISION_H
 from engine.world.sprite_sheet import Direction
 from engine.world.tile_map import TileMap
 
-FADE_SPEED = 300
-
 # Direction → unit vector for "player is facing toward NPC" check.
 _DIR_DX = {Direction.LEFT: -1, Direction.RIGHT: 1, Direction.UP: 0, Direction.DOWN: 0}
 _DIR_DY = {Direction.UP: -1, Direction.DOWN: 1, Direction.LEFT: 0, Direction.RIGHT: 0}

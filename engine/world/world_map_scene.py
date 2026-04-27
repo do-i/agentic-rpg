@@ -1,51 +1,57 @@
 # engine/world/world_map_scene.py
-# Thin orchestrator: delegates logic to world_map_logic.
-
+#
+# Per-frame orchestrator for the world map: routes events to the active
+# overlay (or to the player), advances the fade state machine, runs movement
+# + collision + spawner, and delegates rendering to WorldMapRenderer. Map
+# loading lives in world_map_init, battle launch in world_map_battle_launcher,
+# fade alpha in fade_controller, and overlay routing in world_map_overlays.
 
 import pygame
-from engine.io.yaml_loader import load_yaml_optional
-from engine.world.position_data import Position
+
+from engine.audio.bgm_manager import BgmManager
+from engine.audio.sfx_manager import SfxManager
+from engine.common.game_state_holder import GameStateHolder
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
-from engine.common.game_state_holder import GameStateHolder
-from engine.io.save_manager import GameStateManager
 from engine.dialogue.dialogue_engine import DialogueEngine
-from engine.title.save_modal_scene import SaveModalScene
 from engine.dialogue.dialogue_scene import DialogueScene
-from engine.battle.battle_scene import BattleScene
-from engine.shop.magic_core_shop_scene import MagicCoreShopScene
-from engine.inn.inn_scene import InnScene
-from engine.shop.item_shop_scene import ItemShopScene
-from engine.shop.apothecary_scene import ApothecaryScene
 from engine.encounter.encounter_manager import EncounterManager
 from engine.encounter.encounter_resolver import EncounterResolver
-from engine.encounter.enemy_spawner import EnemySpawner
 from engine.encounter.enemy_sprite import EnemySprite
-from engine.item.item_effect_handler import ItemEffectHandler
-from engine.item.magic_core_catalog_state import MagicCoreCatalogState
-from engine.world.world_map_logic import (
-    FADE_SPEED, try_interact, try_interact_item_box, apply_item_box_loot,
-    dispatch_dialogue_result,
-    check_portals, apply_transition,
-    load_inn_cost, load_shop_items, load_recipes, _is_player_facing,
-)
-from engine.world.player import COLLISION_W, COLLISION_H
+from engine.inn.inn_scene import InnScene
 from engine.io.manifest_loader import ManifestLoader
-from engine.world.tile_map import TileMap
-from engine.world.tile_map_factory import TileMapFactory
-from engine.world.camera import Camera
-from engine.world.player import Player
-from engine.world.sprite_sheet import SpriteSheet
-from engine.world.npc import Npc
-from engine.world.npc_loader import NpcLoader
+from engine.io.save_manager import GameStateManager
+from engine.item.item_effect_handler import ItemEffectHandler
+from engine.item.item_catalog import ItemCatalog
+from engine.item.magic_core_catalog_state import MagicCoreCatalogState
+from engine.shop.apothecary_scene import ApothecaryScene
+from engine.shop.item_shop_scene import ItemShopScene
+from engine.shop.magic_core_shop_scene import MagicCoreShopScene
+from engine.title.save_modal_scene import SaveModalScene
+from engine.world.fade_controller import FadeController
 from engine.world.item_box import ItemBox
 from engine.world.item_box_loader import ItemBoxLoader
 from engine.world.item_box_scene import ItemBoxScene
-from engine.item.item_catalog import ItemCatalog
+from engine.world.npc_loader import NpcLoader
+from engine.world.player import COLLISION_W, COLLISION_H
+from engine.world.tile_map_factory import TileMapFactory
+from engine.world.world_map_battle_launcher import launch_battle_from_enemy
+from engine.world.world_map_init import init_world_map
+from engine.world.world_map_logic import (
+    _is_player_facing,
+    apply_item_box_loot,
+    apply_transition,
+    check_portals,
+    dispatch_dialogue_result,
+    load_inn_cost,
+    load_recipes,
+    load_shop_items,
+    try_interact,
+    try_interact_item_box,
+)
+from engine.world.world_map_overlays import WorldMapOverlays
 from engine.world.world_map_renderer import WorldMapRenderer
-from engine.audio.bgm_manager import BgmManager
-from engine.audio.sfx_manager import SfxManager
 
 
 class WorldMapScene(Scene):
@@ -120,157 +126,62 @@ class WorldMapScene(Scene):
         self._reset_state()
 
     def _reset_state(self) -> None:
-        self._tile_map: TileMap | None = None
-        self._camera: Camera | None = None
-        self._player: Player | None = None
-        self._npcs: list[Npc] = []
-        self._item_boxes: list[ItemBox] = []
-        self._enemy_spawner: EnemySpawner | None = None
+        self._tile_map = None
+        self._camera = None
+        self._player = None
+        self._npcs = []
+        self._item_boxes = []
+        self._enemy_spawner = None
         self._engaged_enemy: EnemySprite | None = None
 
-        self._save_modal: SaveModalScene | None = None
-        self._dialogue: DialogueScene | None = None
-        self._mc_shop: MagicCoreShopScene | None = None
-        self._inn: InnScene | None = None
-        self._item_shop: ItemShopScene | None = None
-        self._apothecary: ApothecaryScene | None = None
-        self._item_box_modal: ItemBoxScene | None = None
+        self._overlays = WorldMapOverlays()
         self._quit_confirm: bool = False
-
-        self._fade_alpha: int = 255
-        self._fade_dir: int = -1
-        self._pending_transition: dict | None = None
+        self._fade = FadeController()
 
     def reset(self) -> None:
         """Re-initialize for a new game/load session. Clears all map state so _init() reruns."""
         self._reset_state()
 
     def _init(self) -> None:
-        scenario_path = self._loader.scenario_path
-        manifest = self._loader.load()
-        state = self._holder.get()
-        map_id = state.map.current
-
-        tmx_path = scenario_path / "assets" / "maps" / f"{map_id}.tmx"
-        self._tile_map = self._tile_map_factory.create(str(tmx_path))
-        self._camera = Camera(
-            self._tile_map.width_px, self._tile_map.height_px,
-            self._screen_width, self._screen_height,
-        )
-
-        sprite_sheet = self._load_protagonist_sprite(manifest, scenario_path)
-        self._player = Player(
-            start=state.map.position,
-            map_width_px=self._tile_map.width_px,
-            map_height_px=self._tile_map.height_px,
-            sprite_sheet=sprite_sheet,
-            smooth_collision=self._smooth_collision,
+        result = init_world_map(
+            holder=self._holder,
+            loader=self._loader,
+            tile_map_factory=self._tile_map_factory,
+            npc_loader=self._npc_loader,
+            item_box_loader=self._item_box_loader,
+            encounter_manager=self._encounter_manager,
+            encounter_resolver=self._encounter_resolver,
+            bgm_manager=self._bgm_manager,
+            balance=self._balance,
+            rng=self._rng,
+            screen_width=self._screen_width,
+            screen_height=self._screen_height,
             tile_size=self._tile_size,
             fps=self._fps,
+            smooth_collision=self._smooth_collision,
             player_speed=self._player_speed,
             debug_collision=self._debug_collision,
+            enemy_spawn_global_interval=self._enemy_spawn_global_interval,
         )
-
-        if self._balance is not None:
-            state.repository.configure_caps(self._balance)
-
-        map_yaml_path = scenario_path / "data" / "maps" / f"{map_id}.yaml"
-        self._npcs = self._npc_loader.load_from_map(map_yaml_path)
-        self._item_boxes = self._item_box_loader.load_from_map(map_yaml_path)
-
-        # BGM
-        map_data = load_yaml_optional(map_yaml_path) or {}
-        if map_data:
-            state.map.display_name = map_data.get("name", map_id)
-            if self._bgm_manager:
-                bgm_key = map_data.get("bgm")
-                if bgm_key:
-                    self._bgm_manager.play_key(bgm_key)
-
-        # Encounter zone + enemy spawner
-        self._encounter_manager.set_zone(map_id)
-        self._enemy_spawner = self._build_spawner(map_yaml_path, map_id, scenario_path)
-        if self._enemy_spawner:
-            self._enemy_spawner.init_spawn(state.flags)
-
-        self._fade_alpha = 255
-        self._fade_dir = -1
-        self._pending_transition = None
-
-    def _build_spawner(self, map_yaml_path, map_id, scenario_path) -> EnemySpawner | None:
-        """Create EnemySpawner if this map has an encounter zone and spawn tiles."""
-        zone = self._encounter_manager.get_zone()
-        if zone is None:
-            return None   # town or non-encounter map
-        if self._encounter_resolver is None:
-            return None
-        if not self._tile_map.enemy_spawn_tiles:
-            return None   # no spawn points defined in TMX
-
-        # Parse map-level spawn config
-        map_interval: float | None = None
-        map_data = load_yaml_optional(map_yaml_path) or {}
-        spawn_cfg = map_data.get("enemy_spawn") or {}
-        raw_interval = spawn_cfg.get("interval")
-        if raw_interval is not None:
-            map_interval = float(raw_interval)
-
-        return EnemySpawner(
-            zone=zone,
-            spawn_tiles=self._tile_map.enemy_spawn_tiles,
-            map_interval=map_interval,
-            global_interval=self._enemy_spawn_global_interval,
-            resolver=self._encounter_resolver,
-            scenario_path=scenario_path,
-            rng=self._rng,
-            tile_size=self._tile_size,
-            boss_tile=self._tile_map.boss_spawn_tile,
-            balance=self._balance,
-        )
-
-    def _load_protagonist_sprite(self, manifest: dict, scenario_path) -> SpriteSheet | None:
-        sprite_path = manifest.get("protagonist", {}).get("sprite")
-        if not sprite_path:
-            return None
-        full_path = scenario_path / sprite_path
-        if not full_path.exists():
-            print(f"[WARN] sprite not found: {full_path}")
-            return None
-        try:
-            return SpriteSheet(full_path)
-        except Exception as e:
-            print(f"[WARN] failed to load sprite: {e}")
-            return None
+        self._tile_map = result.tile_map
+        self._camera = result.camera
+        self._player = result.player
+        self._npcs = result.npcs
+        self._item_boxes = result.item_boxes
+        self._enemy_spawner = result.enemy_spawner
+        self._fade.reset()
 
     # ── Events ────────────────────────────────────────────────
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
-        if self._fade_alpha > 0 and self._fade_dir == -1:
-            return
-        if self._fade_dir == 1:
+        if self._fade.blocks_input:
             return
 
-        if self._dialogue:
-            self._dialogue.handle_events(events)
+        active_overlay = self._overlays.active
+        if active_overlay is not None:
+            active_overlay.handle_events(events)
             return
-        if self._save_modal:
-            self._save_modal.handle_events(events)
-            return
-        if self._mc_shop:
-            self._mc_shop.handle_events(events)
-            return
-        if self._inn:
-            self._inn.handle_events(events)
-            return
-        if self._item_shop:
-            self._item_shop.handle_events(events)
-            return
-        if self._apothecary:
-            self._apothecary.handle_events(events)
-            return
-        if self._item_box_modal:
-            self._item_box_modal.handle_events(events)
-            return
+
         if self._quit_confirm:
             for event in events:
                 if event.type == pygame.KEYDOWN:
@@ -303,7 +214,7 @@ class WorldMapScene(Scene):
     def _open_save_modal(self) -> None:
         state = self._holder.get()
         state.map.set_position(self._player.tile_position)
-        self._save_modal = SaveModalScene(
+        self._overlays.save_modal = SaveModalScene(
             game_state_manager=self._game_state_manager,
             state=self._holder.get(),
             on_close=self._close_save_modal,
@@ -311,7 +222,7 @@ class WorldMapScene(Scene):
         )
 
     def _close_save_modal(self) -> None:
-        self._save_modal = None
+        self._overlays.save_modal = None
 
     def _try_interact(self) -> None:
         state = self._holder.get()
@@ -328,7 +239,7 @@ class WorldMapScene(Scene):
             self._player, self._npcs, state.flags, self._dialogue_engine,
         )
         if result:
-            self._dialogue = DialogueScene(
+            self._overlays.dialogue = DialogueScene(
                 result=result,
                 on_complete=self._on_dialogue_complete,
                 text_speed=self._text_speed,
@@ -336,7 +247,7 @@ class WorldMapScene(Scene):
             )
 
     def _open_item_box(self, box: ItemBox) -> None:
-        self._item_box_modal = ItemBoxScene(
+        self._overlays.item_box_modal = ItemBoxScene(
             box=box,
             item_catalog=self._item_catalog,
             on_confirm=self._confirm_item_box,
@@ -346,10 +257,10 @@ class WorldMapScene(Scene):
     def _confirm_item_box(self, box: ItemBox) -> None:
         state = self._holder.get()
         apply_item_box_loot(box, state.repository, state.opened_boxes, state.map.current)
-        self._item_box_modal = None
+        self._overlays.item_box_modal = None
 
     def _on_dialogue_complete(self, on_complete: dict) -> None:
-        self._dialogue = None
+        self._overlays.dialogue = None
         if not on_complete:
             return
         state = self._holder.get()
@@ -375,12 +286,12 @@ class WorldMapScene(Scene):
 
         transition = remaining.get("transition")
         if transition:
-            self._start_fade_out(transition)
+            self._fade.start_fade_out(transition)
 
     # ── Magic Core Shop ───────────────────────────────────────
 
     def _open_mc_shop(self) -> None:
-        self._mc_shop = MagicCoreShopScene(
+        self._overlays.mc_shop = MagicCoreShopScene(
             holder=self._holder,
             scene_manager=self._scene_manager,
             registry=self._registry,
@@ -391,17 +302,17 @@ class WorldMapScene(Scene):
         )
 
     def _close_mc_shop(self) -> None:
-        self._mc_shop = None
+        self._overlays.mc_shop = None
 
     # ── Inn ───────────────────────────────────────────────────
 
     def _open_inn(self) -> None:
-        state    = self._holder.get()
+        state = self._holder.get()
         state.map.set_position(self._player.tile_position)
-        map_id   = state.map.current
+        map_id = state.map.current
         cost = load_inn_cost(self._loader.scenario_path, map_id)
         sprite_path = self._loader.scenario_path / "assets" / "sprites" / "npc" / "female_blue_01.tsx"
-        self._inn = InnScene(
+        self._overlays.inn = InnScene(
             holder=self._holder,
             scene_manager=self._scene_manager,
             registry=self._registry,
@@ -412,16 +323,16 @@ class WorldMapScene(Scene):
         )
 
     def _close_inn(self) -> None:
-        self._inn = None
+        self._overlays.inn = None
 
     # ── Item Shop ─────────────────────────────────────────────
 
     def _open_item_shop(self) -> None:
-        state    = self._holder.get()
-        map_id   = state.map.current
+        state = self._holder.get()
+        map_id = state.map.current
         shop_items = load_shop_items(self._loader.scenario_path, map_id)
         sprite_path = self._loader.scenario_path / "assets" / "sprites" / "npc" / "teen_halfmessy_01.tsx"
-        self._item_shop = ItemShopScene(
+        self._overlays.item_shop = ItemShopScene(
             holder=self._holder,
             scene_manager=self._scene_manager,
             registry=self._registry,
@@ -432,7 +343,7 @@ class WorldMapScene(Scene):
         )
 
     def _close_item_shop(self) -> None:
-        self._item_shop = None
+        self._overlays.item_shop = None
 
     # ── Apothecary ────────────────────────────────────────────
 
@@ -445,7 +356,7 @@ class WorldMapScene(Scene):
             key: self._loader.scenario_path / rel
             for key, rel in icon_cfg.items()
         }
-        self._apothecary = ApothecaryScene(
+        self._overlays.apothecary = ApothecaryScene(
             holder=self._holder,
             scene_manager=self._scene_manager,
             registry=self._registry,
@@ -457,86 +368,43 @@ class WorldMapScene(Scene):
         )
 
     def _close_apothecary(self) -> None:
-        self._apothecary = None
+        self._overlays.apothecary = None
 
     # ── Battle ────────────────────────────────────────────────
 
     def _launch_battle_from_enemy(self, enemy: EnemySprite) -> None:
-        """Build a BattleState from a visible enemy sprite and switch to BattleScene."""
-        state = self._holder.get()
-
         # Store the enemy; it will be deactivated on the first update tick after battle ends.
         self._engaged_enemy = enemy
-
-        # Build battle state
-        zone = self._encounter_manager.get_zone()
-        inventory_ids: set[str] = {entry.id for entry in state.repository.items}
-
-        if enemy.is_boss and zone:
-            from engine.common.flag_state import FlagState
-            battle_state = self._encounter_resolver.build_battle_from_boss(
-                zone, state.flags
-            )
-        elif zone:
-            from engine.encounter.encounter_zone_data import Formation
-            formation = Formation(
-                enemy_ids=enemy.formation,
-                weight=1,
-                chase_range=enemy.chase_range,
-            )
-            battle_state = self._encounter_resolver.build_battle_from_formation(
-                formation, zone, inventory_ids
-            )
-        else:
-            return
-
-        if battle_state is None:
-            return
-
-        boss_flag = getattr(battle_state, "boss_flag", "")
-        battle_state = self._encounter_manager.fill_party(
-            battle_state, state.party, set(state.flags.to_list()),
-        )
-        state.map.set_position(self._player.tile_position)
-
-        scene = BattleScene(
-            battle_state=battle_state,
+        launch_battle_from_enemy(
+            enemy=enemy,
+            holder=self._holder,
+            player=self._player,
+            encounter_manager=self._encounter_manager,
+            encounter_resolver=self._encounter_resolver,
             scene_manager=self._scene_manager,
             registry=self._registry,
-            holder=self._holder,
-            screen_width=self._screen_width,
-            screen_height=self._screen_height,
-            scenario_path=str(self._loader.scenario_path),
-            boss_flag=boss_flag,
-            effect_handler=self._effect_handler,
+            loader=self._loader,
             game_state_manager=self._game_state_manager,
+            effect_handler=self._effect_handler,
             bgm_manager=self._bgm_manager,
             sfx_manager=self._sfx_manager,
             rng=self._rng,
             balance=self._balance,
+            screen_width=self._screen_width,
+            screen_height=self._screen_height,
         )
-        self._scene_manager.switch(scene)
 
     # ── Portal ────────────────────────────────────────────────
 
     def _check_portals(self) -> None:
         transition = check_portals(self._tile_map, self._player)
         if transition:
-            self._start_fade_out(transition)
+            self._fade.start_fade_out(transition)
 
-    # ── Fade & Transition ─────────────────────────────────────
-
-    def _start_fade_out(self, transition: dict) -> None:
-        if self._fade_dir == 1:
-            return
-        self._pending_transition = transition
-        self._fade_dir = 1
-        self._fade_alpha = 0
-
-    def _apply_transition(self) -> None:
+    def _apply_transition(self, transition: dict) -> None:
         apply_transition(
             self._holder, self._game_state_manager,
-            self._player, self._pending_transition,
+            self._player, transition,
         )
         self._tile_map = None
         self._player = None
@@ -551,37 +419,14 @@ class WorldMapScene(Scene):
                 self._enemy_spawner.on_enemy_engaged(self._engaged_enemy)
             self._engaged_enemy = None
 
-        if self._fade_dir != 0:
-            self._fade_alpha += int(FADE_SPEED * delta) * self._fade_dir
-            if self._fade_dir == 1 and self._fade_alpha >= 255:
-                self._fade_alpha = 255
-                self._fade_dir = 0
-                self._apply_transition()
-                return
-            elif self._fade_dir == -1 and self._fade_alpha <= 0:
-                self._fade_alpha = 0
-                self._fade_dir = 0
+        completed_transition = self._fade.update(delta)
+        if completed_transition is not None:
+            self._apply_transition(completed_transition)
+            return
 
-        if self._dialogue:
-            self._dialogue.update(delta)
-            return
-        if self._save_modal:
-            self._save_modal.update(delta)
-            return
-        if self._mc_shop:
-            self._mc_shop.update(delta)
-            return
-        if self._inn:
-            self._inn.update(delta)
-            return
-        if self._item_shop:
-            self._item_shop.update(delta)
-            return
-        if self._apothecary:
-            self._apothecary.update(delta)
-            return
-        if self._item_box_modal:
-            self._item_box_modal.update(delta)
+        active_overlay = self._overlays.active
+        if active_overlay is not None:
+            active_overlay.update(delta)
             return
         if self._quit_confirm:
             return
@@ -589,7 +434,7 @@ class WorldMapScene(Scene):
             return
 
         keys = self._recorder.get_key_state() if self._recorder else pygame.key.get_pressed()
-        frozen = self._fade_dir != 0
+        frozen = not self._fade.is_idle
         state = self._holder.get()
 
         # Build collision rects — NPCs and item boxes block the player as solid walls.
@@ -648,14 +493,6 @@ class WorldMapScene(Scene):
         visible_boxes = [b for b in self._item_boxes if b.is_present(state.flags)]
         enemy_sprites = self._enemy_spawner.active_enemies if self._enemy_spawner else []
 
-        overlays = [
-            o for o in (
-                self._save_modal, self._dialogue, self._mc_shop,
-                self._inn, self._item_shop, self._apothecary,
-                self._item_box_modal,
-            ) if o is not None
-        ]
-
         map_id = state.map.current
         box_opened = {b.id: state.opened_boxes.is_opened(map_id, b.id) for b in visible_boxes}
 
@@ -666,9 +503,9 @@ class WorldMapScene(Scene):
             self._player,
             visible_npcs,
             enemy_sprites,
-            overlays,
-            self._dialogue,
-            self._fade_alpha,
+            self._overlays.render_list(),
+            self._overlays.dialogue,
+            self._fade.alpha,
             self._quit_confirm,
             item_boxes=visible_boxes,
             box_opened=box_opened,

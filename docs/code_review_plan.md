@@ -136,17 +136,6 @@ File: `engine/common/map_state.py:56-60` — uses `.get("position", [0,0])`, `.g
 
 ## 4. Break up oversized modules
 
-### 4.1 [P1] `engine/world/world_map_scene.py` (679 lines, 35 methods)
-
-Mixes: scene wiring, overlay lifecycle (save modal / dialogue / mc_shop / inn / item_shop / apothecary / item_box / quit_confirm), interact dispatch, fade transitions, battle launch from collision, scene init/asset loading, and update/render plumbing.
-
-Proposed split:
-- `engine/world/world_map_scene.py` — keep the `Scene` interface (events/update/render delegation, ~150 lines).
-- `engine/world/world_map_overlay_stack.py` — the 7 overlays' open/close/event-routing currently spread across `_open_*`, `_close_*`, and the `if self._dialogue: ...` event chain. Replace with a small overlay stack (`push(overlay)`, `pop()`).
-- `engine/world/world_map_init.py` — `_init`, `_build_spawner`, `_load_protagonist_sprite`.
-- `engine/world/world_map_battle_launcher.py` — `_launch_battle_from_enemy` (which itself has formation-vs-boss branching that wants a service).
-- `engine/world/fade_controller.py` — fade alpha + pending transition state machine.
-
 ### 4.2 [P1] `engine/battle/battle_scene.py` (451 lines)
 
 Mixes input handling for 6 phases, sub-menu construction, and result handling. Extract:
@@ -230,7 +219,7 @@ Current state: 64 test files, 892 tests. 64 engine modules have no matching `tes
 2. ~~**Centralize YAML loading (3.4)**~~ — **DONE 2026-04-27**. Added `engine/io/yaml_loader.py` with `load_yaml_required`, `load_yaml_optional`, and `iter_yaml_documents`. Migrated all 10 callsites listed in the original §3.4 (`npc_loader`, `item_box_loader`, `encounter_zone_loader`, `enemy_loader`, `dialogue_engine`, `item_catalog`, `item_effect_handler`, `spell_logic`, `world_map_logic.load_*`, `WorldMapScene._init`). `portal_loader` was listed but uses pytmx, not yaml. Test count 900 → 912 (12 new tests in `test_yaml_loader.py`). Paves the way for caching (§2.2, §2.3).
 3. ~~**Tile rendering refactor (2.1)**~~ — **DONE 2026-04-27**. `TileMap.__init__` now pre-renders each visible `TiledTileLayer` to a single `pygame.Surface` via `layer.tiles()`, and `render()` is a one-`screen.blit`-per-layer loop instead of width×height `pytmx.get_tile_image` lookups. Largest map in the scenario (`zone_01_starting_forest`, 50×35, 4 layers) caches ~29 MB; smaller maps 2–8 MB. Y-sort and debug overlays in `WorldMapRenderer` are unaffected (they sit above `tile_map.render`). Test count 912 → 918 (6 new tests in `test_tile_map.py`).
 4. ~~**Damage-float caching + fade-overlay reuse (2.4, 2.5)**~~ — **DONE 2026-04-27**. `BattleRenderer` now caches damage-float text + shadow surfaces by `id(DamageFloat)` (pruned each frame against live ids), pre-bakes the KO-ghost copy per `(enemy_id, sprite)` so it isn't rebuilt per frame, and reuses non-sprite hit-flash overlays keyed by `(w, h)`. `WorldMapRenderer` allocates the fade and quit-confirm dim overlays lazily once and reuses them. The hit-flash sprite-copy branch was left as is — copy + `BLEND_RGB_ADD` is per-frame work but small, and pre-baking would burn memory across many flash colors. Test count 918 → 929 (11 new tests in `test_battle_renderer_caches.py`).
-5. **Break up `world_map_scene` (4.1)** — biggest readability win, unblocks future scene additions.
+5. ~~**Break up `world_map_scene` (4.1)**~~ — **DONE 2026-04-27**. Split the 679-line scene into a 513-line orchestrator plus four single-purpose modules: `engine/world/fade_controller.py` (fade alpha + pending-transition state machine), `engine/world/world_map_init.py` (`init_world_map` returning a `WorldMapInitResult` with tile_map/camera/player/npcs/item_boxes/enemy_spawner), `engine/world/world_map_battle_launcher.py` (boss/formation battle assembly + `SceneManager.switch`), and `engine/world/world_map_overlays.py` (the seven overlay slots with `active`/`render_list` helpers). The seven `_open_*` constructors stayed in the scene since they wire scene-level callbacks, but the routing chain in `handle_events`/`update`/`render` now collapses to one `overlays.active` lookup. Test count 929 → 949 (20 new tests in `test_fade_controller.py` and `test_world_map_overlays.py`).
 6. **Extract menu/list shared code (3.1)** — let the WizardScene base land before splitting equip/spell scenes per §4.4.
 7. **Break up `battle_scene` and `battle_renderer` (4.2, 4.3)** — independent of #5/#6.
 8. **Test gaps (§5)** — driven alongside each refactor; do not ship #5 or #7 without their corresponding test additions.
