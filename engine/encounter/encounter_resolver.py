@@ -31,16 +31,12 @@ class EncounterResolver:
         return self._weighted_pick(zone.entries.entries)
 
     def _weighted_pick(self, entries: list[Formation]) -> Formation | None:
-        total = sum(e.weight for e in entries)
-        if total == 0:
+        if not entries:
             return None
-        roll = self._rng.randint(1, 100)
-        cumulative = 0
-        for entry in entries:
-            cumulative += int(entry.weight * 100 / total)
-            if roll <= cumulative:
-                return entry
-        return entries[-1]
+        weights = [e.weight for e in entries]
+        if sum(weights) == 0:
+            return None
+        return self._rng.choices(entries, weights=weights, k=1)[0]
 
     # ── Battle state construction ─────────────────────────────────
 

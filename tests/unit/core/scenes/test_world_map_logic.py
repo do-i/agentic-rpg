@@ -182,7 +182,9 @@ class TestCheckPortals:
 # ── apply_transition ──────────────────────────────────────────
 
 class TestApplyTransition:
-    def test_saves_and_moves(self):
+    def test_moves_then_saves(self):
+        """Move first, then autosave — so the saved state reflects the
+        destination map/position, not the portal-trigger tile on the old map."""
         holder = MagicMock()
         state = MagicMock()
         state.map.current = "town_01"
@@ -194,11 +196,37 @@ class TestApplyTransition:
 
         transition = {"map": "dungeon_01", "position": [10, 20]}
 
+        # save must come after move_to so the snapshot lands at the destination.
+        manager = MagicMock()
+        manager.attach_mock(state.map.move_to, "move_to")
+        manager.attach_mock(gsm.save, "save")
+
         apply_transition(holder, gsm, player, transition)
 
-        state.map.set_position.assert_called_with(Position(3, 4))
+        state.map.move_to.assert_called_once_with(
+            "dungeon_01", Position(10, 20),
+        )
         gsm.save.assert_called_once_with(state, slot_index=0)
-        state.map.move_to.assert_called_once()
+        ordered = [name for name, *_ in manager.mock_calls]
+        assert ordered.index("move_to") < ordered.index("save")
+
+    def test_missing_map_raises(self):
+        holder = MagicMock()
+        gsm = MagicMock()
+        player = MagicMock()
+        player.tile_position = Position(0, 0)
+
+        with pytest.raises(KeyError, match="'map'"):
+            apply_transition(holder, gsm, player, {"position": [0, 0]})
+
+    def test_missing_position_raises(self):
+        holder = MagicMock()
+        gsm = MagicMock()
+        player = MagicMock()
+        player.tile_position = Position(0, 0)
+
+        with pytest.raises(KeyError, match="'position'"):
+            apply_transition(holder, gsm, player, {"map": "town_01"})
 
 
 # ── load_inn_cost / load_shop_items ───────────────────────────

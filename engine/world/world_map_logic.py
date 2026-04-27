@@ -140,12 +140,11 @@ def apply_transition(holder: GameStateHolder, game_state_manager: GameStateManag
     """Save state and update map position for a transition."""
     if "position" not in transition:
         raise KeyError(f"transition missing required field 'position': {transition!r}")
+    if "map" not in transition:
+        raise KeyError(f"transition missing required field 'map': {transition!r}")
     state = holder.get()
-    state.map.set_position(player.tile_position)
+    state.map.move_to(transition["map"], Position.from_list(transition["position"]))
     game_state_manager.save(state, slot_index=0)
-
-    new_map = transition.get("map", state.map.current)
-    state.map.move_to(new_map, Position.from_list(transition["position"]))
 
 
 def load_inn_cost(scenario_path: Path, map_id: str) -> int:

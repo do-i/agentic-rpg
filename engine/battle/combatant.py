@@ -110,6 +110,10 @@ class Combatant:
         if self.defending:
             reduction = rng.uniform(0.25, 0.30)
             amount = max(1, int(amount * (1 - reduction)))
+        # actual = displayed damage (capped at remaining HP); self.hp uses the
+        # raw amount but is floored at 0, so the returned value can be < amount
+        # even though hp ends up at 0. Keep both clamps — they protect against
+        # negative-amount bugs from upstream regressions.
         actual = min(amount, self.hp)
         self.hp = max(0, self.hp - amount)
         if self.hp == 0:

@@ -95,7 +95,7 @@ class ItemEffectHandler:
         warnings: list[str] = []
 
         for member in targets:
-            w = self._apply_to_member(defn, member)
+            w = self.apply_to_target(defn, member)
             if w:
                 warnings.append(w)
             else:
@@ -108,9 +108,12 @@ class ItemEffectHandler:
         warning_str = "  ".join(warnings) if warnings else ""
         return UseResult(success=True, warning=warning_str, messages=messages)
 
-    def _apply_to_member(self, defn: FieldItemDef, member: MemberState) -> str:
+    def apply_to_target(self, defn: FieldItemDef, member: MemberState) -> str:
         """
-        Apply effect to one member.
+        Apply effect to one member or combatant. The target can be either a
+        MemberState (field use) or a Combatant (battle use) — both expose the
+        hp/mp/status_effects fields this method reads.
+
         Returns a warning string if item would have no effect, else "".
         """
         effect = defn.effect

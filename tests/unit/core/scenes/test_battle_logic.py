@@ -179,6 +179,48 @@ class TestResolveAction:
 
         assert "Slow" in msg
 
+    def test_multi_target_spell_deducts_mp_once(self):
+        """Multi-target spells must charge MP once, not once per target.
+
+        Regression for the dataclass-equality bug: targets[0] and targets[1]
+        could compare equal (same fresh stats) so the old `target == targets[0]`
+        guard was unreliable for AOE buffs/debuffs that don't mutate compared
+        fields on application."""
+        hero = make_combatant("Hero", mp=30, mres=10)
+        # Two enemies with identical fresh stats — would compare `==` equal
+        # under dataclass field equality before the first one is mutated.
+        g1 = make_combatant("Goblin", hp=50, hp_max=50, is_enemy=True)
+        g2 = make_combatant("Goblin", hp=50, hp_max=50, is_enemy=True)
+        state = make_battle_state([hero], [g1, g2])
+        spell = {"name": "Slow", "type": "debuff", "mp_cost": 5,
+                 "target": "all_enemies"}
+        state.pending_action = {
+            "type": "spell", "data": spell, "source": hero, "targets": [g1, g2],
+        }
+
+        resolve_action(state, SCREEN_W)
+
+        assert hero.mp == 25  # 30 - 5, NOT 30 - 5 - 5 = 20
+
+    def test_multi_target_aoe_buff_deducts_mp_once(self):
+        """AOE buff on identical allies (same fields) — dataclass __eq__ would
+        report every iteration's `target == targets[0]` as True, so the old
+        guard double-charged MP. Verify single deduction."""
+        hero = make_combatant("Hero", mp=30, mres=10)
+        a1 = make_combatant("Ally", hp=80, hp_max=80)
+        a2 = make_combatant("Ally", hp=80, hp_max=80)
+        state = make_battle_state([hero, a1, a2],
+                                  [make_combatant("Goblin", is_enemy=True)])
+        spell = {"name": "Protect", "type": "buff", "mp_cost": 7,
+                 "target": "all_allies"}
+        state.pending_action = {
+            "type": "spell", "data": spell, "source": hero, "targets": [a1, a2],
+        }
+
+        resolve_action(state, SCREEN_W)
+
+        assert hero.mp == 23  # 30 - 7, not 30 - 14
+
 
 # ── resolve_enemy_turn ────────────────────────────────────────
 

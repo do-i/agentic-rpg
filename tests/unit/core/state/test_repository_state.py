@@ -136,6 +136,31 @@ class TestItems:
         r.add_item("potion", qty=10)
         assert r.get_item("potion").qty == ITEM_QTY_CAP
 
+    def test_add_item_new_entry_capped(self):
+        """Regression: new entries used to skip the cap (only the
+        accumulating branch applied min()). A single add(qty > cap)
+        must not exceed item_qty_cap."""
+        r = RepositoryState()
+        r.add_item("potion", qty=ITEM_QTY_CAP + 50)
+        assert r.get_item("potion").qty == ITEM_QTY_CAP
+
+    def test_add_item_logs_warning_when_clipped(self, caplog):
+        """Cap clipping must not be silent — loot/quest rewards relied on
+        the caller seeing what was actually added."""
+        import logging
+        r = RepositoryState()
+        r.add_item("potion", qty=ITEM_QTY_CAP)
+        with caplog.at_level(logging.WARNING, logger="engine.party.repository_state"):
+            r.add_item("potion", qty=5)
+        assert any("clipped at cap" in rec.message for rec in caplog.records)
+
+    def test_add_item_no_warning_when_under_cap(self, caplog):
+        import logging
+        r = RepositoryState()
+        with caplog.at_level(logging.WARNING, logger="engine.party.repository_state"):
+            r.add_item("potion", qty=3)
+        assert not any("clipped" in rec.message for rec in caplog.records)
+
     def test_get_item_returns_none_for_missing(self):
         r = RepositoryState()
         assert r.get_item("elixir") is None

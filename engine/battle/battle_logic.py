@@ -113,6 +113,14 @@ def resolve_action(state: BattleState, screen_width: int,
         state.pending_action = None
         return f"{source.name} is defending!"
 
+    # MP for spells is deducted once up front (not per target). `Combatant`
+    # is a dataclass with field-level equality, so iterating "deduct once on
+    # the first target" via `target == targets[0]` is unsafe — an AOE buff
+    # that doesn't mutate compared fields would leave every iteration equal.
+    if atype == "spell" and source and targets:
+        ab = action.get("data", {})
+        source.mp = max(0, source.mp - ab["mp_cost"])
+
     for target in targets:
         if atype == "attack":
             src_atk = source.effective_atk if source else 0
@@ -127,9 +135,6 @@ def resolve_action(state: BattleState, screen_width: int,
             spell_type = ab.get("type", "spell")
             coeff = ab.get("spell_coeff") or ab.get("heal_coeff") or 1.0
             spell_name = ab["name"]
-
-            if source and target == targets[0]:
-                source.mp = max(0, source.mp - ab["mp_cost"])
 
             if spell_type == "heal" and ab.get("revive_hp_pct"):
                 if target.is_ko:
@@ -170,7 +175,7 @@ def resolve_action(state: BattleState, screen_width: int,
             defn = effect_handler.get_def(item_id) if effect_handler else None
             if defn:
                 defn_effect = defn.effect
-                effect_handler._apply_to_member(defn, target)
+                effect_handler.apply_to_target(defn, target)
                 # revive: clear is_ko on combatant
                 if defn_effect == "revive" and target.hp > 0:
                     target.is_ko = False

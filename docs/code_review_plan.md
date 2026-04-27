@@ -13,72 +13,10 @@ Severity tags:
 
 ## 1. Bugs
 
-### 1.1 [P1] Spell MP deducted via `==` on dataclass causes incorrect MP cost on multi-target spells
-File: `engine/battle/battle_logic.py:131`
-
-```python
-if source and target == targets[0]:
-    source.mp = max(0, source.mp - ab["mp_cost"])
-```
-
-`Combatant` is a `@dataclass` with default `eq=True`, so `==` compares all fields, not identity. The intent is "deduct MP only on the first iteration of the multi-target loop." Two enemies of the same type with identical fresh stats compare equal until one of them has mutated. In practice this happens to work for damaging spells (the first target's HP changes after `apply_damage`, breaking equality), but for **buff/debuff/utility AOEs that don't mutate the target's compared fields**, every iteration sees `target == targets[0] == True` (identical buff state) and MP is deducted only once correctly — UNLESS the spell mutates `status_effects`, which is also part of `__eq__`. Outcome is non-obvious and depends on the spell type and ordering.
-
-**Fix:** use `target is targets[0]`, or pull the MP deduction out of the per-target loop.
-
-### 1.2 [P2] `EncounterResolver._weighted_pick` uses biased integer math
-File: `engine/encounter/encounter_resolver.py:33-43`
-
-`int(entry.weight * 100 / total)` truncates per entry, so for weights `[1,1,1]` the cumulative caps at 99 and `roll == 100` falls through to `entries[-1]`, biasing the last entry. `RewardCalculator._weighted_pick` already uses `rng.choices` correctly — replace the encounter version with the same approach.
-
-### 1.3 [P2] `apply_transition` autosaves with old map but new position-target pairing
-File: `engine/world/world_map_logic.py:138-148`
-
-```python
-state.map.set_position(player.tile_position)
-game_state_manager.save(state, slot_index=0)
-new_map = transition.get("map", state.map.current)
-state.map.move_to(new_map, Position.from_list(transition["position"]))
-```
-
-Order: position is set to the player's current pixel-tile, then autosaved (fine), then moved. If a save is loaded between the save call and the move call (e.g., a crash mid-transition), the player wakes up at the **old map** at the **portal trigger tile**, which is at the edge of the map. Cosmetic but reproducible. Move the autosave to after `move_to`.
-
-### 1.4 [P2] `transition.get("map", state.map.current)` silently allows portals without a target map
-File: `engine/world/world_map_logic.py:147`
-
-A misconfigured portal that omits `map` will quietly wrap the player back to the same map at the new position. CLAUDE.md feedback memory explicitly forbids `.get(k, default)`; should `raise KeyError` like the sibling `position` check on line 142.
-
-### 1.5 [P2] `RepositoryState.add_item` silently caps qty
-File: `engine/party/repository_state.py:83-101`
-
-```python
-self._items[item_id].qty = min(self._items[item_id].qty + qty, self._item_qty_cap)
-```
-
-If the caller asks to add 10 but only 3 fit, the caller has no way to know. Loot drops, item-box pickups, and shop purchases all assume the requested qty was added. Consider returning the actual delta, or raising/warning when the cap clips. Same applies to `add_gp`.
-
-### 1.6 [P2] `apply_damage` order-of-operations: `actual` is computed against pre-decrement HP but with post-defending amount
-File: `engine/battle/combatant.py:105-117`
-
-```python
-actual = min(amount, self.hp)
-self.hp = max(0, self.hp - amount)
-```
-
-Functionally correct (actual is "displayed damage" capped at HP). But the `max(0, …)` guard is redundant since `min(amount, self.hp)` already ensures `self.hp - amount >= 0` once `amount` is clamped — except `self.hp -= amount` uses the unclamped `amount`, so the `max(0,…)` matters. Subtle. Not a bug, but a comment-worthy invariant.
-
 ### 1.7 [P2] `Combatant.tick_end_of_turn` mutates list while iterating effects
 File: `engine/battle/combatant.py:153-167`
 
 The two passes (DOT scan, then duration decrement, then filter) are correct, but the `for s in self.status_effects: s.duration_turns -= 1` followed by `self.status_effects = [...]` mutates the list reference. Safe in Python but fragile if a future hook adds during iteration.
-
-### 1.8 [P3] `_apply_to_member` called from outside its class
-File: `engine/battle/battle_logic.py:173`
-
-```python
-effect_handler._apply_to_member(defn, target)
-```
-
-`_apply_to_member` is private but battle_logic reaches across classes to invoke it. Promote to a public method (`apply_to_combatant` or `apply_one`) and route the public `apply()` through it.
 
 ### 1.9 [P3] `WorldMapScene.update` may run before `render` initializes the map
 File: `engine/world/world_map_scene.py:550-642`
@@ -323,7 +261,7 @@ Current state: 64 test files, 892 tests. 64 engine modules have no matching `tes
 
 ## 6. Suggested execution order
 
-1. **Bug fixes (1.1, 1.2, 1.4, 1.5, 1.6 callout, 1.8)** — small, isolated, with tests added per §5.6.
+1. ~~**Bug fixes (1.1, 1.2, 1.3, 1.4, 1.5, 1.6 callout, 1.8)**~~ — **DONE 2026-04-27**. Fixed the spell MP identity check, replaced biased weighted_pick with `rng.choices`, made `apply_transition` raise on missing `map` and reordered the autosave to land after `move_to` (incidentally fixing 1.3), routed `add_item`/`add_gp` clipping through a logging warning and patched the new-entry cap bypass, added the `apply_damage` invariant comment, and renamed `_apply_to_member` → `apply_to_target`. Test count 892 → 900 (8 new tests across `test_battle_logic.py`, `test_encounter_resolver.py`, `test_repository_state.py`, `test_world_map_logic.py`).
 2. **Centralize YAML loading (3.4)** — paves the way for caching (§2.2, §2.3).
 3. **Tile rendering refactor (2.1)** — biggest single perf win; need to confirm the integration with debug overlays and y-sort.
 4. **Damage-float caching + fade-overlay reuse (2.4, 2.5)** — easy after #2.

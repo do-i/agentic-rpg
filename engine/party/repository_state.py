@@ -4,9 +4,12 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from engine.item.item_entry_state import ItemEntry
+
+_log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from engine.item.item_catalog import ItemCatalog
@@ -60,8 +63,20 @@ class RepositoryState:
     def gp(self) -> int:
         return self._gp
 
-    def add_gp(self, amount: int) -> None:
+    def add_gp(self, amount: int) -> int:
+        """Add GP, capped at gp_cap. Returns the amount actually added.
+
+        Logs a warning if the cap clipped the request (caller may have
+        intended user-visible feedback like 'GP overflow!')."""
+        before = self._gp
         self._gp = min(self._gp + amount, self._gp_cap)
+        added = self._gp - before
+        if added < amount:
+            _log.warning(
+                "add_gp clipped at cap: requested=%d added=%d cap=%d",
+                amount, added, self._gp_cap,
+            )
+        return added
 
     def spend_gp(self, amount: int) -> bool:
         """Returns False if insufficient funds."""
@@ -81,13 +96,18 @@ class RepositoryState:
         self._catalog = catalog
 
     def add_item(self, item_id: str, qty: int = 1) -> ItemEntry:
-        """Add qty of item_id. Auto-populates metadata from catalog if set."""
-        if item_id in self._items:
-            self._items[item_id].qty = min(
-                self._items[item_id].qty + qty, self._item_qty_cap
-            )
+        """Add qty of item_id, capped at item_qty_cap.
+
+        Auto-populates metadata from catalog on first add. Logs a warning if
+        the cap clipped the request — silent overflow used to hide loot drops
+        and quest rewards."""
+        existing = self._items.get(item_id)
+        before = existing.qty if existing else 0
+        target = min(before + qty, self._item_qty_cap)
+        if existing:
+            existing.qty = target
         else:
-            entry = ItemEntry(item_id, qty)
+            entry = ItemEntry(item_id, target)
             if self._catalog:
                 defn = self._catalog.get(item_id)
                 if defn:
@@ -98,6 +118,12 @@ class RepositoryState:
                     entry.sellable = defn.sellable
                     entry.droppable = defn.droppable
             self._items[item_id] = entry
+        added = target - before
+        if added < qty:
+            _log.warning(
+                "add_item clipped at cap: id=%s requested=%d added=%d cap=%d",
+                item_id, qty, added, self._item_qty_cap,
+            )
         return self._items[item_id]
 
     def remove_item(self, item_id: str, qty: int | None = None) -> bool:

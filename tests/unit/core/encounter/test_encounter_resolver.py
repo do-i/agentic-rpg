@@ -290,3 +290,25 @@ class TestWeightedPick:
 
     def test_returns_none_on_empty(self):
         assert self._resolver()._weighted_pick([]) is None
+
+    def test_distribution_unbiased_for_equal_weights(self):
+        """Regression for the truncation bias in the old custom-cumulative
+        implementation: with weights [1,1,1], `int(weight*100/total)`
+        produced cumulatives [33,66,99], so a roll of 100 always fell
+        through to the last entry. Statistical check using a fresh RNG
+        seed each call to vary outcomes."""
+        from engine.encounter.encounter_resolver import EncounterResolver
+        rng = PseudoRandom(seed=42)
+        resolver = EncounterResolver(make_loader("a", "b", "c"), rng)
+        entries = [
+            Formation(["a"], 1),
+            Formation(["b"], 1),
+            Formation(["c"], 1),
+        ]
+        counts = {"a": 0, "b": 0, "c": 0}
+        for _ in range(3000):
+            picked = resolver._weighted_pick(entries)
+            counts[picked.enemy_ids[0]] += 1
+        # each bucket should be in the 25%–42% band (very loose for stability)
+        for v in counts.values():
+            assert 750 < v < 1250, counts
