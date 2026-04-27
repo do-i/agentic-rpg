@@ -3,14 +3,12 @@
 from dataclasses import dataclass
 from engine.world.position_data import Position
 
-PORTAL_TRIGGER_RADIUS = 8  # px — portal fires when centers are within this distance
-
 
 @dataclass(frozen=True)
 class Portal:
     """
     Represents a map exit.
-    Trigger: portal center within PORTAL_TRIGGER_RADIUS of collision rect center.
+    Trigger: player collision rect overlaps the portal's bounding box.
     """
     x: int              # pixel x (top-left of object)
     y: int              # pixel y (top-left of object)
@@ -33,11 +31,12 @@ class Portal:
 
     def is_triggered_by(self, col_x: int, col_y: int, col_w: int, col_h: int) -> bool:
         """
-        Returns True if portal center is within PORTAL_TRIGGER_RADIUS
-        of the collision rect center.
+        Returns True if the player's collision rect overlaps (or touches the
+        edge of) the portal's bounding box.
         """
-        ccx = col_x + col_w // 2
-        ccy = col_y + col_h // 2
-        dx = abs(self.center_x - ccx)
-        dy = abs(self.center_y - ccy)
-        return dx <= PORTAL_TRIGGER_RADIUS and dy <= PORTAL_TRIGGER_RADIUS
+        return (
+            col_x <= self.x + self.width
+            and col_x + col_w >= self.x
+            and col_y <= self.y + self.height
+            and col_y + col_h >= self.y
+        )

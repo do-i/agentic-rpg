@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="6" nextobjectid="8">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="6" nextobjectid="8">
  <tileset firstgid="1" source="../tilesets/grass_cave_walls_24x14.tsx"/>
  <tileset firstgid="337" source="../tilesets/icon_table_stage_14x9.tsx"/>
  <objectgroup id="5" name="portals">
-  <object id="1" x="817" y="82">
+  <object id="1" name="zone_02_open_plains_cave_01" x="817" y="82">
    <properties>
-    <property name="target_map" value="town_01_ardel"/>
-    <property name="target_position_x" type="int" value="27"/>
-    <property name="target_position_y" type="int" value="12"/>
+    <property name="target_map" value="zone_02_open_plains_cave_01"/>
+    <property name="target_position_x" type="int" value="7"/>
+    <property name="target_position_y" type="int" value="3"/>
    </properties>
   </object>
  </objectgroup>

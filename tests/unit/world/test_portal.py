@@ -1,6 +1,6 @@
 # tests/unit/world/test_portal.py
 
-from engine.world.portal_data import Portal, PORTAL_TRIGGER_RADIUS
+from engine.world.portal_data import Portal
 from engine.world.position_data import Position
 
 
@@ -24,26 +24,33 @@ class TestPortalCenter:
 
 
 class TestIsTriggered:
-    def test_exact_overlap_triggers(self):
+    def test_full_overlap_triggers(self):
         p = _portal(x=100, y=200, w=16, h=16)
-        # collision rect centered on portal center (108, 208)
         assert p.is_triggered_by(100, 200, 16, 16)
 
-    def test_within_radius_triggers(self):
+    def test_partial_overlap_triggers(self):
         p = _portal(x=100, y=200, w=16, h=16)
-        # shift collision rect slightly — still within radius
-        assert p.is_triggered_by(100 + PORTAL_TRIGGER_RADIUS - 1, 200, 16, 16)
+        # collision rect overlaps portal's right edge
+        assert p.is_triggered_by(110, 205, 16, 16)
 
-    def test_outside_radius_does_not_trigger(self):
+    def test_edge_touch_triggers(self):
         p = _portal(x=100, y=200, w=16, h=16)
-        # shift far away
+        # collision rect's right edge touches portal's left edge
+        assert p.is_triggered_by(84, 200, 16, 16)
+
+    def test_no_overlap_does_not_trigger(self):
+        p = _portal(x=100, y=200, w=16, h=16)
         assert not p.is_triggered_by(200, 400, 16, 16)
 
-    def test_just_at_boundary(self):
-        p = _portal(x=0, y=0, w=0, h=0)
-        # col center at (PORTAL_TRIGGER_RADIUS, 0) — dx == radius, should trigger
-        assert p.is_triggered_by(PORTAL_TRIGGER_RADIUS, 0, 0, 0)
+    def test_one_pixel_gap_does_not_trigger(self):
+        p = _portal(x=100, y=200, w=16, h=16)
+        # collision rect sits one pixel to the left of portal
+        assert not p.is_triggered_by(83, 200, 16, 16)
 
-    def test_just_outside_boundary(self):
-        p = _portal(x=0, y=0, w=0, h=0)
-        assert not p.is_triggered_by(PORTAL_TRIGGER_RADIUS + 1, 0, 0, 0)
+    def test_point_portal_inside_collision_rect_triggers(self):
+        p = _portal(x=50, y=50, w=0, h=0)
+        assert p.is_triggered_by(40, 40, 16, 16)
+
+    def test_point_portal_outside_collision_rect_does_not_trigger(self):
+        p = _portal(x=100, y=100, w=0, h=0)
+        assert not p.is_triggered_by(40, 40, 16, 16)

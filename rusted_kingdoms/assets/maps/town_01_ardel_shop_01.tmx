@@ -7,7 +7,7 @@
  <tileset firstgid="1460" source="../tilesets/astralpixels/finestre.tsx"/>
  <tileset firstgid="1485" source="../tilesets/astralpixels/altro.tsx"/>
  <objectgroup id="4" name="portals">
-  <object id="1" name="town_01_ardel" x="224.458" y="344.292" width="31" height="7.375">
+  <object id="1" name="town_01_ardel" x="224.458" y="350.019" width="31" height="1.64773">
    <properties>
     <property name="target_map" value="town_01_ardel"/>
     <property name="target_position_x" type="int" value="15"/>

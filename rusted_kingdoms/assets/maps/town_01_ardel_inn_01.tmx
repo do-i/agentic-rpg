@@ -9,7 +9,7 @@
  <tileset firstgid="1087" source="../tilesets/stone_tile_stares_16x16.tsx"/>
  <tileset firstgid="1343" source="../tilesets/astralpixels/terreno.tsx"/>
  <objectgroup id="4" name="portals">
-  <object id="1" name="town_01_ardel" x="160.242" y="343.878" width="31.6364" height="8.45455">
+  <object id="1" name="town_01_ardel" x="160.242" y="349.003" width="31.6364" height="3.32955">
    <properties>
     <property name="target_map" value="town_01_ardel"/>
     <property name="target_position_x" type="int" value="24"/>

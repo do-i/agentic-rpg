@@ -675,4 +675,5 @@ class WorldMapScene(Scene):
             self._quit_confirm,
             item_boxes=visible_boxes,
             box_opened=box_opened,
+            debug_collision=self._debug_collision,
         )

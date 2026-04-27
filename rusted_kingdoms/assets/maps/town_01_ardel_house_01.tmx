@@ -11,7 +11,7 @@
  <objectgroup id="5" name="portals">
   <object id="1" name="up" x="748" y="305"/>
   <object id="2" name="down" x="45" y="306"/>
-  <object id="3" name="town_01_ardel" x="320.545" y="409.091" width="31.2727" height="7.09091">
+  <object id="3" name="town_01_ardel" x="323.92" y="413.841" width="23.2727" height="2.34091">
    <properties>
     <property name="target_map" value="town_01_ardel"/>
     <property name="target_position_x" type="int" value="3"/>

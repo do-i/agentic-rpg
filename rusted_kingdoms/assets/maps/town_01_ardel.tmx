@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="10">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="11">
  <tileset firstgid="1" source="../tilesets/grass_cave_walls_24x14.tsx"/>
  <tileset firstgid="337" source="../tilesets/stone_tile_stares_16x16.tsx"/>
  <tileset firstgid="593" source="../tilesets/icon_table_stage_14x9.tsx"/>
@@ -14,33 +14,32 @@
     <property name="target_position_y" type="int" value="1"/>
    </properties>
   </object>
-  <object id="3" name="well" x="67.9698" y="422.333" width="16.6364" height="13.8182">
-   <properties>
-    <property name="target_map" value="zone_01_starting_forest"/>
-    <property name="target_position_x" type="int" value="29"/>
-    <property name="target_position_y" type="int" value="1"/>
-   </properties>
-   <ellipse/>
-  </object>
-  <object id="7" name="house" x="62.5379" y="118.318" width="66.5682" height="29.4318">
+  <object id="7" name="house" x="68.2046" y="127.318" width="53.9015" height="5.09847">
    <properties>
     <property name="target_map" value="town_01_ardel_house_01"/>
     <property name="target_position_x" type="int" value="10"/>
     <property name="target_position_y" type="int" value="11"/>
    </properties>
   </object>
-  <object id="8" name="shop" x="480.364" y="86.1212" width="30.9091" height="28.9091">
+  <object id="8" name="shop" x="480.364" y="95.7879" width="30.9091" height="5.57577">
    <properties>
     <property name="target_map" value="town_01_ardel_shop_01"/>
     <property name="target_position_x" type="int" value="7"/>
-    <property name="target_position_y" type="int" value="8"/>
+    <property name="target_position_y" type="int" value="10"/>
    </properties>
   </object>
-  <object id="9" name="inn" x="785" y="100">
+  <object id="9" name="inn" x="769.125" y="93.9583" width="29.375" height="6.04167">
    <properties>
     <property name="target_map" value="town_01_ardel_inn_01"/>
     <property name="target_position_x" type="int" value="5"/>
     <property name="target_position_y" type="int" value="8"/>
+   </properties>
+  </object>
+  <object id="10" name="hole" x="75.6667" y="426.667" width="4.33333" height="5.66667">
+   <properties>
+    <property name="target_map" value="zone_01_starting_forest"/>
+    <property name="target_position_x" type="int" value="29"/>
+    <property name="target_position_y" type="int" value="1"/>
    </properties>
   </object>
  </objectgroup>

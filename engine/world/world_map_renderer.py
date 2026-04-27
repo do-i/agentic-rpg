@@ -31,6 +31,7 @@ class WorldMapRenderer:
         quit_confirm: bool,
         item_boxes: list | None = None,
         box_opened: dict | None = None,
+        debug_collision: bool = False,
     ) -> None:
         item_boxes = item_boxes or []
         box_opened = box_opened or {}
@@ -81,6 +82,9 @@ class WorldMapRenderer:
         for _, draw in sorted(drawables, key=lambda d: d[0]):
             draw()
 
+        if debug_collision:
+            self._render_portal_debug(screen, tile_map, camera)
+
         for overlay in overlays:
             overlay.render(screen)
 
@@ -93,6 +97,14 @@ class WorldMapRenderer:
             )
             fade_surf.fill((0, 0, 0, fade_alpha))
             screen.blit(fade_surf, (0, 0))
+
+    def _render_portal_debug(self, screen: pygame.Surface, tile_map, camera) -> None:
+        for portal in tile_map.portals:
+            w = portal.width if portal.width > 0 else 4
+            h = portal.height if portal.height > 0 else 4
+            x = portal.x - camera.offset_x
+            y = portal.y - camera.offset_y
+            pygame.draw.rect(screen, (0, 200, 255), (x, y, w, h), 2)
 
     def _render_quit_confirm(self, screen: pygame.Surface) -> None:
         if self._quit_font is None:
