@@ -42,6 +42,15 @@ class BattleRenderer:
         self.cmd_w      = int(screen_width * 0.30)
         self.msg_x      = self.party_w + self.cmd_w
         self.msg_w      = screen_width - self.msg_x
+        # ── Render caches ─────────────────────────────────────
+        # Damage-float text + shadow surfaces, keyed by id(DamageFloat).
+        self._dmg_cache: dict[int, tuple[pygame.Surface, pygame.Surface]] = {}
+        # Pre-baked KO ghost per enemy, invalidated when the source sprite
+        # changes (sprite identity check).
+        self._ko_cache: dict[str, tuple[pygame.Surface, pygame.Surface]] = {}
+        # Reusable hit-flash overlay surfaces for non-sprite enemies, keyed
+        # by (w, h). Refilled per frame.
+        self._flash_cache: dict[tuple[int, int], pygame.Surface] = {}
 
     # ── Main render ───────────────────────────────────────────
 
@@ -113,10 +122,7 @@ class BattleRenderer:
 
         sprite = self._assets.load_enemy_sprite(enemy)
         if sprite is not None:
-            img = sprite
-            if enemy.is_ko:
-                img = img.copy()
-                img.set_alpha(80)
+            img = self._ko_ghost(enemy.id, sprite) if enemy.is_ko else sprite
             screen.blit(img, (sx, sy))
             self._apply_flash(screen, enemy, sx, sy,
                               img.get_width(), img.get_height(), fx, sprite=img)
@@ -399,18 +405,48 @@ class BattleRenderer:
             overlay.fill(tint, special_flags=pygame.BLEND_RGB_ADD)
             screen.blit(overlay, (x, y))
         else:
-            overlay = pygame.Surface((w, h), pygame.SRCALPHA)
+            overlay = self._flash_cache.get((w, h))
+            if overlay is None:
+                overlay = pygame.Surface((w, h), pygame.SRCALPHA)
+                self._flash_cache[(w, h)] = overlay
             overlay.fill((r, g, b, alpha))
             screen.blit(overlay, (x, y))
+
+    # ── KO ghost cache ────────────────────────────────────────
+
+    def _ko_ghost(self, enemy_id: str, sprite: pygame.Surface) -> pygame.Surface:
+        """Return a 80-alpha copy of the sprite, baked once per (enemy, sprite)."""
+        cached = self._ko_cache.get(enemy_id)
+        if cached is not None and cached[0] is sprite:
+            return cached[1]
+        ghost = sprite.copy()
+        ghost.set_alpha(80)
+        self._ko_cache[enemy_id] = (sprite, ghost)
+        return ghost
 
     # ── Damage floats ─────────────────────────────────────────
 
     def _draw_damage_floats(self, screen: pygame.Surface, state: BattleState) -> None:
+        live_ids: set[int] = set()
         for f in state.damage_floats:
-            shadow = self._assets.font_dmg.render(f.text, True, (0, 0, 0))
+            key = id(f)
+            live_ids.add(key)
+            pair = self._dmg_cache.get(key)
+            if pair is None:
+                shadow = self._assets.font_dmg.render(f.text, True, (0, 0, 0))
+                surf = self._assets.font_dmg.render(f.text, True, f.color)
+                pair = (shadow, surf)
+                self._dmg_cache[key] = pair
+            shadow, surf = pair
             shadow.set_alpha(f.alpha)
             for ox, oy in ((-1, -1), (1, -1), (-1, 1), (1, 1), (0, 2)):
                 screen.blit(shadow, (f.x + ox, f.y + oy))
-            surf = self._assets.font_dmg.render(f.text, True, f.color)
             surf.set_alpha(f.alpha)
             screen.blit(surf, (f.x, f.y))
+        # Drop entries for floats that have expired and were pruned by the
+        # state. id() is only safe to compare against live objects, so we
+        # filter against this frame's set.
+        if len(self._dmg_cache) != len(live_ids):
+            for k in list(self._dmg_cache.keys()):
+                if k not in live_ids:
+                    del self._dmg_cache[k]

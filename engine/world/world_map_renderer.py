@@ -16,6 +16,10 @@ class WorldMapRenderer:
 
     def __init__(self) -> None:
         self._quit_font: pygame.font.Font | None = None
+        # Reusable full-screen overlays. Allocated lazily on first use; the
+        # screen size is fixed at runtime so we only ever build one of each.
+        self._fade_surf: pygame.Surface | None = None
+        self._quit_dim_surf: pygame.Surface | None = None
 
     def render(
         self,
@@ -92,11 +96,12 @@ class WorldMapRenderer:
             self._render_quit_confirm(screen)
 
         if fade_alpha > 0:
-            fade_surf = pygame.Surface(
-                (screen.get_width(), screen.get_height()), pygame.SRCALPHA
-            )
-            fade_surf.fill((0, 0, 0, fade_alpha))
-            screen.blit(fade_surf, (0, 0))
+            if self._fade_surf is None:
+                self._fade_surf = pygame.Surface(
+                    (screen.get_width(), screen.get_height()), pygame.SRCALPHA
+                )
+            self._fade_surf.fill((0, 0, 0, fade_alpha))
+            screen.blit(self._fade_surf, (0, 0))
 
     def _render_portal_debug(self, screen: pygame.Surface, tile_map, camera) -> None:
         for portal in tile_map.portals:
@@ -116,9 +121,12 @@ class WorldMapRenderer:
         x = (screen.get_width() - w) // 2
         y = (screen.get_height() - h) // 2
 
-        overlay = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 160))
-        screen.blit(overlay, (0, 0))
+        if self._quit_dim_surf is None:
+            self._quit_dim_surf = pygame.Surface(
+                (screen.get_width(), screen.get_height()), pygame.SRCALPHA
+            )
+            self._quit_dim_surf.fill((0, 0, 0, 160))
+        screen.blit(self._quit_dim_surf, (0, 0))
 
         pygame.draw.rect(screen, (20, 20, 45), (x, y, w, h))
         pygame.draw.rect(screen, (160, 160, 100), (x, y, w, h), 2)

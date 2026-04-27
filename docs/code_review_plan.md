@@ -54,23 +54,6 @@ File: `engine/world/world_map_scene.py:177-196`
 
 `_init()` calls `npc_loader.load_from_map(map_yaml_path)` and `item_box_loader.load_from_map(map_yaml_path)` (each opens the file), then opens the file directly twice more (lines 182-189 for BGM, 213-219 for spawn config). Four reads of the same file per map load. Open once and pass the parsed dict to each consumer.
 
-### 2.4 [P2] Damage-float rendering re-renders text per frame
-File: `engine/battle/battle_renderer.py:408-416`
-
-```python
-for f in state.damage_floats:
-    shadow = self._assets.font_dmg.render(f.text, True, (0, 0, 0))
-    ...
-    surf = self._assets.font_dmg.render(f.text, True, f.color)
-```
-
-Each damage float re-renders both surfaces every frame, then blits the shadow 5 times. Text doesn't change after creation; cache the rendered surfaces on the `DamageFloat` itself or a parallel cache keyed on `id(f)`. Major savings during burst combat.
-
-### 2.5 [P2] Per-frame allocations in renderers
-- `WorldMapRenderer.render` allocates a fresh `pygame.Surface` for the fade overlay every frame when `fade_alpha > 0` (`world_map_renderer.py:94-99`). Allocate once, reuse, just refill the alpha.
-- `BattleRenderer._draw_enemy` does `img.copy()` for KO alpha and another `sprite.copy()` for the hit-flash overlay every frame (`battle_renderer.py:117-120`, `397-400`). Pre-bake the KO ghost when `is_ko` flips; use a single shared overlay surface for the flash.
-- `_render_quit_confirm` allocates a full-screen `SRCALPHA` overlay every frame the dialog is open (`world_map_renderer.py:119`).
-
 ### 2.6 [P2] WorldMapScene rebuilds visibility lists redundantly
 File: `engine/world/world_map_scene.py:600-651`
 
@@ -246,7 +229,7 @@ Current state: 64 test files, 892 tests. 64 engine modules have no matching `tes
 1. ~~**Bug fixes (1.1, 1.2, 1.3, 1.4, 1.5, 1.6 callout, 1.8)**~~ — **DONE 2026-04-27**. Fixed the spell MP identity check, replaced biased weighted_pick with `rng.choices`, made `apply_transition` raise on missing `map` and reordered the autosave to land after `move_to` (incidentally fixing 1.3), routed `add_item`/`add_gp` clipping through a logging warning and patched the new-entry cap bypass, added the `apply_damage` invariant comment, and renamed `_apply_to_member` → `apply_to_target`. Test count 892 → 900 (8 new tests across `test_battle_logic.py`, `test_encounter_resolver.py`, `test_repository_state.py`, `test_world_map_logic.py`).
 2. ~~**Centralize YAML loading (3.4)**~~ — **DONE 2026-04-27**. Added `engine/io/yaml_loader.py` with `load_yaml_required`, `load_yaml_optional`, and `iter_yaml_documents`. Migrated all 10 callsites listed in the original §3.4 (`npc_loader`, `item_box_loader`, `encounter_zone_loader`, `enemy_loader`, `dialogue_engine`, `item_catalog`, `item_effect_handler`, `spell_logic`, `world_map_logic.load_*`, `WorldMapScene._init`). `portal_loader` was listed but uses pytmx, not yaml. Test count 900 → 912 (12 new tests in `test_yaml_loader.py`). Paves the way for caching (§2.2, §2.3).
 3. ~~**Tile rendering refactor (2.1)**~~ — **DONE 2026-04-27**. `TileMap.__init__` now pre-renders each visible `TiledTileLayer` to a single `pygame.Surface` via `layer.tiles()`, and `render()` is a one-`screen.blit`-per-layer loop instead of width×height `pytmx.get_tile_image` lookups. Largest map in the scenario (`zone_01_starting_forest`, 50×35, 4 layers) caches ~29 MB; smaller maps 2–8 MB. Y-sort and debug overlays in `WorldMapRenderer` are unaffected (they sit above `tile_map.render`). Test count 912 → 918 (6 new tests in `test_tile_map.py`).
-4. **Damage-float caching + fade-overlay reuse (2.4, 2.5)** — easy after #2.
+4. ~~**Damage-float caching + fade-overlay reuse (2.4, 2.5)**~~ — **DONE 2026-04-27**. `BattleRenderer` now caches damage-float text + shadow surfaces by `id(DamageFloat)` (pruned each frame against live ids), pre-bakes the KO-ghost copy per `(enemy_id, sprite)` so it isn't rebuilt per frame, and reuses non-sprite hit-flash overlays keyed by `(w, h)`. `WorldMapRenderer` allocates the fade and quit-confirm dim overlays lazily once and reuses them. The hit-flash sprite-copy branch was left as is — copy + `BLEND_RGB_ADD` is per-frame work but small, and pre-baking would burn memory across many flash colors. Test count 918 → 929 (11 new tests in `test_battle_renderer_caches.py`).
 5. **Break up `world_map_scene` (4.1)** — biggest readability win, unblocks future scene additions.
 6. **Extract menu/list shared code (3.1)** — let the WizardScene base land before splitting equip/spell scenes per §4.4.
 7. **Break up `battle_scene` and `battle_renderer` (4.2, 4.3)** — independent of #5/#6.
