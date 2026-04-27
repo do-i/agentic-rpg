@@ -82,3 +82,25 @@ class TestGetFrame:
 class TestFrameCount:
     def test_frame_count(self, sprite_sheet):
         assert sprite_sheet.frame_count == FRAMES_PER_ROW
+
+
+# ── load_npc_face ─────────────────────────────────────────────
+
+class TestLoadNpcFace:
+    def test_returns_scaled_surface(self, tmp_path):
+        tsx_path = make_tsx(tmp_path, "hero.png")
+        with patch("pygame.image.load", return_value=make_fake_sheet()):
+            face = SpriteSheet.load_npc_face(tsx_path, 96)
+        assert isinstance(face, pygame.Surface)
+        assert face.get_size() == (96, 96)
+
+    def test_none_path_returns_none(self):
+        assert SpriteSheet.load_npc_face(None, 96) is None
+
+    def test_missing_tsx_returns_none(self, tmp_path):
+        assert SpriteSheet.load_npc_face(tmp_path / "missing.tsx", 96) is None
+
+    def test_corrupt_tsx_returns_none(self, tmp_path):
+        bad = tmp_path / "bad.tsx"
+        bad.write_text("<not><valid></tileset>")
+        assert SpriteSheet.load_npc_face(bad, 96) is None

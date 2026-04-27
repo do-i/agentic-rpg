@@ -11,7 +11,7 @@ from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
-from engine.world.sprite_sheet import SpriteSheet, Direction
+from engine.world.sprite_sheet import SpriteSheet
 
 # ── Colors ────────────────────────────────────────────────────
 C_BG        = (18, 18, 35)
@@ -64,7 +64,7 @@ class InnScene(Scene):
 
         self._state         = "confirm"   # confirm | no_gp | popup
         self._fonts_ready   = False
-        self._sprite: SpriteSheet | None = None
+        self._sprite_loaded = False
         self._sprite_surf: pygame.Surface | None = None
 
     # ── Init ──────────────────────────────────────────────────
@@ -78,12 +78,8 @@ class InnScene(Scene):
         self._fonts_ready = True
 
     def _init_sprite(self) -> None:
-        try:
-            self._sprite = SpriteSheet(self._sprite_path)
-            frame = self._sprite.get_frame(Direction.DOWN, 0)
-            self._sprite_surf = pygame.transform.scale(frame, (SPRITE_SIZE, SPRITE_SIZE))
-        except Exception:
-            self._sprite_surf = None
+        self._sprite_surf = SpriteSheet.load_npc_face(self._sprite_path, SPRITE_SIZE)
+        self._sprite_loaded = True
 
     # ── Events ────────────────────────────────────────────────
 
@@ -126,7 +122,7 @@ class InnScene(Scene):
     def render(self, screen: pygame.Surface) -> None:
         if not self._fonts_ready:
             self._init_fonts()
-        if self._sprite_surf is None and self._sprite is None:
+        if not self._sprite_loaded:
             self._init_sprite()
 
         state   = self._holder.get()

@@ -16,8 +16,10 @@ from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.font_provider import get_fonts
 from engine.common.color_constants import (
-    C_BG, C_TEXT, C_TEXT_MUT, C_TEXT_DIM,
+    C_BG, C_TEXT, C_TEXT_MUT, C_TEXT_DIM, C_HEAD,
 )
+from engine.common.menu_popup import render_popup
+from engine.common.menu_row_renderer import render_row
 from engine.common.target_select_overlay_renderer import TargetSelectOverlay
 from engine.party.member_state import MemberState
 from engine.spell.spell_logic import learned_spells, is_field_castable
@@ -27,9 +29,6 @@ from engine.status.status_logic import apply_spell, apply_spell_all, valid_targe
 PAGE_MEMBER = "member"
 PAGE_SPELL  = "spell"
 
-C_SEL     = (74, 74, 122)
-C_ROW_SEL = (42, 42, 74)
-C_HEAD    = (212, 200, 138)
 C_BADGE   = (120, 120, 160)
 
 PAD_X = 30
@@ -270,8 +269,8 @@ class SpellScene(Scene):
             focused = selected and active_page
             mp_hint = f"MP {m.mp}/{m.mp_max}"
             text = f"{m.name}  Lv{m.level}  {m.class_name}  {mp_hint}"
-            self._render_row(
-                screen, x, y, COL_W - 16, text,
+            render_row(
+                screen, self._font_row, x, y, COL_W - 16, text,
                 focused,
                 selected and not active_page,
                 C_TEXT,
@@ -307,8 +306,8 @@ class SpellScene(Scene):
             mp_cost = spell["mp_cost"]
             badge = "" if castable else "  [battle]"
             line = f"{spell['name']:<20}  MP {mp_cost:>3}{badge}"
-            self._render_row(
-                screen, x, y, list_w - 16, line,
+            render_row(
+                screen, self._font_row, x, y, list_w - 16, line,
                 selected, False, color,
             )
             y += row_h
@@ -320,19 +319,6 @@ class SpellScene(Scene):
                 text = self._font_meta.render(desc, True, C_TEXT_MUT)
                 screen.blit(text, (x, y))
 
-    def _render_row(
-        self, screen, x: int, y: int, w: int,
-        text: str, focused: bool, dimmed_sel: bool, text_color,
-    ) -> None:
-        row_h = self._font_row.get_height() + 10
-        if focused:
-            pygame.draw.rect(screen, C_ROW_SEL, (x - 4, y - 2, w, row_h))
-            pygame.draw.rect(screen, C_SEL,     (x - 4, y - 2, w, row_h), 2)
-        elif dimmed_sel:
-            pygame.draw.rect(screen, (26, 26, 46), (x - 4, y - 2, w, row_h))
-            pygame.draw.rect(screen, (60, 60, 80), (x - 4, y - 2, w, row_h), 1)
-        screen.blit(self._font_row.render(text, True, text_color), (x, y))
-
     def _render_hint(self, screen: pygame.Surface) -> None:
         sw, sh = screen.get_size()
         if self._page == PAGE_MEMBER:
@@ -343,13 +329,6 @@ class SpellScene(Scene):
         screen.blit(hint, ((sw - hint.get_width()) // 2, sh - 30))
 
     def _render_popup(self, screen: pygame.Surface) -> None:
-        sw, sh = screen.get_size()
-        w, h = 420, 80
-        x = (sw - w) // 2
-        y = (sh - h) // 2
-        pygame.draw.rect(screen, (30, 30, 52), (x, y, w, h))
-        pygame.draw.rect(screen, (140, 140, 200), (x, y, w, h), 2)
-        msg = self._font_row.render(self._popup_text, True, C_TEXT)
-        screen.blit(msg, (x + (w - msg.get_width()) // 2, y + 20))
-        sub = self._font_meta.render("ENTER / ESC to dismiss", True, C_TEXT_DIM)
-        screen.blit(sub, (x + (w - sub.get_width()) // 2, y + h - 24))
+        render_popup(
+            screen, self._font_row, self._font_meta, self._popup_text,
+        )

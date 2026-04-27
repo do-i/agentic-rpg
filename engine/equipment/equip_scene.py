@@ -15,8 +15,9 @@ from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.font_provider import get_fonts
 from engine.common.color_constants import (
-    C_BG, C_TEXT, C_TEXT_MUT, C_TEXT_DIM,
+    C_BG, C_TEXT, C_TEXT_MUT, C_TEXT_DIM, C_HEAD,
 )
+from engine.common.menu_row_renderer import render_row
 from engine.item.item_catalog import ItemCatalog, ItemDef
 from engine.party.member_state import MemberState
 from engine.equipment.equipment_logic import (
@@ -40,11 +41,8 @@ SLOT_LABEL = {
 STAT_ORDER = ("str", "dex", "con", "int")
 STAT_LABEL = {"str": "STR", "dex": "DEX", "con": "CON", "int": "INT"}
 
-C_SEL       = (74, 74, 122)
-C_ROW_SEL   = (42, 42, 74)
 C_UP        = (120, 220, 120)
 C_DOWN      = (220, 110, 110)
-C_HEAD      = (212, 200, 138)
 
 PAD_X      = 30
 PAD_Y      = 24
@@ -258,8 +256,8 @@ class EquipScene(Scene):
         active_page = self._page == PAGE_MEMBER
         for i, m in enumerate(members):
             selected = (i == self._member_sel)
-            self._render_row(
-                screen, x, y, COL_W - 16,
+            render_row(
+                screen, self._font_row, x, y, COL_W - 16,
                 f"{m.name}  Lv{m.level}  {m.class_name}",
                 selected and active_page,
                 selected and not active_page,
@@ -285,8 +283,8 @@ class EquipScene(Scene):
             label = SLOT_LABEL[slot]
             value = self._display_name(item_id) if item_id else "-"
             text = f"{label:<10} {value}"
-            self._render_row(
-                screen, x, y, COL_W - 16,
+            render_row(
+                screen, self._font_row, x, y, COL_W - 16,
                 text,
                 selected and active_page,
                 selected and self._page == PAGE_PICKER,
@@ -328,8 +326,8 @@ class EquipScene(Scene):
             else:
                 label = row.item.name
                 color = C_TEXT
-            self._render_row(screen, x, y, picker_w - 16,
-                             label, selected, False, color)
+            render_row(screen, self._font_row, x, y, picker_w - 16,
+                       label, selected, False, color)
             y += row_h
 
         y += 8
@@ -364,19 +362,6 @@ class EquipScene(Scene):
             y += 6
             desc = self._font_stat.render(row.item.description, True, C_TEXT_MUT)
             screen.blit(desc, (x, y))
-
-    def _render_row(
-        self, screen, x: int, y: int, w: int,
-        text: str, focused: bool, dimmed_sel: bool, text_color,
-    ) -> None:
-        row_h = self._font_row.get_height() + 10
-        if focused:
-            pygame.draw.rect(screen, C_ROW_SEL, (x - 4, y - 2, w, row_h))
-            pygame.draw.rect(screen, C_SEL,     (x - 4, y - 2, w, row_h), 2)
-        elif dimmed_sel:
-            pygame.draw.rect(screen, (26, 26, 46), (x - 4, y - 2, w, row_h))
-            pygame.draw.rect(screen, (60, 60, 80), (x - 4, y - 2, w, row_h), 1)
-        screen.blit(self._font_row.render(text, True, text_color), (x, y))
 
     def _render_hint(self, screen: pygame.Surface) -> None:
         sw, sh = screen.get_size()

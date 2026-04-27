@@ -12,7 +12,7 @@ from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
-from engine.world.sprite_sheet import SpriteSheet, Direction
+from engine.world.sprite_sheet import SpriteSheet
 from engine.common.item_selection_view import ItemSelectionView
 from engine.shop.apothecary_renderer import ApothecaryRenderer, SPRITE_SIZE, VISIBLE_ROWS
 
@@ -51,7 +51,7 @@ class ApothecaryScene(Scene):
         self._scroll       = 0
         self._popup_text   = ""
         self._sprite_surf: pygame.Surface | None = None
-        self._sprite: SpriteSheet | None = None
+        self._sprite_loaded = False
         self._icons: dict[str, pygame.Surface] = {}
         self._icons_ready = False
         self._renderer = ApothecaryRenderer()
@@ -59,12 +59,8 @@ class ApothecaryScene(Scene):
     # ── Init ──────────────────────────────────────────────────
 
     def _init_sprite(self) -> None:
-        try:
-            self._sprite = SpriteSheet(self._sprite_path)
-            frame = self._sprite.get_frame(Direction.DOWN, 0)
-            self._sprite_surf = pygame.transform.scale(frame, (SPRITE_SIZE, SPRITE_SIZE))
-        except Exception:
-            self._sprite_surf = None
+        self._sprite_surf = SpriteSheet.load_npc_face(self._sprite_path, SPRITE_SIZE)
+        self._sprite_loaded = True
 
     def _init_icons(self) -> None:
         target_h = 28
@@ -254,7 +250,7 @@ class ApothecaryScene(Scene):
     # ── Render ────────────────────────────────────────────────
 
     def render(self, screen: pygame.Surface) -> None:
-        if self._sprite_surf is None and self._sprite is None:
+        if not self._sprite_loaded:
             self._init_sprite()
         if not self._icons_ready:
             self._init_icons()

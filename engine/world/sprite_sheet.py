@@ -3,6 +3,7 @@
 from enum import IntEnum
 from pathlib import Path
 from xml.etree import ElementTree
+from xml.etree.ElementTree import ParseError
 
 import pygame
 
@@ -79,3 +80,20 @@ class SpriteSheet:
 
     def __repr__(self) -> str:
         return f"SpriteSheet({self._tsx_path.name}, frames={len(self._frames)})"
+
+    @staticmethod
+    def load_npc_face(path: Path | str, size: int) -> pygame.Surface | None:
+        """Load an NPC's idle DOWN frame and scale to (size, size).
+
+        Returns None if the sheet/image fails to load — callers fall back
+        to a placeholder. Used by inn/shop/apothecary overlays for the
+        small NPC portrait beside their title.
+        """
+        if path is None:
+            return None
+        try:
+            sheet = SpriteSheet(path)
+            frame = sheet.get_frame(Direction.DOWN, 0)
+            return pygame.transform.scale(frame, (size, size))
+        except (FileNotFoundError, OSError, pygame.error, ValueError, KeyError, ParseError):
+            return None
