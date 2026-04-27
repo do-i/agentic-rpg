@@ -71,6 +71,10 @@ class TileMap:
         self.portals: list[Portal] = (portal_loader or PortalLoader()).load(self._tmx)
         self.enemy_spawn_tiles: list[dict] = _load_enemy_spawn_tiles(self._tmx)
         self.boss_spawn_tile: dict | None = _load_boss_spawn_tile(self._tmx)
+        # Each visible tile layer is composited once at load time so per-frame
+        # rendering is a single screen.blit per layer instead of width*height
+        # pytmx.get_tile_image lookups.
+        self._layer_surfaces: list[pygame.Surface] = self._prerender_layers()
 
     @property
     def width_px(self) -> int:
@@ -80,33 +84,24 @@ class TileMap:
     def height_px(self) -> int:
         return self.height * self.tile_height
 
-    def render(self, screen: pygame.Surface, offset_x: int, offset_y: int) -> None:
-        """Render all visible tile layers, culled to viewport."""
-        for layer_idx, layer in enumerate(self._tmx.visible_layers):
-            if not isinstance(layer, pytmx.TiledTileLayer):
-                continue
-            self._render_layer(screen, layer_idx, offset_x, offset_y)
-
-    def _render_layer(
-        self,
-        screen: pygame.Surface,
-        layer_idx: int,
-        offset_x: int,
-        offset_y: int,
-    ) -> None:
+    def _prerender_layers(self) -> list[pygame.Surface]:
+        surfaces: list[pygame.Surface] = []
         tw = self.tile_width
         th = self.tile_height
+        for layer in self._tmx.visible_layers:
+            if not isinstance(layer, pytmx.TiledTileLayer):
+                continue
+            surf = pygame.Surface((self.width_px, self.height_px), pygame.SRCALPHA)
+            for x, y, image in layer.tiles():
+                surf.blit(image, (x * tw, y * th))
+            surfaces.append(surf)
+        return surfaces
 
-        # viewport tile range — cull off-screen tiles
-        col_start = max(0, offset_x // tw)
-        col_end   = min(self.width,  (offset_x + screen.get_width())  // tw + 1)
-        row_start = max(0, offset_y // th)
-        row_end   = min(self.height, (offset_y + screen.get_height()) // th + 1)
+    def render(self, screen: pygame.Surface, offset_x: int, offset_y: int) -> None:
+        """Blit each pre-rendered tile layer at the camera offset.
 
-        for row in range(row_start, row_end):
-            for col in range(col_start, col_end):
-                image = self._tmx.get_tile_image(col, row, layer_idx)
-                if image:
-                    screen_x = col * tw - offset_x
-                    screen_y = row * th - offset_y
-                    screen.blit(image, (screen_x, screen_y))
+        screen.blit clips to the destination automatically, so off-screen
+        tiles cost nothing.
+        """
+        for surf in self._layer_surfaces:
+            screen.blit(surf, (-offset_x, -offset_y))

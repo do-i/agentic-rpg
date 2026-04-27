@@ -42,15 +42,6 @@ The pattern is "fail back to placeholder," but several sites just `pass` with no
 
 ## 2. Performance
 
-### 2.1 [P1] Tile rendering does per-tile `get_tile_image` lookup every frame
-File: `engine/world/tile_map.py:106-112`
-
-For a typical 1280×766 viewport at 32-px tiles with 3 visible layers: `40×24×3 = 2880` tile lookups per frame at 60 fps = **172,800 lookups/sec**. `pytmx.get_tile_image` is well known to be slow for this pattern.
-
-**Fix options:**
-1. Pre-render each layer to a single offscreen `Surface` once at map load, then `screen.blit(layer_surf, (-offset_x, -offset_y))` per frame. Memory cost: `width_px × height_px × 4 bytes × num_layers` (a 50×50 map = ~30 MB for 3 layers — acceptable on desktop).
-2. Use the `pyscroll` library which solves this exact problem.
-
 ### 2.2 [P2] YAML re-loaded on every dialogue interaction
 File: `engine/dialogue/dialogue_engine.py:47-74`
 
@@ -254,7 +245,7 @@ Current state: 64 test files, 892 tests. 64 engine modules have no matching `tes
 
 1. ~~**Bug fixes (1.1, 1.2, 1.3, 1.4, 1.5, 1.6 callout, 1.8)**~~ — **DONE 2026-04-27**. Fixed the spell MP identity check, replaced biased weighted_pick with `rng.choices`, made `apply_transition` raise on missing `map` and reordered the autosave to land after `move_to` (incidentally fixing 1.3), routed `add_item`/`add_gp` clipping through a logging warning and patched the new-entry cap bypass, added the `apply_damage` invariant comment, and renamed `_apply_to_member` → `apply_to_target`. Test count 892 → 900 (8 new tests across `test_battle_logic.py`, `test_encounter_resolver.py`, `test_repository_state.py`, `test_world_map_logic.py`).
 2. ~~**Centralize YAML loading (3.4)**~~ — **DONE 2026-04-27**. Added `engine/io/yaml_loader.py` with `load_yaml_required`, `load_yaml_optional`, and `iter_yaml_documents`. Migrated all 10 callsites listed in the original §3.4 (`npc_loader`, `item_box_loader`, `encounter_zone_loader`, `enemy_loader`, `dialogue_engine`, `item_catalog`, `item_effect_handler`, `spell_logic`, `world_map_logic.load_*`, `WorldMapScene._init`). `portal_loader` was listed but uses pytmx, not yaml. Test count 900 → 912 (12 new tests in `test_yaml_loader.py`). Paves the way for caching (§2.2, §2.3).
-3. **Tile rendering refactor (2.1)** — biggest single perf win; need to confirm the integration with debug overlays and y-sort.
+3. ~~**Tile rendering refactor (2.1)**~~ — **DONE 2026-04-27**. `TileMap.__init__` now pre-renders each visible `TiledTileLayer` to a single `pygame.Surface` via `layer.tiles()`, and `render()` is a one-`screen.blit`-per-layer loop instead of width×height `pytmx.get_tile_image` lookups. Largest map in the scenario (`zone_01_starting_forest`, 50×35, 4 layers) caches ~29 MB; smaller maps 2–8 MB. Y-sort and debug overlays in `WorldMapRenderer` are unaffected (they sit above `tile_map.render`). Test count 912 → 918 (6 new tests in `test_tile_map.py`).
 4. **Damage-float caching + fade-overlay reuse (2.4, 2.5)** — easy after #2.
 5. **Break up `world_map_scene` (4.1)** — biggest readability win, unblocks future scene additions.
 6. **Extract menu/list shared code (3.1)** — let the WizardScene base land before splitting equip/spell scenes per §4.4.
