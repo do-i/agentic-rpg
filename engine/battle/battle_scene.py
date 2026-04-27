@@ -1,7 +1,9 @@
 # engine/scenes/battle_scene.py
 #
 # Phase 4 — Battle system
-# Thin orchestrator: delegates logic to battle_logic, rendering to battle_renderer.
+# Thin orchestrator: delegates input to BattleInputController, sub-menu
+# building to battle_menu_builder, logic to battle_logic, rendering to
+# BattleRenderer.
 
 from __future__ import annotations
 
@@ -15,6 +17,8 @@ from engine.common.scene.scene_registry import SceneRegistry
 from engine.battle.combatant import Combatant
 from engine.battle.battle_state import BattleState, BattlePhase
 from engine.battle.battle_rewards import RewardCalculator
+from engine.battle.battle_input import BattleInputController, BattleInputCallbacks
+from engine.battle.battle_menu_builder import build_spell_menu, build_item_menu
 from engine.common.game_state_holder import GameStateHolder
 from engine.battle.post_battle_scene import PostBattleScene
 from engine.battle.game_over_scene import GameOverScene
@@ -82,12 +86,16 @@ class BattleScene(Scene):
             boss = any(e.boss for e in battle_state.enemies)
             self._bgm_key = "battle.boss" if boss else "battle.normal"
 
-        self._cmd_items: list[str] = ["Attack", "Defend", "Spell", "Item", "Run"]
-        self._cmd_sel: int = 0
-        self._sub_items: list[dict] = []
-        self._sub_sel: int = 0
-        self._target_pool: list[Combatant] = []
-        self._target_sel: int = 0
+        self._input = BattleInputController(
+            BattleInputCallbacks(
+                do_resolve=self._do_resolve,
+                open_spell_menu=self._open_spell_menu,
+                open_item_menu=self._open_item_menu,
+                attempt_run=self._attempt_run,
+                enter_resolve=self._enter_resolve,
+            ),
+            sfx_manager=sfx_manager,
+        )
         self._resolve_msg: str = ""
         self._resolve_is_enemy: bool = False
 
@@ -100,7 +108,7 @@ class BattleScene(Scene):
             self._do_enemy_turn()
         else:
             self._state.phase = BattlePhase.PLAYER_TURN
-            self._cmd_sel = 0
+            self._input.reset_cmd_selection()
 
     # ── Events ────────────────────────────────────────────────
 
@@ -120,18 +128,18 @@ class BattleScene(Scene):
             if event.key == pygame.K_ESCAPE:
                 if phase in (BattlePhase.SELECT_SPELL, BattlePhase.SELECT_ITEM, BattlePhase.SELECT_TARGET):
                     self._state.phase = BattlePhase.PLAYER_TURN
-                    self._sub_items.clear()
+                    self._input.clear_sub()
                     continue
                 elif phase == BattlePhase.PLAYER_TURN:
                     self._attempt_run()
                     continue
 
             if phase == BattlePhase.PLAYER_TURN:
-                self._handle_cmd(event.key)
+                self._input.handle_cmd(self._state, event.key)
             elif phase in (BattlePhase.SELECT_SPELL, BattlePhase.SELECT_ITEM):
-                self._handle_sub(event.key)
+                self._input.handle_sub(self._state, event.key)
             elif phase == BattlePhase.SELECT_TARGET:
-                self._handle_target(event.key)
+                self._input.handle_target(self._state, event.key)
             elif phase == BattlePhase.RESOLVE:
                 if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                     self._resolve_msg = ""
@@ -141,196 +149,14 @@ class BattleScene(Scene):
                     if phase == BattlePhase.GAME_OVER:
                         self._return_to_world_map()
 
-    def _handle_cmd(self, key: int) -> None:
-        active = self._state.active
-        if active is None or active.is_enemy:
-            return
-        if key == pygame.K_UP:
-            new_sel = max(0, self._cmd_sel - 1)
-            if new_sel != self._cmd_sel and self._sfx_manager:
-                self._sfx_manager.play("hover")
-            self._cmd_sel = new_sel
-        elif key == pygame.K_DOWN:
-            new_sel = min(len(self._cmd_items) - 1, self._cmd_sel + 1)
-            if new_sel != self._cmd_sel and self._sfx_manager:
-                self._sfx_manager.play("hover")
-            self._cmd_sel = new_sel
-        elif key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_RIGHT):
-            if self._sfx_manager:
-                self._sfx_manager.play("confirm")
-            self._confirm_cmd()
-
-    def _confirm_cmd(self) -> None:
-        label  = self._cmd_items[self._cmd_sel]
-        active = self._state.active
-        if label == "Attack":
-            self._target_pool = self._state.alive_enemies()
-            self._target_sel  = 0
-            self._state.pending_action = {"type": "attack", "source": active}
-            self._state.phase = BattlePhase.SELECT_TARGET
-        elif label == "Defend":
-            self._state.pending_action = {
-                "type": "defend", "source": active, "targets": [active],
-            }
-            self._do_resolve()
-        elif label == "Spell":
-            if active and active.is_silenced:
-                if self._sfx_manager:
-                    self._sfx_manager.play("denied")
-                self._enter_resolve(f"{active.name} is silenced!")
-                return
-            if active and active.mp_max > 0:
-                self._open_spell_menu(active)
-        elif label == "Item":
-            self._open_item_menu()
-        elif label == "Run":
-            self._attempt_run()
-
     def _open_spell_menu(self, active: Combatant) -> None:
-        self._sub_items = []
-        for ab in active.abilities:
-            if ab.get("type") not in ("spell", "heal", "buff", "debuff", "utility"):
-                continue
-            cost = ab["mp_cost"]
-            self._sub_items.append({
-                "label":    ab["name"],
-                "mp_cost":  cost,
-                "data":     ab,
-                "disabled": active.mp < cost,
-            })
-        self._sub_sel = 0
+        self._input.set_sub_items(build_spell_menu(active))
         self._state.phase = BattlePhase.SELECT_SPELL
 
     def _open_item_menu(self) -> None:
-        TARGET_MAP = {
-            "single_alive": "single_ally",
-            "single_ko": "single_ko",
-            "all_alive": "all_allies",
-        }
         repo = self._holder.get().repository
-        self._sub_items = []
-        for entry in repo.items:
-            defn = self._effect_handler.get_def(entry.id) if self._effect_handler else None
-            if not defn:
-                continue
-            target = TARGET_MAP.get(defn.target, "single_ally")
-            label = entry.id.replace("_", " ").title()
-            self._sub_items.append({
-                "label": label,
-                "qty": entry.qty,
-                "data": {"id": entry.id, "target": target},
-                "disabled": False,
-            })
-        self._sub_sel = 0
+        self._input.set_sub_items(build_item_menu(repo, self._effect_handler))
         self._state.phase = BattlePhase.SELECT_ITEM
-
-    def _handle_sub(self, key: int) -> None:
-        if key in (pygame.K_ESCAPE, pygame.K_LEFT):
-            if self._sfx_manager:
-                self._sfx_manager.play("cancel")
-            self._state.phase = BattlePhase.PLAYER_TURN
-            return
-        if key == pygame.K_UP:
-            new_sel = max(0, self._sub_sel - 1)
-            if new_sel != self._sub_sel and self._sfx_manager:
-                self._sfx_manager.play("hover")
-            self._sub_sel = new_sel
-        elif key == pygame.K_DOWN:
-            new_sel = min(len(self._sub_items) - 1, self._sub_sel + 1)
-            if new_sel != self._sub_sel and self._sfx_manager:
-                self._sfx_manager.play("hover")
-            self._sub_sel = new_sel
-        elif key in (pygame.K_RETURN, pygame.K_RIGHT):
-            if self._sfx_manager:
-                self._sfx_manager.play("confirm")
-            self._confirm_sub()
-
-    def _confirm_sub(self) -> None:
-        if not self._sub_items:
-            return
-        item    = self._sub_items[self._sub_sel]
-        if item.get("disabled"):
-            return
-        active  = self._state.active
-        phase   = self._state.phase
-        ab_data = item.get("data", {})
-        target  = ab_data.get("target", "single_enemy")
-
-        action_type = "spell" if phase == BattlePhase.SELECT_SPELL else "item"
-
-        if target == "single_enemy":
-            self._target_pool = self._state.alive_enemies()
-            self._target_sel  = 0
-            self._state.pending_action = {
-                "type": action_type, "data": ab_data, "source": active,
-            }
-            self._state.phase = BattlePhase.SELECT_TARGET
-        elif target == "single_ally":
-            self._target_pool = self._state.alive_party()
-            self._target_sel  = 0
-            self._state.pending_action = {
-                "type": action_type, "data": ab_data, "source": active,
-            }
-            self._state.phase = BattlePhase.SELECT_TARGET
-        elif target == "single_ko":
-            pool = self._state.ko_party()
-            if not pool:
-                return
-            self._target_pool = pool
-            self._target_sel  = 0
-            self._state.pending_action = {
-                "type": action_type, "data": ab_data, "source": active,
-            }
-            self._state.phase = BattlePhase.SELECT_TARGET
-        elif target in ("all_allies", "party"):
-            self._state.pending_action = {
-                "type": action_type, "data": ab_data, "source": active,
-                "targets": self._state.alive_party(),
-            }
-            self._do_resolve()
-        elif target in ("all_enemies", "group_enemies"):
-            self._state.pending_action = {
-                "type": action_type, "data": ab_data, "source": active,
-                "targets": self._state.alive_enemies(),
-            }
-            self._do_resolve()
-        elif target == "self":
-            self._state.pending_action = {
-                "type": action_type, "data": ab_data, "source": active,
-                "targets": [active],
-            }
-            self._do_resolve()
-        else:
-            self._state.pending_action = {
-                "type": action_type, "data": ab_data, "source": active,
-                "targets": self._state.alive_enemies(),
-            }
-            self._do_resolve()
-
-    def _handle_target(self, key: int) -> None:
-        if key == pygame.K_ESCAPE:
-            if self._sfx_manager:
-                self._sfx_manager.play("cancel")
-            self._state.phase = BattlePhase.PLAYER_TURN
-            self._sub_items.clear()
-            return
-
-        if key in (pygame.K_LEFT, pygame.K_UP):
-            new_sel = max(0, self._target_sel - 1)
-            if new_sel != self._target_sel and self._sfx_manager:
-                self._sfx_manager.play("hover")
-            self._target_sel = new_sel
-        elif key in (pygame.K_RIGHT, pygame.K_DOWN):
-            new_sel = min(len(self._target_pool) - 1, self._target_sel + 1)
-            if new_sel != self._target_sel and self._sfx_manager:
-                self._sfx_manager.play("hover")
-            self._target_sel = new_sel
-        elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-            if self._target_pool:
-                if self._sfx_manager:
-                    self._sfx_manager.play("confirm")
-                self._state.pending_action["targets"] = [self._target_pool[self._target_sel]]
-                self._do_resolve()
 
     # ── Action resolution (delegates to battle_logic) ─────────
 
@@ -409,7 +235,7 @@ class BattleScene(Scene):
         if self._state.phase == BattlePhase.ENEMY_TURN:
             self._do_enemy_turn()
         else:
-            self._cmd_sel = 0
+            self._input.reset_cmd_selection()
 
     def _attempt_run(self) -> None:
         success, msg = attempt_flee(self._state, self._holder, self._rng, self._balance)
@@ -442,9 +268,9 @@ class BattleScene(Scene):
             self._sfx_manager.play("encounter")
         self._renderer.render(
             screen, self._state,
-            self._cmd_items, self._cmd_sel,
-            self._sub_items, self._sub_sel,
-            self._target_pool, self._target_sel,
+            self._input.cmd_items, self._input.cmd_sel,
+            self._input.sub_items, self._input.sub_sel,
+            self._input.target_pool, self._input.target_sel,
             self._resolve_msg,
             self._resolve_is_enemy,
             fx=self._fx,
