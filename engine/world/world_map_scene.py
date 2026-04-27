@@ -3,7 +3,7 @@
 
 
 import pygame
-import yaml
+from engine.io.yaml_loader import load_yaml_optional
 from engine.world.position_data import Position
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
@@ -179,9 +179,8 @@ class WorldMapScene(Scene):
         self._item_boxes = self._item_box_loader.load_from_map(map_yaml_path)
 
         # BGM
-        if map_yaml_path.exists():
-            with open(map_yaml_path) as f:
-                map_data = yaml.safe_load(f) or {}
+        map_data = load_yaml_optional(map_yaml_path) or {}
+        if map_data:
             state.map.display_name = map_data.get("name", map_id)
             if self._bgm_manager:
                 bgm_key = map_data.get("bgm")
@@ -210,13 +209,11 @@ class WorldMapScene(Scene):
 
         # Parse map-level spawn config
         map_interval: float | None = None
-        if map_yaml_path.exists():
-            with open(map_yaml_path) as f:
-                map_data = yaml.safe_load(f) or {}
-            spawn_cfg = map_data.get("enemy_spawn") or {}
-            raw_interval = spawn_cfg.get("interval")
-            if raw_interval is not None:
-                map_interval = float(raw_interval)
+        map_data = load_yaml_optional(map_yaml_path) or {}
+        spawn_cfg = map_data.get("enemy_spawn") or {}
+        raw_interval = spawn_cfg.get("interval")
+        if raw_interval is not None:
+            map_interval = float(raw_interval)
 
         return EnemySpawner(
             zone=zone,

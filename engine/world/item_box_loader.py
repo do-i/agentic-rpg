@@ -2,9 +2,8 @@
 
 from pathlib import Path
 
-import yaml
-
 from engine.io.manifest_loader import ManifestLoader
+from engine.io.yaml_loader import load_yaml_optional
 from engine.world.item_box import ItemBox
 from engine.world.item_box_sprite import ItemBoxSprite
 
@@ -43,15 +42,9 @@ class ItemBoxLoader:
             return None
 
     def load_from_map(self, map_yaml_path: Path) -> list[ItemBox]:
-        if not map_yaml_path.exists():
-            return []
-
-        with open(map_yaml_path, "r") as f:
-            data = yaml.safe_load(f)
-
+        data = load_yaml_optional(map_yaml_path)
         if not isinstance(data, dict):
             return []
-
         return [self._parse(entry) for entry in data.get("item_boxes", [])]
 
     def _parse(self, entry: dict) -> ItemBox:

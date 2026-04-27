@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 from pathlib import Path
-import yaml
 
+from engine.io.yaml_loader import load_yaml_required
 from engine.encounter.encounter_zone_data import (
     Formation,
     EncounterSet,
@@ -21,8 +21,7 @@ def _require(data: dict, key: str, ctx: str):
 
 def load_encounter_zone(path: Path) -> EncounterZone:
     """Parse a single encount YAML file into an EncounterZone."""
-    with open(path, "r") as f:
-        data = yaml.safe_load(f)
+    data = load_yaml_required(path)
 
     ctx = f"encount file {path.name}"
 

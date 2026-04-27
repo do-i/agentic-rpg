@@ -5,9 +5,9 @@
 
 from __future__ import annotations
 
-import yaml
 from pathlib import Path
 
+from engine.io.yaml_loader import load_yaml_optional, load_yaml_required
 from engine.world.position_data import Position
 from engine.common.game_state_holder import GameStateHolder
 from engine.io.save_manager import GameStateManager
@@ -150,8 +150,7 @@ def apply_transition(holder: GameStateHolder, game_state_manager: GameStateManag
 def load_inn_cost(scenario_path: Path, map_id: str) -> int:
     """Load inn cost from map YAML data."""
     map_yaml = scenario_path / "data" / "maps" / f"{map_id}.yaml"
-    with open(map_yaml) as f:
-        map_data = yaml.safe_load(f)
+    map_data = load_yaml_required(map_yaml)
     inn = map_data.get("inn") or {}
     if "cost" not in inn:
         raise KeyError(f"{map_id}.yaml: inn.cost is required")
@@ -161,18 +160,14 @@ def load_inn_cost(scenario_path: Path, map_id: str) -> int:
 def load_shop_items(scenario_path: Path, map_id: str) -> list[dict]:
     """Load shop items from map YAML data."""
     map_yaml = scenario_path / "data" / "maps" / f"{map_id}.yaml"
-    with open(map_yaml) as f:
-        map_data = yaml.safe_load(f)
+    map_data = load_yaml_required(map_yaml)
     return map_data.get("shop", {}).get("items", [])
 
 
 def load_recipes(scenario_path: Path) -> list[dict]:
     """Load apothecary recipes from scenario data."""
     recipe_path = scenario_path / "data" / "recipe" / "all_recipe.yaml"
-    if not recipe_path.exists():
-        return []
-    with open(recipe_path) as f:
-        return yaml.safe_load(f) or []
+    return load_yaml_optional(recipe_path) or []
 
 
 def load_magic_cores(scenario_path: Path) -> list[dict]:
@@ -182,8 +177,5 @@ def load_magic_cores(scenario_path: Path) -> list[dict]:
     Ordered by exchange_rate descending (XL first).
     """
     mc_path = scenario_path / "data" / "items" / "magic_cores.yaml"
-    if not mc_path.exists():
-        return []
-    with open(mc_path) as f:
-        items = yaml.safe_load(f) or []
+    items = load_yaml_optional(mc_path) or []
     return sorted(items, key=lambda d: d["exchange_rate"], reverse=True)

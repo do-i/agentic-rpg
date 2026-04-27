@@ -4,8 +4,8 @@
 
 from __future__ import annotations
 from pathlib import Path
-import yaml
 
+from engine.io.yaml_loader import iter_yaml_documents, load_yaml_required
 from engine.battle.combatant import Combatant
 
 
@@ -35,10 +35,9 @@ class EnemyLoader:
         if not self._enemies_dir.exists():
             return
         for path in self._enemies_dir.glob("enemies_rank_*.yaml"):
-            with open(path, "r") as f:
-                for doc in yaml.safe_load_all(f):
-                    if isinstance(doc, dict) and "id" in doc:
-                        self._index[doc["id"]] = path
+            for doc in iter_yaml_documents(path):
+                if isinstance(doc, dict) and "id" in doc:
+                    self._index[doc["id"]] = path
 
     # ── Load ──────────────────────────────────────────────────
 
@@ -46,10 +45,9 @@ class EnemyLoader:
         path = self._index.get(enemy_id)
         if not path:
             return None
-        with open(path, "r") as f:
-            for doc in yaml.safe_load_all(f):
-                if isinstance(doc, dict) and doc.get("id") == enemy_id:
-                    return self._build(doc)
+        for doc in iter_yaml_documents(path):
+            if isinstance(doc, dict) and doc.get("id") == enemy_id:
+                return self._build(doc)
         return None
 
     _REQUIRED = ("name", "hp", "atk", "def", "mres", "dex", "exp")
@@ -93,8 +91,7 @@ class EnemyLoader:
             ref_path = self._enemies_dir / ai_ref
             if ref_path.exists():
                 try:
-                    with open(ref_path, "r") as f:
-                        ref_data = yaml.safe_load(f)
+                    ref_data = load_yaml_required(ref_path)
                     return {
                         "ai": ref_data.get("ai", {}),
                         "targeting": ref_data.get("targeting", {}),

@@ -8,8 +8,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-import yaml
 
+from engine.io.yaml_loader import load_yaml_required
 from engine.party.member_state import MemberState
 
 
@@ -26,10 +26,7 @@ BATTLE_ONLY_TARGETS = {"single_enemy", "all_enemies", "group_enemies"}
 
 def _load_class_abilities(classes_dir: Path, class_name: str) -> list[dict]:
     path = classes_dir / f"{class_name}.yaml"
-    if not path.exists():
-        raise FileNotFoundError(f"Class YAML not found: {path}")
-    with open(path) as f:
-        data = yaml.safe_load(f)
+    data = load_yaml_required(path)
     return data.get("abilities", [])
 
 

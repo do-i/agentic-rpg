@@ -5,8 +5,8 @@
 from __future__ import annotations
 from pathlib import Path
 from typing import Callable
-import yaml
 
+from engine.io.yaml_loader import load_yaml_optional
 from engine.party.member_state import MemberState
 from engine.party.party_state import PartyState
 from engine.party.repository_state import RepositoryState
@@ -36,10 +36,7 @@ class ItemEffectHandler:
     # ── Load ──────────────────────────────────────────────────
 
     def _load(self, path: Path) -> None:
-        if not path.exists():
-            return
-        with open(path, "r") as f:
-            data = yaml.safe_load(f) or []
+        data = load_yaml_optional(path) or []
         for entry in data:
             item_id = entry.get("id")
             if not item_id:

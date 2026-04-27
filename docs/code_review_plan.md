@@ -136,15 +136,6 @@ Common pieces to extract:
 
 Promote a single `engine.util.weighted_pick(rng, entries, weight_fn)` and call it from both.
 
-### 3.4 [P2] YAML loaders share boilerplate
-
-`npc_loader`, `item_box_loader`, `portal_loader`, `encounter_zone_loader`, `enemy_loader`, `dialogue_engine`, `item_catalog`, `item_effect_handler`, `spell_logic._load_class_abilities`, `world_map_logic.load_inn_cost / load_shop_items / load_recipes / load_magic_cores`, and `WorldMapScene._init` all open YAML with the same `with open(...) as f: yaml.safe_load(f)` pattern. Centralize as `engine/io/yaml_loader.py`:
-
-```python
-def load_yaml(path: Path, default=None) -> Any: ...
-def load_yaml_required(path: Path) -> Any: ...   # raises with helpful path msg
-```
-
 ### 3.5 [P3] `(if self._sfx_manager: self._sfx_manager.play(key))` pattern repeats ~80 times
 
 Most files guard `_sfx_manager` for truthiness. Either:
@@ -262,7 +253,7 @@ Current state: 64 test files, 892 tests. 64 engine modules have no matching `tes
 ## 6. Suggested execution order
 
 1. ~~**Bug fixes (1.1, 1.2, 1.3, 1.4, 1.5, 1.6 callout, 1.8)**~~ — **DONE 2026-04-27**. Fixed the spell MP identity check, replaced biased weighted_pick with `rng.choices`, made `apply_transition` raise on missing `map` and reordered the autosave to land after `move_to` (incidentally fixing 1.3), routed `add_item`/`add_gp` clipping through a logging warning and patched the new-entry cap bypass, added the `apply_damage` invariant comment, and renamed `_apply_to_member` → `apply_to_target`. Test count 892 → 900 (8 new tests across `test_battle_logic.py`, `test_encounter_resolver.py`, `test_repository_state.py`, `test_world_map_logic.py`).
-2. **Centralize YAML loading (3.4)** — paves the way for caching (§2.2, §2.3).
+2. ~~**Centralize YAML loading (3.4)**~~ — **DONE 2026-04-27**. Added `engine/io/yaml_loader.py` with `load_yaml_required`, `load_yaml_optional`, and `iter_yaml_documents`. Migrated all 10 callsites listed in the original §3.4 (`npc_loader`, `item_box_loader`, `encounter_zone_loader`, `enemy_loader`, `dialogue_engine`, `item_catalog`, `item_effect_handler`, `spell_logic`, `world_map_logic.load_*`, `WorldMapScene._init`). `portal_loader` was listed but uses pytmx, not yaml. Test count 900 → 912 (12 new tests in `test_yaml_loader.py`). Paves the way for caching (§2.2, §2.3).
 3. **Tile rendering refactor (2.1)** — biggest single perf win; need to confirm the integration with debug overlays and y-sort.
 4. **Damage-float caching + fade-overlay reuse (2.4, 2.5)** — easy after #2.
 5. **Break up `world_map_scene` (4.1)** — biggest readability win, unblocks future scene additions.

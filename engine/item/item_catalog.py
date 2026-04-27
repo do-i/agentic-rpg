@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-import yaml
+from engine.io.yaml_loader import load_yaml_required
 
 
 EQUIPMENT_TYPES: frozenset[str] = frozenset({
@@ -64,8 +64,7 @@ class ItemCatalog:
             # field_use.yaml defines effects, not item metadata — skip
             if path.name == "field_use.yaml":
                 continue
-            with open(path, "r") as f:
-                entries = yaml.safe_load(f) or []
+            entries = load_yaml_required(path) or []
             for entry in entries:
                 item_id = entry.get("id")
                 if not item_id:
