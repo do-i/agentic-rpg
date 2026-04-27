@@ -162,3 +162,51 @@ class TestListSlots:
         manager.save(state, slot_index=1)
         slots = manager.list_slots()
         assert slots[1].protagonist_name == "Aric"
+
+
+# ── checksum ──────────────────────────────────────────────────
+
+class TestChecksum:
+    def test_round_trip_matches_recomputed(self, manager, state):
+        from engine.io.save_manager import _checksum
+
+        path = manager.save(state, slot_index=1)
+        data = yaml.safe_load(path.read_text())
+        stored = data.pop("checksum")
+        recomputed = _checksum(yaml.dump(data, allow_unicode=True, sort_keys=False))
+        assert recomputed == stored
+
+    def test_modifying_payload_invalidates_checksum(self, manager, state):
+        from engine.io.save_manager import _checksum
+
+        path = manager.save(state, slot_index=1)
+        data = yaml.safe_load(path.read_text())
+        stored = data.pop("checksum")
+        # Tamper with the payload — checksum should no longer match.
+        data["meta"]["location_display"] = "Tampered"
+        recomputed = _checksum(yaml.dump(data, allow_unicode=True, sort_keys=False))
+        assert recomputed != stored
+
+    def test_truncated_file_renders_slot_non_empty_but_broken(self, manager, state, saves_dir):
+        path = manager.save(state, slot_index=1)
+        # Truncate to first 20 bytes — yaml.safe_load may return None or partial dict.
+        path.write_text(path.read_text()[:20])
+        slots = manager.list_slots()
+        assert not slots[1].is_empty
+        assert slots[1].protagonist_name == ""
+
+
+# ── _meta_ts_to_display ───────────────────────────────────────
+
+class TestMetaTsToDisplay:
+    def test_full_format(self):
+        from engine.io.save_manager import _meta_ts_to_display
+        assert _meta_ts_to_display("2026-04-27-10-22-30") == "2026-04-27 10:22:30"
+
+    def test_short_string_passes_through(self):
+        from engine.io.save_manager import _meta_ts_to_display
+        assert _meta_ts_to_display("nope") == "nope"
+
+    def test_empty_string_passes_through(self):
+        from engine.io.save_manager import _meta_ts_to_display
+        assert _meta_ts_to_display("") == ""
