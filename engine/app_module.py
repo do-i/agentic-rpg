@@ -8,16 +8,6 @@ from engine.util.frame_clock import FrameClock
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.game import Game
-from engine.title.boot_scene import BootScene
-from engine.item.item_scene import ItemScene
-from engine.field_menu.field_menu_scene import FieldMenuScene
-from engine.equipment.equip_scene import EquipScene
-from engine.spell.spell_scene import SpellScene
-from engine.title.title_scene import TitleScene
-from engine.title.name_entry_scene import NameEntryScene
-from engine.world.world_map_scene import WorldMapScene
-from engine.title.load_game_scene import LoadGameScene
-from engine.status.status_scene import StatusScene
 from engine.common.game_state_holder import GameStateHolder
 from engine.io.save_manager import GameStateManager
 from engine.dialogue.dialogue_engine import DialogueEngine
@@ -26,9 +16,8 @@ from engine.encounter.encounter_resolver import EncounterResolver
 from engine.encounter.encounter_manager import EncounterManager
 from engine.item.item_catalog import ItemCatalog
 from engine.item.item_effect_handler import ItemEffectHandler
-from engine.item.magic_core_catalog_state import build_mc_catalog
-from engine.world.world_map_logic import load_magic_cores
 from engine.io.manifest_loader import ManifestLoader
+from engine.scenes.scene_registrar import SceneDeps, register_scenes
 from engine.world.tile_map_factory import TileMapFactory
 from engine.world.npc_loader import NpcLoader
 from engine.world.item_box_loader import ItemBoxLoader
@@ -213,95 +202,26 @@ class AppModule(Module):
         rng: PseudoRandom,
     ) -> SceneRegistry:
         registry = SceneRegistry()
-        mc_catalog = build_mc_catalog(load_magic_cores(loader.scenario_path))
-
-        registry.register_singleton("boot", BootScene(scene_manager, loader, registry))
-
-        registry.register_factory("title",
-            lambda: TitleScene(loader, scene_manager, registry, game_state_manager,
-                               sfx_manager=sfx_manager,
-                               bgm_manager=bgm_manager))
-        registry.register_factory("name_entry",
-            lambda: NameEntryScene(loader, scene_manager, registry, holder,
-                                   item_catalog=item_catalog,
-                                   debug_party=settings.debug_party,
-                                   sfx_manager=sfx_manager))
-        registry.register_factory("load_game",
-            lambda: LoadGameScene(game_state_manager, holder, scene_manager, registry,
-                                  sfx_manager=sfx_manager))
-        registry.register_singleton("world_map", WorldMapScene(
-                holder, loader, tile_map_factory,
-                scene_manager, registry,
-                game_state_manager, dialogue_engine, npc_loader,
-                item_box_loader=item_box_loader,
-                item_catalog=item_catalog,
-                encounter_manager=encounter_manager,
-                encounter_resolver=encounter_resolver,
-                enemy_spawn_global_interval=settings.enemy_spawn_global_interval,
-                effect_handler=effect_handler,
-                mc_catalog=mc_catalog,
-                text_speed=settings.text_speed,
-                smooth_collision=settings.smooth_collision,
-                mc_exchange_confirm_large=settings.mc_exchange_confirm_large,
-                bgm_manager=bgm_manager,
-                sfx_manager=sfx_manager,
-                screen_width=settings.screen_width,
-                screen_height=settings.screen_height,
-                tile_size=settings.tile_size,
-                fps=settings.fps,
-                player_speed=balance.player_speed,
-                debug_collision=settings.debug_collision,
-                balance=balance,
-                recorder=recorder,
-                rng=rng,
-            ))
-        registry.register_factory("status",
-            lambda: StatusScene(
-                holder=holder,
-                scene_manager=scene_manager,
-                registry=registry,
-                scenario_path=str(loader.scenario_path),
-                return_scene_name="world_map",
-                sfx_manager=sfx_manager,
-            ))
-        registry.register_factory("items",
-            lambda: ItemScene(
-                holder=holder,
-                scene_manager=scene_manager,
-                registry=registry,
-                effect_handler=effect_handler,
-                mc_catalog=mc_catalog,
-                use_aoe_confirm=settings.use_aoe_confirm,
-                sfx_manager=sfx_manager,
-            ))
-        registry.register_factory("field_menu",
-            lambda: FieldMenuScene(
-                holder=holder,
-                scene_manager=scene_manager,
-                registry=registry,
-                game_state_manager=game_state_manager,
-                return_scene_name="world_map",
-                sfx_manager=sfx_manager,
-            ))
-        registry.register_factory("equip",
-            lambda: EquipScene(
-                holder=holder,
-                scene_manager=scene_manager,
-                registry=registry,
-                catalog=item_catalog,
-                return_scene_name="world_map",
-                sfx_manager=sfx_manager,
-            ))
-        registry.register_factory("spells",
-            lambda: SpellScene(
-                holder=holder,
-                scene_manager=scene_manager,
-                registry=registry,
-                scenario_path=str(loader.scenario_path),
-                return_scene_name="world_map",
-                sfx_manager=sfx_manager,
-            ))
-
+        register_scenes(registry, SceneDeps(
+            settings=settings,
+            balance=balance,
+            loader=loader,
+            scene_manager=scene_manager,
+            holder=holder,
+            tile_map_factory=tile_map_factory,
+            game_state_manager=game_state_manager,
+            dialogue_engine=dialogue_engine,
+            npc_loader=npc_loader,
+            item_box_loader=item_box_loader,
+            encounter_manager=encounter_manager,
+            encounter_resolver=encounter_resolver,
+            item_catalog=item_catalog,
+            effect_handler=effect_handler,
+            bgm_manager=bgm_manager,
+            recorder=recorder,
+            sfx_manager=sfx_manager,
+            rng=rng,
+        ))
         return registry
 
     @provider

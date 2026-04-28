@@ -112,11 +112,6 @@ Pulled action resolution and turn-advance helpers out of battle_logic into their
 - `engine/battle/turn_advance.py` (58 lines) — `tick_active_end_of_turn`, `advance_to_next_turn`, `skip_if_incapacitated`.
 - `engine/battle/battle_logic.py` (134 lines) — keeps `handle_victory`, `handle_defeat`, `sync_party_state`, `check_result`, `attempt_flee`, the FLEE constants, and a re-export shim so existing imports (`battle_scene`, `battle_enemy_logic`, `test_battle_logic`) keep working unchanged. 348 → 134 lines. Test count unchanged at 1107 — no behavior change, no new helpers worth their own test file (the existing `test_battle_logic.py` already covers all three relocated areas).
 
-### 4.6 [P3] `engine/app_module.py` (322 lines)
-
-The DI module is fine in shape but the `provide_scene_registry` provider is 90 lines of factory bodies. Split:
-- `engine/scenes/scene_registrar.py` — pure function `register_scenes(registry, deps)` that takes everything and registers. Keeps `AppModule` to wiring `@provider` methods only.
-
 ### 4.7 [P3] `engine/status/status_renderer.py` (329 lines), `engine/item/item_renderer.py` (318 lines), `engine/encounter/enemy_sprite.py` (307 lines), `engine/shop/apothecary_renderer.py` (305 lines), `engine/world/npc.py` (303 lines)
 
 All under 350 lines and reasonably cohesive. Tag for later if they grow further.
