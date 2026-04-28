@@ -52,10 +52,10 @@ File: `engine/world/world_map_scene.py:177-196`
 
 Added `parse_from_map_data(data)` to `NpcLoader` and `ItemBoxLoader` that take an already-parsed dict. `world_map_init.py` now reads the map YAML once via `load_yaml_optional` and passes the parsed dict to both loaders plus the BGM and spawn-config blocks. The original `load_from_map(path)` methods stay as thin wrappers so existing call sites and tests are unchanged. Test count 1078 → 1086 (8 new tests in `test_npc_loader.py` and `test_item_box_loader.py` for the no-disk-IO path).
 
-### 2.6 [P2] WorldMapScene rebuilds visibility lists redundantly
+### 2.6 [P2] ~~WorldMapScene rebuilds visibility lists redundantly~~ — DONE 2026-04-27
 File: `engine/world/world_map_scene.py:600-651`
 
-`update()` builds `npc_rects`, `visible_npcs`, plus iterates NPCs again O(n²) for `other_rects`. `render()` rebuilds the same `visible_npcs` and `visible_boxes` lists. Compute once per frame (cache on the scene, invalidated when flags change), or pre-filter into stable per-frame collections.
+Added `_refresh_visibility()` which rebuilds `_visible_npcs`, `_visible_boxes`, and their collision-rect lists from current `FlagState`. `update()` calls it once per tick at the top; `render()` falls back to it only if it ran first (e.g. an overlay is active and update short-circuited). The per-NPC `other_rects` is now a slice around the current index instead of an O(N²) "filter by identity" comprehension.
 
 ### 2.7 [P2] `EnemySpawner.update` rebuilds rect lists per frame O(n²)
 File: `engine/encounter/enemy_spawner.py:122-127`

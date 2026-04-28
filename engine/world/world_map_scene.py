@@ -134,9 +134,26 @@ class WorldMapScene(Scene):
         self._enemy_spawner = None
         self._engaged_enemy: EnemySprite | None = None
 
+        # Per-frame visibility cache. _refresh_visibility() rebuilds these from
+        # current FlagState; both update() and render() consume the cached
+        # lists so flag-based filtering happens once per frame instead of
+        # three or four times.
+        self._visible_npcs: list = []
+        self._visible_boxes: list = []
+        self._visible_npc_collision_rects: list = []
+        self._visible_box_collision_rects: list = []
+
         self._overlays = WorldMapOverlays()
         self._quit_confirm: bool = False
         self._fade = FadeController()
+
+    def _refresh_visibility(self) -> None:
+        """Rebuild the per-frame visibility caches from the current FlagState."""
+        flags = self._holder.get().flags
+        self._visible_npcs = [n for n in self._npcs if n.is_present(flags)]
+        self._visible_boxes = [b for b in self._item_boxes if b.is_present(flags)]
+        self._visible_npc_collision_rects = [n.collision_rect for n in self._visible_npcs]
+        self._visible_box_collision_rects = [b.collision_rect for b in self._visible_boxes]
 
     def reset(self) -> None:
         """Re-initialize for a new game/load session. Clears all map state so _init() reruns."""
@@ -437,26 +454,26 @@ class WorldMapScene(Scene):
         frozen = not self._fade.is_idle
         state = self._holder.get()
 
+        # Refresh visibility caches once per tick — render() reuses them and
+        # the per-NPC update loop below pulls collision rects without rescanning.
+        self._refresh_visibility()
+
         # Build collision rects — NPCs and item boxes block the player as solid walls.
         # Enemy sprites are trigger volumes: player walks into them to start battle.
-        npc_rects = [
-            npc.collision_rect
-            for npc in self._npcs
-            if npc.is_present(state.flags)
-        ]
-        npc_rects += [
-            box.collision_rect
-            for box in self._item_boxes
-            if box.is_present(state.flags)
-        ]
+        npc_rects = list(self._visible_npc_collision_rects)
+        npc_rects += self._visible_box_collision_rects
 
         self._player.update(keys, self._tile_map.collision_map, frozen, npc_rects=npc_rects)
         self._camera.update(self._player.pixel_position)
 
         player_pos = self._player.pixel_position
-        visible_npcs = [n for n in self._npcs if n.is_present(state.flags)]
-        for npc in visible_npcs:
-            other_rects = [n.collision_rect for n in visible_npcs if n is not npc]
+        visible_npcs = self._visible_npcs
+        npc_rects_all = self._visible_npc_collision_rects
+        for i, npc in enumerate(visible_npcs):
+            # Build other_rects without re-scanning the visible list per npc:
+            # slice around index i. This keeps allocation linear in N rather
+            # than the O(N^2) "filter by identity" comprehension we had before.
+            other_rects = npc_rects_all[:i] + npc_rects_all[i + 1:]
             notices = (npc.is_near(player_pos)
                        and npc.is_facing_toward(player_pos)
                        and _is_player_facing(self._player, npc.pixel_position))
@@ -489,8 +506,14 @@ class WorldMapScene(Scene):
             self._init()
 
         state = self._holder.get()
-        visible_npcs = [npc for npc in self._npcs if npc.is_present(state.flags)]
-        visible_boxes = [b for b in self._item_boxes if b.is_present(state.flags)]
+        # If update() was skipped this frame (e.g. an overlay is active or the
+        # scene was just initialized) the visibility caches won't have been
+        # rebuilt yet — refresh them now so render isn't reading stale data.
+        if not self._visible_npcs and not self._visible_boxes:
+            self._refresh_visibility()
+
+        visible_npcs = self._visible_npcs
+        visible_boxes = self._visible_boxes
         enemy_sprites = self._enemy_spawner.active_enemies if self._enemy_spawner else []
 
         map_id = state.map.current
