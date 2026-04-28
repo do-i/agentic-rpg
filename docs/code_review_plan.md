@@ -18,11 +18,6 @@ File: `engine/battle/combatant.py:153-167`
 
 Combined the duration decrement and filter pass into a single loop that builds a `remaining` list — no more reading from `self.status_effects` while a replacement is being constructed.
 
-### 1.11 [P3] `_meta_ts_to_display` fragile parser
-File: `engine/io/save_manager.py:31-35`
-
-Hand-rolled string surgery on a known format (`YYYY-MM-DD-HH-MM-SS`). If the format ever changes, this silently produces nonsense. Use `datetime.strptime` and re-`strftime`.
-
 ### 1.12 [P3] Bare `except Exception` swallows sprite/asset load failures silently
 Files (14 sites): `inn_scene.py:85`, `item_shop_scene.py:61`, `apothecary_scene.py:66`, `enemy_spawner.py:220`, `sfx_manager.py:44`, `battle_asset_cache.py:60,91,105`, `save_manager.py:140`, `world_map_scene.py:244`, `item_box_loader.py:41`, `status_renderer.py:82`, `enemy_loader.py:102`, `npc_loader.py:80`.
 

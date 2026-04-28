@@ -28,11 +28,23 @@ def _slot_path(saves_dir: Path, slot_index: int) -> Path:
     return saves_dir / f"{slot_index:03d}.yaml"
 
 
+_META_TS_FORMAT     = "%Y-%m-%d-%H-%M-%S"
+_META_TS_DISPLAY_FMT = "%Y-%m-%d %H:%M:%S"
+
+
 def _meta_ts_to_display(ts: str) -> str:
-    # "2026-04-16-10-22-30" → "2026-04-16 10:22:30"
-    if len(ts) >= 19:
-        return ts[:10] + " " + ts[11:].replace("-", ":")
-    return ts
+    """Convert a save's stored timestamp into the user-facing display form.
+
+    Stored format is `_serialize`'s `now.strftime("%Y-%m-%d-%H-%M-%S")`.
+    Use strptime/strftime so a future schema change to either format
+    surfaces as a ValueError instead of silently producing nonsense
+    (the original hand-rolled string surgery would happily mangle a
+    differently-shaped string).
+    """
+    try:
+        return datetime.strptime(ts, _META_TS_FORMAT).strftime(_META_TS_DISPLAY_FMT)
+    except ValueError:
+        return ts
 
 
 class GameStateManager:
