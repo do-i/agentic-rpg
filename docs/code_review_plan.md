@@ -57,17 +57,10 @@ File: `engine/world/world_map_scene.py:600-651`
 
 Added `_refresh_visibility()` which rebuilds `_visible_npcs`, `_visible_boxes`, and their collision-rect lists from current `FlagState`. `update()` calls it once per tick at the top; `render()` falls back to it only if it ran first (e.g. an overlay is active and update short-circuited). The per-NPC `other_rects` is now a slice around the current index instead of an O(N²) "filter by identity" comprehension.
 
-### 2.7 [P2] `EnemySpawner.update` rebuilds rect lists per frame O(n²)
+### 2.7 [P2] ~~`EnemySpawner.update` rebuilds rect lists per frame O(n²)~~ — DONE 2026-04-27
 File: `engine/encounter/enemy_spawner.py:122-127`
 
-```python
-active = [e for e in self._all_enemies if e.active]
-all_rects = [e.collision_rect for e in active]
-for enemy in active:
-    other_rects = [r for e, r in zip(active, all_rects) if e is not enemy]
-```
-
-For typical N≤8 active enemies this is fine, but the inner zip-comprehension allocates. Cleaner: pass `all_rects` and the enemy's own index, or use a flat list and have each enemy ignore self by `is` check.
+Replaced the per-enemy zip-and-filter comprehension with `all_rects[:i] + all_rects[i+1:]`. Linear in N rather than the implicit N² scan, no `is` identity check on every iteration.
 
 ### 2.8 [P3] `EnemyLoader` and `EnemySpawner` re-load sprite sheets across maps
 The spawner has a per-instance `_sprite_cache`, but the spawner is recreated on every map transition (`world_map_scene.py:546`), so sprites are reloaded on every map change. Promote sprite caching to a singleton (`SpriteSheetCache`) injected via `AppModule`.

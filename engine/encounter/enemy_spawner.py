@@ -118,11 +118,12 @@ class EnemySpawner:
             self._spawn_timer = 0.0
             self._try_activate_one()
 
-        # Update active enemies
+        # Update active enemies. Build the rect list once and slice around
+        # each enemy's index so we avoid the O(N^2) zip-and-filter pattern.
         active = [e for e in self._all_enemies if e.active]
         all_rects = [e.collision_rect for e in active]
-        for enemy in active:
-            other_rects = [r for e, r in zip(active, all_rects) if e is not enemy]
+        for i, enemy in enumerate(active):
+            other_rects = all_rects[:i] + all_rects[i + 1:]
             eff_chase = max(0, enemy.chase_range - chase_reduction)
             enemy.update(delta, player_px, player_py, collision_map, other_rects, eff_chase)
 
