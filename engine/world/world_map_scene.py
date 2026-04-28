@@ -159,6 +159,16 @@ class WorldMapScene(Scene):
         """Re-initialize for a new game/load session. Clears all map state so _init() reruns."""
         self._reset_state()
 
+    def _ensure_init(self) -> None:
+        """Run lazy initialization if it hasn't happened yet.
+
+        Called at the top of both update() and render() so the scene is ready
+        regardless of which one runs first (the game loop calls update first).
+        Pulls the init out of the per-frame render fast path that §1.9 flagged.
+        """
+        if self._tile_map is None:
+            self._init()
+
     def _init(self) -> None:
         result = init_world_map(
             holder=self._holder,
@@ -430,6 +440,7 @@ class WorldMapScene(Scene):
     # ── Update ────────────────────────────────────────────────
 
     def update(self, delta: float) -> None:
+        self._ensure_init()
         # Deactivate the enemy that triggered the last battle (first tick after returning).
         if self._engaged_enemy is not None:
             if self._enemy_spawner:
@@ -446,8 +457,6 @@ class WorldMapScene(Scene):
             active_overlay.update(delta)
             return
         if self._quit_confirm:
-            return
-        if self._player is None:
             return
 
         keys = self._recorder.get_key_state() if self._recorder else pygame.key.get_pressed()
@@ -502,8 +511,7 @@ class WorldMapScene(Scene):
     # ── Render (delegates to WorldMapRenderer) ─────────────────
 
     def render(self, screen: pygame.Surface) -> None:
-        if self._tile_map is None:
-            self._init()
+        self._ensure_init()
 
         state = self._holder.get()
         # If update() was skipped this frame (e.g. an overlay is active or the

@@ -18,11 +18,6 @@ File: `engine/battle/combatant.py:153-167`
 
 Combined the duration decrement and filter pass into a single loop that builds a `remaining` list — no more reading from `self.status_effects` while a replacement is being constructed.
 
-### 1.9 [P3] `WorldMapScene.update` may run before `render` initializes the map
-File: `engine/world/world_map_scene.py:550-642`
-
-`_init()` is called lazily in `render()`. The first frame's `update()` runs before `render()` and short-circuits on `if self._player is None`. This works, but lazy init from render is unusual. Move init into `enter()`/`activate()` if the scene base supports lifecycle hooks, or call `_init()` from `reset()`.
-
 ### 1.10 [P3] `_handle_target` ESC leaves `pending_action` populated
 File: `engine/battle/battle_scene.py:310-317`
 
