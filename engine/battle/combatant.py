@@ -165,9 +165,14 @@ class Combatant:
                 self.is_ko = True
             dot_damage = actual
 
+        # Decrement and filter in a single pass to avoid iterating
+        # self.status_effects while it's about to be replaced.
+        remaining: list[ActiveStatus] = []
         for s in self.status_effects:
             s.duration_turns -= 1
-        self.status_effects = [s for s in self.status_effects if s.duration_turns > 0]
+            if s.duration_turns > 0:
+                remaining.append(s)
+        self.status_effects = remaining
         return dot_damage
 
     def __repr__(self) -> str:

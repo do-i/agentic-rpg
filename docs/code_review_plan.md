@@ -13,10 +13,10 @@ Severity tags:
 
 ## 1. Bugs
 
-### 1.7 [P2] `Combatant.tick_end_of_turn` mutates list while iterating effects
+### 1.7 [P2] ~~`Combatant.tick_end_of_turn` mutates list while iterating effects~~ — DONE 2026-04-27
 File: `engine/battle/combatant.py:153-167`
 
-The two passes (DOT scan, then duration decrement, then filter) are correct, but the `for s in self.status_effects: s.duration_turns -= 1` followed by `self.status_effects = [...]` mutates the list reference. Safe in Python but fragile if a future hook adds during iteration.
+Combined the duration decrement and filter pass into a single loop that builds a `remaining` list — no more reading from `self.status_effects` while a replacement is being constructed.
 
 ### 1.9 [P3] `WorldMapScene.update` may run before `render` initializes the map
 File: `engine/world/world_map_scene.py:550-642`
