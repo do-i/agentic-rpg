@@ -193,9 +193,15 @@ Current state: 64 test files, 892 tests. 64 engine modules have no matching `tes
 
 Added `tests/unit/core/battle/test_battle_renderer_layout.py` with 16 tests covering the pure-helper surface called out in §5.4: `BattleRenderer` layout math (bottom_h, party_w = 25%, cmd_w = 30%, msg_x sum, msg_w fills remainder), `enemy_rect_size` (boss → large; non-boss table indexed by `len(name) % 3`), `float_pos` (party float anchored by row spacing, enemy floats use layout offsets, boss floats lift higher than normal sprites), and the `HP_LOW_THRESHOLD` branch logic (value pinned at 0.35; the renderer uses `<=` so at-threshold counts as low; 0.0 low, 1.0 OK). The damage-float / KO-ghost / hit-flash caches were already covered in `test_battle_renderer_caches.py`. Test count 1134 → 1150.
 
-### 5.5 [P2] Untested IO/state
-- `engine/party/member_state.py`, `engine/item/item_entry_state.py`, `engine/item/item_defs_data.py`, `engine/common/save_slot_data.py` — DTOs with custom logic / serialization shouldn't be assumed correct.
-- `engine/audio/bgm_manager.py`, `engine/audio/sfx_manager.py` — at minimum smoke-test the YAML index parse path.
+### 5.5 [P2] ~~Untested IO/state~~ — DONE 2026-04-28
+- `engine/party/member_state.py` — `tests/unit/core/state/test_member_state.py` (10 tests: construction, unloaded stat_growth defaults, `load_class_data` round-trip, missing-stat KeyError, equipment_slots None-list normalization, the legacy `load_stat_growth` alias, and the protagonist marker in repr).
+- `engine/item/item_entry_state.py` — `tests/unit/core/state/test_item_entry_state.py` (8 tests: minimum construction, default name title-casing, underscore handling, independent default tags set, explicit tags/qty/locked, repr).
+- `engine/item/item_defs_data.py` — `tests/unit/core/state/test_item_defs_data.py` (9 tests: FieldItemDef defaults, frozen-ness, independent default `cures`/`messages` lists, revive_hp_pct, key-item non-consumable, UseResult success/warning/messages).
+- `engine/audio/bgm_manager.py` — `tests/unit/core/state/test_bgm_manager.py` (11 tests: index parsing with category.key keys, non-dict category skip, enabled gate on `play`/`play_key`/`stop`, repeat-call no-op, unknown-key silence).
+- `engine/audio/sfx_manager.py` — `tests/unit/core/state/test_sfx_manager.py` (15 tests: index parsing flatness, missing-file skip, enabled gate, plus the entire `play_battle_action` dispatcher across attack/defend/heal/revive/buff(by stat)/element/item/unknown).
+- `engine/common/save_slot_data.py` was already covered by `tests/unit/core/models/test_save_slot.py`.
+
+Test count 1150 → 1203.
 
 ### 5.6 [P2] Branch coverage gaps in tested modules
 - `engine/battle/battle_logic.py` has `test_battle_logic.py` but `roll_and_apply_side_effects` (line 29) and the spell `revive_hp_pct` branch (line 134) need explicit cases; both are easy to break under refactor.
