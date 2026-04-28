@@ -148,11 +148,13 @@ Test count unchanged (1090 → 1090): the existing `test_battle_renderer_caches.
 
 Added `engine/common/wizard_scene.py` with a `WizardScene` base + `WizardPage` dataclass. Pages declare `count_fn`, `on_confirm` (returns next page id or None), `on_back` (returns previous page id or None to close the scene), and own their own `selection`. The base owns: SFX `_play(key)`, hover-beep `_set_sel`, the per-page UP/DOWN clamp, ENTER/ESC/M routing, the scene-close path, and a `_is_input_blocked` / `_handle_blocked_input` hook for modal overlays. `EquipScene` registers MEMBER/SLOT/PICKER pages and supplies the unique render code; `SpellScene` registers MEMBER/SPELL pages and uses the modal hook to gate input while the target overlay or popup is active. equip_scene 380 → 326 lines, spell_scene 334 → 287 lines; remaining bulk is the genuinely-unique render code per scene. Test count 1090 → 1107 (17 new tests in `test_wizard_scene.py` covering page registration, selection clamping, hover SFX, ENTER/ESC navigation, the empty-page no-op, the modal-overlay hooks, and `set_return_scene`). All existing equip/spell scene tests were updated to read selection state via `scene.page_id` and `scene._page(name).selection`.
 
-### 4.5 [P2] `engine/battle/battle_logic.py` (343 lines)
+### 4.5 [P2] ~~`engine/battle/battle_logic.py` (343 lines)~~ — DONE 2026-04-28
 
-Already split spell side-effects, EXP, flee, and turn ticks. Push further:
-- `engine/battle/action_resolver.py` — `resolve_action` (the 100-line `for target in targets` switch on `atype`). Replace the if/elif chain with one resolver per action type (`AttackResolver`, `SpellResolver`, `ItemResolver`).
-- `engine/battle/turn_advance.py` — `tick_active_end_of_turn`, `advance_to_next_turn`, `skip_if_incapacitated`.
+Pulled action resolution and turn-advance helpers out of battle_logic into their own modules:
+- `engine/battle/battle_floats.py` (42 lines) — float colors and the `float_pos` / `enemy_rect_size` helpers, broken out so `action_resolver` and `turn_advance` can both depend on them without battle_logic importing back into them (which would loop).
+- `engine/battle/action_resolver.py` (226 lines) — `resolve_action`, `roll_and_apply_side_effects`, `SIDE_EFFECT_KINDS`, plus internal `_resolve_attack` / `_resolve_spell` / `_resolve_item` per-target functions. The 100-line `for target in targets` switch is now three short single-purpose functions; `resolve_action` itself is the dispatcher (defend short-circuit, MP-deduct-up-front gate, post-loop item qty decrement).
+- `engine/battle/turn_advance.py` (58 lines) — `tick_active_end_of_turn`, `advance_to_next_turn`, `skip_if_incapacitated`.
+- `engine/battle/battle_logic.py` (134 lines) — keeps `handle_victory`, `handle_defeat`, `sync_party_state`, `check_result`, `attempt_flee`, the FLEE constants, and a re-export shim so existing imports (`battle_scene`, `battle_enemy_logic`, `test_battle_logic`) keep working unchanged. 348 → 134 lines. Test count unchanged at 1107 — no behavior change, no new helpers worth their own test file (the existing `test_battle_logic.py` already covers all three relocated areas).
 
 ### 4.6 [P3] `engine/app_module.py` (322 lines)
 
