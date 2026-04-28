@@ -183,11 +183,11 @@ Current state: 64 test files, 892 tests. 64 engine modules have no matching `tes
 - `engine/battle/battle_enemy_logic.py` — no test file. AI resolution is the hardest thing to test by hand.
 - `engine/battle/post_battle_scene.py`, `engine/battle/game_over_scene.py` — no tests.
 
-### 5.3 [P2] Untested world systems
-- `engine/world/world_map_scene.py` — no integration test exists (only `test_world_map_logic.py` for the extracted helpers and `test_world_map_item_box_integration.py` for chests).
-- `engine/world/tile_map_factory.py` — no tests.
-- `engine/world/portal_loader.py` is tested; `engine/world/tile_map.py` is not.
-- `engine/encounter/encounter_zone_loader.py`, `engine/encounter/encounter_zone.py`, `engine/encounter/encounter_zone_data.py` — no tests.
+### 5.3 [P2] ~~Untested world systems~~ — DONE 2026-04-28
+- `engine/world/tile_map_factory.py` — covered by `tests/unit/world/test_tile_map_factory.py` (2 tests: create returns a TileMap loaded via `pytmx.load_pygame`; the factory is stateless across multiple maps).
+- `engine/encounter/encounter_zone_loader.py` — covered by `tests/unit/core/encounter/test_encounter_zone_loader.py` (15 tests: required-field validation, entry/boss/barrier round trips, zone_id stem fallback, optional metadata).
+- `engine/encounter/encounter_zone_data.py` — covered by `tests/unit/core/encounter/test_encounter_zone_data.py` (10 tests: dataclass defaults, frozen-ness, EncounterSet.total_weight).
+- `engine/world/tile_map.py` is now well-covered (added in step 8). `engine/world/world_map_scene.py` integration tests left out of scope — the plan tagged this as "no integration test exists" but the scene was refactored in step 5 into much smaller helpers (each tested individually); a full integration test is a separate effort beyond §5.3's "by basename" coverage gap. Test count 1107 → 1134.
 
 ### 5.4 [P2] Untested rendering primitives (acceptable but call out)
 - All `*_renderer.py` files (battle/world/item/status/shop/apothecary/menu) lack tests — pure pygame drawing is hard to unit-test, but at minimum exercise their pure helpers (e.g., `BattleRenderer.bottom_h`/`party_w`/`cmd_w` math, color choices via `HP_LOW_THRESHOLD`).
