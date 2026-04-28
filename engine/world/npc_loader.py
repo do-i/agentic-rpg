@@ -1,11 +1,17 @@
 # engine/io/npc_loader.py
 
+import logging
 from pathlib import Path
+from xml.etree.ElementTree import ParseError
+
+import pygame
 
 from engine.io.yaml_loader import load_yaml_optional
 from engine.world.npc import Npc
 from engine.world.sprite_sheet import SpriteSheet
 from engine.util.pseudo_random import PseudoRandom
+
+_log = logging.getLogger(__name__)
 
 
 class NpcLoader:
@@ -74,10 +80,10 @@ class NpcLoader:
             return None
         full_path = self._scenario_path / sprite_path
         if not full_path.exists():
-            print(f"[WARN] NPC sprite not found: {full_path}")
+            _log.warning("NPC sprite not found: %s", full_path)
             return None
         try:
             return SpriteSheet(full_path)
-        except Exception as e:
-            print(f"[WARN] Failed to load NPC sprite {full_path}: {e}")
+        except (pygame.error, OSError, ParseError, KeyError, ValueError) as e:
+            _log.warning("NPC sprite load failed: %s — %s", full_path, e)
             return None

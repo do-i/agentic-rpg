@@ -9,13 +9,19 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
+from xml.etree.ElementTree import ParseError
+
+import pygame
 
 from engine.encounter.encounter_zone_data import EncounterZone, Formation
 from engine.encounter.encounter_resolver import EncounterResolver
 from engine.encounter.enemy_sprite import EnemySprite
 from engine.world.sprite_sheet import SpriteSheet
 from engine.util.pseudo_random import PseudoRandom
+
+_log = logging.getLogger(__name__)
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -218,7 +224,7 @@ class EnemySpawner:
         if tsx_path.exists():
             try:
                 sprite_sheet = SpriteSheet(tsx_path)
-            except Exception as e:
-                print(f"[WARN] failed to load enemy world sprite {tsx_path}: {e}")
+            except (pygame.error, OSError, ParseError, KeyError, ValueError) as e:
+                _log.warning("Enemy world sprite load failed: %s — %s", tsx_path, e)
         self._sprite_cache[enemy_id] = sprite_sheet
         return sprite_sheet

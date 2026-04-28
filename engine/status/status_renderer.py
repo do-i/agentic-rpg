@@ -5,9 +5,13 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
+
 import pygame
 from engine.common.font_provider import get_fonts
+
+_log = logging.getLogger(__name__)
 
 from engine.party.member_state import MemberState
 from engine.party.party_state import exp_pct
@@ -79,7 +83,8 @@ class StatusRenderer:
             img = pygame.transform.scale(img, (PORTRAIT_SIZE, PORTRAIT_SIZE))
             self._portraits[member_id] = img
             return img
-        except Exception:
+        except (pygame.error, OSError) as e:
+            _log.warning("Portrait load failed: %s — %s", path, e)
             return None
 
     def _init_fonts(self) -> None:

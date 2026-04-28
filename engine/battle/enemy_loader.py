@@ -3,10 +3,16 @@
 # Phase 4 — Battle system
 
 from __future__ import annotations
+
+import logging
 from pathlib import Path
+
+import yaml
 
 from engine.io.yaml_loader import iter_yaml_documents, load_yaml_required
 from engine.battle.combatant import Combatant
+
+_log = logging.getLogger(__name__)
 
 
 # Filename convention from docs/03-Battle.md:
@@ -96,8 +102,8 @@ class EnemyLoader:
                         "ai": ref_data.get("ai", {}),
                         "targeting": ref_data.get("targeting", {}),
                     }
-                except Exception:
-                    pass
+                except (yaml.YAMLError, OSError, KeyError) as e:
+                    _log.warning("AI ref reload failed: %s — %s", ref_path, e)
 
         return {
             "ai": data.get("ai", {}),

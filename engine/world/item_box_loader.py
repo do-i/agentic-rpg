@@ -1,11 +1,17 @@
 # engine/world/item_box_loader.py
 
+import logging
 from pathlib import Path
+from xml.etree.ElementTree import ParseError
+
+import pygame
 
 from engine.io.manifest_loader import ManifestLoader
 from engine.io.yaml_loader import load_yaml_optional
 from engine.world.item_box import ItemBox
 from engine.world.item_box_sprite import ItemBoxSprite
+
+_log = logging.getLogger(__name__)
 
 VALID_MC_SIZES = {"xs", "s", "m", "l", "xl"}
 
@@ -33,12 +39,12 @@ class ItemBoxLoader:
             return None
         full_path = self._scenario_path / sprite_rel
         if not full_path.exists():
-            print(f"[WARN] item_box sprite not found: {full_path}")
+            _log.warning("item_box sprite not found: %s", full_path)
             return None
         try:
             return ItemBoxSprite(full_path)
-        except Exception as e:
-            print(f"[WARN] failed to load item_box sprite {full_path}: {e}")
+        except (pygame.error, OSError, ParseError, KeyError, ValueError) as e:
+            _log.warning("item_box sprite load failed: %s — %s", full_path, e)
             return None
 
     def load_from_map(self, map_yaml_path: Path) -> list[ItemBox]:

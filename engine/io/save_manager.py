@@ -1,11 +1,14 @@
 # engine/io/save_manager.py
 
 import binascii
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import yaml
+
+_log = logging.getLogger(__name__)
 
 from engine.common.save_slot_data import SaveSlot
 from engine.common.game_state import GameState
@@ -149,7 +152,10 @@ class GameStateManager:
                 level=proto["level"],
                 is_autosave=is_autosave,
             )
-        except Exception:
+        except (yaml.YAMLError, OSError, KeyError, IndexError, TypeError) as e:
+            # Truncated / malformed / partially-shaped save: return a stub slot
+            # rather than raising so the rest of the slot list still loads.
+            _log.warning("Save slot %d unreadable (%s): %s", index, path, e)
             return SaveSlot(slot_index=index, path=path, is_autosave=is_autosave)
 
     def _serialize(self, state: GameState, is_autosave: bool) -> dict:

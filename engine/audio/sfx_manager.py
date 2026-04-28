@@ -5,10 +5,13 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import pygame
 import yaml
+
+_log = logging.getLogger(__name__)
 
 SFX_VOLUME = 0.8
 
@@ -41,8 +44,8 @@ class SfxManager:
                     sound = pygame.mixer.Sound(str(full_path))
                     sound.set_volume(SFX_VOLUME)
                     self._sounds[key] = sound
-                except Exception as e:
-                    print(f"[SFX] failed to load {full_path}: {e}")
+                except (pygame.error, OSError) as e:
+                    _log.warning("SFX load failed: %s — %s", full_path, e)
 
     def play(self, key: str) -> None:
         """Play a sound by event key. No-op if key is not in the map or SFX is disabled."""

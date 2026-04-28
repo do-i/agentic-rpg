@@ -5,7 +5,9 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
+from xml.etree.ElementTree import ParseError
 
 import pygame
 from engine.common.font_provider import get_fonts
@@ -14,6 +16,8 @@ from engine.battle.combatant import Combatant
 from engine.battle.constants import ENEMY_SIZES
 from engine.battle.battle_renderer_constants import PORTRAIT_SIZE
 from engine.world.sprite_sheet import SpriteSheet, Direction
+
+_log = logging.getLogger(__name__)
 
 
 class BattleAssetCache:
@@ -57,7 +61,8 @@ class BattleAssetCache:
             img = pygame.transform.scale(img, (PORTRAIT_SIZE, PORTRAIT_SIZE))
             self._portraits[member_id] = img
             return img
-        except Exception:
+        except (pygame.error, OSError) as e:
+            _log.warning("Portrait load failed: %s — %s", path, e)
             return None
 
     # ── Enemy sprites ─────────────────────────────────────────
@@ -88,7 +93,8 @@ class BattleAssetCache:
             scaled = pygame.transform.scale(frame, (w, h))
             self._enemy_sprites[sprite_id] = scaled
             return scaled
-        except Exception:
+        except (pygame.error, OSError, ParseError, KeyError, ValueError) as e:
+            _log.warning("Enemy battle sprite load failed: %s — %s", tsx_path, e)
             self._enemy_sprites[sprite_id] = None
             return None
 
@@ -102,7 +108,7 @@ class BattleAssetCache:
             try:
                 self._bg_cache[bg_id] = pygame.image.load(str(path)).convert()
                 return self._bg_cache[bg_id]
-            except Exception:
-                pass
+            except (pygame.error, OSError) as e:
+                _log.warning("Battle background load failed: %s — %s", path, e)
         self._bg_cache[bg_id] = None
         return None

@@ -5,8 +5,12 @@
 # WorldMapScene so the scene class can stay focused on per-frame orchestration.
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
+from xml.etree.ElementTree import ParseError
+
+import pygame
 
 from engine.audio.bgm_manager import BgmManager
 from engine.common.game_state_holder import GameStateHolder
@@ -24,6 +28,8 @@ from engine.world.player import Player
 from engine.world.sprite_sheet import SpriteSheet
 from engine.world.tile_map import TileMap
 from engine.world.tile_map_factory import TileMapFactory
+
+_log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -170,10 +176,10 @@ def _load_protagonist_sprite(manifest: dict, scenario_path: Path) -> SpriteSheet
         return None
     full_path = scenario_path / sprite_path
     if not full_path.exists():
-        print(f"[WARN] sprite not found: {full_path}")
+        _log.warning("protagonist sprite not found: %s", full_path)
         return None
     try:
         return SpriteSheet(full_path)
-    except Exception as e:
-        print(f"[WARN] failed to load sprite: {e}")
+    except (pygame.error, OSError, ParseError, KeyError, ValueError) as e:
+        _log.warning("protagonist sprite load failed: %s — %s", full_path, e)
         return None
