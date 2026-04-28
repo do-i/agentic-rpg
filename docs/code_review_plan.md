@@ -94,12 +94,9 @@ Common pieces to extract:
 
 `item_shop_scene.py:56-62`, `apothecary_scene.py:61-67`, `inn_scene.py:80-86` all have the identical `_init_sprite` body. Extract to `engine/world/sprite_sheet.py` as `SpriteSheet.load_npc_face(path, size) -> Surface | None`.
 
-### 3.3 [P2] `_weighted_pick` reimplemented twice
+### 3.3 [P2] ~~`_weighted_pick` reimplemented twice~~ — DONE 2026-04-27
 
-- `engine/encounter/encounter_resolver.py:33-43` — manual cumulative (and biased per §1.2).
-- `engine/battle/battle_rewards.py:201-207` — uses `rng.choices`.
-
-Promote a single `engine.util.weighted_pick(rng, entries, weight_fn)` and call it from both.
+Added `engine/util/weighted_pick.py` with a generic `weighted_pick(rng, entries, weight_fn) -> entry | None`. Both call sites now use it: `EncounterResolver.pick_formation` passes `lambda e: e.weight` over Formations and the loot path in `RewardCalculator.calculate_loot` passes `lambda e: e.get("weight", 1)` over pool dicts then reads `entry.get("item")`. The local `_weighted_pick` helper in `battle_rewards.py` and the bound method on `EncounterResolver` are gone. The old `TestWeightedPick` in `test_battle_rewards.py` and the bound-method tests in `test_encounter_resolver.py` were rehomed as `tests/unit/core/state/test_weighted_pick.py` (7 tests covering the util directly) and a `TestPickFormationWeighted` class that exercises the public `pick_formation` API end-to-end. Test count 1086 → 1090.
 
 ### 3.5 [P3] `(if self._sfx_manager: self._sfx_manager.play(key))` pattern repeats ~80 times
 

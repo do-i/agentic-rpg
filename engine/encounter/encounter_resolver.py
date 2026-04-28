@@ -8,6 +8,7 @@ from engine.battle.combatant import Combatant
 from engine.battle.battle_state import BattleState
 from engine.common.flag_state import FlagState
 from engine.util.pseudo_random import PseudoRandom
+from engine.util.weighted_pick import weighted_pick
 
 
 class EncounterResolver:
@@ -26,17 +27,7 @@ class EncounterResolver:
 
     def pick_formation(self, zone: EncounterZone) -> Formation | None:
         """Pick a random weighted formation from the zone's entry list."""
-        if not zone.entries.entries:
-            return None
-        return self._weighted_pick(zone.entries.entries)
-
-    def _weighted_pick(self, entries: list[Formation]) -> Formation | None:
-        if not entries:
-            return None
-        weights = [e.weight for e in entries]
-        if sum(weights) == 0:
-            return None
-        return self._rng.choices(entries, weights=weights, k=1)[0]
+        return weighted_pick(self._rng, zone.entries.entries, lambda e: e.weight)
 
     # ── Battle state construction ─────────────────────────────────
 

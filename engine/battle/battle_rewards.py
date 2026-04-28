@@ -8,6 +8,7 @@ import math
 
 from engine.battle.combatant import Combatant
 from engine.util.pseudo_random import PseudoRandom
+from engine.util.weighted_pick import weighted_pick
 from engine.party.party_state import (
     PartyState, calc_exp_next, stat_gain_at, recalc_exp_next,
     _FALLBACK_EXP_BASE, _FALLBACK_EXP_FACTOR, LEVEL_CAP,
@@ -181,7 +182,8 @@ class RewardCalculator:
                 pool = pool_entry.get("pool", [])
                 if not pool:
                     continue
-                item_id = _weighted_pick(pool, self._rng)
+                entry = weighted_pick(self._rng, pool, lambda e: e.get("weight", 1))
+                item_id = entry.get("item", "") if entry else ""
                 if item_id:
                     item_totals[item_id] = item_totals.get(item_id, 0) + 1
 
@@ -198,10 +200,3 @@ class RewardCalculator:
         return getattr(member, "hp", 1) <= 0
 
 
-def _weighted_pick(pool: list[dict], rng: PseudoRandom) -> str | None:
-    """Pick one item id from a weighted pool. Returns None if pool is empty."""
-    if not pool:
-        return None
-    items = [entry.get("item", "") for entry in pool]
-    weights = [entry.get("weight", 1) for entry in pool]
-    return rng.choices(items, weights=weights, k=1)[0]

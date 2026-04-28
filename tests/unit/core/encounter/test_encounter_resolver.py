@@ -267,29 +267,37 @@ class TestPickFormation:
 
 # ── Weighted pick ─────────────────────────────────────────────
 
-class TestWeightedPick:
+class TestPickFormationWeighted:
+    """Tests for pick_formation, which wraps weighted_pick. Behavior assertions
+    here belong to the resolver; the underlying util has its own dedicated
+    tests in tests/unit/core/state/test_weighted_pick.py."""
+
     def _resolver(self):
         return make_resolver()
 
+    def _zone(self, *entries: Formation) -> EncounterZone:
+        return EncounterZone(
+            zone_id="z", name="Z", density=1.0,
+            entries=EncounterSet(list(entries)),
+        )
+
     def test_always_picks_single_entry(self):
         resolver = self._resolver()
-        entries = [Formation(["wolf"], 100)]
+        zone = self._zone(Formation(["wolf"], 100))
         for _ in range(20):
-            result = resolver._weighted_pick(entries)
+            result = resolver.pick_formation(zone)
             assert result.enemy_ids == ["wolf"]
 
     def test_never_picks_zero_weight(self):
         resolver = self._resolver()
-        entries = [
-            Formation(["wolf"], 0),
-            Formation(["bat"],  100),
-        ]
+        zone = self._zone(Formation(["wolf"], 0), Formation(["bat"], 100))
         for _ in range(20):
-            result = resolver._weighted_pick(entries)
+            result = resolver.pick_formation(zone)
             assert result.enemy_ids == ["bat"]
 
     def test_returns_none_on_empty(self):
-        assert self._resolver()._weighted_pick([]) is None
+        zone = self._zone()
+        assert self._resolver().pick_formation(zone) is None
 
     def test_distribution_unbiased_for_equal_weights(self):
         """Regression for the truncation bias in the old custom-cumulative
@@ -300,14 +308,14 @@ class TestWeightedPick:
         from engine.encounter.encounter_resolver import EncounterResolver
         rng = PseudoRandom(seed=42)
         resolver = EncounterResolver(make_loader("a", "b", "c"), rng)
-        entries = [
+        zone = self._zone(
             Formation(["a"], 1),
             Formation(["b"], 1),
             Formation(["c"], 1),
-        ]
+        )
         counts = {"a": 0, "b": 0, "c": 0}
         for _ in range(3000):
-            picked = resolver._weighted_pick(entries)
+            picked = resolver.pick_formation(zone)
             counts[picked.enemy_ids[0]] += 1
         # each bucket should be in the 25%–42% band (very loose for stability)
         for v in counts.values():

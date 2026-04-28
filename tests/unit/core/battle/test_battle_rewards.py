@@ -3,7 +3,7 @@
 import pytest
 from engine.battle.battle_rewards import (
     RewardCalculator, exp_required, LevelUpResult,
-    EXP_CAP, LEVEL_CAP, _weighted_pick,
+    EXP_CAP, LEVEL_CAP,
 )
 from engine.battle.combatant import Combatant
 from engine.party.party_state import PartyState
@@ -247,21 +247,3 @@ class TestLoot:
         assert rewards.loot.item_drops[0]["id"] == "golem_core"
 
 
-class TestWeightedPick:
-    def test_empty_pool_returns_none(self):
-        assert _weighted_pick([], _rng) is None
-
-    def test_single_item_always_picked(self):
-        pool = [{"item": "only_one", "weight": 50}]
-        assert _weighted_pick(pool, _rng) == "only_one"
-
-    def test_respects_weights(self):
-        rng = PseudoRandom(seed=42)
-        pool = [
-            {"item": "common", "weight": 90},
-            {"item": "rare", "weight": 10},
-        ]
-        results = [_weighted_pick(pool, rng) for _ in range(200)]
-        assert "common" in results
-        # rare should appear at least once in 200 draws with 10% chance
-        assert "rare" in results
