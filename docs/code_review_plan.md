@@ -189,8 +189,9 @@ Current state: 64 test files, 892 tests. 64 engine modules have no matching `tes
 - `engine/encounter/encounter_zone_data.py` — covered by `tests/unit/core/encounter/test_encounter_zone_data.py` (10 tests: dataclass defaults, frozen-ness, EncounterSet.total_weight).
 - `engine/world/tile_map.py` is now well-covered (added in step 8). `engine/world/world_map_scene.py` integration tests left out of scope — the plan tagged this as "no integration test exists" but the scene was refactored in step 5 into much smaller helpers (each tested individually); a full integration test is a separate effort beyond §5.3's "by basename" coverage gap. Test count 1107 → 1134.
 
-### 5.4 [P2] Untested rendering primitives (acceptable but call out)
-- All `*_renderer.py` files (battle/world/item/status/shop/apothecary/menu) lack tests — pure pygame drawing is hard to unit-test, but at minimum exercise their pure helpers (e.g., `BattleRenderer.bottom_h`/`party_w`/`cmd_w` math, color choices via `HP_LOW_THRESHOLD`).
+### 5.4 [P2] ~~Untested rendering primitives (acceptable but call out)~~ — DONE 2026-04-28
+
+Added `tests/unit/core/battle/test_battle_renderer_layout.py` with 16 tests covering the pure-helper surface called out in §5.4: `BattleRenderer` layout math (bottom_h, party_w = 25%, cmd_w = 30%, msg_x sum, msg_w fills remainder), `enemy_rect_size` (boss → large; non-boss table indexed by `len(name) % 3`), `float_pos` (party float anchored by row spacing, enemy floats use layout offsets, boss floats lift higher than normal sprites), and the `HP_LOW_THRESHOLD` branch logic (value pinned at 0.35; the renderer uses `<=` so at-threshold counts as low; 0.0 low, 1.0 OK). The damage-float / KO-ghost / hit-flash caches were already covered in `test_battle_renderer_caches.py`. Test count 1134 → 1150.
 
 ### 5.5 [P2] Untested IO/state
 - `engine/party/member_state.py`, `engine/item/item_entry_state.py`, `engine/item/item_defs_data.py`, `engine/common/save_slot_data.py` — DTOs with custom logic / serialization shouldn't be assumed correct.
