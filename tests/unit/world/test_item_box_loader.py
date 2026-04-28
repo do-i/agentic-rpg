@@ -123,3 +123,25 @@ class TestLoadFromMap:
         p = write_map(tmp_path, {"item_boxes": [{"id": "c", "loot": {}}]})
         with pytest.raises(KeyError, match="position"):
             loader.load_from_map(p)
+
+
+class TestParseFromMapData:
+    def test_parses_already_loaded_dict(self, tmp_path):
+        loader = make_loader(tmp_path)
+        boxes = loader.parse_from_map_data({
+            "item_boxes": [{"id": "c", "position": [1, 2], "loot": {}}],
+        })
+        assert len(boxes) == 1
+        assert boxes[0].id == "c"
+
+    def test_none_returns_empty(self, tmp_path):
+        loader = make_loader(tmp_path)
+        assert loader.parse_from_map_data(None) == []
+
+    def test_non_dict_returns_empty(self, tmp_path):
+        loader = make_loader(tmp_path)
+        assert loader.parse_from_map_data(42) == []
+
+    def test_dict_without_boxes_key_returns_empty(self, tmp_path):
+        loader = make_loader(tmp_path)
+        assert loader.parse_from_map_data({"npcs": []}) == []

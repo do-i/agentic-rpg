@@ -88,8 +88,8 @@ def init_world_map(
     map_yaml_path = scenario_path / "data" / "maps" / f"{map_id}.yaml"
     map_data = load_yaml_optional(map_yaml_path) or {}
 
-    npcs = npc_loader.load_from_map(map_yaml_path)
-    item_boxes = item_box_loader.load_from_map(map_yaml_path)
+    npcs = npc_loader.parse_from_map_data(map_data)
+    item_boxes = item_box_loader.parse_from_map_data(map_data)
 
     if map_data:
         state.map.display_name = map_data.get("name", map_id)

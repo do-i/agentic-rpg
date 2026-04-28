@@ -135,3 +135,20 @@ class TestNpcLoader:
         p = write_map(tmp_path, {"npcs": [{"id": "n"}]})
         with pytest.raises(KeyError, match="position"):
             loader.load_from_map(p)
+
+
+class TestParseFromMapData:
+    def test_parses_already_loaded_dict_without_reading_disk(self, loader):
+        data = {"npcs": [{"id": "n", "position": [1, 2]}]}
+        npcs = loader.parse_from_map_data(data)
+        assert len(npcs) == 1
+        assert npcs[0].id == "n"
+
+    def test_none_returns_empty_list(self, loader):
+        assert loader.parse_from_map_data(None) == []
+
+    def test_non_dict_returns_empty_list(self, loader):
+        assert loader.parse_from_map_data("not a dict") == []
+
+    def test_dict_without_npcs_key_returns_empty(self, loader):
+        assert loader.parse_from_map_data({"other": "fields"}) == []

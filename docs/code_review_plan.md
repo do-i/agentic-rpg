@@ -47,10 +47,10 @@ File: `engine/dialogue/dialogue_engine.py:47-74`
 
 Added `load_yaml_required_cached`, `load_yaml_optional_cached`, and `clear_yaml_cache` to `engine/io/yaml_loader.py`. `DialogueEngine.resolve()` now uses `load_yaml_optional_cached` and `spell_logic._load_class_abilities` uses `load_yaml_required_cached`. Cache is keyed on the resolved Path so different tmp_paths don't collide between tests; missing files are also cached so we don't re-stat. Test count 1072 → 1078 (6 new tests in `test_yaml_loader.py` covering first-call read, second-call cache hit, clear_yaml_cache invalidation, and the missing-file caching behavior).
 
-### 2.3 [P2] Map YAML opened twice during scene init
+### 2.3 [P2] ~~Map YAML opened twice during scene init~~ — DONE 2026-04-27
 File: `engine/world/world_map_scene.py:177-196`
 
-`_init()` calls `npc_loader.load_from_map(map_yaml_path)` and `item_box_loader.load_from_map(map_yaml_path)` (each opens the file), then opens the file directly twice more (lines 182-189 for BGM, 213-219 for spawn config). Four reads of the same file per map load. Open once and pass the parsed dict to each consumer.
+Added `parse_from_map_data(data)` to `NpcLoader` and `ItemBoxLoader` that take an already-parsed dict. `world_map_init.py` now reads the map YAML once via `load_yaml_optional` and passes the parsed dict to both loaders plus the BGM and spawn-config blocks. The original `load_from_map(path)` methods stay as thin wrappers so existing call sites and tests are unchanged. Test count 1078 → 1086 (8 new tests in `test_npc_loader.py` and `test_item_box_loader.py` for the no-disk-IO path).
 
 ### 2.6 [P2] WorldMapScene rebuilds visibility lists redundantly
 File: `engine/world/world_map_scene.py:600-651`

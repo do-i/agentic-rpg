@@ -21,7 +21,14 @@ class NpcLoader:
         self._rng = rng
 
     def load_from_map(self, map_yaml_path: Path) -> list[Npc]:
-        data = load_yaml_optional(map_yaml_path)
+        return self.parse_from_map_data(load_yaml_optional(map_yaml_path))
+
+    def parse_from_map_data(self, data: dict | None) -> list[Npc]:
+        """Build NPC instances from already-parsed map YAML data.
+
+        Used by world_map_init when the file has already been loaded so we
+        don't re-read the same path through every loader.
+        """
         if not isinstance(data, dict):
             return []
         return [self._parse_npc(entry) for entry in data.get("npcs", [])]

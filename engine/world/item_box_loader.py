@@ -42,7 +42,14 @@ class ItemBoxLoader:
             return None
 
     def load_from_map(self, map_yaml_path: Path) -> list[ItemBox]:
-        data = load_yaml_optional(map_yaml_path)
+        return self.parse_from_map_data(load_yaml_optional(map_yaml_path))
+
+    def parse_from_map_data(self, data: dict | None) -> list[ItemBox]:
+        """Build ItemBox instances from already-parsed map YAML data.
+
+        Used by world_map_init when the file has already been loaded so we
+        don't re-read the same path through every loader.
+        """
         if not isinstance(data, dict):
             return []
         return [self._parse(entry) for entry in data.get("item_boxes", [])]
