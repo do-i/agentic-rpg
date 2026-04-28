@@ -1,8 +1,8 @@
 # engine/spell/spell_scene.py
 #
-# Field Menu Spells screen: character picker -> learned spells list
-# -> target select for field-castable spells (heal/cure/buff).
-# Battle-only spells appear as inspect-only rows.
+# Field Menu Spells screen: character picker → learned spells list → target
+# select for field-castable spells (heal/cure/buff). Battle-only spells
+# appear as inspect-only rows. Built on engine.common.wizard_scene.
 
 from __future__ import annotations
 
@@ -10,7 +10,6 @@ from pathlib import Path
 
 import pygame
 
-from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
@@ -21,6 +20,7 @@ from engine.common.color_constants import (
 from engine.common.menu_popup import render_popup
 from engine.common.menu_row_renderer import render_row
 from engine.common.target_select_overlay_renderer import TargetSelectOverlay
+from engine.common.wizard_scene import WizardPage, WizardScene
 from engine.party.member_state import MemberState
 from engine.spell.spell_logic import learned_spells, is_field_castable
 from engine.status.status_logic import apply_spell, apply_spell_all, valid_targets
@@ -29,17 +29,17 @@ from engine.status.status_logic import apply_spell, apply_spell_all, valid_targe
 PAGE_MEMBER = "member"
 PAGE_SPELL  = "spell"
 
-C_BADGE   = (120, 120, 160)
+C_BADGE = (120, 120, 160)
 
 PAD_X = 30
 PAD_Y = 24
 COL_W = 260
 
 
-class SpellScene(Scene):
+class SpellScene(WizardScene):
     """Field spell browser with optional casting.
 
-    Pages: MEMBER -> SPELL. Castable spells open a target overlay. Battle-only
+    Pages: MEMBER → SPELL. Castable spells open a target overlay. Battle-only
     spells are rendered in a dimmed color and produce a 'cancel' beep on ENTER.
     """
 
@@ -52,25 +52,27 @@ class SpellScene(Scene):
         return_scene_name: str,
         sfx_manager,
     ) -> None:
+        super().__init__(scene_manager, registry, return_scene_name, sfx_manager)
         self._holder = holder
-        self._scene_manager = scene_manager
-        self._registry = registry
         self._scenario_path = scenario_path
-        self._return_scene_name = return_scene_name
-        self._sfx_manager = sfx_manager
-
-        self._page = PAGE_MEMBER
-        self._member_sel = 0
-        self._spell_sel  = 0
         self._spells: list[dict] = []
-
         self._target_overlay: TargetSelectOverlay | None = None
         self._popup_text: str = ""
         self._popup_active: bool = False
         self._fonts_ready = False
 
-    def set_return_scene(self, name: str) -> None:
-        self._return_scene_name = name
+        self._register_page(WizardPage(
+            name=PAGE_MEMBER,
+            count_fn=lambda: len(self._members()),
+            on_confirm=self._confirm_member,
+            on_back=lambda: None,           # close scene
+        ))
+        self._register_page(WizardPage(
+            name=PAGE_SPELL,
+            count_fn=lambda: len(self._spells),
+            on_confirm=self._confirm_spell,
+            on_back=lambda: PAGE_MEMBER,
+        ))
 
     # ── Fonts ─────────────────────────────────────────────────
 
@@ -92,7 +94,8 @@ class SpellScene(Scene):
         members = self._members()
         if not members:
             return None
-        return members[min(self._member_sel, len(members) - 1)]
+        sel = self._page(PAGE_MEMBER).selection
+        return members[min(sel, len(members) - 1)]
 
     def _classes_dir(self) -> Path:
         return Path(self._scenario_path) / "data" / "classes"
@@ -106,92 +109,61 @@ class SpellScene(Scene):
             return []
         return learned_spells(member, self._classes_dir(), self._flags_set())
 
-    def _play(self, key: str) -> None:
-        if self._sfx_manager:
-            self._sfx_manager.play(key)
+    # ── Modal-overlay routing ────────────────────────────────
 
-    # ── Events ────────────────────────────────────────────────
+    def _is_input_blocked(self) -> bool:
+        return self._target_overlay is not None or self._popup_active
 
-    def handle_events(self, events: list[pygame.event.Event]) -> None:
+    def _handle_blocked_input(self, events: list[pygame.event.Event]) -> None:
         if self._target_overlay:
             self._target_overlay.handle_events(events)
             return
-        if self._popup_active:
-            for event in events:
-                if event.type == pygame.KEYDOWN and event.key in (
-                    pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER,
-                ):
-                    self._popup_active = False
-            return
-
         for event in events:
-            if event.type != pygame.KEYDOWN:
-                continue
-            if self._page == PAGE_MEMBER:
-                self._handle_member(event.key)
-            elif self._page == PAGE_SPELL:
-                self._handle_spell(event.key)
+            if event.type == pygame.KEYDOWN and event.key in (
+                pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER,
+            ):
+                self._popup_active = False
 
-    def _handle_member(self, key: int) -> None:
-        members = self._members()
-        if key in (pygame.K_ESCAPE, pygame.K_m):
-            self._close()
-        elif key == pygame.K_UP and members:
-            self._set_member_sel(max(0, self._member_sel - 1))
-        elif key == pygame.K_DOWN and members:
-            self._set_member_sel(min(len(members) - 1, self._member_sel + 1))
-        elif key in (pygame.K_RETURN, pygame.K_KP_ENTER) and members:
-            self._spells = self._load_spells()
-            if not self._spells:
-                member = self._current_member()
-                self._popup_text = f"{member.name} has no spells."
-                self._popup_active = True
-                self._play("cancel")
-                return
-            self._play("confirm")
-            self._spell_sel = 0
-            self._page = PAGE_SPELL
+    # ── Page confirm callbacks ───────────────────────────────
 
-    def _handle_spell(self, key: int) -> None:
-        if key in (pygame.K_ESCAPE, pygame.K_m):
-            self._play("cancel")
-            self._page = PAGE_MEMBER
-            return
+    def _confirm_member(self) -> str | None:
+        self._spells = self._load_spells()
         if not self._spells:
-            return
-        if key == pygame.K_UP:
-            self._set_spell_sel(max(0, self._spell_sel - 1))
-        elif key == pygame.K_DOWN:
-            self._set_spell_sel(min(len(self._spells) - 1, self._spell_sel + 1))
-        elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-            self._confirm_spell()
+            member = self._current_member()
+            self._popup_text = f"{member.name} has no spells."
+            self._popup_active = True
+            self._play("cancel")
+            return None
+        self._play("confirm")
+        return PAGE_SPELL
 
-    def _confirm_spell(self) -> None:
-        spell = self._spells[self._spell_sel]
+    def _confirm_spell(self) -> str | None:
+        sel = self._page(PAGE_SPELL).selection
+        spell = self._spells[sel]
         caster = self._current_member()
         if caster is None:
-            return
+            return None
         if not is_field_castable(spell):
             self._play("cancel")
-            return
+            return None
         if caster.mp < spell["mp_cost"]:
             self._popup_text = f"{caster.name} has not enough MP."
             self._popup_active = True
             self._play("cancel")
-            return
+            return None
         target_type = spell.get("target")
         if target_type in ("all_allies", "party"):
             self._play("confirm")
             msg = apply_spell_all(spell, caster, self._holder.get().party.members)
             self._popup_text = msg
             self._popup_active = True
-            return
+            return None
         targets = valid_targets(spell, self._holder.get().party.members)
         if not targets:
             self._popup_text = "No valid targets."
             self._popup_active = True
             self._play("cancel")
-            return
+            return None
         self._play("confirm")
         pending = spell
         self._target_overlay = TargetSelectOverlay(
@@ -201,6 +173,7 @@ class SpellScene(Scene):
             on_cancel=self._on_target_cancel,
             sfx_manager=self._sfx_manager,
         )
+        return None
 
     def _on_target_confirm(self, spell: dict, caster: MemberState, target: MemberState) -> None:
         msg = apply_spell(spell, caster, target)
@@ -210,25 +183,6 @@ class SpellScene(Scene):
 
     def _on_target_cancel(self) -> None:
         self._target_overlay = None
-
-    def _set_member_sel(self, new: int) -> None:
-        if new != self._member_sel:
-            self._play("hover")
-        self._member_sel = new
-
-    def _set_spell_sel(self, new: int) -> None:
-        if new != self._spell_sel:
-            self._play("hover")
-        self._spell_sel = new
-
-    def _close(self) -> None:
-        self._play("cancel")
-        self._scene_manager.switch(self._registry.get(self._return_scene_name))
-
-    # ── Update ────────────────────────────────────────────────
-
-    def update(self, delta: float) -> None:
-        pass
 
     # ── Render ────────────────────────────────────────────────
 
@@ -241,7 +195,7 @@ class SpellScene(Scene):
         screen.blit(title, (PAD_X, PAD_Y))
 
         self._render_members(screen)
-        if self._page == PAGE_SPELL:
+        if self.page_id == PAGE_SPELL:
             self._render_spells(screen)
 
         self._render_hint(screen)
@@ -249,7 +203,9 @@ class SpellScene(Scene):
         if self._target_overlay:
             self._target_overlay.render(screen)
         if self._popup_active:
-            self._render_popup(screen)
+            render_popup(
+                screen, self._font_row, self._font_meta, self._popup_text,
+            )
 
     def _render_members(self, screen: pygame.Surface) -> None:
         members = self._members()
@@ -263,9 +219,10 @@ class SpellScene(Scene):
             screen.blit(msg, (x, y))
             return
         row_h = self._font_row.get_height() + 10
-        active_page = self._page == PAGE_MEMBER
+        sel = self._page(PAGE_MEMBER).selection
+        active_page = self.page_id == PAGE_MEMBER
         for i, m in enumerate(members):
-            selected = (i == self._member_sel)
+            selected = (i == sel)
             focused = selected and active_page
             mp_hint = f"MP {m.mp}/{m.mp_max}"
             text = f"{m.name}  Lv{m.level}  {m.class_name}  {mp_hint}"
@@ -291,9 +248,10 @@ class SpellScene(Scene):
 
         row_h = self._font_row.get_height() + 12
         list_w = screen.get_width() - x - PAD_X
+        sel = self._page(PAGE_SPELL).selection
 
         for i, spell in enumerate(self._spells):
-            selected = (i == self._spell_sel)
+            selected = (i == sel)
             castable = is_field_castable(spell)
             can_afford = member.mp >= spell["mp_cost"]
             if castable and can_afford:
@@ -314,21 +272,16 @@ class SpellScene(Scene):
 
         if self._spells:
             y += 8
-            desc = self._spells[self._spell_sel].get("description", "")
+            desc = self._spells[sel].get("description", "")
             if desc:
                 text = self._font_meta.render(desc, True, C_TEXT_MUT)
                 screen.blit(text, (x, y))
 
     def _render_hint(self, screen: pygame.Surface) -> None:
         sw, sh = screen.get_size()
-        if self._page == PAGE_MEMBER:
+        if self.page_id == PAGE_MEMBER:
             text = "UP/DOWN select member    ENTER view spells    ESC close"
         else:
             text = "UP/DOWN select spell    ENTER cast    ESC back"
         hint = self._font_hint.render(text, True, C_TEXT_DIM)
         screen.blit(hint, ((sw - hint.get_width()) // 2, sh - 30))
-
-    def _render_popup(self, screen: pygame.Surface) -> None:
-        render_popup(
-            screen, self._font_row, self._font_meta, self._popup_text,
-        )

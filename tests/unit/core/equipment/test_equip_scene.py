@@ -96,8 +96,8 @@ def _make_scene(catalog, members=None, inventory=None):
 class TestInitialState:
     def test_starts_on_member_page(self, catalog):
         scene, _ = _make_scene(catalog, members=[_make_member()])
-        assert scene._page == PAGE_MEMBER
-        assert scene._member_sel == 0
+        assert scene.page_id == PAGE_MEMBER
+        assert scene._page(PAGE_MEMBER).selection == 0
 
 
 class TestMemberPage:
@@ -105,13 +105,13 @@ class TestMemberPage:
         scene, _ = _make_scene(catalog,
             members=[_make_member("A"), _make_member("B")])
         scene.handle_events(_key(pygame.K_DOWN))
-        assert scene._member_sel == 1
+        assert scene._page(PAGE_MEMBER).selection == 1
 
     def test_enter_advances_to_slot_page(self, catalog):
         scene, _ = _make_scene(catalog, members=[_make_member()])
         scene.handle_events(_key(pygame.K_RETURN))
-        assert scene._page == PAGE_SLOT
-        assert scene._slot_sel == 0
+        assert scene.page_id == PAGE_SLOT
+        assert scene._page(PAGE_SLOT).selection == 0
 
     def test_escape_returns_to_field_menu(self, catalog):
         scene, _ = _make_scene(catalog, members=[_make_member()])
@@ -125,13 +125,13 @@ class TestSlotPage:
         scene, _ = _make_scene(catalog, members=[_make_member()])
         scene.handle_events(_key(pygame.K_RETURN))   # -> SLOT
         scene.handle_events(_key(pygame.K_ESCAPE))
-        assert scene._page == PAGE_MEMBER
+        assert scene.page_id == PAGE_MEMBER
 
     def test_down_moves_slot(self, catalog):
         scene, _ = _make_scene(catalog, members=[_make_member()])
         scene.handle_events(_key(pygame.K_RETURN))   # -> SLOT
         scene.handle_events(_key(pygame.K_DOWN))
-        assert scene._slot_sel == 1
+        assert scene._page(PAGE_SLOT).selection == 1
 
     def test_enter_opens_picker(self, catalog):
         scene, _ = _make_scene(catalog,
@@ -139,7 +139,7 @@ class TestSlotPage:
             inventory={"iron_sword": 1})
         scene.handle_events(_key(pygame.K_RETURN))   # -> SLOT
         scene.handle_events(_key(pygame.K_RETURN))   # -> PICKER
-        assert scene._page == PAGE_PICKER
+        assert scene.page_id == PAGE_PICKER
         ids = [r.item_id for r in scene._picker_rows]
         assert None in ids   # Unequip row present
         assert "iron_sword" in ids
@@ -153,7 +153,7 @@ class TestPickerPage:
         scene.handle_events(_key(pygame.K_RETURN))   # SLOT
         scene.handle_events(_key(pygame.K_RETURN))   # PICKER
         scene.handle_events(_key(pygame.K_ESCAPE))
-        assert scene._page == PAGE_SLOT
+        assert scene.page_id == PAGE_SLOT
 
     def test_select_item_equips_it(self, catalog):
         m = _make_member()
@@ -165,7 +165,7 @@ class TestPickerPage:
         scene.handle_events(_key(pygame.K_RETURN))   # equip
         assert m.equipped["weapon"] == "iron_sword"
         assert not holder.get().repository.has_item("iron_sword")
-        assert scene._page == PAGE_SLOT
+        assert scene.page_id == PAGE_SLOT
 
     def test_select_unequip_row_returns_item(self, catalog):
         m = _make_member(equipped={"weapon": "iron_sword"})
@@ -176,7 +176,7 @@ class TestPickerPage:
         scene.handle_events(_key(pygame.K_RETURN))
         assert m.equipped["weapon"] == ""
         assert holder.get().repository.has_item("iron_sword")
-        assert scene._page == PAGE_SLOT
+        assert scene.page_id == PAGE_SLOT
 
     def test_swap_returns_previous_to_repo(self, catalog):
         m = _make_member(equipped={"weapon": "iron_sword"})

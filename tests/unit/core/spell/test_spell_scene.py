@@ -104,7 +104,7 @@ class TestMemberPage:
     def test_enter_opens_spell_page_when_spells_exist(self, tmp_path):
         scene, *_ = make_scene(tmp_path)
         scene.handle_events(_key(pygame.K_RETURN))
-        assert scene._page == PAGE_SPELL
+        assert scene.page_id == PAGE_SPELL
         assert len(scene._spells) == 3   # heal, heal_all, aqua_shot
 
     def test_enter_shows_popup_when_no_spells(self, tmp_path):
@@ -129,29 +129,29 @@ class TestMemberPage:
         )
         scene.handle_events(_key(pygame.K_RETURN))
         assert scene._popup_active
-        assert scene._page == PAGE_MEMBER
+        assert scene.page_id == PAGE_MEMBER
 
     def test_down_moves_selection(self, tmp_path):
         m1 = make_member("A")
         m2 = make_member("B")
         scene, *_ = make_scene(tmp_path, members=[m1, m2])
         scene.handle_events(_key(pygame.K_DOWN))
-        assert scene._member_sel == 1
+        assert scene._page(PAGE_MEMBER).selection == 1
 
 
 class TestSpellPage:
     def test_escape_returns_to_member_page(self, tmp_path):
         scene, *_ = make_scene(tmp_path)
         scene.handle_events(_key(pygame.K_RETURN))
-        assert scene._page == PAGE_SPELL
+        assert scene.page_id == PAGE_SPELL
         scene.handle_events(_key(pygame.K_ESCAPE))
-        assert scene._page == PAGE_MEMBER
+        assert scene.page_id == PAGE_MEMBER
 
     def test_enter_on_offensive_spell_is_blocked(self, tmp_path):
         scene, state, *_ = make_scene(tmp_path)
         scene.handle_events(_key(pygame.K_RETURN))  # open spell page
         # Spell list order: heal, heal_all, aqua_shot (battle-only at index 2)
-        scene._spell_sel = 2
+        scene._page(PAGE_SPELL).selection = 2
         scene.handle_events(_key(pygame.K_RETURN))
         assert scene._target_overlay is None
         assert not scene._popup_active  # not an error, just a beep
@@ -161,7 +161,7 @@ class TestSpellPage:
         m2 = make_member("B", mp=50, hp=30)
         scene, state, *_ = make_scene(tmp_path, members=[m1, m2])
         scene.handle_events(_key(pygame.K_RETURN))  # open spell page
-        scene._spell_sel = 1                          # heal_all
+        scene._page(PAGE_SPELL).selection = 1                          # heal_all
         scene.handle_events(_key(pygame.K_RETURN))
         assert scene._popup_active
         # MP deducted from active caster (member 0)
@@ -172,7 +172,7 @@ class TestSpellPage:
     def test_enter_on_single_ally_opens_target_overlay(self, tmp_path):
         scene, *_ = make_scene(tmp_path)
         scene.handle_events(_key(pygame.K_RETURN))  # open spell page
-        scene._spell_sel = 0                          # heal (single_ally)
+        scene._page(PAGE_SPELL).selection = 0                          # heal (single_ally)
         scene.handle_events(_key(pygame.K_RETURN))
         assert scene._target_overlay is not None
 
@@ -180,7 +180,7 @@ class TestSpellPage:
         poor_caster = make_member(mp=0)
         scene, state, *_ = make_scene(tmp_path, members=[poor_caster])
         scene.handle_events(_key(pygame.K_RETURN))  # open spell page
-        scene._spell_sel = 0                          # heal — cost 4 > mp 0
+        scene._page(PAGE_SPELL).selection = 0                          # heal — cost 4 > mp 0
         scene.handle_events(_key(pygame.K_RETURN))
         assert scene._popup_active
         assert "MP" in scene._popup_text
@@ -202,7 +202,7 @@ class TestRender:
     def test_render_with_target_overlay(self, tmp_path):
         scene, *_ = make_scene(tmp_path)
         scene.handle_events(_key(pygame.K_RETURN))
-        scene._spell_sel = 0  # heal
+        scene._page(PAGE_SPELL).selection = 0  # heal
         scene.handle_events(_key(pygame.K_RETURN))
         screen = pygame.Surface((1280, 720))
         scene.render(screen)

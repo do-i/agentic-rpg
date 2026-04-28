@@ -1,7 +1,9 @@
 # engine/equipment/equip_scene.py
 #
-# Field equip scene: character -> slot -> item picker with before/after
-# stat diff. Switched in from the field menu; ESC/M back to field_menu.
+# Field equip scene: character → slot → item picker with before/after stat
+# diff. Switched in from the field menu; ESC/M backs out a page or closes
+# the scene from the first page. Built on engine.common.wizard_scene so
+# nav, hover SFX, and the scene-close path are shared with SpellScene.
 
 from __future__ import annotations
 
@@ -9,7 +11,6 @@ from dataclasses import dataclass
 
 import pygame
 
-from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
@@ -18,6 +19,7 @@ from engine.common.color_constants import (
     C_BG, C_TEXT, C_TEXT_MUT, C_TEXT_DIM, C_HEAD,
 )
 from engine.common.menu_row_renderer import render_row
+from engine.common.wizard_scene import WizardPage, WizardScene
 from engine.item.item_catalog import ItemCatalog, ItemDef
 from engine.party.member_state import MemberState
 from engine.equipment.equipment_logic import (
@@ -41,12 +43,12 @@ SLOT_LABEL = {
 STAT_ORDER = ("str", "dex", "con", "int")
 STAT_LABEL = {"str": "STR", "dex": "DEX", "con": "CON", "int": "INT"}
 
-C_UP        = (120, 220, 120)
-C_DOWN      = (220, 110, 110)
+C_UP   = (120, 220, 120)
+C_DOWN = (220, 110, 110)
 
-PAD_X      = 30
-PAD_Y      = 24
-COL_W      = 260
+PAD_X = 30
+PAD_Y = 24
+COL_W = 260
 
 
 @dataclass
@@ -55,8 +57,8 @@ class PickerRow:
     item: ItemDef | None     # None for Unequip row
 
 
-class EquipScene(Scene):
-    """Field equip flow. Pages: MEMBER -> SLOT -> PICKER -> apply."""
+class EquipScene(WizardScene):
+    """Field equip flow. Pages: MEMBER → SLOT → PICKER → apply."""
 
     def __init__(
         self,
@@ -67,22 +69,30 @@ class EquipScene(Scene):
         return_scene_name: str,
         sfx_manager,
     ) -> None:
+        super().__init__(scene_manager, registry, return_scene_name, sfx_manager)
         self._holder = holder
-        self._scene_manager = scene_manager
-        self._registry = registry
         self._catalog = catalog
-        self._return_scene_name = return_scene_name
-        self._sfx_manager = sfx_manager
-
-        self._page = PAGE_MEMBER
-        self._member_sel = 0
-        self._slot_sel = 0
-        self._item_sel = 0
         self._picker_rows: list[PickerRow] = []
         self._fonts_ready = False
 
-    def set_return_scene(self, name: str) -> None:
-        self._return_scene_name = name
+        self._register_page(WizardPage(
+            name=PAGE_MEMBER,
+            count_fn=lambda: len(self._members()),
+            on_confirm=self._confirm_member,
+            on_back=lambda: None,           # close scene
+        ))
+        self._register_page(WizardPage(
+            name=PAGE_SLOT,
+            count_fn=lambda: len(SLOTS),
+            on_confirm=self._confirm_slot,
+            on_back=lambda: PAGE_MEMBER,
+        ))
+        self._register_page(WizardPage(
+            name=PAGE_PICKER,
+            count_fn=lambda: len(self._picker_rows),
+            on_confirm=self._confirm_picker,
+            on_back=lambda: PAGE_SLOT,
+        ))
 
     # ── Fonts ─────────────────────────────────────────────────
 
@@ -104,10 +114,12 @@ class EquipScene(Scene):
         members = self._members()
         if not members:
             return None
-        return members[min(self._member_sel, len(members) - 1)]
+        sel = self._page(PAGE_MEMBER).selection
+        return members[min(sel, len(members) - 1)]
 
     def _current_slot(self) -> str:
-        return SLOTS[min(self._slot_sel, len(SLOTS) - 1)]
+        sel = self._page(PAGE_SLOT).selection
+        return SLOTS[min(sel, len(SLOTS) - 1)]
 
     def _build_picker_rows(self) -> list[PickerRow]:
         member = self._current_member()
@@ -120,79 +132,23 @@ class EquipScene(Scene):
             rows.append(PickerRow(item_id=defn.id, item=defn))
         return rows
 
-    # ── Events ────────────────────────────────────────────────
+    # ── Page confirm callbacks ───────────────────────────────
 
-    def handle_events(self, events: list[pygame.event.Event]) -> None:
-        for event in events:
-            if event.type != pygame.KEYDOWN:
-                continue
-            if self._page == PAGE_MEMBER:
-                self._handle_member(event.key)
-            elif self._page == PAGE_SLOT:
-                self._handle_slot(event.key)
-            elif self._page == PAGE_PICKER:
-                self._handle_picker(event.key)
+    def _confirm_member(self) -> str | None:
+        self._play("confirm")
+        return PAGE_SLOT
 
-    def _handle_member(self, key: int) -> None:
-        members = self._members()
-        if key in (pygame.K_ESCAPE, pygame.K_m):
-            self._close()
-        elif key == pygame.K_UP and members:
-            self._set_member_sel(max(0, self._member_sel - 1))
-        elif key == pygame.K_DOWN and members:
-            self._set_member_sel(min(len(members) - 1, self._member_sel + 1))
-        elif key in (pygame.K_RETURN, pygame.K_KP_ENTER) and members:
-            self._play("confirm")
-            self._page = PAGE_SLOT
-            self._slot_sel = 0
+    def _confirm_slot(self) -> str | None:
+        self._play("confirm")
+        self._picker_rows = self._build_picker_rows()
+        return PAGE_PICKER
 
-    def _handle_slot(self, key: int) -> None:
-        if key in (pygame.K_ESCAPE, pygame.K_m):
-            self._play("cancel")
-            self._page = PAGE_MEMBER
-        elif key == pygame.K_UP:
-            self._set_slot_sel(max(0, self._slot_sel - 1))
-        elif key == pygame.K_DOWN:
-            self._set_slot_sel(min(len(SLOTS) - 1, self._slot_sel + 1))
-        elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-            self._play("confirm")
-            self._picker_rows = self._build_picker_rows()
-            self._item_sel = 0
-            self._page = PAGE_PICKER
-
-    def _handle_picker(self, key: int) -> None:
-        if key in (pygame.K_ESCAPE, pygame.K_m):
-            self._play("cancel")
-            self._page = PAGE_SLOT
-        elif key == pygame.K_UP:
-            self._set_item_sel(max(0, self._item_sel - 1))
-        elif key == pygame.K_DOWN:
-            self._set_item_sel(min(len(self._picker_rows) - 1, self._item_sel + 1))
-        elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-            self._apply_selection()
-
-    def _set_member_sel(self, new: int) -> None:
-        if new != self._member_sel:
-            self._play("hover")
-        self._member_sel = new
-
-    def _set_slot_sel(self, new: int) -> None:
-        if new != self._slot_sel:
-            self._play("hover")
-        self._slot_sel = new
-
-    def _set_item_sel(self, new: int) -> None:
-        if new != self._item_sel:
-            self._play("hover")
-        self._item_sel = new
-
-    def _apply_selection(self) -> None:
+    def _confirm_picker(self) -> str | None:
         member = self._current_member()
-        if member is None:
-            return
-        if not self._picker_rows:
-            return
-        row = self._picker_rows[self._item_sel]
+        if member is None or not self._picker_rows:
+            return None
+        sel = self._page(PAGE_PICKER).selection
+        row = self._picker_rows[sel]
         slot = self._current_slot()
         repo = self._holder.get().repository
         if row.item_id is None:
@@ -208,21 +164,8 @@ class EquipScene(Scene):
                 self._play("confirm")
             except ValueError:
                 self._play("cancel")
-                return
-        self._page = PAGE_SLOT
-
-    def _play(self, key: str) -> None:
-        if self._sfx_manager:
-            self._sfx_manager.play(key)
-
-    def _close(self) -> None:
-        self._play("cancel")
-        self._scene_manager.switch(self._registry.get(self._return_scene_name))
-
-    # ── Update ────────────────────────────────────────────────
-
-    def update(self, delta: float) -> None:
-        pass
+                return None
+        return PAGE_SLOT
 
     # ── Render ────────────────────────────────────────────────
 
@@ -234,9 +177,9 @@ class EquipScene(Scene):
         screen.blit(title, (PAD_X, PAD_Y))
 
         self._render_members(screen)
-        if self._page in (PAGE_SLOT, PAGE_PICKER):
+        if self.page_id in (PAGE_SLOT, PAGE_PICKER):
             self._render_slots(screen)
-        if self._page == PAGE_PICKER:
+        if self.page_id == PAGE_PICKER:
             self._render_picker(screen)
 
         self._render_hint(screen)
@@ -253,9 +196,10 @@ class EquipScene(Scene):
             screen.blit(msg, (x, y))
             return
         row_h = self._font_row.get_height() + 10
-        active_page = self._page == PAGE_MEMBER
+        sel = self._page(PAGE_MEMBER).selection
+        active_page = self.page_id == PAGE_MEMBER
         for i, m in enumerate(members):
-            selected = (i == self._member_sel)
+            selected = (i == sel)
             render_row(
                 screen, self._font_row, x, y, COL_W - 16,
                 f"{m.name}  Lv{m.level}  {m.class_name}",
@@ -276,9 +220,10 @@ class EquipScene(Scene):
         y += head.get_height() + 6
 
         row_h = self._font_row.get_height() + 10
-        active_page = self._page == PAGE_SLOT
+        active_page = self.page_id == PAGE_SLOT
+        sel = self._page(PAGE_SLOT).selection
         for i, slot in enumerate(SLOTS):
-            selected = (i == self._slot_sel)
+            selected = (i == sel)
             item_id = member.equipped.get(slot) or ""
             label = SLOT_LABEL[slot]
             value = self._display_name(item_id) if item_id else "-"
@@ -287,12 +232,11 @@ class EquipScene(Scene):
                 screen, self._font_row, x, y, COL_W - 16,
                 text,
                 selected and active_page,
-                selected and self._page == PAGE_PICKER,
+                selected and self.page_id == PAGE_PICKER,
                 C_TEXT if item_id else C_TEXT_DIM,
             )
             y += row_h
 
-        # Current stat totals for context
         y += 8
         totals = stat_totals(member, self._catalog)
         line = "  ".join(f"{STAT_LABEL[k]} {totals[k]}" for k in STAT_ORDER)
@@ -318,8 +262,9 @@ class EquipScene(Scene):
 
         row_h = self._font_row.get_height() + 10
         picker_w = screen.get_width() - x - PAD_X
+        sel = self._page(PAGE_PICKER).selection
         for i, row in enumerate(self._picker_rows):
-            selected = (i == self._item_sel)
+            selected = (i == sel)
             if row.item_id is None:
                 label = "(Unequip)"
                 color = C_TEXT_MUT
@@ -334,7 +279,8 @@ class EquipScene(Scene):
         self._render_preview(screen, x, y, picker_w, member, slot)
 
     def _render_preview(self, screen, x, y, w, member, slot) -> None:
-        row = self._picker_rows[self._item_sel] if self._picker_rows else None
+        sel = self._page(PAGE_PICKER).selection
+        row = self._picker_rows[sel] if self._picker_rows else None
         if row is None:
             return
         current = stat_totals(member, self._catalog)
@@ -369,7 +315,7 @@ class EquipScene(Scene):
             PAGE_MEMBER: "UP/DOWN select member    ENTER open slots    ESC close",
             PAGE_SLOT:   "UP/DOWN select slot    ENTER change item    ESC back",
             PAGE_PICKER: "UP/DOWN preview    ENTER equip    ESC back",
-        }[self._page]
+        }[self.page_id]
         hint = self._font_hint.render(hint_text, True, C_TEXT_DIM)
         screen.blit(hint, ((sw - hint.get_width()) // 2, sh - 30))
 

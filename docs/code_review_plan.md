@@ -144,9 +144,9 @@ Split the 453-line renderer into one orchestrator + four panel classes + a share
 
 Test count unchanged (1090 → 1090): the existing `test_battle_renderer_caches.py` was rewritten to reach into the new panel-renderer fields (`renderer._damage_floats._cache`, `renderer._enemy_area._ko_cache`, `renderer._hit_flash._flash_cache`) so all 11 cache assertions still hold.
 
-### 4.4 [P2] `engine/equipment/equip_scene.py` (395 lines) and `engine/spell/spell_scene.py` (355 lines)
+### 4.4 [P2] ~~`engine/equipment/equip_scene.py` (395 lines) and `engine/spell/spell_scene.py` (355 lines)~~ — DONE 2026-04-28
 
-Both are MEMBER → SLOT/SPELL → DETAIL three-page wizards with near-identical structure (see §3.1). Extract a `WizardScene` base class with a list of `WizardPage` objects so both scenes shrink to ~120 lines plus their unique data.
+Added `engine/common/wizard_scene.py` with a `WizardScene` base + `WizardPage` dataclass. Pages declare `count_fn`, `on_confirm` (returns next page id or None), `on_back` (returns previous page id or None to close the scene), and own their own `selection`. The base owns: SFX `_play(key)`, hover-beep `_set_sel`, the per-page UP/DOWN clamp, ENTER/ESC/M routing, the scene-close path, and a `_is_input_blocked` / `_handle_blocked_input` hook for modal overlays. `EquipScene` registers MEMBER/SLOT/PICKER pages and supplies the unique render code; `SpellScene` registers MEMBER/SPELL pages and uses the modal hook to gate input while the target overlay or popup is active. equip_scene 380 → 326 lines, spell_scene 334 → 287 lines; remaining bulk is the genuinely-unique render code per scene. Test count 1090 → 1107 (17 new tests in `test_wizard_scene.py` covering page registration, selection clamping, hover SFX, ENTER/ESC navigation, the empty-page no-op, the modal-overlay hooks, and `set_return_scene`). All existing equip/spell scene tests were updated to read selection state via `scene.page_id` and `scene._page(name).selection`.
 
 ### 4.5 [P2] `engine/battle/battle_logic.py` (343 lines)
 
