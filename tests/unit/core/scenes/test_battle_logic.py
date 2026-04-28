@@ -102,6 +102,48 @@ class TestResolveAction:
         assert not dead.is_ko
         assert "revived" in msg.lower()
 
+    def test_revive_spell_on_alive_target_is_no_op(self):
+        # The revive_hp_pct branch in resolve_action is gated on target.is_ko.
+        # A revive spell cast on an already-alive ally should not change their
+        # HP, MP cost is still spent (deducted up front before the per-target
+        # loop), and no "revived" message is emitted. Locks in current
+        # behavior so a refactor doesn't silently change it.
+        hero = make_combatant("Hero", mp=30, mres=10)
+        ally = make_combatant("Ally", hp=80, hp_max=100)
+        state = make_battle_state([hero, ally], [make_combatant("Goblin", is_enemy=True)])
+        spell = {"name": "Revive", "type": "heal", "revive_hp_pct": 0.5, "mp_cost": 15}
+        state.pending_action = {
+            "type": "spell", "data": spell, "source": hero, "targets": [ally],
+        }
+
+        msg = resolve_action(state, SCREEN_W)
+
+        assert ally.hp == 80          # unchanged
+        assert ally.is_ko is False
+        assert hero.mp == 15          # MP still consumed up front
+        assert msg == ""              # no "revived" message
+
+    def test_heal_spell_skips_ko_target_without_revive_pct(self):
+        # The plain `heal` branch (no revive_hp_pct) calls Combatant.apply_heal
+        # which short-circuits on KO targets. Pin this so a regression that
+        # added healing to KO targets via plain Heal would surface here.
+        hero = make_combatant("Hero", mp=30, mres=20)
+        dead = make_combatant("Dead", hp=0, hp_max=100)
+        dead.is_ko = True
+        state = make_battle_state([hero, dead], [make_combatant("Goblin", is_enemy=True)])
+        spell = {"name": "Heal", "type": "heal", "heal_coeff": 2.0, "mp_cost": 10}
+        state.pending_action = {
+            "type": "spell", "data": spell, "source": hero, "targets": [dead],
+        }
+
+        resolve_action(state, SCREEN_W)
+
+        # Plain Heal on a KO'd target leaves them KO'd (no revive flag set).
+        assert dead.is_ko is True
+        assert dead.hp == 0
+        # MP is still deducted (matches the up-front MP gate).
+        assert hero.mp == 20
+
     def test_utility_spell_clears_status(self):
         hero = make_combatant("Hero", mp=20, mres=10)
         poisoned = make_combatant("Ally", hp=80, hp_max=100)

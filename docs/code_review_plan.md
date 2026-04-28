@@ -203,10 +203,13 @@ Added `tests/unit/core/battle/test_battle_renderer_layout.py` with 16 tests cove
 
 Test count 1150 → 1203.
 
-### 5.6 [P2] Branch coverage gaps in tested modules
-- `engine/battle/battle_logic.py` has `test_battle_logic.py` but `roll_and_apply_side_effects` (line 29) and the spell `revive_hp_pct` branch (line 134) need explicit cases; both are easy to break under refactor.
-- `engine/encounter/encounter_resolver.py` — `_weighted_pick` (the buggy one) has no direct test; the bias from §1.2 would be caught by a test that pumps roll=100 a few times.
-- `engine/party/repository_state.py` — confirm there's a test asserting the cap behavior in §1.5; if not, add one that documents *and* fails on silent loss when this is fixed.
+### 5.6 [P2] ~~Branch coverage gaps in tested modules~~ — DONE 2026-04-28
+- `roll_and_apply_side_effects` is well-covered by the existing `TestRollAndApplySideEffects` (6 cases: applied/skipped by chance, knockback atk_modifier, KO early-return guard, unknown-effect ignore, multi-effect independent rolls).
+- The spell `revive_hp_pct` branch had a test for the KO target but not for an alive target — the no-op path could silently change. Added `test_revive_spell_on_alive_target_is_no_op` (HP unchanged, MP still spent up front, no message). Also added `test_heal_spell_skips_ko_target_without_revive_pct` to pin that plain Heal short-circuits on KO targets via `Combatant.apply_heal`.
+- `_weighted_pick` was unified in §3.3 and has 7 dedicated tests in `tests/unit/core/state/test_weighted_pick.py` plus the `test_distribution_unbiased_for_equal_weights` regression in `test_encounter_resolver.py` that catches the original §1.2 truncation bias.
+- `RepositoryState` cap behavior is well-covered: `test_add_gp_capped_at_max`, `test_add_gp_exact_cap`, `test_add_item_qty_capped`, `test_add_item_new_entry_capped`, `test_add_item_logs_warning_when_clipped`. §1.5 was already addressed in step 1.
+
+Test count 1203 → 1205 (+2).
 
 ### 5.7 [P3] Test directory consolidation
 `tests/unit/core/` and `tests/unit/world/` split is already noted in CLAUDE.md ("legacy path"). Plan a rename pass once the bug fixes above land.
