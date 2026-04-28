@@ -38,6 +38,9 @@ def _make_renderer():
 
 
 class TestDamageFloatCache:
+    """Caches now live on the DamageFloatRenderer panel; reach in through
+    the BattleRenderer's _damage_floats accessor."""
+
     def test_renders_once_per_float(self):
         renderer, assets = _make_renderer()
         state = BattleState(party=[], enemies=[])
@@ -45,9 +48,9 @@ class TestDamageFloatCache:
         state.damage_floats.append(f)
 
         screen = pygame.Surface((40, 40), pygame.SRCALPHA)
-        renderer._draw_damage_floats(screen, state)
-        renderer._draw_damage_floats(screen, state)
-        renderer._draw_damage_floats(screen, state)
+        renderer._damage_floats.draw(screen, state)
+        renderer._damage_floats.draw(screen, state)
+        renderer._damage_floats.draw(screen, state)
 
         # 1 shadow + 1 colored = 2 calls per cache miss; only one miss expected.
         assert assets.font_dmg.render.call_count == 2
@@ -59,12 +62,12 @@ class TestDamageFloatCache:
         state.damage_floats.append(f)
         screen = pygame.Surface((40, 40), pygame.SRCALPHA)
 
-        renderer._draw_damage_floats(screen, state)
-        assert id(f) in renderer._dmg_cache
+        renderer._damage_floats.draw(screen, state)
+        assert id(f) in renderer._damage_floats._cache
 
         state.damage_floats.clear()
-        renderer._draw_damage_floats(screen, state)
-        assert renderer._dmg_cache == {}
+        renderer._damage_floats.draw(screen, state)
+        assert renderer._damage_floats._cache == {}
 
     def test_distinct_floats_get_distinct_entries(self):
         renderer, _ = _make_renderer()
@@ -74,48 +77,52 @@ class TestDamageFloatCache:
         state.damage_floats.extend([a, b])
         screen = pygame.Surface((40, 40), pygame.SRCALPHA)
 
-        renderer._draw_damage_floats(screen, state)
-        assert {id(a), id(b)} == set(renderer._dmg_cache.keys())
+        renderer._damage_floats.draw(screen, state)
+        assert {id(a), id(b)} == set(renderer._damage_floats._cache.keys())
 
 
 class TestKoGhostCache:
+    """KO ghost cache now lives on the EnemyAreaRenderer."""
+
     def test_returns_cached_ghost_for_same_sprite(self):
         renderer, _ = _make_renderer()
         sprite = pygame.Surface((32, 32), pygame.SRCALPHA)
-        ghost1 = renderer._ko_ghost("goblin", sprite)
-        ghost2 = renderer._ko_ghost("goblin", sprite)
+        ghost1 = renderer._enemy_area._ko_ghost("goblin", sprite)
+        ghost2 = renderer._enemy_area._ko_ghost("goblin", sprite)
         assert ghost1 is ghost2
 
     def test_rebuilds_on_sprite_change(self):
         renderer, _ = _make_renderer()
         s1 = pygame.Surface((32, 32), pygame.SRCALPHA)
         s2 = pygame.Surface((32, 32), pygame.SRCALPHA)
-        g1 = renderer._ko_ghost("goblin", s1)
-        g2 = renderer._ko_ghost("goblin", s2)
+        g1 = renderer._enemy_area._ko_ghost("goblin", s1)
+        g2 = renderer._enemy_area._ko_ghost("goblin", s2)
         assert g1 is not g2
 
     def test_separate_enemies_have_separate_entries(self):
         renderer, _ = _make_renderer()
         sprite = pygame.Surface((32, 32), pygame.SRCALPHA)
-        renderer._ko_ghost("goblin", sprite)
-        renderer._ko_ghost("orc", sprite)
-        assert set(renderer._ko_cache.keys()) == {"goblin", "orc"}
+        renderer._enemy_area._ko_ghost("goblin", sprite)
+        renderer._enemy_area._ko_ghost("orc", sprite)
+        assert set(renderer._enemy_area._ko_cache.keys()) == {"goblin", "orc"}
 
 
 class TestFlashCache:
+    """Hit-flash cache now lives on the shared HitFlash helper."""
+
     def test_reuses_overlay_for_same_size(self):
         renderer, _ = _make_renderer()
-        # Drive `_apply_flash` via a fake fx that flashes on a non-sprite enemy.
+        # Drive HitFlash.apply via a fake fx that flashes on a non-sprite enemy.
         fx = MagicMock()
         fx.flash_alpha.return_value = 200
         fx.flash_color.return_value = (255, 255, 255)
         screen = pygame.Surface((100, 100), pygame.SRCALPHA)
 
         target = MagicMock()
-        renderer._apply_flash(screen, target, 0, 0, 32, 32, fx, sprite=None)
-        first = renderer._flash_cache[(32, 32)]
-        renderer._apply_flash(screen, target, 0, 0, 32, 32, fx, sprite=None)
-        assert renderer._flash_cache[(32, 32)] is first
+        renderer._hit_flash.apply(screen, target, 0, 0, 32, 32, fx, sprite=None)
+        first = renderer._hit_flash._flash_cache[(32, 32)]
+        renderer._hit_flash.apply(screen, target, 0, 0, 32, 32, fx, sprite=None)
+        assert renderer._hit_flash._flash_cache[(32, 32)] is first
 
     def test_separate_size_makes_separate_overlay(self):
         renderer, _ = _make_renderer()
@@ -124,9 +131,9 @@ class TestFlashCache:
         fx.flash_color.return_value = (255, 255, 255)
         screen = pygame.Surface((100, 100), pygame.SRCALPHA)
         target = MagicMock()
-        renderer._apply_flash(screen, target, 0, 0, 32, 32, fx, sprite=None)
-        renderer._apply_flash(screen, target, 0, 0, 64, 64, fx, sprite=None)
-        assert set(renderer._flash_cache.keys()) == {(32, 32), (64, 64)}
+        renderer._hit_flash.apply(screen, target, 0, 0, 32, 32, fx, sprite=None)
+        renderer._hit_flash.apply(screen, target, 0, 0, 64, 64, fx, sprite=None)
+        assert set(renderer._hit_flash._flash_cache.keys()) == {(32, 32), (64, 64)}
 
 
 # ──────────────────────────────────────────────────────────────

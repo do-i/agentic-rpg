@@ -131,15 +131,18 @@ Mixes input handling for 6 phases, sub-menu construction, and result handling. E
 - `engine/battle/battle_menu_builder.py` — `_open_spell_menu`, `_open_item_menu` (currently builds dicts with hardcoded `TARGET_MAP`).
 - The 451-line scene becomes pure orchestration.
 
-### 4.3 [P2] `engine/battle/battle_renderer.py` (416 lines)
+### 4.3 [P2] ~~`engine/battle/battle_renderer.py` (416 lines)~~ — DONE 2026-04-27
 
-Already split asset loading to `BattleAssetCache`. Now split the renderer further by "panel":
-- `EnemyAreaRenderer` (`_draw_enemy_area`, `_draw_enemy`).
-- `PartyPanelRenderer` (`_draw_party_panel`, `_draw_party_row`).
-- `CommandPanelRenderer` (`_draw_command_panel`, `_draw_main_cmd`, `_draw_submenu`).
-- `MessagePanelRenderer` + `DamageFloatRenderer`.
+Split the 453-line renderer into one orchestrator + four panel classes + a shared HitFlash helper:
+- `engine/battle/battle_enemy_area_renderer.py` — `EnemyAreaRenderer` owns the floor strip, enemy sprite/HP-bar drawing, and the KO ghost cache (which used to live on BattleRenderer).
+- `engine/battle/battle_party_panel_renderer.py` — `PartyPanelRenderer` draws the per-member roster row.
+- `engine/battle/battle_command_panel_renderer.py` — `CommandPanelRenderer` covers the turn header, main command list, sub-menu, and target-select prompt.
+- `engine/battle/battle_damage_float_renderer.py` — `DamageFloatRenderer` owns the per-DamageFloat shadow/foreground cache.
+- `engine/battle/battle_hit_flash.py` — shared `HitFlash` helper owns the per-(w,h) flash overlay cache; both the enemy area and party panel use the same instance so they share the cache.
 
-`BattleRenderer.render` becomes a 10-line composition.
+`BattleRenderer.render()` is now a ~15-line composition: paint background, dispatch to enemy area, draw dividers + party panel + command panel + message line, then damage floats. The 4-line message panel stayed inline since it isn't worth its own class.
+
+Test count unchanged (1090 → 1090): the existing `test_battle_renderer_caches.py` was rewritten to reach into the new panel-renderer fields (`renderer._damage_floats._cache`, `renderer._enemy_area._ko_cache`, `renderer._hit_flash._flash_cache`) so all 11 cache assertions still hold.
 
 ### 4.4 [P2] `engine/equipment/equip_scene.py` (395 lines) and `engine/spell/spell_scene.py` (355 lines)
 
