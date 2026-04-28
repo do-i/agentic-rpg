@@ -254,6 +254,16 @@ class TestHandleTarget:
         assert state.phase == BattlePhase.PLAYER_TURN
         assert ctl.sub_items == []
 
+    def test_escape_clears_pending_action(self):
+        # Regression for §1.10: ESC during target select used to leave a
+        # stale pending_action set, which was overwritten on the next
+        # confirm. Now we drop it explicitly.
+        ctl, _ = make_controller()
+        state = make_state(phase=BattlePhase.SELECT_TARGET)
+        state.pending_action = {"type": "spell", "data": {"name": "Fire"}}
+        ctl.handle_target(state, pygame.K_ESCAPE)
+        assert state.pending_action is None
+
     def test_left_decrements_target_sel(self):
         ctl, _ = make_controller()
         e1 = make_combatant("E1", is_enemy=True)

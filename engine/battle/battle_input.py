@@ -99,6 +99,9 @@ class BattleInputController:
             self._play("cancel")
             state.phase = BattlePhase.PLAYER_TURN
             self.clear_sub()
+            # Match the scene-level ESC path (§1.10): drop the pending
+            # action so the next confirm starts from a clean slot.
+            state.pending_action = None
             return
         if key in (pygame.K_LEFT, pygame.K_UP):
             self._move_sel("target_sel", -1, len(self.target_pool))

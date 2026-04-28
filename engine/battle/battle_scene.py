@@ -129,6 +129,10 @@ class BattleScene(Scene):
                 if phase in (BattlePhase.SELECT_SPELL, BattlePhase.SELECT_ITEM, BattlePhase.SELECT_TARGET):
                     self._state.phase = BattlePhase.PLAYER_TURN
                     self._input.clear_sub()
+                    # Drop the pending action so a stale partially-built dict
+                    # can't leak into the next confirm. The next confirm
+                    # would overwrite it anyway, but holding it is fragile.
+                    self._state.pending_action = None
                     continue
                 elif phase == BattlePhase.PLAYER_TURN:
                     self._attempt_run()
