@@ -19,6 +19,7 @@ from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.font_provider import get_fonts
 from engine.common.color_constants import C_BG, C_TEXT, C_TEXT_MUT, C_TEXT_DIM
+from engine.common.menu_sfx_mixin import MenuSfxMixin
 from engine.io.save_manager import GameStateManager
 from engine.title.save_modal_scene import SaveModalScene
 
@@ -44,7 +45,7 @@ C_ROW_SEL_BDR    = (74, 74, 122)
 C_ROW_SEL_TEXT   = (255, 220, 100)
 
 
-class FieldMenuScene(Scene):
+class FieldMenuScene(MenuSfxMixin, Scene):
     """
     Full-screen menu. Switches into sub-scenes (Items/Status) that will return
     to `field_menu`, and overlays SaveModalScene for the Save entry.
@@ -108,19 +109,14 @@ class FieldMenuScene(Scene):
 
     def _move(self, delta: int) -> None:
         total = len(self._entries)
-        new = (self._selected + delta) % total
-        if new != self._selected and self._sfx_manager:
-            self._sfx_manager.play("hover")
-        self._selected = new
+        self._selected = self._set_sel_hover(self._selected, (self._selected + delta) % total)
 
     def _select(self) -> None:
         entry = self._entries[self._selected]
         if entry.kind == KIND_DISABLED:
-            if self._sfx_manager:
-                self._sfx_manager.play("cancel")
+            self._play("cancel")
             return
-        if self._sfx_manager:
-            self._sfx_manager.play("confirm")
+        self._play("confirm")
         if entry.kind == KIND_SCENE_SWITCH:
             scene = self._registry.get(entry.target)
             setter: Callable[[str], None] | None = getattr(scene, "set_return_scene", None)
@@ -142,8 +138,7 @@ class FieldMenuScene(Scene):
         self._save_modal = None
 
     def _close(self) -> None:
-        if self._sfx_manager:
-            self._sfx_manager.play("cancel")
+        self._play("cancel")
         self._scene_manager.switch(self._registry.get(self._return_scene_name))
 
     # ── Update ────────────────────────────────────────────────

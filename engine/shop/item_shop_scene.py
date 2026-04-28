@@ -10,6 +10,7 @@ from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
+from engine.common.menu_sfx_mixin import MenuSfxMixin
 from engine.world.sprite_sheet import SpriteSheet
 from engine.common.item_selection_view import ItemSelectionView
 from engine.shop.item_shop_renderer import ItemShopRenderer, SPRITE_SIZE, VISIBLE_ROWS
@@ -18,7 +19,7 @@ QTY_STEP_SMALL = 1
 QTY_STEP_LARGE = 5
 
 
-class ItemShopScene(Scene):
+class ItemShopScene(MenuSfxMixin, Scene):
     """
     Item shop overlay.  States: list → qty → toast (loop).
     ESC closes from list state, goes back from qty state.
@@ -91,7 +92,7 @@ class ItemShopScene(Scene):
             if event.type != pygame.KEYDOWN:
                 continue
             if self._state == "popup":
-                if event.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER):
+                if self.is_popup_dismiss_key(event.key):
                     self._state = "list"
                 return
             if self._state == "list":
@@ -103,33 +104,24 @@ class ItemShopScene(Scene):
         avail = self._available()
         if not avail:
             if key == pygame.K_ESCAPE:
-                if self._sfx_manager:
-                    self._sfx_manager.play("cancel")
+                self._play("cancel")
                 self._on_close()
             return
 
         if key == pygame.K_UP:
-            new = max(0, self._list_sel - 1)
-            if new != self._list_sel and self._sfx_manager:
-                self._sfx_manager.play("hover")
-            self._list_sel = new
+            self._list_sel = self._set_sel_hover(self._list_sel, max(0, self._list_sel - 1))
             self._clamp_scroll()
         elif key == pygame.K_DOWN:
-            new = min(len(avail) - 1, self._list_sel + 1)
-            if new != self._list_sel and self._sfx_manager:
-                self._sfx_manager.play("hover")
-            self._list_sel = new
+            self._list_sel = self._set_sel_hover(self._list_sel, min(len(avail) - 1, self._list_sel + 1))
             self._clamp_scroll()
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             sel = self._selected()
             if sel and sel["buy_price"] <= self._holder.get().repository.gp:
-                if self._sfx_manager:
-                    self._sfx_manager.play("confirm")
+                self._play("confirm")
                 self._qty   = 1
                 self._state = "qty"
         elif key == pygame.K_ESCAPE:
-            if self._sfx_manager:
-                self._sfx_manager.play("cancel")
+            self._play("cancel")
             self._on_close()
 
     def _handle_qty(self, key: int) -> None:
@@ -147,28 +139,18 @@ class ItemShopScene(Scene):
         max_q = max(max_q, 1)
 
         if key == pygame.K_ESCAPE:
-            if self._sfx_manager:
-                self._sfx_manager.play("cancel")
+            self._play("cancel")
             self._state = "list"
         elif key == pygame.K_LEFT:
-            self._qty = max(1, self._qty - QTY_STEP_SMALL)
-            if self._sfx_manager:
-                self._sfx_manager.play("hover")
+            self._qty = self._set_sel_hover(self._qty, max(1, self._qty - QTY_STEP_SMALL))
         elif key == pygame.K_RIGHT:
-            self._qty = min(max_q, self._qty + QTY_STEP_SMALL)
-            if self._sfx_manager:
-                self._sfx_manager.play("hover")
+            self._qty = self._set_sel_hover(self._qty, min(max_q, self._qty + QTY_STEP_SMALL))
         elif key == pygame.K_UP:
-            self._qty = min(max_q, self._qty + QTY_STEP_LARGE)
-            if self._sfx_manager:
-                self._sfx_manager.play("hover")
+            self._qty = self._set_sel_hover(self._qty, min(max_q, self._qty + QTY_STEP_LARGE))
         elif key == pygame.K_DOWN:
-            self._qty = max(1, self._qty - QTY_STEP_LARGE)
-            if self._sfx_manager:
-                self._sfx_manager.play("hover")
+            self._qty = self._set_sel_hover(self._qty, max(1, self._qty - QTY_STEP_LARGE))
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-            if self._sfx_manager:
-                self._sfx_manager.play("confirm")
+            self._play("confirm")
             self._do_buy()
 
     def _clamp_scroll(self) -> None:

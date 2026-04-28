@@ -54,22 +54,6 @@ File: `engine/world/world_map_logic.py:145`
 
 ## 3. Duplication
 
-### 3.1 [P1] Field/menu scenes share a near-identical "list/picker with hover SFX" pattern
-
-The same idiom appears in:
-- `engine/equipment/equip_scene.py` — `_set_member_sel`, `_set_slot_sel`, `_set_item_sel`, `_play`, `_render_row`, `_init_fonts`.
-- `engine/spell/spell_scene.py` — `_set_member_sel`, `_set_spell_sel`, `_play`, `_render_row`, `_init_fonts`, `_render_popup`.
-- `engine/shop/item_shop_scene.py` — `_handle_list`, `_handle_qty` (hover/confirm/cancel SFX).
-- `engine/shop/apothecary_scene.py` — `_handle_list`, `_handle_detail`.
-- `engine/inn/inn_scene.py` — confirm/cancel pattern.
-- `engine/field_menu/field_menu_scene.py` — same.
-
-Common pieces to extract:
-1. `MenuScene` base or mixin: `_play_sfx(key)`, `_set_sel(field, new_value)` with hover beep, the standard `popup_active`/`popup_text` flow.
-2. `MenuRowRenderer` helper: `_render_row(screen, x, y, w, text, focused, dimmed_sel, color)` — `equip_scene._render_row` and `spell_scene._render_row` are character-identical. Move to `engine/common/menu_row_renderer.py`.
-3. `Popup` overlay: `inn`, `spell`, `item_shop`, `apothecary` each open and dismiss a single-line popup with ENTER/ESC. Make a `Popup(text, on_dismiss)` overlay class.
-4. Stat/font color constants: `C_SEL`, `C_ROW_SEL`, `C_HEAD` are redefined in `equip_scene` and `spell_scene`. Move to `engine/common/color_constants.py`.
-
 ### 3.2 [P2] Sprite-init pattern duplicated across overlays
 
 `item_shop_scene.py:56-62`, `apothecary_scene.py:61-67`, `inn_scene.py:80-86` all have the identical `_init_sprite` body. Extract to `engine/world/sprite_sheet.py` as `SpriteSheet.load_npc_face(path, size) -> Surface | None`.
@@ -77,14 +61,6 @@ Common pieces to extract:
 ### 3.3 [P2] ~~`_weighted_pick` reimplemented twice~~ — DONE 2026-04-27
 
 Added `engine/util/weighted_pick.py` with a generic `weighted_pick(rng, entries, weight_fn) -> entry | None`. Both call sites now use it: `EncounterResolver.pick_formation` passes `lambda e: e.weight` over Formations and the loot path in `RewardCalculator.calculate_loot` passes `lambda e: e.get("weight", 1)` over pool dicts then reads `entry.get("item")`. The local `_weighted_pick` helper in `battle_rewards.py` and the bound method on `EncounterResolver` are gone. The old `TestWeightedPick` in `test_battle_rewards.py` and the bound-method tests in `test_encounter_resolver.py` were rehomed as `tests/unit/core/state/test_weighted_pick.py` (7 tests covering the util directly) and a `TestPickFormationWeighted` class that exercises the public `pick_formation` API end-to-end. Test count 1086 → 1090.
-
-### 3.5 [P3] `(if self._sfx_manager: self._sfx_manager.play(key))` pattern repeats ~80 times
-
-Most files guard `_sfx_manager` for truthiness. Either:
-- Make `SfxManager` always non-None (use a `NullSfxManager` placeholder), or
-- Add a tiny `_sfx(self, key)` helper to a shared base.
-
-The `equip_scene._play` / `spell_scene._play` already do this and would be the model.
 
 ### 3.6 [P3] `_clamp_scroll` re-implemented per shop scene
 

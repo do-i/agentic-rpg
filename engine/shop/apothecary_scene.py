@@ -12,6 +12,7 @@ from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
+from engine.common.menu_sfx_mixin import MenuSfxMixin
 from engine.world.sprite_sheet import SpriteSheet
 from engine.common.item_selection_view import ItemSelectionView
 from engine.shop.apothecary_renderer import ApothecaryRenderer, SPRITE_SIZE, VISIBLE_ROWS
@@ -20,7 +21,7 @@ from engine.shop.apothecary_renderer import ApothecaryRenderer, SPRITE_SIZE, VIS
 _MC_SIZE_TO_ID = {"XS": "mc_xs", "S": "mc_s", "M": "mc_m", "L": "mc_l", "XL": "mc_xl"}
 
 
-class ApothecaryScene(Scene):
+class ApothecaryScene(MenuSfxMixin, Scene):
     """
     Apothecary overlay.  States: list → detail → toast (loop).
     ESC closes from list state, goes back from detail state.
@@ -148,7 +149,7 @@ class ApothecaryScene(Scene):
             if event.type != pygame.KEYDOWN:
                 continue
             if self._state == "popup":
-                if event.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER):
+                if self.is_popup_dismiss_key(event.key):
                     self._state = "list"
                 return
             if self._state == "list":
@@ -160,34 +161,25 @@ class ApothecaryScene(Scene):
         recipes = self._visible_recipes()
         if not recipes:
             if key == pygame.K_ESCAPE:
-                if self._sfx_manager:
-                    self._sfx_manager.play("cancel")
+                self._play("cancel")
                 self._on_close()
             return
 
         if key == pygame.K_UP:
-            new = max(0, self._list_sel - 1)
-            if new != self._list_sel and self._sfx_manager:
-                self._sfx_manager.play("hover")
-            self._list_sel = new
+            self._list_sel = self._set_sel_hover(self._list_sel, max(0, self._list_sel - 1))
             self._clamp_scroll()
         elif key == pygame.K_DOWN:
-            new = min(len(recipes) - 1, self._list_sel + 1)
-            if new != self._list_sel and self._sfx_manager:
-                self._sfx_manager.play("hover")
-            self._list_sel = new
+            self._list_sel = self._set_sel_hover(self._list_sel, min(len(recipes) - 1, self._list_sel + 1))
             self._clamp_scroll()
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             sel = self._selected()
             if sel and self._is_unlocked(sel) and not self._is_duplicate_blocked(sel):
-                if self._sfx_manager:
-                    self._sfx_manager.play("confirm")
+                self._play("confirm")
                 self._state = "detail"
-            elif self._sfx_manager:
-                self._sfx_manager.play("cancel")
+            else:
+                self._play("cancel")
         elif key == pygame.K_ESCAPE:
-            if self._sfx_manager:
-                self._sfx_manager.play("cancel")
+            self._play("cancel")
             self._on_close()
 
     def _handle_detail(self, key: int) -> None:
@@ -196,13 +188,11 @@ class ApothecaryScene(Scene):
             self._state = "list"
             return
         if key == pygame.K_ESCAPE:
-            if self._sfx_manager:
-                self._sfx_manager.play("cancel")
+            self._play("cancel")
             self._state = "list"
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             if self._can_craft(sel):
-                if self._sfx_manager:
-                    self._sfx_manager.play("confirm")
+                self._play("confirm")
                 self._do_craft(sel)
 
     def _clamp_scroll(self) -> None:

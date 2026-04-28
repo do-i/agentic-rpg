@@ -11,6 +11,7 @@ from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
+from engine.common.menu_sfx_mixin import MenuSfxMixin
 from engine.world.sprite_sheet import SpriteSheet
 
 # ── Colors ────────────────────────────────────────────────────
@@ -39,7 +40,7 @@ FOOTER_H    = 36
 POPUP_W     = 360
 
 
-class InnScene(Scene):
+class InnScene(MenuSfxMixin, Scene):
     """
     Inn rest overlay.  States: confirm → toast (auto-close).
     """
@@ -88,17 +89,15 @@ class InnScene(Scene):
             if event.type != pygame.KEYDOWN:
                 continue
             if self._state == "popup":
-                if event.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER):
+                if self.is_popup_dismiss_key(event.key):
                     self._on_close()
                 return
             if self._state in ("confirm", "no_gp"):
                 if event.key == pygame.K_ESCAPE:
-                    if self._sfx_manager:
-                        self._sfx_manager.play("cancel")
+                    self._play("cancel")
                     self._on_close()
                 elif event.key == pygame.K_RETURN:
-                    if self._sfx_manager:
-                        self._sfx_manager.play("confirm")
+                    self._play("confirm")
                     self._try_rest()
 
     def _try_rest(self) -> None:
