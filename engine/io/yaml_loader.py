@@ -12,6 +12,44 @@ from typing import Any, Iterator
 import yaml
 
 
+# Process-wide cache for YAML files that don't change between loads.
+# Keyed on the resolved path. Use clear_yaml_cache() on scenario reload.
+_CACHE: dict[Path, Any] = {}
+
+
+def clear_yaml_cache() -> None:
+    """Drop all cached YAML payloads. Call on scenario reload or in tests."""
+    _CACHE.clear()
+
+
+def load_yaml_required_cached(path: Path) -> Any:
+    """Cached variant of load_yaml_required.
+
+    Used for files that are read repeatedly during a session and don't change
+    until the scenario itself reloads (class ability sheets, dialogue trees).
+    """
+    key = path.resolve()
+    if key in _CACHE:
+        return _CACHE[key]
+    payload = load_yaml_required(path)
+    _CACHE[key] = payload
+    return payload
+
+
+def load_yaml_optional_cached(path: Path) -> Any | None:
+    """Cached variant of load_yaml_optional.
+
+    A None payload (missing file) is also cached so we don't re-stat on every
+    lookup. Use clear_yaml_cache() if a file is created at runtime.
+    """
+    key = path.resolve()
+    if key in _CACHE:
+        return _CACHE[key]
+    payload = load_yaml_optional(path)
+    _CACHE[key] = payload
+    return payload
+
+
 def load_yaml_required(path: Path) -> Any:
     """Load and parse a YAML file that must exist.
 

@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from engine.io.yaml_loader import load_yaml_optional
+from engine.io.yaml_loader import load_yaml_optional_cached
 from engine.common.flag_state import FlagState
 from engine.party.repository_state import RepositoryState
 
@@ -51,7 +51,7 @@ class DialogueEngine:
         Returns None if no entry matches.
         """
         path = self._dir / f"{dialogue_id}.yaml"
-        data = load_yaml_optional(path)
+        data = load_yaml_optional_cached(path)
         if not isinstance(data, dict):
             return None
 

@@ -42,12 +42,10 @@ The pattern is "fail back to placeholder," but several sites just `pass` with no
 
 ## 2. Performance
 
-### 2.2 [P2] YAML re-loaded on every dialogue interaction
+### 2.2 [P2] ~~YAML re-loaded on every dialogue interaction~~ — DONE 2026-04-27
 File: `engine/dialogue/dialogue_engine.py:47-74`
 
-`resolve()` calls `yaml.safe_load` on the dialogue file every time the player presses ENTER. Cache loaded files by `dialogue_id` (invalidate only at scenario reload).
-
-Same pattern: `engine/spell/spell_logic.py:_load_class_abilities` reloads class YAML every time the spell screen opens.
+Added `load_yaml_required_cached`, `load_yaml_optional_cached`, and `clear_yaml_cache` to `engine/io/yaml_loader.py`. `DialogueEngine.resolve()` now uses `load_yaml_optional_cached` and `spell_logic._load_class_abilities` uses `load_yaml_required_cached`. Cache is keyed on the resolved Path so different tmp_paths don't collide between tests; missing files are also cached so we don't re-stat. Test count 1072 → 1078 (6 new tests in `test_yaml_loader.py` covering first-call read, second-call cache hit, clear_yaml_cache invalidation, and the missing-file caching behavior).
 
 ### 2.3 [P2] Map YAML opened twice during scene init
 File: `engine/world/world_map_scene.py:177-196`

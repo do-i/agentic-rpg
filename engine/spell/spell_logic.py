@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from engine.io.yaml_loader import load_yaml_required
+from engine.io.yaml_loader import load_yaml_required_cached
 from engine.party.member_state import MemberState
 
 
@@ -26,7 +26,7 @@ BATTLE_ONLY_TARGETS = {"single_enemy", "all_enemies", "group_enemies"}
 
 def _load_class_abilities(classes_dir: Path, class_name: str) -> list[dict]:
     path = classes_dir / f"{class_name}.yaml"
-    data = load_yaml_required(path)
+    data = load_yaml_required_cached(path)
     return data.get("abilities", [])
 
 
