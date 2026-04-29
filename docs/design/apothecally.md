@@ -7,25 +7,27 @@
 ```yaml
 id: recipe_hi_potion
 scroll_name: "Vital Brew"        # always visible, intentionally vague
-output_name: "Hi-Potion"         # shown only after unlock
-locked_label_flavor: "This recipe has not yet been revealed."
 output:
-  item: hi_potion
-  qty: 1
+  item: hi_potion                # output item id (resolved at craft time)
+  qty: 2                         # crafted quantity per craft
 inputs:
-  mc:
-    - size: L
-      qty: 2
-    - size: XL
+  mc:                            # magic-core inputs (optional)
+    - size: S
       qty: 1
-  items:
+  items:                         # material inputs (optional)
     - id: herb_red
       qty: 2
-gp_cost: 180
-unlock:
-  flag: story_phase_08_dragon_cave
-
+    - id: rare_herb
+      qty: 1
+gp_cost: 180                     # GP fee per craft
+unlock_flag: story_act2_started  # recipe is locked until this flag is set
+unique_output: true              # optional — once player owns the output,
+                                 # recipe stays visible but uncraftable.
+                                 # Use for key items (e.g. veil_breaker).
 ```
+
+The output item's display name is read from the item catalog (it is **not**
+duplicated on the recipe). Lock-state flavor text is rendered by the UI.
 
 ## Scroll Naming Convention
 
@@ -122,6 +124,8 @@ Crafted item is unsellable or 0.5× on craft-exclusive items — you don't want 
 
 ## Notes
 
-- `life_crystal` recipe uses `phoenix_wing` as a **condition check** (not consumed) — worth confirming if engine supports presence-check vs consume
-- `veil_breaker` outputs `qty: 1` and is a key item — engine should guard against crafting duplicates once owned
-- Shock Vial left open for Act 3 if you want wind-element coverage
+- `veil_breaker` outputs `qty: 1` and is a key item — duplicate crafting is
+  blocked via `unique_output: true` (see schema).
+- All current recipe inputs are **consumed** on craft. There is no
+  presence-check (uncomsumed) input mode in V1.
+- Shock Vial is currently included in Act 3 for wind-element coverage.

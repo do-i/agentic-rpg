@@ -24,12 +24,17 @@ See `rusted_kingdoms/data/dialogue`
 
 | Action | Effect | Available in |
 |---|---|---|
-| `set_flag` | Sets a flag in save state | `npc`, `cutscene` |
-| `give_items` | Adds item(s) to Party Repository | `npc`, `cutscene` |
-| `unlock` | Sets a shop/area unlock flag | `npc`, `cutscene` |
+| `set_flag` | Sets a flag in save state (string or list) | `npc`, `cutscene` |
+| `give_items` | Adds item(s) to Party Repository (`id` + `qty` required) | `npc`, `cutscene` |
 | `start_battle` | Triggers a scripted battle immediately after dialogue | `npc` only |
 | `join_party` | Adds a character to the active party | `npc`, `cutscene` |
 | `transition` | Fades out and loads a new map at a given position | `cutscene` only |
+| `open_shop` | Opens the general item shop overlay | `npc` only |
+| `open_inn` | Opens the inn (rest) overlay | `npc` only |
+| `open_apothecary` | Opens the crafting overlay | `npc` only |
+
+There is no dedicated `unlock` action — area / shop unlocks are expressed by
+`set_flag` plus `unlock_flag` consumers in shops, recipes, and NPC presence.
 
 - All actions are **optional**
 - Multiple actions allowed per entry — list them

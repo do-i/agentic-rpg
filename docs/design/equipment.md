@@ -24,7 +24,8 @@ General Store
 
 **Key Design Decisions**
 
-- Sell price = 0.5 buy — simple, consistent, no per-item override needed unless you want variance later
+- Sell price defaults to ~0.5 × buy as a guideline, but each item YAML sets
+  its own `sell_price` explicitly — there is no auto-derivation in code.
 - Party Repository as sell source — no per-character inventory to manage; clean
 - Gray-out for class restriction vs. net-negative — two distinct states worth distinguishing visually (locked vs. just bad)
 - Preview is per-character — shows real equipped-item diff, so the player always sees marginal gain, not absolute stats
@@ -32,12 +33,12 @@ General Store
 
 
 ```yaml
-# items/chainmail.yaml
+# items/body.yaml — chainmail entry
 id: chainmail
-type: armor
+type: body
 buy_price: 800
-sell_price: 400        # derived: buy * 0.5, or explicitly set
-class_restriction: [hero, warrior]  # omit = all classes
+sell_price: 400              # explicit, not auto-derived
+equippable: [hero, warrior]  # field name in YAML; omit = all classes
 stats:
   def: +15
   dex: -2

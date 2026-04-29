@@ -1,19 +1,22 @@
 # Save Game State
 
-Slot count: 100
+Slot count: 100 player slots + 1 autosave (slot 0)
 Autosave: before/after entering safe area
-save state: character status, party repo, location on map
-data schema: YAML. file name `YYYY-MM-DD-HH-MM-SS-[CRC32 Hash].yaml`.
+save state: character status, party repo, location on map, opened item boxes
+data schema: YAML. File names are slot-indexed: `{slot:03d}.yaml`
+(`000.yaml` = autosave, `001.yaml` … `100.yaml` = player slots).
+Integrity is protected by a CRC32 `checksum` field embedded inside the YAML
+(not in the filename).
 
 
 ## Schema
 
 ```yaml
-# 2024-03-15-14-22-10-A3F2C1B4.yaml
+# saves/008.yaml — slot 8
 
 meta:
-  timestamp: "2024-03-15-14-22-10"
-  playtime_seconds: 367200        # display as 04d 06h 00m
+  timestamp: "2024-03-15-14-22-10"  # %Y-%m-%d-%H-%M-%S
+  playtime_seconds: 367200          # display as 04d 06h 00m
   location_display: "Town of Ardel"
   is_autosave: false
 
@@ -24,6 +27,7 @@ party:
     class: hero
     level: 8
     exp: 6200
+    exp_next: 17321        # cached threshold for next level
     hp: 55
     hp_max: 68
     mp: 32
@@ -38,10 +42,6 @@ party:
       helmet: iron_helm
       body: chainmail
       accessory: stealth_cloak
-    abilities_unlocked: [power_strike, rally]
-    status_effects:
-      - effect: poison
-        duration_turns: 6000 # avoid null. Just put unrealistically long duration
 
 party_repository:
   gp: 3200
@@ -63,11 +63,24 @@ flags:
 map:
   current: town_01
   position: [12, 8]
-  # used for warp destination option
-  visited:
+  visited:                  # set of map ids ever entered (for future warp use)
     - town_01
     - zone_01_starting_forest
+
+opened_boxes:               # field item-box ids already looted
+  - town_01_chest_01
+
+checksum: "A3F2C1B4"        # CRC32 over the rest of the file
 ```
+
+### Fields not currently persisted
+
+These are intentionally omitted by `engine/io/save_manager.py::_serialize`:
+
+| Field | Reason |
+|---|---|
+| `abilities_unlocked` | Recomputed from `class` + `level` on load — no need to store |
+| `status_effects` | Cleared on save (party rests when saving in safe areas) |
 
 ## Playtime Tracking
 

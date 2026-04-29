@@ -37,26 +37,34 @@ Pytest is configured in `pyproject.toml` with `-v -x` (verbose, stop on first fa
 ## Architecture
 
 ### Engine (`engine/`)
+
+Code is organised by feature. Each subpackage owns its scene, renderer, state,
+and logic together (no global `dto/` / `service/` / `ui/` directories).
+
 - **`main.py`** — Entry point. Parses `--scenario` arg, creates `Injector` with `AppModule`, runs `Game`.
-- **`app_module.py`** — Central DI wiring. All singletons (scenes, state, loaders) are registered here via `injector` `@provider` methods. This is the first place to look when adding a new system or understanding how components connect.
+- **`app_module.py`** — Central DI wiring. All singletons are registered here via `injector` `@provider` methods. First place to look when adding a new system.
 - **`game.py`** — Main game loop (Display, FrameClock, SceneManager).
-- **`settings/`** — `Settings` (compile-time constants: screen size, FPS, tile size, layers) and `EngineSettings` (runtime config loaded from `settings/settings.yaml`).
-- **`scenes/`** — Scene base class, `SceneManager`, `SceneRegistry`, and all scene implementations (world map, battle, dialogue, shops, title, etc.). Each scene handles its own input, update, and draw.
-- **`battle/`** — Battle system (combatants, battle state, battle logic, reward calculation).
-- **`dialogue/`** — Dialogue engine, loads YAML dialogue trees.
-- **`encounter/`** — Random encounter system (encounter manager, encounter resolution).
-- **`item/`** — Item effect handling and item logic.
-- **`service/`** — Business logic services: `RepositoryState` (inventory management, GP caps, sell validation), stat calculation helpers (`calc_exp_next`, `stat_gain_at`, `recalc_exp_next`), `StatusLogic` (spell application).
-- **`dto/`** — Data containers: `Position`, `SaveSlot`, `Portal`, `EncounterZone`, `BattleRewards`, `FieldItemDef`, `UseResult`, `FlagState`, `MapState`, `GameState`, `GameStateHolder`, `PartyState`, `MemberState`, `ItemEntry`.
-- **`util/`** — Small utilities: `Clock` protocol + implementations, `FrameClock` (pygame timing), `Playtime` (session time accumulator).
-- **`io/`** — All file I/O: `ManifestLoader`, `SaveManager`, `EnemyLoader`, `ItemCatalog`, `NpcLoader`, `PortalLoader`, `EncounterZoneLoader`, `GameStateLoader` (new-game/save factories).
+- **`settings/`** — `Settings` (compile-time: screen size, FPS, tile size, layers), `EngineSettings` (runtime, from `settings/settings.yaml`), `BalanceData` (scenario balance YAML).
+- **`scenes/`** — `SceneRegistrar` + `SceneRegistry` (DI-time wiring of all scenes). The `Scene` base class lives in `engine/common/scene/`.
+- **`common/`** — Cross-cutting state and shared UI helpers: `GameState`, `GameStateHolder`, `MapState`, `FlagState`, `OpenedBoxesState`, `SaveSlot`, `Scene` base, `MenuPopup`, `MenuRowRenderer`, `ItemSelectionView`, `TargetSelectOverlayRenderer`, `MenuSfxMixin`.
+- **`battle/`** — `BattleScene`, `BattleState`, `Combatant`, `action_resolver`, `turn_advance`, reward calculation, post-battle / game-over scenes, enemy AI, renderers.
+- **`dialogue/`** — `DialogueEngine` (YAML dialogue tree resolver) + `DialogueScene`.
+- **`encounter/`** — Tile-spawner encounter system: `EncounterManager`, `EnemySpawner`, `EncounterZone`, `EncounterResolver`, enemy sprites.
+- **`item/`** — `ItemCatalog`, `ItemEntry`, `ItemEffectHandler`, `ItemLogic`, `ItemScene`, plus `MagicCoreCatalog`.
+- **`equipment/`** — `EquipScene` + `equipment_logic`.
+- **`field_menu/`** — Field/pause menu.
+- **`shop/`** — Item shop, magic-core shop, apothecary (crafting) scenes + renderers.
+- **`inn/`** — `InnScene` (rest / save).
+- **`spell/`** — `SpellScene` + `spell_logic`.
+- **`status/`** — Status screen + `StatusLogic` (spell/effect application).
+- **`party/`** — `PartyState`, `MemberState`, `RepositoryState` (shared item pool + GP caps).
+- **`title/`** — Boot, title, name-entry, load-game, save-modal scenes.
+- **`record/`** — Input recording / replay.
+- **`audio/`** — `BgmManager`, `SfxManager`.
+- **`util/`** — `Clock` protocol, `FrameClock`, `Playtime`, `PseudoRandom`, `WeightedPick`.
+- **`io/`** — `ManifestLoader`, `GameStateManager` (save/load), `GameStateLoader` (new-game / save factories), `yaml_loader`.
+- **`world/`** — Tile maps via `pytmx`, player movement, NPC, camera, collision, sprite sheets, world-map scene + logic, item-box scene, portals.
 - **`debug/`** — Debug bootstrapping.
-
-### UI (`engine/ui/`)
-- Display management, menu rendering, and all scene renderers (battle, item, status) and overlays (target select).
-
-### World (`engine/world/`)
-- Tile maps via `pytmx` (.tmx format from Tiled editor), player movement, NPC behavior, camera, collision detection, sprite sheets, world map logic.
 
 ### Scenario (`rusted_kingdoms/`)
 - `manifest.yaml` — Scenario entry point defining protagonist, start position, flags, and refs to all data directories.
@@ -72,7 +80,7 @@ Pytest is configured in `pyproject.toml` with `-v -x` (verbose, stop on first fa
 - **Dependency Injection**: All major components are wired through `AppModule`. To add a new system, add a `@provider` method there and inject it where needed.
 - **Scene-based architecture**: Game flow is controlled by switching scenes via `SceneManager`. Each scene is self-contained with input/update/draw methods.
 - **Engine/Scenario separation**: The engine never hardcodes scenario data. Everything is loaded from the scenario path via `ManifestLoader` and YAML files.
-- **State management**: Game state flows through `GameStateHolder` (dto, current runtime state) and `GameStateManager` (io, persistence to YAML save files). Data containers live in `dto/`, business logic in `service/`, and factory/persistence in `io/`.
+- **State management**: Game state flows through `GameStateHolder` (current runtime state, in `engine/common/`) and `GameStateManager` (in `engine/io/`, handles persistence to YAML save files). Per-feature state lives next to its scene (e.g. `engine/party/`, `engine/item/`).
 
 ## Design Documentation
 

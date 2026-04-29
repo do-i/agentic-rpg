@@ -46,7 +46,10 @@ Wait — actually inverted. The gate NPC should be:
 - present when flag is NOT set (blocking)
 - gone when flag IS set (passage open)
 
-See data/maps/world.yaml
+NPCs and their `present` block live inline in each map's YAML (see
+`data/maps/town_*.yaml`, `data/maps/zone_*.yaml`). There is no separate
+`world.yaml` overworld registry — the world map composes itself from the
+individual map files.
 
 ```yaml
 # NPC appears AFTER flag is set (reward giver, story character, etc.)

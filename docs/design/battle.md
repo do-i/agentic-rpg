@@ -99,98 +99,58 @@ Good addition. Cure sources — locked:
 
 **Note:** Bed/tent also implies full HP/MP restore — needs to be defined when we cover the **Map/Town rest system**. Flagging that as a design item.
 
-## Encounter Rate System
+## Encounter System
 
-### Base Formula
+Encounters are **tile-spawner driven**, not D100-per-step. Each dungeon zone
+has a population of enemy sprites placed on walkable tiles; collision triggers
+the battle. There is no global "encounter rate" probability per step.
 
-```
-final_encounter_rate = clamp(encounter_rate + encounter_modifier, 0.0, 1.0)
-```
-- `encounter_rate` — defined per map in scenario config
-- `encounter_modifier` — sum of all equipped accessory modifiers on Rogue only
-- Any party position works
-
-
-### Accessory Schema
+### Per-zone tuning (`encount/*.yaml`)
 
 ```yaml
-# items/stealth_cloak.yaml
-id: stealth_cloak
-type: accessory
-buy_price: 800
-sell_price: 400
-equippable: [rogue]
-stats:
-  encounter_modifier: -0.15    # reduce encounters
+id: zone_01_starting_forest
+name: Starting Forest
+density: 0.70             # share of walkable tiles eligible for spawns
+spawn_frequency: 25.0     # respawn cadence after a battle
+background: world1-bg-1280x468
 
-# items/lure_charm.yaml
-id: lure_charm
-type: accessory
-buy_price: 600
-sell_price: 300
-equippable: [rogue]
-stats:
-  encounter_modifier: +0.20    # increase encounters (grinding)
+entries:
+  - formation: [goblin]
+    weight: 25
+    chase_range: 8        # tiles — how far the sprite chases the player
+  - formation: [goblin, goblin, goblin]
+    weight: 25
+    chase_range: 6
+
+boss:
+  id: grik_the_grin_192
+  name: Grik the Grin
+  once: true
+  on_complete:
+    set_flag: boss_zone01_defeated
+
+barrier_enemies:          # optional — present-check items, not consumed
+  - id: ghost
+    requires_item: veil_breaker
+    blocked_message: "A mysterious force blocks your attack."
 ```
 
-### Why Both Directions
+### Stealth-Cloak Effect
 
-| Direction | Use Case |
-|---|---|
-| `-` reduce | Stealth run, low-resource, story focus |
-| `+` increase | Grinding EXP/GP, farming loot |
+The `stealth_cloak` accessory **reduces enemy chase range** rather than
+modifying a global encounter probability. Tunable via `balance.yaml`
+(`spawner.stealth_cloak_reduction`).
 
-### Map Config
+### Formation Roll
 
-```yaml
-# maps/forest.yaml
-encounter_rate: 0.15    # base — before modifier
-```
-
-### Resolution
+When the player collides with a spawn:
 
 ```
-# Roll 1 — does encounter happen?
-Roll D100
-If roll <= (final_encounter_rate * 100) → encounter triggered
-Otherwise → no encounter, keep walking
-
-# Roll 2 — which formation? (only if Roll 1 triggered)
-Roll D100
-Walk encounter_group entries by cumulative weight
+Roll D100 against entries[].weight (walked cumulatively)
 → formation selected
 ```
 
-| Scenario | Base | Modifier | Final |
-|---|---|---|---|
-| No Rogue | 0.15 | 0 | 0.15 |
-| Rogue + stealth cloak | 0.15 | -0.15 | 0.00 |
-| Rogue + lure charm | 0.15 | +0.20 | 0.35 |
-| Rogue + both | 0.15 | +0.05 | 0.20 |
-
-> **Design note:** Stacking multiple accessories is naturally limited by the accessory slot count per character — no additional cap needed.
-
-> Boss battles use `encounter_rate: 1.0` + `once: true` — they are **scripted events, not random rolls**. Encounter modifier should be **ignored entirely** for boss encounters.
-
-
-**Typical encounter**
-
-```yaml
-encounter_rate: 0.15             # required — drives the roll
-encounter_group: forest_enemies  # required — enemy pool or specific boss
-once: false                      # optional, default false
-```
-
-**Boss Event Encount**
-
-```yaml
-encounter_rate: 1.0             # required — always 100%
-encounter_group: boss_001       # required — enemy pool or specific boss
-once: true                      # optional, default false
-on_complete:                    # optional, omit if no hooks
-  set_flag: boss_dragon_defeated
-  start_dialogue: elder_aftermath
-```
+Boss encounters are scripted (`once: true`) and bypass the spawner population.
 
 ## Encounter Group
 

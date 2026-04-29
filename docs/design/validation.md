@@ -26,6 +26,12 @@ Compare all files on disk against everything visited in Pass 1. Anything not vis
 | `recipe/*.yaml` | `inputs.items[].id` | `data/items/*.yaml` |
 | `recipe/*.yaml` | `output.item` | `data/items/*.yaml` |
 | `map/*.yaml` | `shop.items[].id` | `data/items/*.yaml` |
+| `encount/*.yaml` | `entries[].formation[]` | `data/enemies/*.yaml` (enemy id) |
+| `encount/*.yaml` | `boss.id` | `data/enemies/*.yaml` (boss enemy id) |
+| `encount/*.yaml` | `barrier_enemies[].id` / `requires_item` | `data/enemies/`, `data/items/` |
+| `enemies/*.yaml` | `drops.loot[].pool[].item` | `data/items/*.yaml` |
+| `enemies/*.yaml` | `ai_ref` | `data/enemies/boss_move_sets/*.yaml` |
+| `manifest.yaml` | `engine_managed_flags` | flag registry (collect only) |
 
 ## Output Format
 

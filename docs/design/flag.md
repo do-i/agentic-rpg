@@ -43,13 +43,29 @@ flags:
 
 ## Bootstrap (New Game)
 
+The manifest declares two flag lists:
+
 ```yaml
-# game bootstrap — injected once at new game start
-flags:
+# manifest.yaml
+bootstrap_flags:           # injected once at New Game
   - story_quest_started
+
+engine_managed_flags:      # the engine itself fires these at story milestones
+  - story_act2_started
+  - story_act3_started
+  - story_act4_started
+  - boss_zone10_defeated
 ```
 
-Single source of truth — all other systems use this as the default fallback condition.
+`bootstrap_flags` are written into save state at New Game and act as the
+default condition for any system that wants to gate by "the player has
+started the game."
+
+`engine_managed_flags` are flags whose lifecycle is the engine's
+responsibility — they are not set from dialogue or encounter `on_complete`.
+Listing them in the manifest documents the contract and lets the validator
+treat them as "defined" without requiring a `set_flag` source in scenario
+YAML.
 
 
 ## Naming Convention

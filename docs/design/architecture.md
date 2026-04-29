@@ -5,7 +5,7 @@
 A modular, classic JRPG engine inspired by Dragon Quest (NES/SNES era), designed with a clean separation between **engine core** and **story content**. Stories, worlds, and characters are delivered as self-contained Scenarios, letting developers (or solo creators) swap narratives without touching engine internals.
 
 **License:** MIT
-**Language:** Python 3.11+
+**Language:** Python 3.14+
 **Map Format:** Tiled (.tmx / .tsx)
 **Save Format:** YAML
 
@@ -15,25 +15,30 @@ A modular, classic JRPG engine inspired by Dragon Quest (NES/SNES era), designed
 ┌─────────────────────────────────────────┐
 │              Story Scenario             │
 │  (maps, dialogue, quests, items, lore)  │
+│        — pure YAML / TMX data —         │
 └────────────────┬────────────────────────┘
-                 │ Scenario API
+                 │ Manifest + data refs
 ┌────────────────▼────────────────────────┐
 │              Engine Core                │
 │  battle · movement · UI · save · audio  │
 └─────────────────────────────────────────┘
 
+Scenarios are pure data. There is no scripting sandbox; behavior is wired via
+flag-driven YAML (dialogue, encounters, shops, recipes).
+
 ## Tech Stack
 
 | Layer | Choice | Notes |
 |-------|--------|-------|
-| Language | Python 3.11+ | Dataclasses + type hints throughout |
-| Renderer | Pygame-CE | Faster, maintained fork of Pygame |
+| Language | Python 3.14+ | Dataclasses + type hints throughout |
+| Renderer | Pygame 2.6.x (vanilla) | `pygame==2.6.1` pinned in `pyproject.toml` |
+| DI | `injector` | All wiring via `engine/app_module.py` |
 | Map format | Tiled (.tmx / .tsx) via `pytmx` | Full layer + object support |
-| Scenario scripting | Python (`RestrictedPython` sandbox) | Native, no FFI needed |
-| Config format | YAML (`ruamel.yaml`) | Human-editable, comment-preserving |
-| Save format | YAML | Single file per slot, hand-editable |
+| Scenario format | YAML (`PyYAML`) | Pure data; no scripting sandbox |
+| Save format | YAML | One file per slot (`{slot:03d}.yaml`), hand-editable |
 | Audio | `pygame.mixer` | BGM + SFX, looping support |
-| Build / packaging | `pyproject.toml` + `hatch` | PEP 621 compliant |
+| Build / packaging | `pyproject.toml` + `setuptools` | PEP 621 compliant |
+| Test runner | `pytest` | `addopts = -v -x` |
 
 ## Sprite Generation
 
