@@ -318,6 +318,16 @@ class WorldMapScene(Scene):
         if transition:
             self._fade.start_fade_out(transition)
 
+    def _manifest_sprite(self, section: str) -> str:
+        manifest = self._loader.load()
+        node = manifest.get(section)
+        if not isinstance(node, dict) or "sprite" not in node:
+            raise ValueError(
+                f"manifest.yaml: missing '{section}.sprite'. "
+                f"Example:\n{section}:\n  sprite: assets/sprites/npc/example.tsx"
+            )
+        return node["sprite"]
+
     # ── Magic Core Shop ───────────────────────────────────────
 
     def _open_mc_shop(self) -> None:
@@ -341,7 +351,7 @@ class WorldMapScene(Scene):
         state.map.set_position(self._player.tile_position)
         map_id = state.map.current
         cost = load_inn_cost(self._loader.scenario_path, map_id)
-        sprite_path = self._loader.scenario_path / "assets" / "sprites" / "npc" / "female_blue_01.tsx"
+        sprite_path = self._loader.scenario_path / self._manifest_sprite("inn")
         self._overlays.inn = InnScene(
             holder=self._holder,
             scene_manager=self._scene_manager,
@@ -361,7 +371,7 @@ class WorldMapScene(Scene):
         state = self._holder.get()
         map_id = state.map.current
         shop_items = load_shop_items(self._loader.scenario_path, map_id)
-        sprite_path = self._loader.scenario_path / "assets" / "sprites" / "npc" / "teen_halfmessy_01.tsx"
+        sprite_path = self._loader.scenario_path / self._manifest_sprite("item_shop")
         self._overlays.item_shop = ItemShopScene(
             holder=self._holder,
             scene_manager=self._scene_manager,
@@ -379,7 +389,7 @@ class WorldMapScene(Scene):
 
     def _open_apothecary(self) -> None:
         recipes = load_recipes(self._loader.scenario_path)
-        sprite_path = self._loader.scenario_path / "assets" / "sprites" / "npc" / "female_wiz_01.tsx"
+        sprite_path = self._loader.scenario_path / self._manifest_sprite("apothecary")
         manifest = self._loader.load()
         icon_cfg = manifest.get("apothecary", {}).get("icons", {})
         icon_paths = {

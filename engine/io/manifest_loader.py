@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from engine.io.yaml_loader import load_yaml_required
+from engine.io.yaml_loader import load_yaml_required_cached
 
 
 class ManifestLoader:
@@ -10,7 +10,7 @@ class ManifestLoader:
         self._scenario_path = Path(scenario_path)
 
     def load(self) -> dict:
-        return load_yaml_required(self._scenario_path / "manifest.yaml")
+        return load_yaml_required_cached(self._scenario_path / "manifest.yaml")
 
     @property
     def scenario_path(self) -> Path:
