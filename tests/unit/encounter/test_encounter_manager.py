@@ -35,8 +35,10 @@ stat_growth:
 abilities:
   - id: slash
     unlock_level: 1
+    mp_cost: 0
   - id: power_strike
     unlock_level: 3
+    mp_cost: 0
 """
 
 
@@ -234,10 +236,13 @@ stat_growth:
 abilities:
   - id: fire_bolt
     unlock_level: 1
+    mp_cost: 0
   - id: fireball
     unlock_level: 10
+    mp_cost: 6
   - id: meteor
     unlock_level: 46
+    mp_cost: 24
     unlock_flag: story_ultimate_fire
 """
 

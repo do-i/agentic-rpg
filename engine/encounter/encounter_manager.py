@@ -124,6 +124,13 @@ class EncounterManager:
                 return []
             data = load_yaml_required_cached(path)
             all_abs = data.get("abilities", [])
+            for ab in all_abs:
+                if "id" not in ab or "unlock_level" not in ab or "mp_cost" not in ab:
+                    raise ValueError(
+                        f"{path}: ability {ab.get('id', '?')!r} is missing one of "
+                        f"required fields (id, unlock_level, mp_cost). "
+                        f"Example: '- id: spell_id\\n  unlock_level: 1\\n  mp_cost: 0'"
+                    )
             self._class_cache[class_name] = all_abs
         result = []
         for ab in all_abs:
