@@ -50,10 +50,32 @@ class ItemEffectHandler:
                     f"Valid: restore_hp | restore_mp | restore_full | cure | revive. "
                     f"Example:\n  effect: restore_hp"
                 )
+            if "target" not in entry:
+                raise ValueError(
+                    f"item {item_id!r} ({path.name}): missing required field 'target'. "
+                    f"Valid: single_alive | single_ko | all_alive. "
+                    f"Example:\n  target: single_alive"
+                )
+            effect = entry["effect"]
+            if effect in ("restore_hp", "restore_mp") and "amount" not in entry:
+                raise ValueError(
+                    f"item {item_id!r} ({path.name}): effect {effect!r} requires "
+                    f"'amount'. Example:\n  amount: 30"
+                )
+            if effect == "cure" and "cures" not in entry:
+                raise ValueError(
+                    f"item {item_id!r} ({path.name}): effect 'cure' requires "
+                    f"'cures' list. Example:\n  cures: [poison]"
+                )
+            if effect == "revive" and "revive_hp_pct" not in entry:
+                raise ValueError(
+                    f"item {item_id!r} ({path.name}): effect 'revive' requires "
+                    f"'revive_hp_pct'. Example:\n  revive_hp_pct: 0.5"
+                )
             self._defs[item_id] = FieldItemDef(
                 id=item_id,
-                effect=entry["effect"],
-                target=entry.get("target", "single_alive"),
+                effect=effect,
+                target=entry["target"],
                 amount=entry.get("amount", 0),
                 cures=entry.get("cures", []),
                 revive_hp_pct=float(entry.get("revive_hp_pct", 0.0)),
