@@ -38,13 +38,13 @@ pip install -e ".[dev]"
 python -m pytest
 
 # Run a specific file
-python -m pytest tests/unit/core/state/test_map_state.py
+python -m pytest tests/unit/state/test_map_state.py
 
 # Run a specific class
-python -m pytest tests/unit/core/state/test_map_state.py::TestMoveTo
+python -m pytest tests/unit/state/test_map_state.py::TestMoveTo
 
 # Run a specific test
-python -m pytest tests/unit/core/state/test_map_state.py::TestMoveTo::test_updates_current_and_position
+python -m pytest tests/unit/state/test_map_state.py::TestMoveTo::test_updates_current_and_position
 
 # Suppress warning
 PYTHONWARNINGS="ignore::RuntimeWarning" python -m pytest

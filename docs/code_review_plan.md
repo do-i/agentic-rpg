@@ -16,4 +16,3 @@ All P1/P2 items called out in the original review have landed. The notes below t
 ## Out of scope (noted, not pursued)
 
 - **§3.7 [P3] `.get(k, default)` audit** — touches dozens of files (`map_state.py`, `dialogue_engine.py`, `item_catalog.py`, `item_effect_handler.py`, …) and is a project-wide policy enforcement task; recommend a separate ticket.
-- **§5.7 [P3] Test directory consolidation** — `tests/unit/core/` and `tests/unit/world/` split is already noted in CLAUDE.md ("legacy path"); plan a rename pass once unrelated work settles.

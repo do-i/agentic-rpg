@@ -21,9 +21,9 @@ python -m engine.main --scenario ./rusted_kingdoms
 python -m pytest
 
 # Run a specific test file / class / test
-python -m pytest tests/unit/core/state/test_map_state.py
-python -m pytest tests/unit/core/state/test_map_state.py::TestMoveTo
-python -m pytest tests/unit/core/state/test_map_state.py::TestMoveTo::test_updates_current_and_position
+python -m pytest tests/unit/state/test_map_state.py
+python -m pytest tests/unit/state/test_map_state.py::TestMoveTo
+python -m pytest tests/unit/state/test_map_state.py::TestMoveTo::test_updates_current_and_position
 
 # Suppress RuntimeWarnings
 PYTHONWARNINGS="ignore::RuntimeWarning" python -m pytest
@@ -64,7 +64,7 @@ Pytest is configured in `pyproject.toml` with `-v -x` (verbose, stop on first fa
 - `assets/` — Sprites, map tilesets (.tmx/.tsx), audio.
 
 ### Tests (`tests/`)
-- Unit tests under `tests/unit/`. Legacy path `tests/unit/core/` still exists pending test directory reorganization.
+- Unit tests under `tests/unit/`, organized by subsystem (`battle/`, `dialogue/`, `world/`, `state/`, …).
 - Shared fixtures in `tests/conftest.py`.
 
 ## Key Patterns
