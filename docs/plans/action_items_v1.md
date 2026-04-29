@@ -9,16 +9,6 @@ Status legend: 🟥 not started · 🟨 in progress · ❓ decision needed
 
 ## Code decisions (need user input)
 
-### 5. ❓ Sell price = 0.5 × buy default rule
-`equipment.md` claims `sell_price` is auto-derived as half of `buy_price`;
-code stores `sell_price` explicitly per item.
-
-- A. Add the auto-derive default; allow per-item override.
-- B. Drop the claim from `equipment.md`; require explicit `sell_price`.
-- C. Other.
-
-**Answer:** B
-
 ### 6. ❓ Party stats not yet implemented
 `party.md` lists `encounter_modifier` and `trap_detect` (only `flee_rate`
 ships). It also lists `taunt` / `def_up` statuses, which are not in the
