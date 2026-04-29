@@ -113,6 +113,10 @@ class Player:
         return Position(int(self._x), int(self._y))
 
     @property
+    def sort_y(self) -> int:
+        return int(self._y) + self._tile_size * 2
+
+    @property
     def collision_rect_position(self) -> Position:
         return Position(int(self._x) + COLLISION_OFFSET_X,
                         int(self._y) + COLLISION_OFFSET_Y)

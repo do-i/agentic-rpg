@@ -116,6 +116,10 @@ class Npc:
         return Position(self._px, self._py)
 
     @property
+    def sort_y(self) -> int:
+        return self._py + self._tile_size * 2
+
+    @property
     def collision_rect(self) -> tuple[int, int, int, int]:
         """Returns (x, y, w, h) of NPC collision box in world pixels."""
         return (

@@ -114,6 +114,10 @@ class EnemySprite:
     def pixel_y(self) -> float:
         return self._py
 
+    @property
+    def sort_y(self) -> float:
+        return self._py + self._tile_size * 2
+
     def deactivate(self) -> None:
         """Mark inactive and reset to spawn origin. Called when player engages in battle."""
         self.active = False

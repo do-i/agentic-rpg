@@ -78,9 +78,9 @@ class WorldMapRenderer:
 
         # Sort by bottom-of-sprite so tall (64px) entities and short (32px)
         # chests interleave correctly.
-        drawables = [(player_pos.y + 64, render_player)]
-        drawables += [(npc._py + 64, lambda n=npc: render_npc(n)) for npc in npcs]
-        drawables += [(e.pixel_y + 64, lambda s=e: render_enemy(s)) for e in enemy_sprites]
+        drawables = [(player.sort_y, render_player)]
+        drawables += [(npc.sort_y, lambda n=npc: render_npc(n)) for npc in npcs]
+        drawables += [(e.sort_y, lambda s=e: render_enemy(s)) for e in enemy_sprites]
         drawables += [(b.sort_y, lambda bx=b: render_box(bx)) for b in item_boxes]
 
         for _, draw in sorted(drawables, key=lambda d: d[0]):
