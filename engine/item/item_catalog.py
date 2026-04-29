@@ -66,16 +66,29 @@ class ItemCatalog:
                 continue
             entries = load_yaml_required(path) or []
             for entry in entries:
-                item_id = entry.get("id")
-                if not item_id:
-                    continue
+                if "id" not in entry:
+                    raise ValueError(
+                        f"{path.name}: item entry missing required field 'id'. "
+                        f"Example:\n  - id: potion\n    name: Potion\n    type: consumable"
+                    )
+                item_id = entry["id"]
                 if "name" not in entry:
                     raise KeyError(
                         f"item {item_id!r} ({path.name}): missing required field 'name'"
                     )
-                item_type = entry.get("type", "")
+                if "type" not in entry:
+                    raise ValueError(
+                        f"item {item_id!r} ({path.name}): missing required field 'type'. "
+                        f"Example:\n  type: consumable   # or material | key | weapon | shield | helmet | body | accessory | magic_core"
+                    )
+                item_type = entry["type"]
+                if item_type not in _TYPE_TAGS:
+                    raise ValueError(
+                        f"item {item_id!r} ({path.name}): unknown type {item_type!r}. "
+                        f"Valid types: {sorted(_TYPE_TAGS)}"
+                    )
                 explicit_tags = set(entry.get("tags", []))
-                default_tags = _TYPE_TAGS.get(item_type, set())
+                default_tags = _TYPE_TAGS[item_type]
                 all_tags = frozenset(explicit_tags | default_tags)
 
                 if item_type in EQUIPMENT_TYPES:
