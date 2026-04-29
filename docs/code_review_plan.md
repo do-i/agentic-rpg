@@ -15,7 +15,5 @@ All P1/P2 items called out in the original review have landed. The notes below t
 
 ## Out of scope (noted, not pursued)
 
-- **§3.6 [P3] `_clamp_scroll` per shop scene** (`item_shop_scene.py:156-159`, `apothecary_scene.py:198-201`). Both bodies are a 1-line wrapper around `ItemSelectionView.clamp_scroll` that differ only in the source list (`_available()` vs `_visible_recipes()`). Extracting would not shorten either site; left inlined.
 - **§3.7 [P3] `.get(k, default)` audit** — touches dozens of files (`map_state.py`, `dialogue_engine.py`, `item_catalog.py`, `item_effect_handler.py`, …) and is a project-wide policy enforcement task; recommend a separate ticket.
-- **§4.7 [P3] ~300-line modules** — `engine/status/status_renderer.py` (329), `engine/item/item_renderer.py` (318), `engine/encounter/enemy_sprite.py` (307), `engine/shop/apothecary_renderer.py` (305), `engine/world/npc.py` (303). All under threshold and reasonably cohesive; revisit if any cross 400.
 - **§5.7 [P3] Test directory consolidation** — `tests/unit/core/` and `tests/unit/world/` split is already noted in CLAUDE.md ("legacy path"); plan a rename pass once unrelated work settles.
