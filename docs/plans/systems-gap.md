@@ -29,7 +29,7 @@ Open items:
 
 ### Current state
 
-- `docs/15-Transportation.md` defines three unlock flags (`transport_sail_unlocked`, `transport_fly_unlocked`, `transport_warp_unlocked`) and rules (land/water tile, visited-only warp, no dungeon warp).
+- `docs/design/transportation.md` defines three unlock flags (`transport_sail_unlocked`, `transport_fly_unlocked`, `transport_warp_unlocked`) and rules (land/water tile, visited-only warp, no dungeon warp).
 - No transport scene, no flag wiring, no port tile config, no visited-location registry.
 
 ### Gap

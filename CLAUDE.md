@@ -76,4 +76,6 @@ Pytest is configured in `pyproject.toml` with `-v -x` (verbose, stop on first fa
 
 ## Design Documentation
 
-Detailed design docs live in `docs/` covering battle, party, characters, equipment, maps, dialogue, shops, spells, NPCs, save system, and more.
+- `docs/design/` — long-lived subsystem references (battle, party, characters, equipment, maps, dialogue, shops, spells, NPCs, save, etc.). See `docs/design/INDEX.md` for the grouped reading order.
+- `docs/plans/` — active work-in-progress plans (deleted/archived once done).
+- `docs/scenario/` — scenario-specific narrative/design notes (e.g. `rusted_kingdoms` high-level outline).

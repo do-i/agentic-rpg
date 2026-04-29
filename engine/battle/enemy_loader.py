@@ -15,13 +15,13 @@ from engine.battle.combatant import Combatant
 _log = logging.getLogger(__name__)
 
 
-# Filename convention from docs/03-Battle.md:
+# Filename convention from docs/design/battle.md:
 #   enemies_rank_1_SS.yaml, enemies_rank_2_S.yaml, ..., enemies_rank_8_F.yaml
 # Build an index at startup: {enemy_id: Path}
 
 class EnemyLoader:
     """
-    Two-phase loader (matches docs/03-Battle.md):
+    Two-phase loader (matches docs/design/battle.md):
       Phase 1 (startup) — scan all rank files, build id → file index.
       Phase 2 (battle)  — load only the specific enemy docs needed.
 
@@ -73,7 +73,7 @@ class EnemyLoader:
             name=data["name"],
             hp=data["hp"],
             hp_max=data["hp"],
-            mp=0,       # enemies don't manage MP — docs/10-Enemy.md
+            mp=0,       # enemies don't manage MP — docs/design/enemy.md
             mp_max=0,
             atk=data["atk"],
             def_=data["def"],
