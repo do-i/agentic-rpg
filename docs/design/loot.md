@@ -23,13 +23,22 @@ Simple weighted random pick — one roll, one outcome.
 → **Wolf Pelt drops**
 
 
-### No-drop Example — weights sum to 80
+### No-drop Example — explicit empty-item entry
 
-```
-Roll random(1, 100)
-If roll > 80 → nothing drops
-Otherwise → walk table as normal
-```
+The runtime (`weighted_pick` → `rng.choices`) normalizes weights, so a
+short-sum table does **not** produce a no-drop chance — it just rebases
+the existing entries. To express "no drop" use an explicit entry with an
+empty `item:`. The drop resolver in `engine/battle/battle_rewards.py`
+skips empty-item picks.
+
+| Item | Weight | Cumulative | Result |
+|---|---|---|---|
+| Wolf Fang | 60 | 60 | drops on roll ≤ 60 |
+| Wolf Pelt | 20 | 80 | drops on 60 < roll ≤ 80 |
+| _(no drop)_ — `item: ""` | 20 | 100 | nothing drops on roll > 80 |
+
+Convention: keep the weight total = 100 so percentages read cleanly in
+the YAML.
 
 ## Updated MC Drop by Zone:
 

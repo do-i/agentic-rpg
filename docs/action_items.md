@@ -142,27 +142,25 @@ update doc or implement.
 
 ---
 
-## 5. 🟥 Spot-check pass: verify "verify in code" claims
+## 5. 🟩 Spot-check pass: verify "verify in code" claims
 
-The gap analysis listed several "→ spot check" items that I did not
-fully resolve. Each is a 1–2 minute read; if anything is broken it
-becomes its own task.
+| # | Claim | Result |
+|---|---|---|
+| 1 | `InnScene` clears status effects on rest (`battle.md` cure matrix) | ✅ vacuous — `MemberState` has no `status_effects`; status lives only on `Combatant` during battle and never persists. Nothing to clear at rest. (Doc claim is moot under current architecture.) |
+| 2 | `NpcLoader` honors `present.requires` / `excludes` | ✅ `npc_loader.py:51,68-69` reads them; `Npc.is_present(flags)` checks via `FlagState.has_all`/`has_none`; consumed in `world_map_scene.py:155` and `world_map_logic.py:48`. |
+| 3 | `BarrierEnemy.requires_item` is a presence-check, not consumed | ✅ `encounter_resolver.py:89` uses `not in inventory_item_ids`. |
+| 4 | `heal_pct` ability field is honored (Hero `second_wind`) | 🟩 fixed in this pass — `action_resolver.py` heal branch was ignoring `heal_pct`; now `heal_pct` (target.hp_max%) takes precedence over `heal_coeff` (mres-scaled). Test added: `test_battle_logic.py::test_heal_spell_with_heal_pct_uses_target_hp_max`. |
+| 5 | `Phoenix Down` (revive item) exists | ✅ no literal "Phoenix Down", but `Life Crystal` (revive 1.0) and `Phoenix Wing` (revive 0.30) cover the slot. |
+| 6 | No-drop loot semantics | ⚠ doc-imprecise. `weighted_pick` uses `rng.choices` (normalized weights) — short-sum does NOT give a no-drop chance. No-drop is reachable via an explicit `item: ""` row (skipped at `battle_rewards.py:187`). All 76 current loot pools sum ≥100 with no empty-item rows, so the question is academic for V1. **Doc fix: drop the "weights summing < 100" line wherever it appears; the actual mechanism is empty-item entries.** |
+| 7 | `tools/validate.py` traverses recipe inputs/outputs | ✅ `validate.py:358-376`. |
+| 8 | Boss `ai_ref: boss_move_sets/<id>.yaml` is loaded | ✅ `enemy_loader.py:93-111`; 10 boss AI files exist under `data/enemies/boss_move_sets/`. |
+| 9 | Enemy targeting overrides (`lowest_hp`, `all_party`) | ✅ `battle_enemy_logic.py:152-161` implements `all_party`, `self`, `lowest_hp`, `highest_hp`, `random_alive`, with per-ability override at `:143-146`. |
+| 10 | Item filter tabs (All/Recovery/Status/Battle/Key) | ✅ `item_logic.py:14`: `TABS = ["New", "All", "Recovery", "Status", "Battle", "Material", "Magic Core", "Key"]` — exceeds doc spec. |
 
-| Claim | File(s) to check |
-|---|---|
-| `InnScene` clears status effects on rest (`battle.md` cure matrix) | `engine/inn/inn_scene.py`, `engine/party/member_state.py` |
-| `NpcLoader` honors `present.requires` / `excludes` (`map.md`) | `engine/world/npc_loader.py`, `engine/world/npc.py` |
-| `BarrierEnemy.requires_item` is a presence-check, not consumed (`enemy.md`) | `engine/encounter/encounter_resolver.py`, search `requires_item` |
-| `heal_pct` ability field is honored (`characters.md` — Hero `second_wind`) | `engine/battle/action_resolver.py` heal branch |
-| `Phoenix Down` (revive item) exists | `rusted_kingdoms/data/items/consumables_recovery.yaml` |
-| No-drop loot semantics (weights summing < 100) | `engine/util/weighted_pick.py`, drop resolver |
-| `tools/validate.py` traverses recipe inputs/outputs | `tools/validate.py` |
-| Boss `ai_ref: boss_move_sets/<id>.yaml` is loaded | `engine/encounter/enemy_loader.py` (or wherever AI is built) |
-| Enemy targeting overrides (`lowest_hp`, `all_party`) are implemented | `engine/battle/battle_enemy_logic.py` |
-| Item filter tabs (All/Recovery/Status/Battle/Key) (`screen.md`) | `engine/item/item_renderer.py`, `item_scene.py` |
-
-Each row that turns out broken should be split into its own task with the
-same shape as #1.
+All ten checks resolved in this pass. Doc fix for row 6 applied to
+`docs/design/loot.md` (no-drop = explicit `item: ""` row, not weight
+shortfall). Code fix for row 4 (`heal_pct`) committed with this
+update.
 
 ---
 

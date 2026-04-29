@@ -86,6 +86,22 @@ class TestResolveAction:
         assert hero.mp == 20  # 30 - 10
         assert "healed" in msg
 
+    def test_heal_spell_with_heal_pct_uses_target_hp_max(self):
+        # Hero's `second_wind` heals 25% of target.hp_max; heal_pct should
+        # take precedence over heal_coeff when both are present.
+        hero = make_combatant("Hero", hp=30, hp_max=100, mp=20, mres=99)
+        state = make_battle_state([hero], [make_combatant("Goblin", is_enemy=True)])
+        spell = {"name": "Second Wind", "type": "heal",
+                 "heal_coeff": 1.0, "heal_pct": 0.25, "mp_cost": 6,
+                 "target": "self"}
+        state.pending_action = {
+            "type": "spell", "data": spell, "source": hero, "targets": [hero],
+        }
+
+        resolve_action(state, SCREEN_W)
+
+        assert hero.hp == 55  # 30 + int(100 * 0.25), not 30 + int(99 * 1.0)
+
     def test_revive_spell(self):
         hero = make_combatant("Hero", mp=30, mres=10)
         dead = make_combatant("Dead", hp=0, hp_max=100)

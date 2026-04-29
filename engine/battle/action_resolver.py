@@ -168,7 +168,13 @@ def _resolve_spell(
             state.add_float("Revive", *float_pos(state, target, screen_width), C_HEAL)
             msgs.append(f"{source.name} casts {spell_name}! {target.name} revived!")
     elif spell_type == "heal":
-        amount = int(source.mres * coeff) if source else 10
+        # heal_pct (% of target's hp_max) takes precedence over heal_coeff (mres-scaled).
+        # See docs/design/characters.md heal-formula table.
+        heal_pct = ab.get("heal_pct")
+        if heal_pct is not None:
+            amount = int(target.hp_max * heal_pct)
+        else:
+            amount = int(source.mres * coeff) if source else 10
         actual = target.apply_heal(amount)
         state.add_float(str(actual), *float_pos(state, target, screen_width), C_HEAL)
         msgs.append(f"{source.name} casts {spell_name}! {target.name} healed {actual} HP!")
