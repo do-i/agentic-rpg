@@ -8,6 +8,7 @@ from engine.party.repository_state import RepositoryState
 from engine.item.item_logic import (
     TABS, item_tab, filtered_items, is_usable,
     actions_for, display_name, discard_item, clamp_scroll,
+    EDITABLE_SYSTEM_TAGS, custom_tags, is_system_tag, normalize_custom_tag,
 )
 from engine.item.magic_core_catalog_state import MagicCoreCatalogState, build_mc_catalog
 
@@ -241,6 +242,59 @@ class TestClampScroll:
     def test_boundary_exact(self):
         assert clamp_scroll(13, 0, 14) == 0  # still visible at index 13
         assert clamp_scroll(14, 0, 14) == 1  # needs scroll
+
+
+# ── Tag editor helpers ───────────────────────────────────────
+
+class TestIsSystemTag:
+    def test_editable_system_tags_recognized(self):
+        for t in EDITABLE_SYSTEM_TAGS:
+            assert is_system_tag(t)
+
+    def test_type_driven_tags_recognized(self):
+        for t in ("consumable", "material", "key", "magic_core",
+                  "equipment", "weapon", "battle", "status", "recovery"):
+            assert is_system_tag(t)
+
+    def test_unknown_tag_is_custom(self):
+        assert not is_system_tag("my_custom_tag")
+        assert not is_system_tag("sell_now")
+
+
+class TestCustomTags:
+    def test_returns_only_non_system(self):
+        entry = make_entry(tags={"consumable", "rare", "my_tag", "favorite"})
+        # rare and favorite are editable system tags; consumable is type-driven.
+        assert custom_tags(entry) == ["my_tag"]
+
+    def test_sorted(self):
+        entry = make_entry(tags={"zeta", "alpha", "mu"})
+        assert custom_tags(entry) == ["alpha", "mu", "zeta"]
+
+
+class TestNormalizeCustomTag:
+    def test_lowercases(self):
+        assert normalize_custom_tag("MyTag") == "mytag"
+
+    def test_strips_whitespace(self):
+        assert normalize_custom_tag("  hello  ") == "hello"
+
+    def test_replaces_inner_space_with_underscore(self):
+        assert normalize_custom_tag("sell soon") == "sell_soon"
+
+    def test_rejects_empty(self):
+        assert normalize_custom_tag("") == ""
+        assert normalize_custom_tag("   ") == ""
+
+    def test_rejects_too_long(self):
+        assert normalize_custom_tag("x" * 17) == ""
+
+    def test_rejects_disallowed_chars(self):
+        assert normalize_custom_tag("hi!") == ""
+        assert normalize_custom_tag("foo-bar") == ""
+
+    def test_accepts_alnum_and_underscore(self):
+        assert normalize_custom_tag("tag_42") == "tag_42"
 
 
 # ── build_mc_catalog ─────────────────────────────────────────

@@ -17,6 +17,8 @@ from engine.common.target_select_overlay_renderer import TargetSelectOverlay
 from engine.item.item_logic import (
     TABS, filtered_items, actions_for, is_usable, discard_item,
     clamp_scroll, display_name,
+    EDITABLE_SYSTEM_TAGS, custom_tags, normalize_custom_tag,
+    CUSTOM_TAG_MAX_LEN,
 )
 from engine.item.magic_core_catalog_state import MagicCoreCatalogState
 from engine.item.item_renderer import ItemRenderer, VISIBLE_ROWS
@@ -61,6 +63,14 @@ class ItemScene(Scene):
         self._target_overlay: TargetSelectOverlay | None = None
         self._aoe_confirm:    bool = False
 
+        # Edit Tags overlay
+        self._in_edit_tags:    bool = False
+        self._tag_editor_sel:  int  = 0
+        self._in_new_tag:      bool = False
+        self._tag_input:       str  = ""
+        self._tag_warning:     str  = ""
+        self._tag_warning_t:   int  = 0   # frames remaining
+
         self._renderer = ItemRenderer(effect_handler, mc_catalog)
 
     # ── Data helpers ──────────────────────────────────────────
@@ -90,6 +100,12 @@ class ItemScene(Scene):
             self._target_overlay.handle_events(events)
             return
 
+        # Custom-tag text entry intercepts both TEXTINPUT and KEYDOWN.
+        if self._in_new_tag:
+            for event in events:
+                self._handle_new_tag_event(event)
+            return
+
         for event in events:
             if event.type != pygame.KEYDOWN:
                 continue
@@ -99,6 +115,9 @@ class ItemScene(Scene):
                 return
             if self._aoe_confirm:
                 self._handle_aoe_confirm(event.key)
+                return
+            if self._in_edit_tags:
+                self._handle_edit_tags_key(event.key)
                 return
 
             if event.key == pygame.K_i:
@@ -165,6 +184,10 @@ class ItemScene(Scene):
                 self._sfx_manager.play("confirm")
             self._in_action = True
             self._action_sel = 0
+        elif key == pygame.K_t:
+            if self._sfx_manager:
+                self._sfx_manager.play("confirm")
+            self._open_edit_tags()
         elif key == pygame.K_ESCAPE:
             if self._sfx_manager:
                 self._sfx_manager.play("cancel")
@@ -281,6 +304,143 @@ class ItemScene(Scene):
         items = self._filtered_items()
         self._list_sel = min(self._list_sel, max(0, len(items) - 1))
 
+    # ── Edit Tags ─────────────────────────────────────────────
+
+    def _editor_rows(self) -> list[tuple[str, str]]:
+        """Rows in the tag editor, in display order.
+        Each row is (kind, tag) where kind is 'system', 'custom', or 'new'.
+        """
+        entry = self._selected_entry()
+        rows: list[tuple[str, str]] = [("system", t) for t in EDITABLE_SYSTEM_TAGS]
+        if entry:
+            rows.extend(("custom", t) for t in custom_tags(entry))
+        rows.append(("new", ""))
+        return rows
+
+    def _open_edit_tags(self) -> None:
+        if not self._selected_entry():
+            return
+        self._in_edit_tags    = True
+        self._tag_editor_sel  = 0
+        self._tag_warning     = ""
+        self._tag_warning_t   = 0
+
+    def _close_edit_tags(self) -> None:
+        self._in_edit_tags    = False
+        self._tag_warning     = ""
+        self._tag_warning_t   = 0
+
+    def _set_tag_warning(self, msg: str) -> None:
+        self._tag_warning   = msg
+        self._tag_warning_t = 90  # ~1.5s @60fps
+
+    def _handle_edit_tags_key(self, key: int) -> None:
+        rows = self._editor_rows()
+        if key == pygame.K_ESCAPE:
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
+            self._close_edit_tags()
+            return
+        if key == pygame.K_UP:
+            new = max(0, self._tag_editor_sel - 1)
+            if new != self._tag_editor_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._tag_editor_sel = new
+            return
+        if key == pygame.K_DOWN:
+            new = min(len(rows) - 1, self._tag_editor_sel + 1)
+            if new != self._tag_editor_sel and self._sfx_manager:
+                self._sfx_manager.play("hover")
+            self._tag_editor_sel = new
+            return
+        if key == pygame.K_RETURN:
+            self._activate_editor_row(rows[self._tag_editor_sel])
+
+    def _activate_editor_row(self, row: tuple[str, str]) -> None:
+        kind, tag = row
+        if kind == "new":
+            if self._sfx_manager:
+                self._sfx_manager.play("confirm")
+            self._begin_new_tag()
+            return
+        # Toggle existing tag (system or custom).
+        entry = self._selected_entry()
+        if not entry:
+            return
+        repo = self._get_repo()
+        if tag in entry.tags:
+            repo.remove_tag(entry.id, tag)
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
+            return
+        if not repo.add_tag(entry.id, tag):
+            self._set_tag_warning(f"max tags ({repo.max_tags_per_item}) reached")
+            return
+        if self._sfx_manager:
+            self._sfx_manager.play("confirm")
+
+    # ── New custom tag entry ──────────────────────────────────
+
+    def _begin_new_tag(self) -> None:
+        entry = self._selected_entry()
+        repo  = self._get_repo()
+        if entry and len(entry.tags) >= repo.max_tags_per_item:
+            self._set_tag_warning(f"max tags ({repo.max_tags_per_item}) reached")
+            return
+        self._in_new_tag = True
+        self._tag_input  = ""
+        pygame.key.start_text_input()
+
+    def _end_new_tag(self) -> None:
+        pygame.key.stop_text_input()
+        self._in_new_tag = False
+        self._tag_input  = ""
+
+    def _handle_new_tag_event(self, event: pygame.event.Event) -> None:
+        if event.type == pygame.TEXTINPUT:
+            if len(self._tag_input) < CUSTOM_TAG_MAX_LEN:
+                self._tag_input += event.text
+            return
+        if event.type != pygame.KEYDOWN:
+            return
+        if event.key == pygame.K_BACKSPACE:
+            self._tag_input = self._tag_input[:-1]
+        elif event.key == pygame.K_ESCAPE:
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
+            self._end_new_tag()
+        elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+            self._commit_new_tag()
+
+    def _commit_new_tag(self) -> None:
+        tag = normalize_custom_tag(self._tag_input)
+        if not tag:
+            self._set_tag_warning("invalid tag")
+            return
+        entry = self._selected_entry()
+        if not entry:
+            self._end_new_tag()
+            return
+        if tag in entry.tags:
+            self._set_tag_warning("tag already added")
+            return
+        if not self._get_repo().add_tag(entry.id, tag):
+            self._set_tag_warning(
+                f"max tags ({self._get_repo().max_tags_per_item}) reached"
+            )
+            return
+        if self._sfx_manager:
+            self._sfx_manager.play("confirm")
+        self._end_new_tag()
+
+    # ── Update ────────────────────────────────────────────────
+
+    def update(self, delta: float) -> None:
+        if self._tag_warning_t > 0:
+            self._tag_warning_t -= 1
+            if self._tag_warning_t == 0:
+                self._tag_warning = ""
+
     # ── Render (delegates to ItemRenderer) ────────────────────
 
     def render(self, screen: pygame.Surface) -> None:
@@ -298,4 +458,10 @@ class ItemScene(Scene):
             confirm_discard=self._confirm_discard,
             aoe_confirm=self._aoe_confirm,
             target_overlay=self._target_overlay,
+            edit_tags=self._in_edit_tags,
+            editor_rows=self._editor_rows() if self._in_edit_tags else [],
+            editor_sel=self._tag_editor_sel,
+            tag_warning=self._tag_warning,
+            in_new_tag=self._in_new_tag,
+            tag_input=self._tag_input,
         )

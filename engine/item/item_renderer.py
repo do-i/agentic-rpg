@@ -116,7 +116,13 @@ class ItemRenderer:
                in_tab: bool, in_action: bool, action_sel: int,
                selected_entry: ItemEntry | None,
                confirm_discard: bool, aoe_confirm: bool,
-               target_overlay) -> None:
+               target_overlay,
+               edit_tags: bool = False,
+               editor_rows: list | None = None,
+               editor_sel: int = 0,
+               tag_warning: str = "",
+               in_new_tag: bool = False,
+               tag_input: str = "") -> None:
         if not self._fonts_ready:
             self._init_fonts()
 
@@ -144,6 +150,13 @@ class ItemRenderer:
             self._draw_aoe_confirm_overlay(screen, selected_entry)
         if target_overlay:
             target_overlay.render(screen)
+        if edit_tags:
+            self._draw_edit_tags_overlay(
+                screen, selected_entry, editor_rows or [], editor_sel,
+                tag_warning,
+            )
+            if in_new_tag:
+                self._draw_new_tag_overlay(screen, tag_input)
 
     # ── Header ────────────────────────────────────────────────
 
@@ -310,9 +323,120 @@ class ItemRenderer:
 
     # ── Footer ────────────────────────────────────────────────
 
+    # \u2500\u2500 Edit Tags overlay \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+
+    def _draw_edit_tags_overlay(self, screen: pygame.Surface,
+                                entry: ItemEntry | None,
+                                rows: list, sel: int,
+                                warning: str) -> None:
+        if not entry:
+            return
+        ow, oh = 420, 360
+        ox = (screen.get_width()  - ow) // 2
+        oy = (screen.get_height() - oh) // 2
+
+        scrim = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+        scrim.fill((0, 0, 0, 140))
+        screen.blit(scrim, (0, 0))
+
+        pygame.draw.rect(screen, DETAIL_BG,      (ox, oy, ow, oh), border_radius=6)
+        pygame.draw.rect(screen, TAB_BORDER_ACT, (ox, oy, ow, oh), 2, border_radius=6)
+
+        cx, cy = ox + 16, oy + 14
+        title_text = f"Edit Tags: {entry.name or entry.id}"
+        screen.blit(
+            self._font_title.render(title_text, True, HEADER_COLOR), (cx, cy),
+        )
+        cy += self._font_title.get_height() + 8
+        pygame.draw.line(screen, DIVIDER, (cx, cy), (ox + ow - 16, cy))
+        cy += 10
+
+        last_section: str | None = None
+        for i, row in enumerate(rows):
+            kind, tag = row
+            section = (
+                "System Tags" if kind == "system" else
+                "Custom Tags" if kind in ("custom", "new") else None
+            )
+            if section and section != last_section:
+                if last_section is not None:
+                    cy += 6
+                lbl = self._font_hint.render(section, True, TEXT_SECONDARY)
+                screen.blit(lbl, (cx, cy))
+                cy += lbl.get_height() + 4
+                last_section = section
+
+            row_h = 24
+            if i == sel:
+                pygame.draw.rect(
+                    screen, LIST_SEL_BG,
+                    (cx - 4, cy - 2, ow - 28, row_h),
+                    border_radius=3,
+                )
+                pygame.draw.rect(
+                    screen, LIST_SEL_BDR,
+                    (cx - 4, cy - 2, ow - 28, row_h),
+                    1, border_radius=3,
+                )
+
+            if kind == "new":
+                label = "[+] New Tag..."
+                col   = BTN_TEXT
+            else:
+                checked = tag in entry.tags
+                box     = "[x]" if checked else "[ ]"
+                label   = f"{box} {tag}"
+                col     = TEXT_PRIMARY if checked else TEXT_SECONDARY
+            screen.blit(self._font_detail.render(label, True, col), (cx + 4, cy))
+            cy += row_h
+
+        cy = oy + oh - 56
+        pygame.draw.line(screen, DIVIDER, (cx, cy), (ox + ow - 16, cy))
+        cy += 6
+        count_str = f"Tags: {len(entry.tags)}/5"
+        screen.blit(self._font_hint.render(count_str, True, TEXT_SECONDARY), (cx, cy))
+        if warning:
+            warn = self._font_hint.render(warning, True, (220, 130, 130))
+            screen.blit(warn, (ox + ow - 16 - warn.get_width(), cy))
+        cy += 18
+        screen.blit(
+            self._font_hint.render(
+                "ENTER toggle \u00b7 ESC close", True, MUTED,
+            ),
+            (cx, cy),
+        )
+
+    def _draw_new_tag_overlay(self, screen: pygame.Surface, text: str) -> None:
+        ow, oh = 360, 110
+        ox = (screen.get_width()  - ow) // 2
+        oy = (screen.get_height() - oh) // 2
+        pygame.draw.rect(screen, (20, 20, 36),   (ox, oy, ow, oh), border_radius=6)
+        pygame.draw.rect(screen, HEADER_COLOR,   (ox, oy, ow, oh), 2, border_radius=6)
+        cx, cy = ox + 16, oy + 14
+        screen.blit(self._font_title.render("New Tag", True, HEADER_COLOR), (cx, cy))
+        cy += self._font_title.get_height() + 6
+        box_w, box_h = ow - 32, 28
+        pygame.draw.rect(screen, (40, 40, 70),    (cx, cy, box_w, box_h))
+        pygame.draw.rect(screen, TAB_BORDER_ACT,  (cx, cy, box_w, box_h), 1)
+        screen.blit(
+            self._font_detail.render(text + "|", True, TEXT_PRIMARY),
+            (cx + 6, cy + (box_h - self._font_detail.get_height()) // 2),
+        )
+        cy += box_h + 6
+        screen.blit(
+            self._font_hint.render(
+                "ENTER confirm \u00b7 ESC cancel", True, MUTED,
+            ),
+            (cx, cy),
+        )
+
+    # \u2500\u2500 Footer \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+
     def _draw_footer(self, screen: pygame.Surface) -> None:
         fy = screen.get_height() - FOOTER_H
         pygame.draw.line(screen, DIVIDER, (PAD, fy), (screen.get_width() - PAD, fy))
         hint = self._font_hint.render(
-            "navigate \u00b7 Q/E tab \u00b7 actions \u00b7 I close", True, MUTED)
+            "navigate \u00b7 Q/E tab \u00b7 actions \u00b7 T edit tags \u00b7 I close",
+            True, MUTED,
+        )
         screen.blit(hint, (PAD, fy + 8))

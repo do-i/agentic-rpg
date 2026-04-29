@@ -13,6 +13,46 @@ from engine.item.magic_core_catalog_state import MagicCoreCatalogState, build_mc
 # ── Tabs — Magic Core inserted between Material and Key ───────
 TABS = ["New", "All", "Recovery", "Status", "Battle", "Material", "Magic Core", "Key"]
 
+# ── Tag editor ────────────────────────────────────────────────
+# Curatorial system tags exposed in the Edit Tags UI. Tags driven by item
+# type (consumable, material, key, magic_core, equipment, weapon, …) are
+# excluded — toggling them would silently re-categorize the item under a
+# different tab.
+EDITABLE_SYSTEM_TAGS: tuple[str, ...] = ("rare", "sell_soon", "favorite")
+
+CUSTOM_TAG_MAX_LEN = 16
+_CUSTOM_TAG_ALLOWED = set("abcdefghijklmnopqrstuvwxyz0123456789_")
+
+
+def custom_tags(entry: ItemEntry) -> list[str]:
+    """Tags on the entry that are neither editable system tags nor
+    type-driven system tags. Sorted for stable display."""
+    return sorted(t for t in entry.tags if not is_system_tag(t))
+
+
+def is_system_tag(tag: str) -> bool:
+    """True for any tag the engine treats as system-managed.
+    System tags include the editable curatorial set plus type-driven tags
+    (consumable/material/key/magic_core/equipment/...) that come from the
+    item catalog."""
+    if tag in EDITABLE_SYSTEM_TAGS:
+        return True
+    return tag in {
+        "consumable", "material", "key", "magic_core",
+        "equipment", "weapon", "shield", "helmet", "body", "accessory",
+        "battle", "status", "recovery",
+    }
+
+
+def normalize_custom_tag(raw: str) -> str:
+    """Lowercase, trim, validate. Returns empty string if invalid."""
+    s = raw.strip().lower().replace(" ", "_")
+    if not s or len(s) > CUSTOM_TAG_MAX_LEN:
+        return ""
+    if any(ch not in _CUSTOM_TAG_ALLOWED for ch in s):
+        return ""
+    return s
+
 
 def item_tab(entry: ItemEntry) -> str:
     """Determine which tab an item belongs to."""
