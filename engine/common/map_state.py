@@ -53,11 +53,17 @@ class MapState:
 
     @classmethod
     def from_dict(cls, data: dict) -> "MapState":
-        raw_pos = data.get("position", [0, 0])
+        for field in ("current", "position", "visited"):
+            if field not in data:
+                raise ValueError(
+                    f"MapState.from_dict: save data missing required field {field!r}. "
+                    f"Got keys: {sorted(data)}. "
+                    f"Example:\n  current: town_01\n  position: [5, 3]\n  visited: [zone_01]"
+                )
         return cls(
-            current=data.get("current", ""),
-            position=Position.from_list(raw_pos),
-            visited=set(data.get("visited", [])),
+            current=data["current"],
+            position=Position.from_list(data["position"]),
+            visited=set(data["visited"]),
         )
 
     def __repr__(self) -> str:

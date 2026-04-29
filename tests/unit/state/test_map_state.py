@@ -86,8 +86,10 @@ class TestSerialization:
         assert restored.position == map_state.position
         assert restored.visited == map_state.visited
 
-    def test_from_dict_defaults(self):
-        s = MapState.from_dict({})
-        assert s.current == ""
-        assert s.position == Position(0, 0)
-        assert s.visited == []
+    def test_from_dict_missing_field_raises(self):
+        with pytest.raises(ValueError, match="'current'"):
+            MapState.from_dict({"position": [0, 0], "visited": []})
+        with pytest.raises(ValueError, match="'position'"):
+            MapState.from_dict({"current": "town_01", "visited": []})
+        with pytest.raises(ValueError, match="'visited'"):
+            MapState.from_dict({"current": "town_01", "position": [0, 0]})
