@@ -4,12 +4,12 @@
 
 from __future__ import annotations
 from pathlib import Path
-import yaml
 
 from engine.common.game_state import GameState
 from engine.common.flag_state import FlagState
 from engine.common.map_state import MapState
 from engine.common.opened_boxes_state import OpenedBoxesState
+from engine.io.yaml_loader import load_yaml_required, load_yaml_required_cached
 from engine.party.member_state import MemberState
 from engine.world.position_data import Position
 from engine.party.party_state import calc_exp_next
@@ -21,19 +21,11 @@ if TYPE_CHECKING:
 
 
 def _load_class_data(classes_dir: Path, class_name: str) -> dict:
-    path = classes_dir / f"{class_name}.yaml"
-    if not path.exists():
-        raise FileNotFoundError(f"Class YAML not found: {path}")
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+    return load_yaml_required_cached(classes_dir / f"{class_name}.yaml")
 
 
 def _load_character_data(scenario_path: Path, char_path_str: str) -> dict:
-    path = scenario_path / char_path_str
-    if not path.exists():
-        raise FileNotFoundError(f"Character YAML not found: {path}")
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+    return load_yaml_required(scenario_path / char_path_str)
 
 
 def from_new_game(

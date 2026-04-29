@@ -3,9 +3,8 @@
 from __future__ import annotations
 from pathlib import Path
 
-import yaml
-
 from engine.encounter.encounter_zone import EncounterZone, load_encounter_zone
+from engine.io.yaml_loader import load_yaml_required_cached
 from engine.battle.battle_state import BattleState
 from engine.battle.combatant import Combatant
 from engine.party.party_state import PartyState
@@ -123,8 +122,7 @@ class EncounterManager:
             path = self._classes_dir / f"{class_name}.yaml"
             if not path.exists():
                 return []
-            with open(path) as f:
-                data = yaml.safe_load(f)
+            data = load_yaml_required_cached(path)
             all_abs = data.get("abilities", [])
             self._class_cache[class_name] = all_abs
         result = []

@@ -1,7 +1,8 @@
 # engine/io/manifest_loader.py
 
 from pathlib import Path
-import yaml
+
+from engine.io.yaml_loader import load_yaml_required
 
 
 class ManifestLoader:
@@ -9,11 +10,7 @@ class ManifestLoader:
         self._scenario_path = Path(scenario_path)
 
     def load(self) -> dict:
-        manifest_path = self._scenario_path / "manifest.yaml"
-        if not manifest_path.exists():
-            raise FileNotFoundError(f"manifest.yaml not found at {manifest_path}")
-        with open(manifest_path, "r") as f:
-            return yaml.safe_load(f)
+        return load_yaml_required(self._scenario_path / "manifest.yaml")
 
     @property
     def scenario_path(self) -> Path:
