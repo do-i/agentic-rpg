@@ -181,7 +181,8 @@ class StatusRenderer:
         content_h = self._font_name.get_height() + 6 + self._font_class.get_height()
         ty = y + (ROW_H - content_h) // 2
         screen.blit(self._font_name.render(m.name, True, TEXT_PRIMARY), (tx, ty))
-        screen.blit(self._font_class.render(m.class_name, True, TEXT_SECONDARY),
+        class_label = f"{m.class_name}  ·  {m.row.upper()}"
+        screen.blit(self._font_class.render(class_label, True, TEXT_SECONDARY),
                     (tx, ty + self._font_name.get_height() + 4))
         return x + COL_NAME_W + 50
 
@@ -330,5 +331,5 @@ class StatusRenderer:
         fy = screen.get_height() - FOOTER_H
         pygame.draw.line(screen, (51, 51, 51),
                          (PAD_X, fy), (screen.get_width() - PAD_X, fy))
-        hint = self._font_hint.render("select \u00b7 ENTER spells \u00b7 S close", True, MUTED)
+        hint = self._font_hint.render("select \u00b7 ENTER spells \u00b7 R row \u00b7 S close", True, MUTED)
         screen.blit(hint, (PAD_X, fy + 8))

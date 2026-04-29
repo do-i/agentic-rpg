@@ -49,6 +49,11 @@ class MemberState:
         self.equipped    = equipped
         self.exp_next    = exp_next
 
+        # Battle row — overridden by load_class_data() from class YAML's
+        # default_row, then optionally by save data via direct assignment.
+        # Initial "front" is a placeholder that production paths always replace.
+        self.row: str = "front"
+
         # stat_growth loaded from class YAML — None until load_class_data() called
         self.stat_growth: dict[str, list[int]] | None = None
         self.exp_base:   int = 0
@@ -81,6 +86,14 @@ class MemberState:
             self.exp_factor = float(class_data["exp_factor"])
         slots = class_data.get("equipment_slots") or {}
         self.equipment_slots = {str(k): list(v or []) for k, v in slots.items()}
+        if "default_row" in class_data:
+            row = class_data["default_row"]
+            if row not in ("front", "back"):
+                raise ValueError(
+                    f"class YAML default_row must be 'front' or 'back', got "
+                    f"{row!r} (e.g. 'default_row: front')"
+                )
+            self.row = row
 
     # Kept for backward compatibility — tests and legacy callers.
     def load_stat_growth(self, class_data: dict) -> None:

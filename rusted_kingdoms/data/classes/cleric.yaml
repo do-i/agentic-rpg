@@ -6,6 +6,8 @@ description: "A devoted healer who channels earth and holy magic. Keeps the part
 base_hp: 18
 base_mp: 18
 
+default_row: back
+
 stat_growth:
   str: [1, 1, 2, 1, 1, 2, 1, 1, 2, 1]
   dex: [1, 2, 1, 1, 2, 1, 1, 2, 1, 1]

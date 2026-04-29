@@ -101,6 +101,28 @@ class StatusScene(Scene):
                 if self._sfx_manager:
                     self._sfx_manager.play("confirm")
                 self._open_spell_menu()
+            elif event.key == pygame.K_r:
+                self._toggle_row(members)
+
+    def _toggle_row(self, members: list[MemberState]) -> None:
+        """Toggle the selected member's row (front <-> back).
+
+        Only Rogue is swappable; other classes are fixed by design (see
+        docs/design/party.md). Plays cancel SFX on a non-rogue press so
+        the user gets feedback that the key was received.
+        """
+        if not members:
+            return
+        member = members[self._selected]
+        if member.class_name.lower() != "rogue":
+            if self._sfx_manager:
+                self._sfx_manager.play("cancel")
+            self._popup_text = "Only Rogue can change row."
+            self._popup_active = True
+            return
+        member.row = "front" if member.row == "back" else "back"
+        if self._sfx_manager:
+            self._sfx_manager.play("confirm")
 
     def _open_spell_menu(self) -> None:
         members = self._holder.get().party.members

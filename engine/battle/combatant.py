@@ -53,6 +53,9 @@ class Combatant:
     dex:       int
     is_enemy:  bool = False
     boss:      bool = False
+    # Row only applies to party members. Enemies leave it as "front"; the
+    # row math in action_resolver only triggers when row == "back".
+    row:       str = "front"
     portrait_path: str = ""     # party members only — assets/images/{id}_profile.png
     sprite_id: str = ""         # enemies — placeholder label for now
     sprite_scale: int = 100     # enemies — enlarge sprite by this %, 100 = no change

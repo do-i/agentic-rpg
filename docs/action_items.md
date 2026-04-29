@@ -9,7 +9,7 @@ Status legend: 🟥 not started · 🟨 in progress · 🟩 done · ❓ decision
 
 ---
 
-## 1. 🟥 Implement front/back row + `attack_range` ability flag
+## 1. 🟩 Implement front/back row + `attack_range` ability flag
 
 **Why**
 `docs/design/battle.md` and `docs/design/party.md` specify a row system:
@@ -138,6 +138,7 @@ map YAML (`shop.items[].qty`) and may already be effectively stateless
 **Decision**
 Likely **doc drop** is correct; confirm by inspection, then either
 update doc or implement.
+
 
 ---
 

@@ -6,6 +6,8 @@ description: "A balanced warrior destined for greatness. Adapts to any challenge
 base_hp: 22
 base_mp: 10
 
+default_row: front
+
 stat_growth:
   str: [3, 2, 3, 3, 2, 3, 3, 3, 2, 3]
   dex: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
@@ -28,6 +30,7 @@ abilities:
     name: Power Strike
     unlock_level: 2
     type: physical
+    attack_range: melee
     description: "A focused blow dealing 150% physical damage to one enemy."
     mp_cost: 0
     damage_coeff: 1.5
@@ -71,6 +74,7 @@ abilities:
     name: Limit Slash
     unlock_level: 10
     type: physical
+    attack_range: melee
     description: "A devastating strike dealing 200% physical damage to one enemy."
     mp_cost: 0
     damage_coeff: 2.0

@@ -131,6 +131,12 @@ def _resolve_attack(
 ) -> list[str]:
     src_atk = source.effective_atk if source else 0
     dmg = max(1, src_atk - target.def_)
+    # Basic attack is melee; back-row attacker deals halved damage.
+    if source and source.row == "back":
+        dmg = max(1, dmg // 2)
+    # Back-row defender takes halved physical.
+    if target.row == "back":
+        dmg = max(1, dmg // 2)
     actual = target.apply_damage(dmg, rng)
     state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_PHYS)
     if fx:

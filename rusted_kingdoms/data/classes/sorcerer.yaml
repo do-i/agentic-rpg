@@ -6,6 +6,8 @@ description: "A fragile but devastating elementalist. Masters fire, water, wind,
 base_hp: 14
 base_mp: 20
 
+default_row: back
+
 stat_growth:
   str: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
   dex: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]

@@ -6,6 +6,8 @@ description: "A swift and cunning trickster. Acts first, hits hard with crits, a
 base_hp: 16
 base_mp: 6
 
+default_row: back  # user-swappable; Rogue can be moved to front via status menu
+
 stat_growth:
   str: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
   dex: [4, 3, 4, 3, 4, 3, 4, 3, 4, 3]
@@ -42,6 +44,7 @@ abilities:
     name: Dual Strike
     unlock_level: 3
     type: physical
+    attack_range: melee
     description: "Strikes twice in one turn, each hit at 70% damage."
     mp_cost: 0
     hits: 2
@@ -64,6 +67,7 @@ abilities:
     name: Shadow Step
     unlock_level: 7
     type: physical
+    attack_range: melee
     description: "Vanishes and reappears behind the enemy for a guaranteed critical hit at 180% damage."
     mp_cost: 4
     damage_coeff: 1.80
@@ -74,6 +78,7 @@ abilities:
     name: Assassinate
     unlock_level: 10
     type: physical
+    attack_range: melee
     description: "A lethal strike at 200% damage with a 20% chance to instantly defeat the target. No effect on bosses."
     mp_cost: 8
     damage_coeff: 2.0

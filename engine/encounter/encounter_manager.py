@@ -102,6 +102,7 @@ class EncounterManager:
             mres=totals["int"],
             dex=totals["dex"],
             is_enemy=False,
+            row=member.row,
             portrait_path=f"assets/images/{member.id}_profile.png",
             abilities=abilities,
         )
@@ -131,6 +132,14 @@ class EncounterManager:
                         f"required fields (id, unlock_level, mp_cost). "
                         f"Example: '- id: spell_id\\n  unlock_level: 1\\n  mp_cost: 0'"
                     )
+                if ab.get("type") == "physical":
+                    rng = ab.get("attack_range")
+                    if rng not in ("melee", "ranged"):
+                        raise ValueError(
+                            f"{path}: physical ability {ab['id']!r} requires "
+                            f"attack_range: melee | ranged (got {rng!r}). "
+                            f"Example: 'attack_range: melee'"
+                        )
             self._class_cache[class_name] = all_abs
         result = []
         for ab in all_abs:

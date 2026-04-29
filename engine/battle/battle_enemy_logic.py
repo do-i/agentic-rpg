@@ -38,6 +38,9 @@ def resolve_enemy_turn(state: BattleState, screen_width: int,
         target = target_list[0]
         alive_before = not target.is_ko
         dmg = max(1, active.atk - target.def_)
+        # Back-row party member halves incoming physical damage.
+        if target.row == "back":
+            dmg = max(1, dmg // 2)
         actual = target.apply_damage(dmg, rng)
         state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_PHYS)
         if fx:

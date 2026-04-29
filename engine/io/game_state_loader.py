@@ -113,6 +113,15 @@ def from_save(
             equipped=m["equipped"],
         )
         member.load_class_data(class_data)
+        # Save data overrides the class default — preserves user's row swaps.
+        if "row" in m:
+            row = m["row"]
+            if row not in ("front", "back"):
+                raise ValueError(
+                    f"save data for member {m['id']!r}: row must be "
+                    f"'front' or 'back', got {row!r}"
+                )
+            member.row = row
         exp_next = m.get("exp_next")
         member.exp_next = exp_next if exp_next is not None else calc_exp_next(member, member.level)
         state.party.add_member(member)

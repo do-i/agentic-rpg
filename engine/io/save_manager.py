@@ -181,6 +181,7 @@ class GameStateManager:
                 "con":         m.con,
                 "int":         m.int_,
                 "equipped":    m.equipped,
+                "row":         m.row,
             })
 
         # ── Items — full repository contents ──────────────────
