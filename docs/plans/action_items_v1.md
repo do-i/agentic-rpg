@@ -9,16 +9,6 @@ Status legend: 🟥 not started · 🟨 in progress · ❓ decision needed
 
 ## Code decisions (need user input)
 
-### 3. ❓ Inn-triggered shop restock
-`shop.md` claims "every rest triggers full restock"; `InnScene` does not
-call into shop state.
-
-- A. Implement restock-on-rest in `InnScene`.
-- B. Drop the restock semantics from `shop.md` (stock is static).
-- C. Other.
-
-**Answer:** B
-
 ### 4. ❓ Item filter tabs (All/Recovery/Status/Battle/Key)
 `screen.md` specifies filter tabs in the item screen; current UI shows a
 tag list but no tab filter.
