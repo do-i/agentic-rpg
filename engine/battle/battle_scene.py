@@ -1,4 +1,4 @@
-# engine/scenes/battle_scene.py
+# engine/battle/battle_scene.py
 #
 # Phase 4 — Battle system
 # Thin orchestrator: delegates input to BattleInputController, sub-menu

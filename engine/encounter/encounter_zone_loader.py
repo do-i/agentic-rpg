@@ -1,4 +1,4 @@
-# engine/io/encounter_zone_loader.py
+# engine/encounter/encounter_zone_loader.py
 
 from __future__ import annotations
 from pathlib import Path

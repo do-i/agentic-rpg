@@ -1,4 +1,4 @@
-# engine/scenes/inn_scene.py
+# engine/inn/inn_scene.py
 
 from __future__ import annotations
 

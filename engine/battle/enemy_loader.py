@@ -1,4 +1,4 @@
-# engine/io/enemy_loader.py
+# engine/battle/enemy_loader.py
 #
 # Phase 4 — Battle system
 

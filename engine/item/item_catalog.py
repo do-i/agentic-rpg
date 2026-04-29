@@ -1,4 +1,4 @@
-# engine/io/item_catalog.py
+# engine/item/item_catalog.py
 #
 # Loads all item YAML files from the scenario and provides metadata lookup.
 

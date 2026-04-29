@@ -1,4 +1,4 @@
-# engine/io/npc_loader.py
+# engine/world/npc_loader.py
 
 from pathlib import Path
 
