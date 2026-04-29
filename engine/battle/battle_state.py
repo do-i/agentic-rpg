@@ -29,6 +29,10 @@ class DamageFloat:
     color:   tuple        # RGB
     alpha:   int  = 255
     vy:      float = -40.0   # pixels/sec upward drift
+    # Renderer-owned cache of (shadow, foreground) surfaces. Stored on the
+    # float itself so it dies with the object and can't collide with a
+    # reused id() the way a side-channel dict keyed by id() could.
+    cached_surfaces: object = None
 
     def update(self, delta: float) -> None:
         self.y += int(self.vy * delta)

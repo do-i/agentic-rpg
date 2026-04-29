@@ -38,8 +38,9 @@ def _make_renderer():
 
 
 class TestDamageFloatCache:
-    """Caches now live on the DamageFloatRenderer panel; reach in through
-    the BattleRenderer's _damage_floats accessor."""
+    """The (shadow, foreground) surface pair is cached on each DamageFloat
+    instance — so the cache dies with the float and can't collide with a
+    reused id()."""
 
     def test_renders_once_per_float(self):
         renderer, assets = _make_renderer()
@@ -55,19 +56,16 @@ class TestDamageFloatCache:
         # 1 shadow + 1 colored = 2 calls per cache miss; only one miss expected.
         assert assets.font_dmg.render.call_count == 2
 
-    def test_cache_drops_expired_floats(self):
+    def test_surfaces_attached_to_float(self):
         renderer, _ = _make_renderer()
         state = BattleState(party=[], enemies=[])
         f = DamageFloat("12", 0, 0, (255, 255, 255))
         state.damage_floats.append(f)
         screen = pygame.Surface((40, 40), pygame.SRCALPHA)
 
+        assert f.cached_surfaces is None
         renderer._damage_floats.draw(screen, state)
-        assert id(f) in renderer._damage_floats._cache
-
-        state.damage_floats.clear()
-        renderer._damage_floats.draw(screen, state)
-        assert renderer._damage_floats._cache == {}
+        assert f.cached_surfaces is not None
 
     def test_distinct_floats_get_distinct_entries(self):
         renderer, _ = _make_renderer()
@@ -78,7 +76,9 @@ class TestDamageFloatCache:
         screen = pygame.Surface((40, 40), pygame.SRCALPHA)
 
         renderer._damage_floats.draw(screen, state)
-        assert {id(a), id(b)} == set(renderer._damage_floats._cache.keys())
+        assert a.cached_surfaces is not None
+        assert b.cached_surfaces is not None
+        assert a.cached_surfaces is not b.cached_surfaces
 
 
 class TestKoGhostCache:
