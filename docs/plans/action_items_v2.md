@@ -2,7 +2,7 @@
 
 Self-contained tasks deferred until v1 is fully playable end-to-end.
 
-Status legend: 🟥 not started · 🟨 in progress · 🟩 done · ❓ decision needed
+Status legend: 🟥 not started · 🟨 in progress · ❓ decision needed
 
 ---
 
@@ -50,12 +50,33 @@ Out of scope for v1; do not start until the v1 scenario is fully playable.
 
 ### Open questions
 
-- Sail/fly sprite art — palette swap or proper boat/aircraft frames?
-- Dungeon entrances as warp destinations — confirm by listing every map
-  in `world.yaml` with its warp target.
-- Warp UX from inside a dungeon — `transportation.md` says warp is
-  usable from dungeon *and* world but also lists "Walk remains only
-  mode inside dungeons." Resolve before implementing.
+#### ❓ Sail/fly sprite art
+
+- A. Palette-swap the existing overworld sprite.
+- B. Author proper boat + aircraft frame sets.
+- C. Other.
+
+**Answer:**
+
+#### ❓ Dungeon entrances as warp destinations
+
+- A. Yes — entrance tile only, never interior; list every map in
+  `world.yaml` with its warp target.
+- B. No — towns only, never dungeons.
+- C. Other.
+
+**Answer:**
+
+#### ❓ Warp UX from inside a dungeon
+
+`transportation.md` says warp is usable from dungeon *and* world but
+also lists "Walk remains only mode inside dungeons."
+
+- A. Warp is usable from inside dungeons (override the walk-only rule).
+- B. Walk-only inside dungeons; warp only from the overworld.
+- C. Other.
+
+**Answer:**
 
 ---
 
