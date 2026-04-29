@@ -9,17 +9,6 @@ Status legend: 🟥 not started · 🟨 in progress · ❓ decision needed
 
 ## Code decisions (need user input)
 
-### 1. ❓ Tag-editing UI in item screen
-`bag.md` specifies an `[Edit Tags]` panel (toggle system tags + custom-tag
-creation). Repository data layer (`add_tag` / `remove_tag` / `set_locked` /
-`max_tags=5` / `items_by_tag`) is implemented; only the UI flow is missing.
-
-- A. Build the edit UI as `bag.md` specifies.
-- B. Drop the spec from `bag.md` and keep tags author-only.
-- C. Other.
-
-**Answer:**
-
 ### 2. ❓ Ultimate-spell story-flag gate
 `spells.md` says ultimates (lvl 46/48/50/52) are gated by a story flag;
 class YAMLs only check `unlock_level`.
@@ -28,7 +17,7 @@ class YAMLs only check `unlock_level`.
 - B. Drop the gate from `spells.md`; level alone unlocks.
 - C. Other.
 
-**Answer:**
+**Answer:** A
 
 ### 3. ❓ Inn-triggered shop restock
 `shop.md` claims "every rest triggers full restock"; `InnScene` does not
@@ -38,7 +27,7 @@ call into shop state.
 - B. Drop the restock semantics from `shop.md` (stock is static).
 - C. Other.
 
-**Answer:**
+**Answer:** B
 
 ### 4. ❓ Item filter tabs (All/Recovery/Status/Battle/Key)
 `screen.md` specifies filter tabs in the item screen; current UI shows a
@@ -48,7 +37,7 @@ tag list but no tab filter.
 - B. Drop from `screen.md`; current tag list is enough.
 - C. Other.
 
-**Answer:**
+**Answer:** A
 
 ### 5. ❓ Sell price = 0.5 × buy default rule
 `equipment.md` claims `sell_price` is auto-derived as half of `buy_price`;
@@ -58,7 +47,7 @@ code stores `sell_price` explicitly per item.
 - B. Drop the claim from `equipment.md`; require explicit `sell_price`.
 - C. Other.
 
-**Answer:**
+**Answer:** B
 
 ### 6. ❓ Party stats not yet implemented
 `party.md` lists `encounter_modifier` and `trap_detect` (only `flee_rate`
@@ -72,7 +61,7 @@ ships). It also lists `taunt` / `def_up` statuses, which are not in the
 - C. Drop all four from `party.md`.
 - D. Other.
 
-**Answer:**
+**Answer:** A
 
 ### 7. ❓ Dialogue `unlock` action
 `dialogue.md` lists an `unlock` action under `on_complete`; dispatcher
@@ -82,7 +71,7 @@ does not implement it.
 - B. Drop it from `dialogue.md`.
 - C. Other.
 
-**Answer:**
+**Answer:** A
 
 ---
 
