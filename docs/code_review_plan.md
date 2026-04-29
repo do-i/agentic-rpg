@@ -1,12 +1,18 @@
-# Code Review Plan
+# Code Review Report
 
-Date: 2026-04-27
-Scope: `engine/` and `tests/` (199 source files, 14,742 LOC engine; 64 test files, 9,224 LOC tests, 892 tests).
-Method: Read-only review focused on five axes: bugs, performance, duplication, breaking up oversized modules, and test gaps.
+## Open items (deferred)
 
-Severity tags:
-- **P1** — broken / data loss / incorrect game behavior. Fix before next release.
-- **P2** — wrong-but-benign or fragile. Schedule.
-- **P3** — code smell / style / minor inefficiency.
+- **`RepositoryState.add_gp` return type drift** — `engine/party/repository_state.py:66` returns `int` but call sites still treat it as `None`. Harmless until a type-checker is wired in.
+- **`engine/world/world_map_renderer.py:99-104`** — `_fade_surf` is reused across frames but refilled every frame; a future profiler pass could decide whether to keep this or simplify.
+- **`engine/world/world_map_scene.py:415-426`** — `update()` runs `_engaged_enemy` deactivation before the fade / overlay checks. Works; reordering is cosmetic.
+- **`engine/io/save_manager.py`** — file lacks `from __future__ import annotations`; relies on PEP 649 deferred eval pinned by `pyproject.toml >=3.14.3`. Adding the import would make the convention explicit but isn't load-bearing today.
+- **pygame pin** — project pins `pygame==2.6.1` which lacks Python 3.14 wheels; CI on the declared Python version cannot install. Out of scope for the review pass.
+- **Larger refactors still on the plan** — §4.3 (battle_renderer panel split), §4.4 (equip/spell wizard base), §4.5 (action_resolver split), §3.5 (`SfxManager` null-object).
 
-All items called out in the original review have landed. Required-field tightening on the §3.7-named loaders (`item_catalog`, `item_effect_handler`, `dialogue_engine` give_items, `MapState.from_dict`) is done; broader `.get(k, default)` cleanup across the codebase is per-file scoped work per the project convention (see `feedback_no_hardcoded_defaults`), not a tracked review item.
+## Test results
+
+`PYTHONWARNINGS="ignore::RuntimeWarning" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy python -m pytest` — **1225 passed**.
+
+## Validation results
+
+`python tools/validate.py --root rusted_kingdoms` — **PASS**.
