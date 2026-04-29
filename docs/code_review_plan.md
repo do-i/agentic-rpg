@@ -42,8 +42,9 @@ File: `engine/encounter/enemy_spawner.py:122-127`
 
 Replaced the per-enemy zip-and-filter comprehension with `all_rects[:i] + all_rects[i+1:]`. Linear in N rather than the implicit N² scan, no `is` identity check on every iteration.
 
-### 2.8 [P3] `EnemyLoader` and `EnemySpawner` re-load sprite sheets across maps
-The spawner has a per-instance `_sprite_cache`, but the spawner is recreated on every map transition (`world_map_scene.py:546`), so sprites are reloaded on every map change. Promote sprite caching to a singleton (`SpriteSheetCache`) injected via `AppModule`.
+### 2.8 [P3] ~~`EnemyLoader` and `EnemySpawner` re-load sprite sheets across maps~~ — DONE 2026-04-28
+
+Added `engine/world/sprite_sheet_cache.py` — a process-wide `SpriteSheetCache` keyed by absolute `Path`. `get()` returns the cached `SpriteSheet`, loading on first call; missing files and load failures are also cached as `None` so we don't re-stat or retry the parse. `AppModule.provide_sprite_sheet_cache` registers it as a singleton. `NpcLoader`, `EnemySpawner`, and the protagonist sprite path in `world_map_init._load_protagonist_sprite` all route through the same cache, threaded via `SceneDeps.sprite_cache` → `WorldMapScene` → `init_world_map` → `_build_spawner`. Sheets now survive map transitions instead of being re-read whenever the spawner is rebuilt or `parse_from_map_data` runs. Test count 1219 → 1224 (5 new tests in `test_sprite_sheet_cache.py` covering cache hit, missing-path caching, load-failure caching, and `clear()`).
 
 ### 2.9 [P3] Autosave on every portal transition
 File: `engine/world/world_map_logic.py:145`

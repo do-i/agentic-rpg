@@ -1,17 +1,12 @@
 # engine/io/npc_loader.py
 
-import logging
 from pathlib import Path
-from xml.etree.ElementTree import ParseError
-
-import pygame
 
 from engine.io.yaml_loader import load_yaml_optional
 from engine.world.npc import Npc
 from engine.world.sprite_sheet import SpriteSheet
+from engine.world.sprite_sheet_cache import SpriteSheetCache
 from engine.util.pseudo_random import PseudoRandom
-
-_log = logging.getLogger(__name__)
 
 
 class NpcLoader:
@@ -21,10 +16,17 @@ class NpcLoader:
     Loads sprite sheet from TSX path if provided.
     """
 
-    def __init__(self, tile_size: int, scenario_path: Path | None = None, rng: PseudoRandom | None = None) -> None:
+    def __init__(
+        self,
+        tile_size: int,
+        scenario_path: Path | None = None,
+        rng: PseudoRandom | None = None,
+        sprite_cache: SpriteSheetCache | None = None,
+    ) -> None:
         self._scenario_path = scenario_path
         self._tile_size = tile_size
         self._rng = rng
+        self._sprite_cache = sprite_cache or SpriteSheetCache()
 
     def load_from_map(self, map_yaml_path: Path) -> list[Npc]:
         return self.parse_from_map_data(load_yaml_optional(map_yaml_path))
@@ -78,12 +80,4 @@ class NpcLoader:
     def _load_sprite(self, sprite_path: str) -> SpriteSheet | None:
         if self._scenario_path is None:
             return None
-        full_path = self._scenario_path / sprite_path
-        if not full_path.exists():
-            _log.warning("NPC sprite not found: %s", full_path)
-            return None
-        try:
-            return SpriteSheet(full_path)
-        except (pygame.error, OSError, ParseError, KeyError, ValueError) as e:
-            _log.warning("NPC sprite load failed: %s — %s", full_path, e)
-            return None
+        return self._sprite_cache.get(self._scenario_path / sprite_path)

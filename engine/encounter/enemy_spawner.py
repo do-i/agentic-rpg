@@ -9,19 +9,14 @@
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
-from xml.etree.ElementTree import ParseError
-
-import pygame
 
 from engine.encounter.encounter_zone_data import EncounterZone, Formation
 from engine.encounter.encounter_resolver import EncounterResolver
 from engine.encounter.enemy_sprite import EnemySprite
 from engine.world.sprite_sheet import SpriteSheet
+from engine.world.sprite_sheet_cache import SpriteSheetCache
 from engine.util.pseudo_random import PseudoRandom
-
-_log = logging.getLogger(__name__)
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -57,6 +52,7 @@ class EnemySpawner:
         resolver: EncounterResolver,
         scenario_path: Path,
         rng: PseudoRandom,
+        sprite_cache: SpriteSheetCache | None = None,
         tile_size: int = 32,
         boss_tile: dict | None = None,    # {x, y} boss spawn position from TMX boss_enemy layer
         balance=None,                     # BalanceData — spawner modifier values
@@ -67,6 +63,7 @@ class EnemySpawner:
         self._resolver      = resolver
         self._scenario_path = scenario_path
         self._rng           = rng
+        self._sprite_cache  = sprite_cache or SpriteSheetCache()
         self._tile_size     = tile_size
         self._rogue_chase_reduction    = balance.rogue_chase_reduction    if balance else ROGUE_CHASE_REDUCTION
         self._stealth_cloak_reduction  = balance.stealth_cloak_reduction  if balance else STEALTH_CLOAK_REDUCTION
@@ -83,7 +80,6 @@ class EnemySpawner:
         self._all_enemies: list[EnemySprite] = []
         self._elapsed     = 0.0
         self._spawn_timer = 0.0
-        self._sprite_cache: dict[str, SpriteSheet | None] = {}
 
     # ── Public API ────────────────────────────────────────────────
 
@@ -217,14 +213,5 @@ class EnemySpawner:
     # ── Sprite loading ────────────────────────────────────────────
 
     def _load_sprite(self, enemy_id: str) -> SpriteSheet | None:
-        if enemy_id in self._sprite_cache:
-            return self._sprite_cache[enemy_id]
-        sprite_sheet = None
         tsx_path = self._scenario_path / "assets" / "sprites" / "enemies" / f"{enemy_id}.tsx"
-        if tsx_path.exists():
-            try:
-                sprite_sheet = SpriteSheet(tsx_path)
-            except (pygame.error, OSError, ParseError, KeyError, ValueError) as e:
-                _log.warning("Enemy world sprite load failed: %s — %s", tsx_path, e)
-        self._sprite_cache[enemy_id] = sprite_sheet
-        return sprite_sheet
+        return self._sprite_cache.get(tsx_path)

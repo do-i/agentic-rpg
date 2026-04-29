@@ -21,6 +21,7 @@ from engine.scenes.scene_registrar import SceneDeps, register_scenes
 from engine.world.tile_map_factory import TileMapFactory
 from engine.world.npc_loader import NpcLoader
 from engine.world.item_box_loader import ItemBoxLoader
+from engine.world.sprite_sheet_cache import SpriteSheetCache
 from engine.audio.bgm_manager import BgmManager
 from engine.audio.sfx_manager import SfxManager
 from engine.record.recorder import RecordPlaybackManager
@@ -121,8 +122,24 @@ class AppModule(Module):
 
     @provider
     @singleton
-    def provide_npc_loader(self, loader: ManifestLoader, config: EngineConfigData, rng: PseudoRandom) -> NpcLoader:
-        return NpcLoader(scenario_path=loader.scenario_path, tile_size=config.tile_size, rng=rng)
+    def provide_sprite_sheet_cache(self) -> SpriteSheetCache:
+        return SpriteSheetCache()
+
+    @provider
+    @singleton
+    def provide_npc_loader(
+        self,
+        loader: ManifestLoader,
+        config: EngineConfigData,
+        rng: PseudoRandom,
+        sprite_cache: SpriteSheetCache,
+    ) -> NpcLoader:
+        return NpcLoader(
+            scenario_path=loader.scenario_path,
+            tile_size=config.tile_size,
+            rng=rng,
+            sprite_cache=sprite_cache,
+        )
 
     @provider
     @singleton
@@ -200,6 +217,7 @@ class AppModule(Module):
         recorder: RecordPlaybackManager,
         sfx_manager: SfxManager,
         rng: PseudoRandom,
+        sprite_cache: SpriteSheetCache,
     ) -> SceneRegistry:
         registry = SceneRegistry()
         register_scenes(registry, SceneDeps(
@@ -221,6 +239,7 @@ class AppModule(Module):
             recorder=recorder,
             sfx_manager=sfx_manager,
             rng=rng,
+            sprite_cache=sprite_cache,
         ))
         return registry
 

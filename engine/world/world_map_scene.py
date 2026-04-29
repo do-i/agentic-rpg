@@ -91,6 +91,7 @@ class WorldMapScene(Scene):
         balance=None,
         recorder=None,
         rng=None,
+        sprite_cache=None,
     ) -> None:
         self._screen_width = screen_width
         self._screen_height = screen_height
@@ -121,6 +122,7 @@ class WorldMapScene(Scene):
         self._sfx_manager = sfx_manager
         self._recorder = recorder
         self._rng = rng
+        self._sprite_cache = sprite_cache
 
         self._renderer = WorldMapRenderer()
         self._reset_state()
@@ -179,6 +181,7 @@ class WorldMapScene(Scene):
             encounter_manager=self._encounter_manager,
             encounter_resolver=self._encounter_resolver,
             bgm_manager=self._bgm_manager,
+            sprite_cache=self._sprite_cache,
             balance=self._balance,
             rng=self._rng,
             screen_width=self._screen_width,

@@ -37,6 +37,7 @@ from engine.title.title_scene import TitleScene
 from engine.util.pseudo_random import PseudoRandom
 from engine.world.item_box_loader import ItemBoxLoader
 from engine.world.npc_loader import NpcLoader
+from engine.world.sprite_sheet_cache import SpriteSheetCache
 from engine.world.tile_map_factory import TileMapFactory
 from engine.world.world_map_logic import load_magic_cores
 from engine.world.world_map_scene import WorldMapScene
@@ -65,6 +66,7 @@ class SceneDeps:
     recorder: RecordPlaybackManager
     sfx_manager: SfxManager
     rng: PseudoRandom
+    sprite_cache: SpriteSheetCache
 
 
 def register_scenes(registry: SceneRegistry, deps: SceneDeps) -> None:
@@ -123,6 +125,7 @@ def register_scenes(registry: SceneRegistry, deps: SceneDeps) -> None:
             balance=balance,
             recorder=deps.recorder,
             rng=deps.rng,
+            sprite_cache=deps.sprite_cache,
         ))
     registry.register_factory("status",
         lambda: StatusScene(

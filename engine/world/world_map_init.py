@@ -5,12 +5,8 @@
 # WorldMapScene so the scene class can stay focused on per-frame orchestration.
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
 from pathlib import Path
-from xml.etree.ElementTree import ParseError
-
-import pygame
 
 from engine.audio.bgm_manager import BgmManager
 from engine.common.game_state_holder import GameStateHolder
@@ -26,10 +22,9 @@ from engine.world.npc import Npc
 from engine.world.npc_loader import NpcLoader
 from engine.world.player import Player
 from engine.world.sprite_sheet import SpriteSheet
+from engine.world.sprite_sheet_cache import SpriteSheetCache
 from engine.world.tile_map import TileMap
 from engine.world.tile_map_factory import TileMapFactory
-
-_log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -52,6 +47,7 @@ def init_world_map(
     encounter_manager: EncounterManager,
     encounter_resolver: EncounterResolver | None,
     bgm_manager: BgmManager | None,
+    sprite_cache: SpriteSheetCache | None,
     balance,
     rng,
     screen_width: int,
@@ -67,6 +63,8 @@ def init_world_map(
     manifest = loader.load()
     state = holder.get()
     map_id = state.map.current
+    if sprite_cache is None:
+        sprite_cache = SpriteSheetCache()
 
     tmx_path = scenario_path / "assets" / "maps" / f"{map_id}.tmx"
     tile_map = tile_map_factory.create(str(tmx_path))
@@ -75,7 +73,7 @@ def init_world_map(
         screen_width, screen_height,
     )
 
-    sprite_sheet = _load_protagonist_sprite(manifest, scenario_path)
+    sprite_sheet = _load_protagonist_sprite(manifest, scenario_path, sprite_cache)
     player = Player(
         start=state.map.position,
         map_width_px=tile_map.width_px,
@@ -112,6 +110,7 @@ def init_world_map(
         encounter_resolver=encounter_resolver,
         scenario_path=scenario_path,
         rng=rng,
+        sprite_cache=sprite_cache,
         tile_size=tile_size,
         balance=balance,
         global_interval=enemy_spawn_global_interval,
@@ -137,6 +136,7 @@ def _build_spawner(
     encounter_resolver: EncounterResolver | None,
     scenario_path: Path,
     rng,
+    sprite_cache: SpriteSheetCache,
     tile_size: int,
     balance,
     global_interval: float,
@@ -164,22 +164,17 @@ def _build_spawner(
         resolver=encounter_resolver,
         scenario_path=scenario_path,
         rng=rng,
+        sprite_cache=sprite_cache,
         tile_size=tile_size,
         boss_tile=tile_map.boss_spawn_tile,
         balance=balance,
     )
 
 
-def _load_protagonist_sprite(manifest: dict, scenario_path: Path) -> SpriteSheet | None:
+def _load_protagonist_sprite(
+    manifest: dict, scenario_path: Path, sprite_cache: SpriteSheetCache,
+) -> SpriteSheet | None:
     sprite_path = manifest.get("protagonist", {}).get("sprite")
     if not sprite_path:
         return None
-    full_path = scenario_path / sprite_path
-    if not full_path.exists():
-        _log.warning("protagonist sprite not found: %s", full_path)
-        return None
-    try:
-        return SpriteSheet(full_path)
-    except (pygame.error, OSError, ParseError, KeyError, ValueError) as e:
-        _log.warning("protagonist sprite load failed: %s — %s", full_path, e)
-        return None
+    return sprite_cache.get(scenario_path / sprite_path)
