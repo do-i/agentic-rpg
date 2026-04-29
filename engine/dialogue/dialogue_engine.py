@@ -93,10 +93,17 @@ class DialogueEngine:
 
         # give_items
         for gift in on_complete.get("give_items", []):
-            item_id = gift.get("id")
-            qty = gift.get("qty", 1)
-            if item_id:
-                repository.add_item(item_id, qty)
+            if "id" not in gift:
+                raise ValueError(
+                    f"on_complete.give_items entry missing required field 'id': {gift!r}. "
+                    f"Example:\n  give_items:\n    - id: potion\n      qty: 3"
+                )
+            if "qty" not in gift:
+                raise ValueError(
+                    f"on_complete.give_items[{gift['id']!r}] missing required field 'qty'. "
+                    f"Example:\n  give_items:\n    - id: {gift['id']}\n      qty: 1"
+                )
+            repository.add_item(gift["id"], gift["qty"])
 
         # pass through to caller
         for key in ("join_party", "transition", "start_battle", "open_shop", "open_inn", "open_apothecary"):
