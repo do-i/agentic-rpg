@@ -210,6 +210,22 @@ class TestApplyTransition:
         ordered = [name for name, *_ in manager.mock_calls]
         assert ordered.index("move_to") < ordered.index("save")
 
+    def test_skips_save_on_same_map(self):
+        """Intra-map portal (target == current) should move but not autosave."""
+        holder = MagicMock()
+        state = MagicMock()
+        state.map.current = "town_01"
+        holder.get.return_value = state
+
+        gsm = MagicMock()
+        player = MagicMock()
+        player.tile_position = Position(0, 0)
+
+        apply_transition(holder, gsm, player, {"map": "town_01", "position": [5, 6]})
+
+        state.map.move_to.assert_called_once_with("town_01", Position(5, 6))
+        gsm.save.assert_not_called()
+
     def test_missing_map_raises(self):
         holder = MagicMock()
         gsm = MagicMock()

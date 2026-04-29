@@ -135,14 +135,21 @@ def check_portals(tile_map: TileMap, player: Player) -> dict | None:
 
 def apply_transition(holder: GameStateHolder, game_state_manager: GameStateManager,
                      player: Player, transition: dict) -> None:
-    """Save state and update map position for a transition."""
+    """Update map position for a transition; autosave only when the map id changes.
+
+    Skipping the autosave on intra-map portals avoids redundant full YAML writes
+    for teleports that don't represent meaningful progression.
+    """
     if "position" not in transition:
         raise KeyError(f"transition missing required field 'position': {transition!r}")
     if "map" not in transition:
         raise KeyError(f"transition missing required field 'map': {transition!r}")
     state = holder.get()
-    state.map.move_to(transition["map"], Position.from_list(transition["position"]))
-    game_state_manager.save(state, slot_index=0)
+    target_map = transition["map"]
+    map_changed = target_map != state.map.current
+    state.map.move_to(target_map, Position.from_list(transition["position"]))
+    if map_changed:
+        game_state_manager.save(state, slot_index=0)
 
 
 def load_inn_cost(scenario_path: Path, map_id: str) -> int:
