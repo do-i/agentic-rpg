@@ -9,16 +9,6 @@ Status legend: 🟥 not started · 🟨 in progress · ❓ decision needed
 
 ## Code decisions (need user input)
 
-### 4. ❓ Item filter tabs (All/Recovery/Status/Battle/Key)
-`screen.md` specifies filter tabs in the item screen; current UI shows a
-tag list but no tab filter.
-
-- A. Implement the tab filter in `item_renderer.py`.
-- B. Drop from `screen.md`; current tag list is enough.
-- C. Other.
-
-**Answer:** A
-
 ### 5. ❓ Sell price = 0.5 × buy default rule
 `equipment.md` claims `sell_price` is auto-derived as half of `buy_price`;
 code stores `sell_price` explicitly per item.
