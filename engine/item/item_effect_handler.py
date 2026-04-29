@@ -38,12 +38,21 @@ class ItemEffectHandler:
     def _load(self, path: Path) -> None:
         data = load_yaml_optional(path) or []
         for entry in data:
-            item_id = entry.get("id")
-            if not item_id:
-                continue
+            if "id" not in entry:
+                raise ValueError(
+                    f"{path.name}: field-use entry missing required field 'id'. "
+                    f"Example:\n  - id: potion\n    effect: restore_hp\n    amount: 30"
+                )
+            item_id = entry["id"]
+            if "effect" not in entry:
+                raise ValueError(
+                    f"item {item_id!r} ({path.name}): missing required field 'effect'. "
+                    f"Valid: restore_hp | restore_mp | restore_full | cure | revive. "
+                    f"Example:\n  effect: restore_hp"
+                )
             self._defs[item_id] = FieldItemDef(
                 id=item_id,
-                effect=entry.get("effect", ""),
+                effect=entry["effect"],
                 target=entry.get("target", "single_alive"),
                 amount=entry.get("amount", 0),
                 cures=entry.get("cures", []),
