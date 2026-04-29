@@ -9,16 +9,6 @@ Status legend: 🟥 not started · 🟨 in progress · ❓ decision needed
 
 ## Code decisions (need user input)
 
-### 2. ❓ Ultimate-spell story-flag gate
-`spells.md` says ultimates (lvl 46/48/50/52) are gated by a story flag;
-class YAMLs only check `unlock_level`.
-
-- A. Add a flag-gate at spell unlock (extend resolver + class YAML).
-- B. Drop the gate from `spells.md`; level alone unlocks.
-- C. Other.
-
-**Answer:** A
-
 ### 3. ❓ Inn-triggered shop restock
 `shop.md` claims "every rest triggers full restock"; `InnScene` does not
 call into shop state.
