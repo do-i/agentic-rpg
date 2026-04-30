@@ -15,8 +15,6 @@ Verification passes against the codebase. Each resolves to either
 - 🟥 Build item shop sell UI (bag.md). `RepositoryState.sell_item`
   exists but no UI calls it; bag.md spec says sell list filters by
   tag and hides locked items.
-- 🟥 Phoenix-Down-equivalent KO-revive item exists in
-  `consumables_recovery.yaml` (party.md).
 
 ❓ **Q1.** Run all spot checks now in one pass, or wait until you flag a
 specific one?
