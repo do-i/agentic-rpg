@@ -7,17 +7,6 @@ Status legend: 🟥 not started · 🟨 in progress · ❓ decision needed
 
 ---
 
-## 1. Spot checks
-
-Verification passes against the codebase. Each resolves to either
-"confirmed, delete this line" or "found a gap, file a fix."
-
-- 🟥 Build item shop sell UI (bag.md). `RepositoryState.sell_item`
-  exists but no UI calls it; bag.md spec says sell list filters by
-  tag and hides locked items.
-
----
-
 ## 2. Code review follow-ups
 
 ### 2.1 Trivial cleanups (can land any time)

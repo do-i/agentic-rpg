@@ -76,6 +76,10 @@ class ItemShopRenderer:
         selected: dict | None,
         owned_qty: Callable[[str], int],
         display_name: Callable[[dict], str],
+        *,
+        mode: str = "buy",
+        row_price: Callable[[dict], int] | None = None,
+        sell_tag: str | None = None,
     ) -> None:
         if not self._fonts_ready:
             self._init_fonts()
@@ -91,9 +95,14 @@ class ItemShopRenderer:
         draw_dim_overlay(screen)
         draw_modal_box(screen, mx, my, MODAL_W, mh, C_BORDER)
 
+        if mode == "buy":
+            title_text = "Item Shop — Buy"
+        else:
+            tag_label = f"[{sell_tag}]" if sell_tag else "[All]"
+            title_text = f"Item Shop — Sell {tag_label}"
         draw_shop_header(
             screen, mx, my, MODAL_W,
-            title_text="Item Shop",
+            title_text=title_text,
             title_color=C_HEADER,
             gp=gp,
             gp_color=C_GP,
@@ -109,20 +118,31 @@ class ItemShopRenderer:
         list_rect = pygame.Rect(mx, list_y, MODAL_W, list_h)
 
         if not avail:
-            empty = self._font_hint.render("No items available.", True, C_DIM)
+            empty_msg = (
+                "No items available." if mode == "buy"
+                else "Nothing to sell."
+            )
+            empty = self._font_hint.render(empty_msg, True, C_DIM)
             screen.blit(empty, (mx + PAD, list_y + 16))
         else:
-            rows = [self._build_row(item, gp, owned_qty, display_name) for item in avail]
+            rows = [
+                self._build_row(item, gp, owned_qty, display_name, mode, row_price)
+                for item in avail
+            ]
             self._view.render(screen, list_rect, rows, list_sel, scroll, active=(state == "list"))
 
+        footer_hint = (
+            "TAB sell · ENTER buy · ESC close" if mode == "buy"
+            else "TAB buy · T tag · ENTER sell · ESC close"
+        )
         draw_footer(
             screen, mx, my + mh - FOOTER_H - 4, MODAL_W, PAD,
-            "select · ENTER buy · ESC close", self._font_hint,
+            footer_hint, self._font_hint,
         )
 
         if state == "qty" and selected:
             self._draw_qty_overlay(
-                screen, mx, my, mh, selected, qty, gp, display_name,
+                screen, mx, my, mh, selected, qty, gp, display_name, mode, row_price,
             )
         elif state == "popup":
             draw_popup(
@@ -138,15 +158,26 @@ class ItemShopRenderer:
         gp: int,
         owned_qty: Callable[[str], int],
         display_name: Callable[[dict], str],
+        mode: str,
+        row_price: Callable[[dict], int] | None,
     ) -> ItemRow:
-        price = item["buy_price"]
-        affordable = price <= gp
-        owned = owned_qty(item["id"])
+        price = row_price(item) if row_price else item["buy_price"]
+        if mode == "buy":
+            affordable = price <= gp
+            owned = owned_qty(item["id"])
+            return ItemRow(
+                title=display_name(item),
+                subtitle=f"owned: {owned}",
+                right_text=f"{price:,} GP",
+                locked=not affordable,
+            )
+        # sell mode: row already carries owned qty
+        owned = item.get("owned", 0)
         return ItemRow(
             title=display_name(item),
             subtitle=f"owned: {owned}",
             right_text=f"{price:,} GP",
-            locked=not affordable,
+            locked=False,
         )
 
     # ── Qty overlay ──────────────────────────────────────────
@@ -161,8 +192,10 @@ class ItemShopRenderer:
         qty: int,
         gp: int,
         display_name: Callable[[dict], str],
+        mode: str,
+        row_price: Callable[[dict], int] | None,
     ) -> None:
-        price = sel["buy_price"]
+        price = row_price(sel) if row_price else sel["buy_price"]
         total = qty * price
 
         ow, oh = MODAL_W - 40, 120
@@ -188,13 +221,16 @@ class ItemShopRenderer:
         screen.blit(right_s, (cx + left_s.get_width() + num_s.get_width(), cy))
 
         # total price
-        col = C_WARN if total > gp else C_GP
-        total_s = self._font_row.render(f"Total: {total:,} GP", True, col)
-        screen.blit(total_s, (ox + 20, oy + 76))
-
-        if total > gp:
-            warn = self._font_hint.render("Not enough GP", True, C_WARN)
-            screen.blit(warn, (ox + ow - warn.get_width() - 20, oy + 80))
+        if mode == "buy":
+            col = C_WARN if total > gp else C_GP
+            total_s = self._font_row.render(f"Total: {total:,} GP", True, col)
+            screen.blit(total_s, (ox + 20, oy + 76))
+            if total > gp:
+                warn = self._font_hint.render("Not enough GP", True, C_WARN)
+                screen.blit(warn, (ox + ow - warn.get_width() - 20, oy + 80))
+        else:
+            total_s = self._font_row.render(f"Receive: {total:,} GP", True, C_GP)
+            screen.blit(total_s, (ox + 20, oy + 76))
 
         hint = self._font_hint.render(
             "qty ±1    qty ±5    ENTER confirm    ESC back",
