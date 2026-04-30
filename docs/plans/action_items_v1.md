@@ -23,19 +23,6 @@ Verification passes against the codebase. Each resolves to either
 ### 2.1 Trivial cleanups (can land any time)
 
 
-### 2.3 Larger refactors still on the plan ❓
-
-- §4.3 — `battle_renderer` panel split
-
-❓ **Q3.** Which of these block v1?
-- (a) All four — land before shipping.
-- (b) None — defer all to post-v1.
-- (c) Only one or two (specify which).
-
-Answer: a
-
----
-
 ## 3. Scenario / asset work
 
 ### 3.1 Maps ❓
