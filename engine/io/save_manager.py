@@ -1,5 +1,7 @@
 # engine/io/save_manager.py
 
+from __future__ import annotations
+
 import binascii
 import logging
 from datetime import datetime

@@ -22,8 +22,6 @@ Verification passes against the codebase. Each resolves to either
 
 ### 2.1 Trivial cleanups (can land any time)
 
-- 🟥 `engine/io/save_manager.py` missing `from __future__ import
-  annotations` (relies on PEP 649 pinned by `pyproject.toml >=3.14.3`).
 
 ### 2.2 pygame / Python 3.14 wheel gap ❓
 
