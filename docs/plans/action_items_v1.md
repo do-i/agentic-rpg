@@ -7,11 +7,6 @@ Status legend: 🟥 not started · 🟨 in progress · ❓ decision needed
 
 ---
 
-## 2. Code review follow-ups
-
-### 2.1 Trivial cleanups (can land any time)
-
-
 ## 3. Scenario / asset work
 
 ### 3.1 Maps ❓

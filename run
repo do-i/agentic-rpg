@@ -15,6 +15,7 @@ usage() {
     echo "  replay        Playback a recording (./run play <seed>)"
     echo "  test          Run tests (./run test [pytest args...])"
     echo "  validate      Run data validation"
+    echo "  maps          Render interactive map-connections HTML and open it"
     echo ""
 }
 
@@ -61,6 +62,15 @@ case "$cmd" in
         ;;
     validate)
         exec "$SCRIPT_DIR/tests/tools/validate.py" "$@"
+        ;;
+    maps)
+        OUT="${OUT:-$SCRIPT_DIR/maps_graph.html}"
+        python "$SCRIPT_DIR/tools/visualize_maps.py" \
+            --root "$SCRIPT_DIR/rusted_kingdoms" \
+            --out "$OUT" "$@"
+        if command -v xdg-open >/dev/null 2>&1; then
+            xdg-open "$OUT" >/dev/null 2>&1 &
+        fi
         ;;
     ""|help|--help|-h)
         usage

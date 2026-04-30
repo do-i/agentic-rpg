@@ -1,0 +1,59 @@
+# Color palette for tools/visualize_maps.py
+# Edit values here to retheme the generated HTML — no code changes needed.
+
+ui:
+  background: "#1b1d24"        # body background
+  graph_bg: "#11131a"          # graph canvas
+  panel_bg: "#222633"          # right detail panel
+  border: "#2e3340"            # panel/border separators
+  splitter: "#3a3f4f"
+  splitter_hover: "#e8b96b"
+  text: "#e8e6df"
+  text_muted: "#8a8e98"
+  heading: "#e8b96b"           # warm gold — h2 titles, highlights
+  subheading: "#a8a8b2"        # h1 small caps
+  link: "#9ec1e0"
+  code_bg: "#1f2230"
+  code_text: "#d8d4c8"
+  empty: "#5e6470"
+  screenshot_border: "#2e3340"
+  lightbox_bg: "rgba(0,0,0,0.85)"
+
+edge:
+  line: "#5b6170"
+  highlight: "#e8b96b"
+  label_bg: "#f5e6c8"          # parchment
+  label_text: "#1b1d24"
+
+# node style by id-prefix classifier (see classify() in JS)
+node:
+  default:
+    color: "#4a4f5c"
+    shape: "dot"
+  missing:
+    color: "#7a3535"
+    shape: "dot"
+    border: "#c25a5a"
+  zone:
+    color: "#3e6b3a"
+    shape: "ellipse"
+  port:
+    color: "#2f5d7d"
+    shape: "box"
+  building:
+    color: "#5e3a6e"
+    shape: "box"
+  town:
+    color: "#7a5a2a"
+    shape: "box"
+  label_text: "#f5f1e6"
+  border: "#1b1d24"
+  border_selected: "#e8b96b"
+
+badge:
+  default_bg: "#3a3f4f"
+  inn_bg: "#6a4a9a"
+  shop_bg: "#3a7e4a"
+  apothecary_bg: "#8a5d3a"
+  transport_bg: "#3a6a8a"
+  text: "#f5f1e6"
