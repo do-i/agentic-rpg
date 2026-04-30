@@ -12,8 +12,6 @@ Status legend: 🟥 not started · 🟨 in progress · ❓ decision needed
 Verification passes against the codebase. Each resolves to either
 "confirmed, delete this line" or "found a gap, file a fix."
 
-- 🟥 `boss_move_sets/<id>.yaml` resolves through the enemy loader
-  (enemy.md).
 - 🟥 `BarrierEnemy.requires_item` is wired to item present-check, not
   consumption (enemy.md).
 - 🟥 Enemy targeting overrides (`random_alive`, `lowest_hp`,
