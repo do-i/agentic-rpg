@@ -109,6 +109,8 @@ class InnScene(MenuSfxMixin, Scene):
         for member in state.party.members:
             member.hp = member.hp_max
             member.mp = member.mp_max
+            if hasattr(member, "status_effects"):
+                member.status_effects = []
         self._state       = "popup"
 
     # ── Update ────────────────────────────────────────────────
