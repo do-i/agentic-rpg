@@ -53,35 +53,6 @@ Need more TMX map files for v1.
 
 Answer: full @docs/scenario/high-level.md
 
-### 3.2 Tile attribution ❓
-
-Tag each tile with hints for AI-agent navigation.
-
-❓ **Q5.** What attribution scheme?
-- (a) Per-tile properties in the `.tsx` file (e.g. `walkable`,
-  `terrain_type`, `cover`).
-- (b) Sidecar YAML keyed by tile GID.
-- (c) Custom Tiled object layer with semantic regions.
-- (d) Defer until the AI-agent feature is scoped.
-
-Answer:
-
-### 3.3 SKILLs prompt update 🟥
-
-Update the SKILLs prompt to enforce: *"no hardcoded method-param
-defaults; if a YAML value is missing, raise with file name, property
-name, and an example."*
-
-(This is already in your auto-memory as a feedback rule — extending it
-to SKILLs prompts is straightforward.)
-
-❓ **Q6.** Which SKILLs need updating?
-- (a) All scaffolding skills (`scaffold-content`, `new-scene`).
-- (b) Only `scaffold-content`.
-- (c) Point me at a specific skill file.
-
-Answer:
-
 ### 3.4 `unlock_flag` chain wiring ❓
 
 Wire `story_quest_started` → `story_act2_started` → ... from real NPC
@@ -93,4 +64,4 @@ fires at the right story beats.
 - (b) Just the apothecary unlock — leave later acts as TODO.
 - (c) Stub flags only; defer narrative wiring post-v1.
 
-Answer:
+Answer: a
