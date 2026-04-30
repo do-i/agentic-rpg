@@ -1,5 +1,7 @@
 # tests/unit/core/spell/test_spell_scene.py
 
+from __future__ import annotations
+
 import pytest
 import pygame
 from unittest.mock import MagicMock

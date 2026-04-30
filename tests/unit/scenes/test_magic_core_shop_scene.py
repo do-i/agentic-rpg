@@ -1,5 +1,7 @@
 # tests/unit/core/scenes/test_magic_core_shop_scene.py
 
+from __future__ import annotations
+
 from unittest.mock import MagicMock
 
 from engine.party.repository_state import RepositoryState

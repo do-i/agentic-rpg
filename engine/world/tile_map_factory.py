@@ -1,5 +1,7 @@
 # engine/world/tile_map_factory.py
 
+from __future__ import annotations
+
 from engine.world.tile_map import TileMap
 
 

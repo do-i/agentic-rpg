@@ -1,5 +1,7 @@
 # tests/unit/world/test_portal.py
 
+from __future__ import annotations
+
 from engine.world.portal_data import Portal
 from engine.world.position_data import Position
 

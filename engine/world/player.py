@@ -1,5 +1,7 @@
 # engine/world/player.py
 
+from __future__ import annotations
+
 import pygame
 from engine.world.position_data import Position
 from engine.world.collision import CollisionMap

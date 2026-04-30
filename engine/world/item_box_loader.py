@@ -1,5 +1,7 @@
 # engine/world/item_box_loader.py
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
 from xml.etree.ElementTree import ParseError

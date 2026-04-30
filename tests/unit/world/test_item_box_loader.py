@@ -1,5 +1,7 @@
 # tests/unit/world/test_item_box_loader.py
 
+from __future__ import annotations
+
 from pathlib import Path
 from unittest.mock import MagicMock
 

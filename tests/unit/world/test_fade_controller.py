@@ -1,5 +1,7 @@
 # tests/unit/world/test_fade_controller.py
 
+from __future__ import annotations
+
 from engine.world.fade_controller import FADE_SPEED, FadeController
 
 

@@ -1,5 +1,7 @@
 # tests/unit/core/state/test_opened_boxes_state.py
 
+from __future__ import annotations
+
 from engine.common.opened_boxes_state import OpenedBoxesState
 
 

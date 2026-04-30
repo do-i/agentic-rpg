@@ -3,6 +3,8 @@
 # Re-exports for backwards compatibility.
 # DTOs live in engine.encounter.encounter_zone_data, loader in engine.encounter.encounter_zone_loader.
 
+from __future__ import annotations
+
 from engine.encounter.encounter_zone_data import (
     Formation,
     EncounterSet,

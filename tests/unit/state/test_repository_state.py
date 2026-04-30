@@ -1,5 +1,7 @@
 # tests/unit/core/state/test_repository_state.py
 
+from __future__ import annotations
+
 import pytest
 from engine.item.item_entry_state import ItemEntry
 from engine.party.repository_state import (

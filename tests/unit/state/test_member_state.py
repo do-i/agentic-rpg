@@ -1,5 +1,7 @@
 # tests/unit/core/state/test_member_state.py
 
+from __future__ import annotations
+
 import pytest
 
 from engine.party.member_state import MemberState

@@ -1,5 +1,7 @@
 # engine/scenes/dialogue_scene.py
 
+from __future__ import annotations
+
 import pygame
 from engine.common.scene.scene import Scene
 from engine.dialogue.dialogue_engine import DialogueResult

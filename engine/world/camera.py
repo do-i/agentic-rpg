@@ -1,5 +1,7 @@
 # engine/world/camera.py
 
+from __future__ import annotations
+
 from engine.world.position_data import Position
 
 

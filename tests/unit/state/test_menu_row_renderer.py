@@ -3,6 +3,8 @@
 # Smoke tests for the shared MenuRowRenderer helper. The renderer is pure
 # pygame drawing so we assert pixel sampling at a few known offsets.
 
+from __future__ import annotations
+
 import pytest
 import pygame
 

@@ -1,5 +1,7 @@
 # engine/io/portal_loader.py
 
+from __future__ import annotations
+
 import pytmx
 from engine.world.portal_data import Portal
 from engine.world.position_data import Position

@@ -1,5 +1,7 @@
 # engine/io/manifest_loader.py
 
+from __future__ import annotations
+
 from pathlib import Path
 
 from engine.io.yaml_loader import load_yaml_required_cached

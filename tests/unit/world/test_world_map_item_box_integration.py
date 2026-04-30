@@ -3,6 +3,8 @@
 # Light integration between world_map_logic helpers, ItemBox,
 # OpenedBoxesState, and RepositoryState.
 
+from __future__ import annotations
+
 from types import SimpleNamespace
 
 from engine.common.flag_state import FlagState

@@ -1,5 +1,7 @@
 # tests/unit/core/state/test_game_state_holder.py
 
+from __future__ import annotations
+
 import pytest
 from unittest.mock import patch
 from pathlib import Path

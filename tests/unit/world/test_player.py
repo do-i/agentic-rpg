@@ -1,5 +1,7 @@
 # tests/unit/core/world/test_player.py
 
+from __future__ import annotations
+
 import math
 import pytest
 import pygame

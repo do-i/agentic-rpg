@@ -3,6 +3,8 @@
 # DTO smoke tests — confirm the dataclasses are immutable, accept defaults,
 # and that EncounterSet.total_weight sums correctly.
 
+from __future__ import annotations
+
 import pytest
 from dataclasses import FrozenInstanceError
 

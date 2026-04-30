@@ -4,6 +4,8 @@
 # damage-float surface cache, KO-ghost cache, hit-flash overlay cache, and
 # the fade / quit-dim overlays in WorldMapRenderer.
 
+from __future__ import annotations
+
 import pygame
 import pytest
 from unittest.mock import MagicMock, patch

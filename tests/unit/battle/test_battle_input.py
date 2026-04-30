@@ -1,5 +1,7 @@
 # tests/unit/core/battle/test_battle_input.py
 
+from __future__ import annotations
+
 import pygame
 import pytest
 from unittest.mock import MagicMock

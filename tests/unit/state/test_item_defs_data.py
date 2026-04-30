@@ -1,5 +1,7 @@
 # tests/unit/core/state/test_item_defs_data.py
 
+from __future__ import annotations
+
 import pytest
 from dataclasses import FrozenInstanceError
 

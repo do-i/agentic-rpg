@@ -1,5 +1,7 @@
 # engine/dto/portal.py
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from engine.world.position_data import Position
 

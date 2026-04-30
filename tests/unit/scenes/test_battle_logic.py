@@ -1,5 +1,7 @@
 # tests/unit/core/scenes/test_battle_logic.py
 
+from __future__ import annotations
+
 import pytest
 from unittest.mock import MagicMock, patch
 

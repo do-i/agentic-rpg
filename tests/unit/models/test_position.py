@@ -1,5 +1,7 @@
 # tests/unit/core/models/test_position.py
 
+from __future__ import annotations
+
 import math
 import pytest
 from engine.world.position_data import Position

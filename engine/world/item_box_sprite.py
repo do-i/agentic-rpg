@@ -1,5 +1,7 @@
 # engine/world/item_box_sprite.py
 
+from __future__ import annotations
+
 from pathlib import Path
 from xml.etree import ElementTree
 

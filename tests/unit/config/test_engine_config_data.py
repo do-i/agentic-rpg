@@ -1,5 +1,7 @@
 # tests/unit/core/config/test_engine_config_data.py
 
+from __future__ import annotations
+
 import pytest
 import yaml
 from pathlib import Path

@@ -1,5 +1,7 @@
 # tests/unit/core/record/test_recorder.py
 
+from __future__ import annotations
+
 import pickle
 from collections import defaultdict
 

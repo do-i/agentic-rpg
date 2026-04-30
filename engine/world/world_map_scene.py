@@ -6,6 +6,8 @@
 # loading lives in world_map_init, battle launch in world_map_battle_launcher,
 # fade alpha in fade_controller, and overlay routing in world_map_overlays.
 
+from __future__ import annotations
+
 import pygame
 
 from engine.audio.bgm_manager import BgmManager

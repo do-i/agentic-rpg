@@ -3,6 +3,8 @@
 # Smoke tests for BgmManager: index parsing, key resolution, and the
 # enabled gate. Actual pygame.mixer.music calls are patched out.
 
+from __future__ import annotations
+
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 

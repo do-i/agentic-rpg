@@ -1,5 +1,7 @@
 # tests/unit/world/test_tile_map.py
 
+from __future__ import annotations
+
 import pygame
 import pytest
 import pytmx

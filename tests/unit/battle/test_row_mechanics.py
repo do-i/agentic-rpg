@@ -3,6 +3,8 @@
 # Front/back row + attack_range — covers the four cases in
 # docs/design/battle.md's summary table.
 
+from __future__ import annotations
+
 from engine.battle.battle_state import BattleState
 from engine.battle.combatant import Combatant
 from engine.battle.action_resolver import resolve_action

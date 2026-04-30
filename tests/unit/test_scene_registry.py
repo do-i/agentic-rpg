@@ -1,5 +1,7 @@
 # tests/unit/core/test_scene_registry.py
 
+from __future__ import annotations
+
 import pytest
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.scene.scene import Scene

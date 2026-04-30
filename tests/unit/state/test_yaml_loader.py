@@ -1,5 +1,7 @@
 # tests/unit/core/state/test_yaml_loader.py
 
+from __future__ import annotations
+
 import pytest
 import yaml
 

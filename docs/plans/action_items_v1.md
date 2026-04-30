@@ -23,22 +23,6 @@ Verification passes against the codebase. Each resolves to either
 ### 2.1 Trivial cleanups (can land any time)
 
 
-### 2.2 pygame / Python 3.14 wheel gap ❓
-
-`pygame==2.6.1` has no Python 3.14 wheels, so CI cannot install on the
-declared Python version.
-
-❓ **Q2.** How do you want to resolve this?
-- (a) Downgrade `pyproject.toml` Python pin to 3.13 (drop PEP 649
-  reliance — re-add `from __future__ import annotations` where needed).
-- (b) Switch to `pygame-ce` (community edition usually has earlier
-  wheel releases for new Python versions).
-- (c) Wait for upstream `pygame` 3.14 wheels; mark CI Python as 3.13
-  for now while leaving runtime declaration at 3.14.
-- (d) Build pygame from source in CI.
-
-Answer:
-
 ### 2.3 Larger refactors still on the plan ❓
 
 - §4.3 — `battle_renderer` panel split
@@ -51,7 +35,7 @@ Answer:
 - (b) None — defer all to post-v1.
 - (c) Only one or two (specify which).
 
-Answer:
+Answer: a
 
 ---
 
@@ -67,7 +51,7 @@ Need more TMX map files for v1.
 - (c) Full Act 1 coverage (specify regions).
 - (d) You'll author them; I just stand by.
 
-Answer:
+Answer: full @docs/scenario/high-level.md
 
 ### 3.2 Tile attribution ❓
 

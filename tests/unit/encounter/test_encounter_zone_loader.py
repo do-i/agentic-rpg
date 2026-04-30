@@ -1,5 +1,7 @@
 # tests/unit/core/encounter/test_encounter_zone_loader.py
 
+from __future__ import annotations
+
 from pathlib import Path
 
 import pytest

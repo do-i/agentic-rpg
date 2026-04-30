@@ -1,5 +1,7 @@
 # tests/unit/core/state/test_flag_state.py
 
+from __future__ import annotations
+
 import pytest
 from engine.common.flag_state import FlagState
 

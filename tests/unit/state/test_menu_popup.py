@@ -2,6 +2,8 @@
 #
 # Smoke tests for the shared MenuPopup helper.
 
+from __future__ import annotations
+
 import pytest
 import pygame
 

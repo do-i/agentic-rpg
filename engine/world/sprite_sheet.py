@@ -1,5 +1,7 @@
 # engine/world/sprite_sheet.py
 
+from __future__ import annotations
+
 from enum import IntEnum
 from pathlib import Path
 from xml.etree import ElementTree

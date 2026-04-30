@@ -1,5 +1,7 @@
 # engine/scenes/scene.py
 
+from __future__ import annotations
+
 import pygame
 
 # owns scene switching, nothing else. Scenes are the building blocks:

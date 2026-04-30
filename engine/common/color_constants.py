@@ -2,6 +2,8 @@
 #
 # Shared UI color constants and thresholds used across multiple renderers.
 
+from __future__ import annotations
+
 C_BG       = (13,  13,  26)
 C_TEXT     = (238, 238, 238)
 C_TEXT_MUT = (170, 170, 170)

@@ -1,6 +1,8 @@
 # engine/common/opened_boxes_state.py
 
 
+from __future__ import annotations
+
 class OpenedBoxesState:
     """
     Tracks which item boxes the party has already opened.

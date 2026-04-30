@@ -1,5 +1,7 @@
 # tests/unit/world/test_sprite_sheet_cache.py
 
+from __future__ import annotations
+
 from pathlib import Path
 from unittest.mock import patch
 

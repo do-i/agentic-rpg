@@ -1,5 +1,7 @@
 # engine/scenes/title_scene.py
 
+from __future__ import annotations
+
 import pygame
 from engine.audio.bgm_manager import BgmManager
 from engine.common.font_provider import get_fonts

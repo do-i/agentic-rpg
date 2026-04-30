@@ -1,5 +1,7 @@
 # tests/unit/core/equipment/test_equipment_logic.py
 
+from __future__ import annotations
+
 import pytest
 
 from engine.party.member_state import MemberState

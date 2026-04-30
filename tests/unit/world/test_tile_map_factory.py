@@ -1,5 +1,7 @@
 # tests/unit/world/test_tile_map_factory.py
 
+from __future__ import annotations
+
 from unittest.mock import patch, MagicMock
 
 from engine.world.tile_map_factory import TileMapFactory

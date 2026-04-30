@@ -1,5 +1,7 @@
 # tests/unit/core/scenes/test_status_logic.py
 
+from __future__ import annotations
+
 import pytest
 from unittest.mock import patch, MagicMock
 from pathlib import Path

@@ -3,6 +3,8 @@
 # Smoke tests for SfxManager: index parsing, play() gate, and the
 # play_battle_action dispatcher. Real pygame.mixer.Sound is patched out.
 
+from __future__ import annotations
+
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 

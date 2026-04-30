@@ -1,5 +1,7 @@
 # engine/main.py
 
+from __future__ import annotations
+
 import argparse
 import pygame
 from injector import Injector

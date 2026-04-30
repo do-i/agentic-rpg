@@ -1,5 +1,7 @@
 # tests/unit/core/battle/test_battle_rewards.py
 
+from __future__ import annotations
+
 import pytest
 from engine.battle.battle_rewards import (
     RewardCalculator, exp_required, LevelUpResult,

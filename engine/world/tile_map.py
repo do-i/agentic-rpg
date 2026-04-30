@@ -1,5 +1,7 @@
 # engine/world/tile_map.py
 
+from __future__ import annotations
+
 import pytmx
 import pygame
 from engine.world.collision import CollisionMap

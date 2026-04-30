@@ -1,5 +1,7 @@
 # tests/unit/world/test_sprite_sheet.py
 
+from __future__ import annotations
+
 import pytest
 import pygame
 from pathlib import Path

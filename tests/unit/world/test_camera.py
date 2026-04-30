@@ -1,5 +1,7 @@
 # tests/unit/world/test_camera.py
 
+from __future__ import annotations
+
 import pytest
 from engine.world.camera import Camera
 from engine.world.position_data import Position

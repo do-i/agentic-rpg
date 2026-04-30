@@ -1,5 +1,7 @@
 # tests/unit/world/test_item_box.py
 
+from __future__ import annotations
+
 from engine.common.flag_state import FlagState
 from engine.world.item_box import ItemBox
 from engine.world.position_data import Position

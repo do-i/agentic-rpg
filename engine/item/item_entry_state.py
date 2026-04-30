@@ -1,6 +1,8 @@
 # engine/dto/item_entry.py
 
 
+from __future__ import annotations
+
 class ItemEntry:
     """Single item stack in the Party Repository."""
 

@@ -1,5 +1,7 @@
 # tests/unit/core/state/test_game_state_loader.py
 
+from __future__ import annotations
+
 import pytest
 import yaml
 from pathlib import Path

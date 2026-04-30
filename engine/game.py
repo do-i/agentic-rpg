@@ -1,5 +1,7 @@
 # engine/game.py
 
+from __future__ import annotations
+
 import pygame
 from engine.settings.engine_config_data import EngineConfigData
 from engine.util.frame_clock import FrameClock

@@ -1,5 +1,7 @@
 # tests/unit/core/state/test_playtime.py
 
+from __future__ import annotations
+
 from datetime import datetime
 import pytest
 from engine.util.clock import FakeClock

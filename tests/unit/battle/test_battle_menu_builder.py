@@ -1,5 +1,7 @@
 # tests/unit/core/battle/test_battle_menu_builder.py
 
+from __future__ import annotations
+
 from unittest.mock import MagicMock
 
 from engine.battle.combatant import Combatant

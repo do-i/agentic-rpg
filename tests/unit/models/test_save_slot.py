@@ -1,5 +1,7 @@
 # tests/unit/core/models/test_save_slot.py
 
+from __future__ import annotations
+
 import pytest
 from pathlib import Path
 from engine.common.save_slot_data import SaveSlot

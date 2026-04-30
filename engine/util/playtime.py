@@ -1,5 +1,7 @@
 # engine/util/playtime.py
 
+from __future__ import annotations
+
 from datetime import datetime
 from engine.util.clock import Clock, SystemClock
 

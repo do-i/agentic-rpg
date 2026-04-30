@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import pickle
 import pygame.locals as _pg_locals

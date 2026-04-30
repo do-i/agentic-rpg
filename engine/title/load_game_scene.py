@@ -1,5 +1,7 @@
 # engine/scenes/load_game_scene.py
 
+from __future__ import annotations
+
 import pygame
 from engine.common.scene.scene import Scene
 from engine.common.font_provider import get_fonts

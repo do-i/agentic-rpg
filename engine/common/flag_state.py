@@ -1,6 +1,8 @@
 # engine/dto/flag_state.py
 
 
+from __future__ import annotations
+
 class FlagState:
     """
     Boolean flag registry.

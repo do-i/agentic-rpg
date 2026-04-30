@@ -1,5 +1,7 @@
 # engine/dto/position.py
 
+from __future__ import annotations
+
 import math
 
 

@@ -1,5 +1,7 @@
 # tests/unit/state/test_map_state.py
 
+from __future__ import annotations
+
 import pytest
 from engine.world.position_data import Position
 from engine.common.map_state import MapState

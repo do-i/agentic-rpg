@@ -1,5 +1,7 @@
 # tests/unit/core/state/test_weighted_pick.py
 
+from __future__ import annotations
+
 from engine.util.weighted_pick import weighted_pick
 from engine.util.pseudo_random import PseudoRandom
 

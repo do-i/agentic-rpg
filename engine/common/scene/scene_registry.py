@@ -1,5 +1,7 @@
 # engine/scenes/scene_registry.py
 
+from __future__ import annotations
+
 from typing import Callable
 from engine.common.scene.scene import Scene
 

@@ -1,5 +1,7 @@
 # tests/unit/world/test_npc_loader.py
 
+from __future__ import annotations
+
 import pytest
 import yaml
 from pathlib import Path

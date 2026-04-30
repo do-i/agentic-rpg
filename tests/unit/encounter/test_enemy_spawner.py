@@ -1,5 +1,7 @@
 # tests/unit/core/encounter/test_enemy_spawner.py
 
+from __future__ import annotations
+
 import pytest
 from unittest.mock import MagicMock
 from pathlib import Path

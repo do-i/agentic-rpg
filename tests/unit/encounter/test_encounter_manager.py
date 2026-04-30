@@ -1,5 +1,7 @@
 # tests/unit/core/encounter/test_encounter_manager.py
 
+from __future__ import annotations
+
 import pytest
 import yaml
 from pathlib import Path

@@ -1,5 +1,7 @@
 # tests/unit/world/test_npc.py
 
+from __future__ import annotations
+
 import pytest
 from unittest.mock import MagicMock
 import pygame

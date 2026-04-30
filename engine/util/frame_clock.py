@@ -1,5 +1,7 @@
 # engine/util/frame_clock.py
 
+from __future__ import annotations
+
 import pygame
 
 # Clock as written is frame timing only — keeps the game loop running at 60 FPS and provides delta for smooth movement/animation. That's its single responsibility.

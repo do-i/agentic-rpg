@@ -1,5 +1,7 @@
 # tests/unit/core/test_scene_manager.py
 
+from __future__ import annotations
+
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene import Scene
 

@@ -1,5 +1,7 @@
 # tests/unit/core/battle/test_battle_fx.py
 
+from __future__ import annotations
+
 from engine.battle.battle_fx import BattleFx
 
 

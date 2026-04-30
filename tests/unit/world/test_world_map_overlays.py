@@ -1,5 +1,7 @@
 # tests/unit/world/test_world_map_overlays.py
 
+from __future__ import annotations
+
 from engine.world.world_map_overlays import WorldMapOverlays
 
 

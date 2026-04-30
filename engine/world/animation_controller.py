@@ -1,5 +1,7 @@
 # engine/world/animation_controller.py
 
+from __future__ import annotations
+
 import pygame
 from engine.world.sprite_sheet import SpriteSheet, Direction
 

@@ -1,5 +1,7 @@
 # engine/app_module.py
 
+from __future__ import annotations
+
 from injector import Module, singleton, provider
 
 from engine.settings.engine_config_data import EngineConfigData

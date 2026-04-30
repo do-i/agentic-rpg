@@ -5,6 +5,8 @@
 # three sprite renderers in lockstep so they can collide with each other.
 
 # Render — square sprite in pixels
+from __future__ import annotations
+
 CHAR_SPRITE_SIZE = 64
 
 # Collision rect — smaller than sprite; centered horizontally, feet-aligned

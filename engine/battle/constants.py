@@ -5,6 +5,8 @@
 
 
 # ── Layout ────────────────────────────────────────────────────
+from __future__ import annotations
+
 ENEMY_AREA_H = 468
 ROW_H = 56
 

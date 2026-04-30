@@ -1,5 +1,7 @@
 # tests/unit/core/battle/test_battle_state.py
 
+from __future__ import annotations
+
 from engine.battle.battle_state import BattleState, BattlePhase, DamageFloat
 from engine.battle.combatant import Combatant
 

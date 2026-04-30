@@ -4,6 +4,8 @@
 # float_pos, and the HP color threshold logic. These don't exercise pygame
 # drawing — just the small numeric helpers § 5.4 called out.
 
+from __future__ import annotations
+
 import pygame
 import pytest
 from unittest.mock import patch, MagicMock

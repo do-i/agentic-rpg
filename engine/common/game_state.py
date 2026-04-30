@@ -1,5 +1,7 @@
 # engine/dto/game_state.py
 
+from __future__ import annotations
+
 from engine.common.flag_state import FlagState
 from engine.common.map_state import MapState
 from engine.common.opened_boxes_state import OpenedBoxesState

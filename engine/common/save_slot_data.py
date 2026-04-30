@@ -1,5 +1,7 @@
 # engine/dto/save_slot.py
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
 

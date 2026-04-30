@@ -1,5 +1,7 @@
 # engine/dialogue/dialogue_engine.py
 
+from __future__ import annotations
+
 from pathlib import Path
 
 from engine.io.yaml_loader import load_yaml_optional_cached
