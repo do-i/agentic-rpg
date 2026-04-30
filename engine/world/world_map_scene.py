@@ -454,11 +454,6 @@ class WorldMapScene(Scene):
 
     def update(self, delta: float) -> None:
         self._ensure_init()
-        # Deactivate the enemy that triggered the last battle (first tick after returning).
-        if self._engaged_enemy is not None:
-            if self._enemy_spawner:
-                self._enemy_spawner.on_enemy_engaged(self._engaged_enemy)
-            self._engaged_enemy = None
 
         completed_transition = self._fade.update(delta)
         if completed_transition is not None:
@@ -471,6 +466,12 @@ class WorldMapScene(Scene):
             return
         if self._quit_confirm:
             return
+
+        # Deactivate the enemy that triggered the last battle (first tick after returning).
+        if self._engaged_enemy is not None:
+            if self._enemy_spawner:
+                self._enemy_spawner.on_enemy_engaged(self._engaged_enemy)
+            self._engaged_enemy = None
 
         keys = self._recorder.get_key_state() if self._recorder else pygame.key.get_pressed()
         frozen = not self._fade.is_idle

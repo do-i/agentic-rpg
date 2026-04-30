@@ -22,9 +22,6 @@ Verification passes against the codebase. Each resolves to either
 
 ### 2.1 Trivial cleanups (can land any time)
 
-- 🟥 `engine/world/world_map_scene.py:415-426` — `update()` runs
-  `_engaged_enemy` deactivation before fade/overlay checks; reorder is
-  cosmetic.
 - 🟥 `engine/io/save_manager.py` missing `from __future__ import
   annotations` (relies on PEP 649 pinned by `pyproject.toml >=3.14.3`).
 
