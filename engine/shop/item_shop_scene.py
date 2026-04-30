@@ -33,7 +33,7 @@ class ItemShopScene(MenuSfxMixin, Scene):
         on_close: callable,
         shop_items: list[dict],
         sprite_path: Path,
-        sfx_manager=None,
+        sfx_manager,
     ) -> None:
         self._holder        = holder
         self._scene_manager = scene_manager

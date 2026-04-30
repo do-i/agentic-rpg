@@ -34,7 +34,7 @@ def launch_battle_from_enemy(
     game_state_manager: GameStateManager,
     effect_handler: ItemEffectHandler | None,
     bgm_manager: BgmManager | None,
-    sfx_manager: SfxManager | None,
+    sfx_manager: SfxManager,
     rng,
     balance,
     screen_width: int,

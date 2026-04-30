@@ -12,6 +12,7 @@ from engine.field_menu.field_menu_scene import (
     KIND_OVERLAY,
     KIND_DISABLED,
 )
+from engine.audio.sfx_manager import SfxManager
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.game_state import GameState
 from engine.common.scene.scene_manager import SceneManager
@@ -45,7 +46,7 @@ def make_scene():
         registry=registry,
         game_state_manager=game_state_manager,
         return_scene_name="world_map",
-        sfx_manager=None,
+        sfx_manager=SfxManager.null(),
     )
     return scene, holder, scene_manager, registry, game_state_manager
 

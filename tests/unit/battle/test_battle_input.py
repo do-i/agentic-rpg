@@ -37,6 +37,9 @@ def make_state(party=None, enemies=None, phase=BattlePhase.PLAYER_TURN) -> Battl
 
 
 def make_controller(sfx=None, **callback_overrides):
+    from engine.audio.sfx_manager import SfxManager
+    if sfx is None:
+        sfx = SfxManager.null()
     callbacks = BattleInputCallbacks(
         do_resolve=MagicMock(),
         open_spell_menu=MagicMock(),

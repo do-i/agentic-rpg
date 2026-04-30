@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 import pygame
 import pytest
 
+from engine.audio.sfx_manager import SfxManager
 from engine.common.menu_sfx_mixin import MenuSfxMixin
 
 
@@ -22,9 +23,9 @@ class TestPlay:
         host._play("hover")
         sfx.play.assert_called_once_with("hover")
 
-    def test_no_op_when_sfx_none(self):
-        # No exception raised — _play silently no-ops with None.
-        _Host(None)._play("hover")
+    def test_no_op_when_null_sfx(self):
+        # No exception raised — null SfxManager swallows the call.
+        _Host(SfxManager.null())._play("hover")
 
 
 class TestSetSelHover:
@@ -45,8 +46,8 @@ class TestSetSelHover:
         sfx.play.assert_not_called()
         assert result == 2
 
-    def test_no_sfx_manager_still_returns_new(self):
-        assert _Host(None)._set_sel_hover(0, 7) == 7
+    def test_null_sfx_manager_still_returns_new(self):
+        assert _Host(SfxManager.null())._set_sel_hover(0, 7) == 7
 
 
 class TestIsPopupDismissKey:

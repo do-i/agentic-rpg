@@ -58,7 +58,7 @@ class BattleScene(Scene):
         effect_handler: ItemEffectHandler | None = None,
         game_state_manager: GameStateManager | None = None,
         bgm_manager: BgmManager | None = None,
-        sfx_manager: SfxManager | None = None,
+        sfx_manager: SfxManager,
         rng: PseudoRandom | None = None,
         balance=None,
     ) -> None:
@@ -171,11 +171,10 @@ class BattleScene(Scene):
         msg = resolve_action(self._state, self._screen_width,
                              effect_handler=self._effect_handler, repository=repo,
                              rng=self._rng, fx=self._fx)
-        if self._sfx_manager:
-            self._sfx_manager.play_battle_action(pending)
-            newly_ko = [e for e in self._state.enemies if e.is_ko and e.name in alive_before]
-            if newly_ko:
-                self._sfx_manager.play("enemy_death")
+        self._sfx_manager.play_battle_action(pending)
+        newly_ko = [e for e in self._state.enemies if e.is_ko and e.name in alive_before]
+        if newly_ko:
+            self._sfx_manager.play("enemy_death")
         self._enter_resolve(msg)
 
     def _enter_resolve(self, msg: str, is_enemy: bool = False) -> None:
@@ -243,8 +242,7 @@ class BattleScene(Scene):
 
     def _attempt_run(self) -> None:
         success, msg = attempt_flee(self._state, self._holder, self._rng, self._balance)
-        if self._sfx_manager:
-            self._sfx_manager.play("flee" if success else "denied")
+        self._sfx_manager.play("flee" if success else "denied")
         if success:
             self._scene_manager.switch(self._registry.get("world_map"))
         else:
@@ -267,7 +265,7 @@ class BattleScene(Scene):
         if not self._bgm_started and self._bgm_manager and self._bgm_key:
             self._bgm_started = True
             self._bgm_manager.play_key(self._bgm_key)
-        if not self._encounter_sfx_played and self._sfx_manager:
+        if not self._encounter_sfx_played:
             self._encounter_sfx_played = True
             self._sfx_manager.play("encounter")
         self._renderer.render(

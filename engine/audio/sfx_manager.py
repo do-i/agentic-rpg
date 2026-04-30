@@ -55,6 +55,11 @@ class SfxManager:
         if sound:
             sound.play()
 
+    @classmethod
+    def null(cls) -> NullSfxManager:
+        """Null-object instance for tests / contexts without audio."""
+        return NullSfxManager()
+
     def play_battle_action(self, action: dict) -> None:
         """Derive the SFX key from a pending_action dict and play it."""
         atype = action.get("type")
@@ -82,3 +87,17 @@ class SfxManager:
                 self.play(f"spell_{element}")
         elif atype == "item":
             self.play("use_item")
+
+
+class NullSfxManager(SfxManager):
+    """No-op SfxManager for tests and contexts where audio is not wired."""
+
+    def __init__(self) -> None:  # noqa: D401 — intentional override
+        self._enabled = False
+        self._sounds = {}
+
+    def play(self, key: str) -> None:
+        return
+
+    def play_battle_action(self, action: dict) -> None:
+        return

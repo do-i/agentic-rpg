@@ -31,7 +31,8 @@ class NameEntryScene(Scene):
         holder: GameStateHolder,
         item_catalog: ItemCatalog | None = None,
         debug_party: bool = False,
-        sfx_manager=None,
+        *,
+        sfx_manager,
     ) -> None:
         self._manifest     = loader.load()
         self._scenario_path = loader.scenario_path
@@ -64,8 +65,7 @@ class NameEntryScene(Scene):
                 if event.key == pygame.K_BACKSPACE:
                     self._name = self._name[:-1]
                 elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                    if self._sfx_manager:
-                        self._sfx_manager.play("confirm")
+                    self._sfx_manager.play("confirm")
                     self._confirm()
 
     def _confirm(self) -> None:

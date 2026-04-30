@@ -36,7 +36,8 @@ class ApothecaryScene(MenuSfxMixin, Scene):
         recipes: list[dict],
         sprite_path: Path,
         icon_paths: dict[str, Path] | None = None,
-        sfx_manager=None,
+        *,
+        sfx_manager,
     ) -> None:
         self._holder        = holder
         self._scene_manager = scene_manager

@@ -20,6 +20,9 @@ def _pygame():
 
 
 def make_scene(saves: bool = True, sfx=None) -> tuple[GameOverScene, MagicMock, MagicMock]:
+    from engine.audio.sfx_manager import SfxManager
+    if sfx is None:
+        sfx = SfxManager.null()
     scene_manager = MagicMock()
     registry = MagicMock()
     holder = MagicMock()

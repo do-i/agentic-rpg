@@ -13,7 +13,7 @@ from engine.util.pseudo_random import PseudoRandom
 
 
 def resolve_enemy_turn(state: BattleState, screen_width: int,
-                       sfx_manager=None,
+                       sfx_manager,
                        rng: PseudoRandom | None = None,
                        fx: BattleFx | None = None) -> str:
     """Execute the current enemy's turn using AI data. Returns message."""
@@ -45,10 +45,9 @@ def resolve_enemy_turn(state: BattleState, screen_width: int,
         state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_PHYS)
         if fx:
             fx.hit(target)
-        if sfx_manager:
-            sfx_manager.play("atk_impact")
-            if alive_before and target.is_ko:
-                sfx_manager.play("party_hit")
+        sfx_manager.play("atk_impact")
+        if alive_before and target.is_ko:
+            sfx_manager.play("party_hit")
         return f"{active.name} attacked {target.name} for {actual} damage!"
 
     # ability — display ability name, deal ATK-based damage to targets
@@ -65,10 +64,9 @@ def resolve_enemy_turn(state: BattleState, screen_width: int,
         msg_parts.append(f"{target.name} took {actual} damage")
         if alive_before and target.is_ko:
             newly_ko = True
-    if sfx_manager:
-        sfx_manager.play("atk_impact")
-        if newly_ko:
-            sfx_manager.play("party_hit")
+    sfx_manager.play("atk_impact")
+    if newly_ko:
+        sfx_manager.play("party_hit")
 
     targets_msg = ", ".join(msg_parts)
     return f"{active.name} used {ability_name}! {targets_msg}!"

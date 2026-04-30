@@ -53,7 +53,7 @@ class InnScene(MenuSfxMixin, Scene):
         on_close: callable,
         cost: int,
         sprite_path: Path,
-        sfx_manager=None,
+        sfx_manager,
     ) -> None:
         self._holder        = holder
         self._scene_manager = scene_manager

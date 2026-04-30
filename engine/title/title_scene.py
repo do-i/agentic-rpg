@@ -20,7 +20,7 @@ class TitleScene(Scene):
         scene_manager: SceneManager,
         registry: SceneRegistry,
         game_state_manager: GameStateManager,
-        sfx_manager=None,
+        sfx_manager,
         bgm_manager: BgmManager | None = None,
     ) -> None:
         self._manifest = loader.load()

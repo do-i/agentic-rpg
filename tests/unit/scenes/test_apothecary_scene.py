@@ -12,6 +12,7 @@ from engine.common.game_state import GameState
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.font_provider import init_fonts
+from engine.audio.sfx_manager import SfxManager
 
 
 @pytest.fixture(autouse=True)
@@ -65,7 +66,7 @@ def _make_scene(recipes, flags=("story_act2_started",), owned=None, gp=10_000):
         on_close=MagicMock(),
         recipes=list(recipes),
         sprite_path=None,
-        sfx_manager=None,
+        sfx_manager=SfxManager.null(),
     )
     return scene, holder
 

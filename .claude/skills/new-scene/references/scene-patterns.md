@@ -17,16 +17,16 @@ def handle_events(self, events):
             continue
         if event.key == pygame.K_UP:
             self._cursor = (self._cursor - 1) % len(self._items)
-            if self._sfx_manager: self._sfx_manager.play("cursor")
+            self._sfx_manager.play("cursor")
         elif event.key == pygame.K_DOWN:
             self._cursor = (self._cursor + 1) % len(self._items)
-            if self._sfx_manager: self._sfx_manager.play("cursor")
+            self._sfx_manager.play("cursor")
         elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             self._confirm()
-            if self._sfx_manager: self._sfx_manager.play("confirm")
+            self._sfx_manager.play("confirm")
         elif event.key == pygame.K_ESCAPE:
             self._on_close()
-            if self._sfx_manager: self._sfx_manager.play("cancel")
+            self._sfx_manager.play("cancel")
 
 def _draw_menu(self, screen, x, y, item_h=32):
     for i, label in enumerate(self._items):

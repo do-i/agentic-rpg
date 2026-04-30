@@ -40,7 +40,7 @@ class BattleInputCallbacks:
 class BattleInputController:
     """Owns the player-side selection state and routes per-phase input."""
 
-    def __init__(self, callbacks: BattleInputCallbacks, sfx_manager=None) -> None:
+    def __init__(self, callbacks: BattleInputCallbacks, sfx_manager) -> None:
         self._callbacks = callbacks
         self._sfx_manager = sfx_manager
 
@@ -210,5 +210,4 @@ class BattleInputController:
         setattr(self, attr, new)
 
     def _play(self, key: str) -> None:
-        if self._sfx_manager:
-            self._sfx_manager.play(key)
+        self._sfx_manager.play(key)

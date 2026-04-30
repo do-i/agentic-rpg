@@ -13,6 +13,7 @@ from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.font_provider import init_fonts
 from engine.party.member_state import MemberState
 from engine.spell.spell_scene import SpellScene, PAGE_MEMBER, PAGE_SPELL
+from engine.audio.sfx_manager import SfxManager
 
 
 CLERIC_YAML = """\
@@ -86,7 +87,7 @@ def make_scene(tmp_path, members=None, flags=None):
         registry=registry,
         scenario_path=str(tmp_path),
         return_scene_name="world_map",
-        sfx_manager=None,
+        sfx_manager=SfxManager.null(),
     )
     return scene, state, scene_manager, registry
 
@@ -127,7 +128,7 @@ class TestMemberPage:
             registry=MagicMock(spec=SceneRegistry),
             scenario_path=str(tmp_path),
             return_scene_name="world_map",
-            sfx_manager=None,
+            sfx_manager=SfxManager.null(),
         )
         scene.handle_events(_key(pygame.K_RETURN))
         assert scene._popup_active

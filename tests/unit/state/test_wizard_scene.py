@@ -25,6 +25,9 @@ def make_pages_scene(
     Tests can override any subset; sensible defaults wire `a -> b` on confirm
     and `b -> a` on back, with `a -> close` on back.
     """
+    from engine.audio.sfx_manager import SfxManager
+    if sfx is None:
+        sfx = SfxManager.null()
     counts = counts or {"a": 3, "b": 2}
     confirm = confirm or {"a": "b", "b": None}
     back = back or {"a": None, "b": "a"}

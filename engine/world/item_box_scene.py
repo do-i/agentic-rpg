@@ -36,7 +36,7 @@ class ItemBoxScene(Scene):
         box: ItemBox,
         item_catalog: ItemCatalog | None,
         on_confirm: callable,
-        sfx_manager=None,
+        sfx_manager,
     ) -> None:
         self._box = box
         self._catalog = item_catalog
@@ -78,8 +78,7 @@ class ItemBoxScene(Scene):
             if event.type != pygame.KEYDOWN:
                 continue
             if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
-                if self._sfx_manager:
-                    self._sfx_manager.play("confirm")
+                self._sfx_manager.play("confirm")
                 self._on_confirm(self._box)
                 return
 

@@ -23,6 +23,7 @@ from engine.battle.battle_enemy_logic import (
     resolve_enemy_turn, pick_enemy_action, resolve_targeting,
     _check_condition, _weighted_pick_move,
 )
+from engine.audio.sfx_manager import SfxManager
 from engine.battle.constants import ENEMY_SIZES
 
 SCREEN_W = 1280
@@ -293,7 +294,7 @@ class TestResolveEnemyTurn:
         # force goblin active
         state.active_index = state.turn_order.index(goblin)
 
-        msg = resolve_enemy_turn(state, SCREEN_W, rng=_rng)
+        msg = resolve_enemy_turn(state, SCREEN_W, sfx_manager=SfxManager.null(), rng=_rng)
 
         assert hero.hp == 90  # 100 - (15-5)
         assert "attacked" in msg
@@ -304,7 +305,7 @@ class TestResolveEnemyTurn:
         state.build_turn_order()
         state.active_index = state.turn_order.index(hero)
 
-        msg = resolve_enemy_turn(state, SCREEN_W, rng=_rng)
+        msg = resolve_enemy_turn(state, SCREEN_W, sfx_manager=SfxManager.null(), rng=_rng)
 
         assert msg == ""
 
@@ -316,7 +317,7 @@ class TestResolveEnemyTurn:
         state.build_turn_order()
         state.active_index = state.turn_order.index(goblin)
 
-        msg = resolve_enemy_turn(state, SCREEN_W, rng=_rng)
+        msg = resolve_enemy_turn(state, SCREEN_W, sfx_manager=SfxManager.null(), rng=_rng)
 
         assert msg == ""
 
@@ -926,7 +927,7 @@ class TestResolveEnemyTurnWithAI:
         state.build_turn_order()
         state.active_index = state.turn_order.index(enemy)
 
-        msg = resolve_enemy_turn(state, SCREEN_W, rng=_rng)
+        msg = resolve_enemy_turn(state, SCREEN_W, sfx_manager=SfxManager.null(), rng=_rng)
 
         assert "Fire Bolt" in msg
         assert hero.hp < 100
@@ -944,7 +945,7 @@ class TestResolveEnemyTurnWithAI:
         state.build_turn_order()
         state.active_index = state.turn_order.index(enemy)
 
-        msg = resolve_enemy_turn(state, SCREEN_W, rng=_rng)
+        msg = resolve_enemy_turn(state, SCREEN_W, sfx_manager=SfxManager.null(), rng=_rng)
 
         assert hero1.hp < 100
         assert hero2.hp < 100
@@ -957,7 +958,7 @@ class TestResolveEnemyTurnWithAI:
         state.build_turn_order()
         state.active_index = state.turn_order.index(enemy)
 
-        msg = resolve_enemy_turn(state, SCREEN_W, rng=_rng)
+        msg = resolve_enemy_turn(state, SCREEN_W, sfx_manager=SfxManager.null(), rng=_rng)
 
         assert hero.hp == 90
         assert "attacked" in msg

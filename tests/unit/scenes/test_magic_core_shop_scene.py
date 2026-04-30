@@ -30,6 +30,7 @@ def make_scene(repo=None, confirm_large=True):
     holder.get.return_value = state
 
     on_close = MagicMock()
+    from engine.audio.sfx_manager import SfxManager
     scene = MagicCoreShopScene(
         holder=holder,
         scene_manager=MagicMock(),
@@ -37,6 +38,7 @@ def make_scene(repo=None, confirm_large=True):
         on_close=on_close,
         mc_sizes=MC_SIZES,
         confirm_large=confirm_large,
+        sfx_manager=SfxManager.null(),
     )
     return scene, repo, on_close
 

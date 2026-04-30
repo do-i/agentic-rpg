@@ -35,7 +35,7 @@ class GameOverScene(Scene):
         registry: SceneRegistry,
         holder: GameStateHolder,
         game_state_manager: GameStateManager,
-        sfx_manager=None,
+        sfx_manager,
     ) -> None:
         self._scene_manager = scene_manager
         self._registry = registry
@@ -75,16 +75,15 @@ class GameOverScene(Scene):
                 self._sel = max(0, self._sel - 1)
                 if not self._has_saves and self._sel == 0:
                     self._sel = 1
-                if self._sel != old and self._sfx_manager:
+                if self._sel != old:
                     self._sfx_manager.play("hover")
             elif event.key == pygame.K_DOWN:
                 old = self._sel
                 self._sel = min(len(MENU_ITEMS) - 1, self._sel + 1)
-                if self._sel != old and self._sfx_manager:
+                if self._sel != old:
                     self._sfx_manager.play("hover")
             elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                if self._sfx_manager:
-                    self._sfx_manager.play("confirm")
+                self._sfx_manager.play("confirm")
                 self._confirm()
 
     def _confirm(self) -> None:

@@ -82,7 +82,8 @@ def make_scene(members: list[MemberState] | None = None) -> tuple[StatusScene, G
 
     scene_manager = MagicMock(spec=SceneManager)
     registry = MagicMock(spec=SceneRegistry)
-    scene = StatusScene(holder, scene_manager, registry, return_scene_name="world_map")
+    from engine.audio.sfx_manager import SfxManager
+    scene = StatusScene(holder, scene_manager, registry, return_scene_name="world_map", sfx_manager=SfxManager.null())
     return scene, holder
 
 

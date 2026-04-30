@@ -9,6 +9,7 @@ from engine.battle.battle_state import BattleState
 from engine.battle.combatant import Combatant
 from engine.battle.action_resolver import resolve_action
 from engine.battle.battle_enemy_logic import resolve_enemy_turn
+from engine.audio.sfx_manager import SfxManager
 from engine.util.pseudo_random import PseudoRandom
 
 SCREEN_W = 1280
@@ -75,7 +76,7 @@ class TestIncomingPhysical:
         state.build_turn_order()
         state.active_index = state.turn_order.index(goblin)
 
-        resolve_enemy_turn(state, SCREEN_W, rng=_rng)
+        resolve_enemy_turn(state, SCREEN_W, sfx_manager=SfxManager.null(), rng=_rng)
         # base = 15 - 5 = 10; back row halves → 5.
         assert hero.hp == 95
 
@@ -86,7 +87,7 @@ class TestIncomingPhysical:
         state.build_turn_order()
         state.active_index = state.turn_order.index(goblin)
 
-        resolve_enemy_turn(state, SCREEN_W, rng=_rng)
+        resolve_enemy_turn(state, SCREEN_W, sfx_manager=SfxManager.null(), rng=_rng)
         assert hero.hp == 90  # 100 - (15-5)
 
 

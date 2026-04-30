@@ -35,6 +35,9 @@ def make_rewards(
 
 
 def make_scene(rewards=None, sfx=None) -> tuple[PostBattleScene, MagicMock]:
+    from engine.audio.sfx_manager import SfxManager
+    if sfx is None:
+        sfx = SfxManager.null()
     on_continue = MagicMock()
     scene = PostBattleScene(
         rewards=rewards or make_rewards(),

@@ -27,7 +27,6 @@ Verification passes against the codebase. Each resolves to either
 
 - §4.3 — `battle_renderer` panel split
 - §4.5 — `action_resolver` split
-- §3.5 — `SfxManager` null-object
 
 ❓ **Q3.** Which of these block v1?
 - (a) All four — land before shipping.

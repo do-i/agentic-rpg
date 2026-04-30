@@ -111,8 +111,7 @@ class WizardScene(Scene):
     # ── SFX + selection tracking ─────────────────────────────
 
     def _play(self, key: str) -> None:
-        if self._sfx_manager:
-            self._sfx_manager.play(key)
+        self._sfx_manager.play(key)
 
     def _set_sel(self, page: WizardPage, new: int) -> None:
         if new != page.selection:

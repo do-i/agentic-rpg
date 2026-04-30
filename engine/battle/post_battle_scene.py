@@ -41,7 +41,7 @@ class PostBattleScene(Scene):
         scene_manager: SceneManager,
         registry: SceneRegistry,
         on_continue: callable,
-        sfx_manager=None,
+        sfx_manager,
     ) -> None:
         self._rewards = rewards
         self._scene_manager = scene_manager
@@ -75,8 +75,7 @@ class PostBattleScene(Scene):
                 continue
             if event.key in (pygame.K_SPACE, pygame.K_RETURN,
                               pygame.K_KP_ENTER, pygame.K_z):
-                if self._sfx_manager:
-                    self._sfx_manager.play("confirm")
+                self._sfx_manager.play("confirm")
                 if not self._exp_done:
                     # skip animation
                     self._exp_fill = 1.0

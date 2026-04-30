@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 from engine.equipment.equip_scene import (
     EquipScene, SLOTS, PAGE_MEMBER, PAGE_SLOT, PAGE_PICKER,
 )
+from engine.audio.sfx_manager import SfxManager
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.game_state import GameState
 from engine.common.scene.scene_manager import SceneManager
@@ -90,7 +91,7 @@ def _make_scene(catalog, members=None, inventory=None):
         registry=MagicMock(spec=SceneRegistry),
         catalog=catalog,
         return_scene_name="field_menu",
-        sfx_manager=None,
+        sfx_manager=SfxManager.null(),
     )
     return scene, holder
 

@@ -40,7 +40,8 @@ class ItemScene(Scene):
         mc_catalog: MagicCoreCatalogState | None = None,
         use_aoe_confirm: bool = True,
         return_scene_name: str = "world_map",
-        sfx_manager=None,
+        *,
+        sfx_manager,
     ) -> None:
         self._holder       = holder
         self._scene_manager = scene_manager
@@ -140,22 +141,18 @@ class ItemScene(Scene):
             self._tab_index = (self._tab_index - 1) % len(TABS)
             self._list_sel = 0
             self._scroll = 0
-            if self._sfx_manager:
-                self._sfx_manager.play("hover")
+            self._sfx_manager.play("hover")
         elif key == pygame.K_RIGHT:
             self._tab_index = (self._tab_index + 1) % len(TABS)
             self._list_sel = 0
             self._scroll = 0
-            if self._sfx_manager:
-                self._sfx_manager.play("hover")
+            self._sfx_manager.play("hover")
         elif key == pygame.K_ESCAPE:
-            if self._sfx_manager:
-                self._sfx_manager.play("cancel")
+            self._sfx_manager.play("cancel")
             self._close()
         elif key == pygame.K_DOWN:
             if self._filtered_items():
-                if self._sfx_manager:
-                    self._sfx_manager.play("confirm")
+                self._sfx_manager.play("confirm")
                 self._in_tab = False
 
     def _handle_list_key(self, key: int) -> None:
@@ -164,33 +161,28 @@ class ItemScene(Scene):
             return
         if key == pygame.K_UP:
             if self._list_sel == 0:
-                if self._sfx_manager:
-                    self._sfx_manager.play("cancel")
+                self._sfx_manager.play("cancel")
                 self._in_tab = True
                 return
             new = self._list_sel - 1
-            if self._sfx_manager:
-                self._sfx_manager.play("hover")
+            self._sfx_manager.play("hover")
             self._list_sel = new
             self._scroll = clamp_scroll(self._list_sel, self._scroll, VISIBLE_ROWS)
         elif key == pygame.K_DOWN:
             new = min(len(items) - 1, self._list_sel + 1)
-            if new != self._list_sel and self._sfx_manager:
+            if new != self._list_sel:
                 self._sfx_manager.play("hover")
             self._list_sel = new
             self._scroll = clamp_scroll(self._list_sel, self._scroll, VISIBLE_ROWS)
         elif key == pygame.K_RETURN:
-            if self._sfx_manager:
-                self._sfx_manager.play("confirm")
+            self._sfx_manager.play("confirm")
             self._in_action = True
             self._action_sel = 0
         elif key == pygame.K_t:
-            if self._sfx_manager:
-                self._sfx_manager.play("confirm")
+            self._sfx_manager.play("confirm")
             self._open_edit_tags()
         elif key == pygame.K_ESCAPE:
-            if self._sfx_manager:
-                self._sfx_manager.play("cancel")
+            self._sfx_manager.play("cancel")
             self._in_tab = True
             self._in_action = False
             self._confirm_discard = False
@@ -202,28 +194,25 @@ class ItemScene(Scene):
             return
         item_actions = actions_for(entry, self._effect_handler)
         if key in (pygame.K_LEFT, pygame.K_ESCAPE):
-            if self._sfx_manager:
-                self._sfx_manager.play("cancel")
+            self._sfx_manager.play("cancel")
             self._in_action = False
         elif key == pygame.K_UP:
             new = max(0, self._action_sel - 1)
-            if new != self._action_sel and self._sfx_manager:
+            if new != self._action_sel:
                 self._sfx_manager.play("hover")
             self._action_sel = new
         elif key == pygame.K_DOWN:
             new = min(len(item_actions) - 1, self._action_sel + 1)
-            if new != self._action_sel and self._sfx_manager:
+            if new != self._action_sel:
                 self._sfx_manager.play("hover")
             self._action_sel = new
         elif key == pygame.K_RETURN:
             label = item_actions[self._action_sel]
             if label == "Use":
-                if self._sfx_manager:
-                    self._sfx_manager.play("confirm")
+                self._sfx_manager.play("confirm")
                 self._begin_use(entry)
             elif label == "Discard" and not entry.locked:
-                if self._sfx_manager:
-                    self._sfx_manager.play("confirm")
+                self._sfx_manager.play("confirm")
                 self._confirm_discard = True
 
     def _handle_confirm_discard(self, key: int) -> None:
@@ -337,19 +326,18 @@ class ItemScene(Scene):
     def _handle_edit_tags_key(self, key: int) -> None:
         rows = self._editor_rows()
         if key == pygame.K_ESCAPE:
-            if self._sfx_manager:
-                self._sfx_manager.play("cancel")
+            self._sfx_manager.play("cancel")
             self._close_edit_tags()
             return
         if key == pygame.K_UP:
             new = max(0, self._tag_editor_sel - 1)
-            if new != self._tag_editor_sel and self._sfx_manager:
+            if new != self._tag_editor_sel:
                 self._sfx_manager.play("hover")
             self._tag_editor_sel = new
             return
         if key == pygame.K_DOWN:
             new = min(len(rows) - 1, self._tag_editor_sel + 1)
-            if new != self._tag_editor_sel and self._sfx_manager:
+            if new != self._tag_editor_sel:
                 self._sfx_manager.play("hover")
             self._tag_editor_sel = new
             return
@@ -359,8 +347,7 @@ class ItemScene(Scene):
     def _activate_editor_row(self, row: tuple[str, str]) -> None:
         kind, tag = row
         if kind == "new":
-            if self._sfx_manager:
-                self._sfx_manager.play("confirm")
+            self._sfx_manager.play("confirm")
             self._begin_new_tag()
             return
         # Toggle existing tag (system or custom).
@@ -370,14 +357,12 @@ class ItemScene(Scene):
         repo = self._get_repo()
         if tag in entry.tags:
             repo.remove_tag(entry.id, tag)
-            if self._sfx_manager:
-                self._sfx_manager.play("cancel")
+            self._sfx_manager.play("cancel")
             return
         if not repo.add_tag(entry.id, tag):
             self._set_tag_warning(f"max tags ({repo.max_tags_per_item}) reached")
             return
-        if self._sfx_manager:
-            self._sfx_manager.play("confirm")
+        self._sfx_manager.play("confirm")
 
     # ── New custom tag entry ──────────────────────────────────
 
@@ -406,8 +391,7 @@ class ItemScene(Scene):
         if event.key == pygame.K_BACKSPACE:
             self._tag_input = self._tag_input[:-1]
         elif event.key == pygame.K_ESCAPE:
-            if self._sfx_manager:
-                self._sfx_manager.play("cancel")
+            self._sfx_manager.play("cancel")
             self._end_new_tag()
         elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             self._commit_new_tag()
@@ -429,8 +413,7 @@ class ItemScene(Scene):
                 f"max tags ({self._get_repo().max_tags_per_item}) reached"
             )
             return
-        if self._sfx_manager:
-            self._sfx_manager.play("confirm")
+        self._sfx_manager.play("confirm")
         self._end_new_tag()
 
     # ── Update ────────────────────────────────────────────────

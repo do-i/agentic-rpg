@@ -33,7 +33,8 @@ class StatusScene(Scene):
         registry: SceneRegistry,
         scenario_path: str = "",
         return_scene_name: str = "world_map",
-        sfx_manager=None,
+        *,
+        sfx_manager,
     ) -> None:
         self._holder = holder
         self._scene_manager = scene_manager
@@ -84,22 +85,20 @@ class StatusScene(Scene):
                 return
 
             if event.key in (pygame.K_s, pygame.K_ESCAPE):
-                if self._sfx_manager:
-                    self._sfx_manager.play("cancel")
+                self._sfx_manager.play("cancel")
                 self._scene_manager.switch(self._registry.get(self._return_scene_name))
             elif event.key == pygame.K_UP:
                 new = max(0, self._selected - 1)
-                if new != self._selected and self._sfx_manager:
+                if new != self._selected:
                     self._sfx_manager.play("hover")
                 self._selected = new
             elif event.key == pygame.K_DOWN:
                 new = min(len(members) - 1, self._selected + 1)
-                if new != self._selected and self._sfx_manager:
+                if new != self._selected:
                     self._sfx_manager.play("hover")
                 self._selected = new
             elif event.key == pygame.K_RETURN:
-                if self._sfx_manager:
-                    self._sfx_manager.play("confirm")
+                self._sfx_manager.play("confirm")
                 self._open_spell_menu()
             elif event.key == pygame.K_r:
                 self._toggle_row(members)
@@ -115,14 +114,12 @@ class StatusScene(Scene):
             return
         member = members[self._selected]
         if member.class_name.lower() != "rogue":
-            if self._sfx_manager:
-                self._sfx_manager.play("cancel")
+            self._sfx_manager.play("cancel")
             self._popup_text = "Only Rogue can change row."
             self._popup_active = True
             return
         member.row = "front" if member.row == "back" else "back"
-        if self._sfx_manager:
-            self._sfx_manager.play("confirm")
+        self._sfx_manager.play("confirm")
 
     def _open_spell_menu(self) -> None:
         members = self._holder.get().party.members
@@ -140,8 +137,7 @@ class StatusScene(Scene):
 
     def _handle_spell_key(self, key: int) -> None:
         if key == pygame.K_ESCAPE:
-            if self._sfx_manager:
-                self._sfx_manager.play("cancel")
+            self._sfx_manager.play("cancel")
             self._spell_list = None
             self._spell_caster = None
             return
@@ -149,12 +145,12 @@ class StatusScene(Scene):
         spells = self._spell_list
         if key == pygame.K_UP:
             new = max(0, self._spell_sel - 1)
-            if new != self._spell_sel and self._sfx_manager:
+            if new != self._spell_sel:
                 self._sfx_manager.play("hover")
             self._spell_sel = new
         elif key == pygame.K_DOWN:
             new = min(len(spells) - 1, self._spell_sel + 1)
-            if new != self._spell_sel and self._sfx_manager:
+            if new != self._spell_sel:
                 self._sfx_manager.play("hover")
             self._spell_sel = new
         elif key == pygame.K_RETURN:
