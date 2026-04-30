@@ -16,14 +16,6 @@ Verification passes against the codebase. Each resolves to either
   exists but no UI calls it; bag.md spec says sell list filters by
   tag and hides locked items.
 
-❓ **Q1.** Run all spot checks now in one pass, or wait until you flag a
-specific one?
-- (a) Run all now and report findings.
-- (b) Wait — you'll point at one when relevant.
-- (c) Run as a background agent task.
-
-Answer: a
-
 ---
 
 ## 2. Code review follow-ups
