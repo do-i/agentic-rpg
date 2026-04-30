@@ -32,9 +32,15 @@ Stats that belong to the party (not a character):
 | Stat | Source | Effect |
 |---|---|---|
 | `flee_rate` | Rogue's DEX (if in party) | Base flee 30%, +2% per Rogue DEX |
-| `encounter_modifier` | Rogue passive | Reduces random encounter roll by ~20% |
+| `encounter_modifier` | Rogue passive | Reduces random encounter roll by ~20% (slows spawn cadence) |
 | `trap_detect` | Rogue passive | Auto-reveal chest traps |
 | `gp_balance` | Party Repository | Shared currency, always synced |
+
+`flee_rate` lives in `battle_logic.attempt_flee`. `encounter_modifier` and
+`trap_detect` are exposed by `engine.party.party_stats`; the encounter
+modifier is consumed by `EnemySpawner._compute_modifiers`. Chest-trap
+data on `ItemBox` is not yet defined — `has_trap_detect` is the API the
+trap consumer will read once chest traps are added.
 
 ## Recruitment & Availability
 

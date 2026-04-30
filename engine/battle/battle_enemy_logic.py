@@ -37,7 +37,7 @@ def resolve_enemy_turn(state: BattleState, screen_width: int,
     if action_type == "attack":
         target = target_list[0]
         alive_before = not target.is_ko
-        dmg = max(1, active.atk - target.def_)
+        dmg = max(1, active.atk - target.effective_def)
         # Back-row party member halves incoming physical damage.
         if target.row == "back":
             dmg = max(1, dmg // 2)
@@ -57,7 +57,7 @@ def resolve_enemy_turn(state: BattleState, screen_width: int,
     newly_ko = False
     for target in target_list:
         alive_before = not target.is_ko
-        dmg = max(1, active.atk - target.def_)
+        dmg = max(1, active.atk - target.effective_def)
         actual = target.apply_damage(dmg, rng)
         state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_MAGIC)
         if fx:
@@ -149,13 +149,19 @@ def resolve_targeting(
     if not alive:
         return []
 
+    # all_party AOE bypasses taunt; self targets the caster.
     if mode == "all_party":
         return alive
     if mode == "self":
         return [enemy]
+
+    # Single-target modes: any taunting party member forces the pick.
+    taunters = [c for c in alive if c.is_taunting]
+    pool = taunters if taunters else alive
+
     if mode == "lowest_hp":
-        return [min(alive, key=lambda c: c.hp)]
+        return [min(pool, key=lambda c: c.hp)]
     if mode == "highest_hp":
-        return [max(alive, key=lambda c: c.hp)]
+        return [max(pool, key=lambda c: c.hp)]
     # random_alive (default)
-    return [rng.choice(alive)]
+    return [rng.choice(pool)]

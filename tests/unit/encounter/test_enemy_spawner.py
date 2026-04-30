@@ -286,7 +286,16 @@ class TestComputeModifiers:
         spawner = make_spawner()
         party = self._make_party("rogue", accessory="lure_charm")
         mult, _ = spawner._compute_modifiers(party)
-        assert mult == LURE_CHARM_INTERVAL_MULT
+        # lure_charm sets the base mult to 0.5; the Rogue encounter_modifier
+        # passive (×0.8) then divides into it → 0.5 / 0.8 = 0.625.
+        assert mult == LURE_CHARM_INTERVAL_MULT / 0.8
+
+    def test_rogue_alone_slows_spawns(self):
+        spawner = make_spawner()
+        party = self._make_party("rogue")
+        mult, _ = spawner._compute_modifiers(party)
+        # Rogue passive reduces encounter rate by 20% → interval ×1.25.
+        assert mult == 1.0 / 0.8
 
     def test_none_party_returns_defaults(self):
         spawner = make_spawner()

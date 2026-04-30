@@ -25,6 +25,8 @@ SIDE_EFFECT_KINDS = {
     "stun":      StatusEffect.STUN,
     "silence":   StatusEffect.SILENCE,
     "knockback": StatusEffect.KNOCKBACK,
+    "taunt":     StatusEffect.TAUNT,
+    "def_up":    StatusEffect.DEF_UP,
 }
 
 
@@ -57,11 +59,13 @@ def roll_and_apply_side_effects(
         if effect is StatusEffect.BURN:
             dot = max(1, (source.atk if source else 0) // 10)
         atk_mod = float(se.get("atk_modifier", 1.0))
+        def_mod = float(se.get("def_modifier", 1.0))
         target.add_status(ActiveStatus(
             effect=effect,
             duration_turns=duration,
             damage_per_turn=dot,
             atk_modifier=atk_mod,
+            def_modifier=def_mod,
         ))
         msgs.append(f"{target.name} is {kind}ed!")
     return msgs
@@ -130,7 +134,7 @@ def _resolve_attack(
     fx: BattleFx | None,
 ) -> list[str]:
     src_atk = source.effective_atk if source else 0
-    dmg = max(1, src_atk - target.def_)
+    dmg = max(1, src_atk - target.effective_def)
     # Basic attack is melee; back-row attacker deals halved damage.
     if source and source.row == "back":
         dmg = max(1, dmg // 2)
@@ -189,7 +193,7 @@ def _resolve_spell(
         state.add_float("Debuff", *float_pos(state, target, screen_width), C_DMG_MAGIC)
         msgs.append(f"{source.name} casts {spell_name} on {target.name}!")
     else:
-        dmg = max(1, int(source.mres * coeff) - target.def_) if source else 10
+        dmg = max(1, int(source.mres * coeff) - target.effective_def) if source else 10
         actual = target.apply_damage(dmg, rng)
         state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_MAGIC)
         if fx:

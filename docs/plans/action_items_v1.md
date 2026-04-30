@@ -9,20 +9,6 @@ Status legend: 🟥 not started · 🟨 in progress · ❓ decision needed
 
 ## Code decisions (need user input)
 
-### 6. ❓ Party stats not yet implemented
-`party.md` lists `encounter_modifier` and `trap_detect` (only `flee_rate`
-ships). It also lists `taunt` / `def_up` statuses, which are not in the
-`StatusEffect` enum (POISON/SLEEP/STUN/SILENCE/KNOCKBACK only).
-
-- A. Implement all four (`encounter_modifier`, `trap_detect`, `taunt`,
-  `def_up`).
-- B. Implement only `encounter_modifier` + `trap_detect`; drop the two
-  statuses from `party.md`.
-- C. Drop all four from `party.md`.
-- D. Other.
-
-**Answer:** A
-
 ### 7. ❓ Dialogue `unlock` action
 `dialogue.md` lists an `unlock` action under `on_complete`; dispatcher
 does not implement it.

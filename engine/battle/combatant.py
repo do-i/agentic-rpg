@@ -16,6 +16,8 @@ class StatusEffect(Enum):
     BURN      = auto()
     FREEZE    = auto()
     KNOCKBACK = auto()
+    TAUNT     = auto()
+    DEF_UP    = auto()
 
 
 @dataclass
@@ -24,11 +26,13 @@ class ActiveStatus:
 
     `damage_per_turn` — burn DOT resolved at application time.
     `atk_modifier`   — knockback multiplier on source ATK (e.g. 0.80).
+    `def_modifier`   — DEF_UP multiplier on target DEF (e.g. 1.20).
     """
     effect:          StatusEffect
     duration_turns:  int
     damage_per_turn: int = 0
     atk_modifier:    float = 1.0
+    def_modifier:    float = 1.0
 
 
 # Effects that prevent the combatant from acting on their turn.
@@ -93,6 +97,19 @@ class Combatant:
             if s.effect is StatusEffect.KNOCKBACK:
                 mult *= s.atk_modifier
         return max(1, int(self.atk * mult))
+
+    @property
+    def effective_def(self) -> int:
+        """DEF after applying all active DEF_UP modifiers."""
+        mult = 1.0
+        for s in self.status_effects:
+            if s.effect is StatusEffect.DEF_UP:
+                mult *= s.def_modifier
+        return max(0, int(self.def_ * mult))
+
+    @property
+    def is_taunting(self) -> bool:
+        return self.has_status(StatusEffect.TAUNT)
 
     @property
     def is_silenced(self) -> bool:

@@ -14,6 +14,7 @@ from pathlib import Path
 from engine.encounter.encounter_zone_data import EncounterZone, Formation
 from engine.encounter.encounter_resolver import EncounterResolver
 from engine.encounter.enemy_sprite import EnemySprite
+from engine.party.party_stats import encounter_modifier
 from engine.world.sprite_sheet import SpriteSheet
 from engine.world.sprite_sheet_cache import SpriteSheetCache
 from engine.util.pseudo_random import PseudoRandom
@@ -176,6 +177,12 @@ class EnemySpawner:
                     chase_reduction += self._stealth_cloak_reduction
                 elif acc == "lure_charm":
                     interval_mult = min(interval_mult, self._lure_charm_interval_mult)
+
+        # Rogue passive — encounter_modifier slows the spawn cadence.
+        # encounter_modifier < 1.0 means fewer encounters → longer interval.
+        enc_mod = encounter_modifier(party)
+        if enc_mod > 0:
+            interval_mult = interval_mult / enc_mod
 
         return interval_mult, chase_reduction
 

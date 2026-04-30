@@ -21,6 +21,8 @@ STATUS_COLORS = {
     StatusEffect.BURN:      ((140, 40, 40),  (255, 170, 120), "BRN"),
     StatusEffect.FREEZE:    ((40, 80, 140),  (180, 220, 255), "FRZ"),
     StatusEffect.KNOCKBACK: ((90, 90, 120),  (210, 210, 230), "KBK"),
+    StatusEffect.TAUNT:     ((150, 60, 30),  (255, 180, 100), "TNT"),
+    StatusEffect.DEF_UP:    ((40, 110, 110), (170, 230, 230), "DEF"),
 }
 
 # ── Colors ────────────────────────────────────────────────────
