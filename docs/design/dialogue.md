@@ -32,9 +32,24 @@ See `rusted_kingdoms/data/dialogue`
 | `open_shop` | Opens the general item shop overlay | `npc` only |
 | `open_inn` | Opens the inn (rest) overlay | `npc` only |
 | `open_apothecary` | Opens the crafting overlay | `npc` only |
+| `unlock` | Sets one or more `<kind>_<id>_unlocked` flags (recipe / spell / location / transport) | `npc`, `cutscene` |
 
-There is no dedicated `unlock` action — area / shop unlocks are expressed by
-`set_flag` plus `unlock_flag` consumers in shops, recipes, and NPC presence.
+`unlock` is sugar over `set_flag` for the canonical unlock kinds. Each
+entry names exactly one of `recipe`, `spell`, `location`, `transport`,
+or a raw `flag` escape hatch:
+
+```yaml
+on_complete:
+  unlock:
+    - recipe: heal_potion        # → recipe_heal_potion_unlocked
+    - spell: fireball            # → spell_fireball_unlocked
+    - location: town_02          # → location_town_02_unlocked
+    - transport: sail            # → transport_sail_unlocked
+    - flag: custom_unlock_flag   # raw flag passthrough
+```
+
+The resulting flags are consumed by existing `unlock_flag` filters in
+shops, recipes, transport menus, and NPC presence.
 
 - All actions are **optional**
 - Multiple actions allowed per entry — list them

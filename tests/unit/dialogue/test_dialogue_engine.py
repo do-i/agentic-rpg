@@ -126,3 +126,45 @@ class TestDispatchOnComplete:
         flags = FlagState()
         repo = RepositoryState()
         assert engine.dispatch_on_complete({}, flags, repo) == {}
+
+    def test_unlock_recipe_sets_flag(self, engine):
+        flags = FlagState()
+        repo = RepositoryState()
+        engine.dispatch_on_complete(
+            {"unlock": [{"recipe": "heal_potion"}]}, flags, repo
+        )
+        assert flags.has_flag("recipe_heal_potion_unlocked")
+
+    def test_unlock_accepts_dict_form(self, engine):
+        flags = FlagState()
+        repo = RepositoryState()
+        engine.dispatch_on_complete(
+            {"unlock": {"transport": "sail"}}, flags, repo
+        )
+        assert flags.has_flag("transport_sail_unlocked")
+
+    def test_unlock_handles_all_kinds(self, engine):
+        flags = FlagState()
+        repo = RepositoryState()
+        engine.dispatch_on_complete(
+            {
+                "unlock": [
+                    {"spell": "fireball"},
+                    {"location": "town_02"},
+                    {"flag": "custom_xyz"},
+                ]
+            },
+            flags, repo,
+        )
+        assert flags.has_flag("spell_fireball_unlocked")
+        assert flags.has_flag("location_town_02_unlocked")
+        assert flags.has_flag("custom_xyz")
+
+    def test_unlock_unknown_kind_raises(self, engine):
+        import pytest
+        flags = FlagState()
+        repo = RepositoryState()
+        with pytest.raises(ValueError):
+            engine.dispatch_on_complete(
+                {"unlock": [{"weapon": "sword"}]}, flags, repo
+            )

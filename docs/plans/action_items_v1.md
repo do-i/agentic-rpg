@@ -7,20 +7,6 @@ Status legend: 🟥 not started · 🟨 in progress · ❓ decision needed
 
 ---
 
-## Code decisions (need user input)
-
-### 7. ❓ Dialogue `unlock` action
-`dialogue.md` lists an `unlock` action under `on_complete`; dispatcher
-does not implement it.
-
-- A. Implement `unlock` (e.g. unlock a recipe / spell / location).
-- B. Drop it from `dialogue.md`.
-- C. Other.
-
-**Answer:** A
-
----
-
 ## Spot checks still pending
 
 Quick verification passes; resolve with a one-line answer or a small fix.
