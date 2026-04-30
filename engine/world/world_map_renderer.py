@@ -19,6 +19,7 @@ class WorldMapRenderer:
         # Reusable full-screen overlays. Allocated lazily on first use; the
         # screen size is fixed at runtime so we only ever build one of each.
         self._fade_surf: pygame.Surface | None = None
+        self._fade_surf_alpha: int = -1
         self._quit_dim_surf: pygame.Surface | None = None
 
     def render(
@@ -100,7 +101,9 @@ class WorldMapRenderer:
                 self._fade_surf = pygame.Surface(
                     (screen.get_width(), screen.get_height()), pygame.SRCALPHA
                 )
-            self._fade_surf.fill((0, 0, 0, fade_alpha))
+            if self._fade_surf_alpha != fade_alpha:
+                self._fade_surf.fill((0, 0, 0, fade_alpha))
+                self._fade_surf_alpha = fade_alpha
             screen.blit(self._fade_surf, (0, 0))
 
     def _render_portal_debug(self, screen: pygame.Surface, tile_map, camera) -> None:

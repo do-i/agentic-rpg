@@ -22,8 +22,6 @@ Verification passes against the codebase. Each resolves to either
 
 ### 2.1 Trivial cleanups (can land any time)
 
-- 🟥 `engine/world/world_map_renderer.py:99-104` — `_fade_surf` refilled
-  every frame; revisit on a profiler pass.
 - 🟥 `engine/world/world_map_scene.py:415-426` — `update()` runs
   `_engaged_enemy` deactivation before fade/overlay checks; reorder is
   cosmetic.
