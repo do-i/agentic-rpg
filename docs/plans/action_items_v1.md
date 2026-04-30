@@ -26,7 +26,6 @@ Verification passes against the codebase. Each resolves to either
 ### 2.3 Larger refactors still on the plan ❓
 
 - §4.3 — `battle_renderer` panel split
-- §4.4 — equip/spell wizard base class
 - §4.5 — `action_resolver` split
 - §3.5 — `SfxManager` null-object
 
