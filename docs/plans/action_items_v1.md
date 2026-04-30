@@ -12,7 +12,6 @@ Status legend: 🟥 not started · 🟨 in progress · ❓ decision needed
 Verification passes against the codebase. Each resolves to either
 "confirmed, delete this line" or "found a gap, file a fix."
 
-- 🟥 `NpcLoader` reads `animation: { mode, speed, range }` (npc.md).
 - 🟥 Item shop sell flow filters by tag (bag.md).
 - 🟥 Phoenix-Down-equivalent KO-revive item exists in
   `consumables_recovery.yaml` (party.md).
