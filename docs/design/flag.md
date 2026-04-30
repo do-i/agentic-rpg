@@ -61,11 +61,20 @@ engine_managed_flags:      # the engine itself fires these at story milestones
 default condition for any system that wants to gate by "the player has
 started the game."
 
-`engine_managed_flags` are flags whose lifecycle is the engine's
-responsibility — they are not set from dialogue or encounter `on_complete`.
-Listing them in the manifest documents the contract and lets the validator
-treat them as "defined" without requiring a `set_flag` source in scenario
-YAML.
+`engine_managed_flags` are story-milestone flags whose timing is part of
+the scenario's narrative contract (act transitions, end-game). They MAY
+be set from dialogue / encounter `on_complete` at the chosen story beat;
+listing them here lets the validator treat them as "defined" so the
+recipe / dialogue gating that consumes them passes audit even when the
+specific trigger has not been wired yet.
+
+For Rusted Kingdoms the act transitions fire from these dialogue beats:
+
+| Flag | Trigger |
+|---|---|
+| `story_act2_started` | Elder reward in Ardel (after `boss_zone01_defeated`) |
+| `story_act3_started` | Millhaven elder hint (after `boss_zone02_defeated`) |
+| `story_act4_started` | Frostholm captain hint (after `boss_zone05_defeated`) |
 
 
 ## Naming Convention

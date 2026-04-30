@@ -25,16 +25,3 @@ Need more TMX map files for v1.
 - (d) You'll author them; I just stand by.
 
 Answer: full @docs/scenario/high-level.md
-
-### 3.4 `unlock_flag` chain wiring ❓
-
-Wire `story_quest_started` → `story_act2_started` → ... from real NPC
-dialogue / encounter triggers so the apothecary recipe unlock chain
-fires at the right story beats.
-
-❓ **Q7.** Scope for v1?
-- (a) Wire the full chain end-to-end through Act 1.
-- (b) Just the apothecary unlock — leave later acts as TODO.
-- (c) Stub flags only; defer narrative wiring post-v1.
-
-Answer: a

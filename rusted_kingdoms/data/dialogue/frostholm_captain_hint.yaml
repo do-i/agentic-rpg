@@ -21,7 +21,7 @@ entries:
       - "A Frost Dragon took up there two winters ago. We've lost three scouting parties."
       - "No one gets through until that thing is gone."
 
-  # Act 4 not started, zone05 cleared — hint that Frostholm is the next step
+  # Act 4 not started, zone05 cleared — fires Act 4
   - condition:
       requires: [boss_zone05_defeated]
       excludes: [story_act4_started]
@@ -29,6 +29,8 @@ entries:
       - "You came up through the foothills? Impressive."
       - "Frostholm doesn't get many visitors who survive that climb."
       - "There's a man here — Kael. Former army. If you're heading further north, talk to him first."
+    on_complete:
+      set_flag: story_act4_started
 
   # Early visit — Act 3 or earlier
   - condition:

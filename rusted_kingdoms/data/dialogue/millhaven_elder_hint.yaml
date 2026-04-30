@@ -12,7 +12,7 @@ entries:
       - "The ruins of Ashenveil hold older secrets than Millhaven ever knew."
       - "Whatever you're chasing — it's older than this kingdom."
 
-  # Act 2 underway, zone02 boss cleared — hint toward Act 3 trigger
+  # Act 2 underway, zone02 boss cleared — fires Act 3
   - condition:
       requires: [story_act2_started, boss_zone02_defeated]
       excludes: [story_act3_started]
@@ -20,6 +20,8 @@ entries:
       - "The plains have quieted since you passed through."
       - "I've heard travelers mention strange lights near the old ruins to the east."
       - "Ashenveil has been abandoned for good reason. If you go — go prepared."
+    on_complete:
+      set_flag: story_act3_started
 
   # Act 2 started, boss not yet cleared — nudge toward zone02
   - condition:

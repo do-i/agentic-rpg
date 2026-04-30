@@ -21,6 +21,7 @@ entries:
     on_complete:
       set_flag:
         - npc_elder_reward_given
+        - story_act2_started
       give_items:
         - id: hi_potion
           qty: 2
