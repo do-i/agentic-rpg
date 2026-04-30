@@ -26,7 +26,6 @@ Verification passes against the codebase. Each resolves to either
 ### 2.3 Larger refactors still on the plan ❓
 
 - §4.3 — `battle_renderer` panel split
-- §4.5 — `action_resolver` split
 
 ❓ **Q3.** Which of these block v1?
 - (a) All four — land before shipping.
