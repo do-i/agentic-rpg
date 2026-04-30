@@ -63,11 +63,8 @@ class RepositoryState:
     def gp(self) -> int:
         return self._gp
 
-    def add_gp(self, amount: int) -> int:
-        """Add GP, capped at gp_cap. Returns the amount actually added.
-
-        Logs a warning if the cap clipped the request (caller may have
-        intended user-visible feedback like 'GP overflow!')."""
+    def add_gp(self, amount: int) -> None:
+        """Add GP, capped at gp_cap. Logs a warning when clipped."""
         before = self._gp
         self._gp = min(self._gp + amount, self._gp_cap)
         added = self._gp - before
@@ -76,7 +73,6 @@ class RepositoryState:
                 "add_gp clipped at cap: requested=%d added=%d cap=%d",
                 amount, added, self._gp_cap,
             )
-        return added
 
     def spend_gp(self, amount: int) -> bool:
         """Returns False if insufficient funds."""

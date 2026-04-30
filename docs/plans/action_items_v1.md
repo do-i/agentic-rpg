@@ -22,8 +22,6 @@ Verification passes against the codebase. Each resolves to either
 
 ### 2.1 Trivial cleanups (can land any time)
 
-- 🟥 `RepositoryState.add_gp` returns `int` but call sites discard it
-  (`engine/party/repository_state.py:66`).
 - 🟥 `engine/world/world_map_renderer.py:99-104` — `_fade_surf` refilled
   every frame; revisit on a profiler pass.
 - 🟥 `engine/world/world_map_scene.py:415-426` — `update()` runs
