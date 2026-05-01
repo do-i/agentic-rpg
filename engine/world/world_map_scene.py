@@ -383,6 +383,7 @@ class WorldMapScene(Scene):
             shop_items=shop_items,
             sprite_path=sprite_path,
             sfx_manager=self._sfx_manager,
+            item_catalog=self._item_catalog,
         )
 
     def _close_item_shop(self) -> None:

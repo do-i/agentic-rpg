@@ -13,6 +13,7 @@ from engine.common.game_state_holder import GameStateHolder
 from engine.common.menu_sfx_mixin import MenuSfxMixin
 from engine.world.sprite_sheet import SpriteSheet
 from engine.common.item_selection_view import ItemSelectionView
+from engine.item.item_catalog import ItemCatalog
 from engine.shop.item_shop_renderer import ItemShopRenderer, SPRITE_SIZE, VISIBLE_ROWS
 
 QTY_STEP_SMALL = 1
@@ -38,6 +39,7 @@ class ItemShopScene(MenuSfxMixin, Scene):
         shop_items: list[dict],
         sprite_path: Path,
         sfx_manager,
+        item_catalog: ItemCatalog,
     ) -> None:
         self._holder        = holder
         self._scene_manager = scene_manager
@@ -46,6 +48,7 @@ class ItemShopScene(MenuSfxMixin, Scene):
         self._shop_items    = shop_items
         self._sprite_path   = sprite_path
         self._sfx_manager   = sfx_manager
+        self._item_catalog  = item_catalog
 
         self._mode         = MODE_BUY
         self._state        = "list"   # list | qty | popup
@@ -139,6 +142,10 @@ class ItemShopScene(MenuSfxMixin, Scene):
 
     def _display_name(self, item: dict) -> str:
         return item.get("name", item["id"].replace("_", " ").title())
+
+    def _description(self, item: dict) -> str:
+        item_def = self._item_catalog.get(item["id"])
+        return item_def.description if item_def else ""
 
     def _row_price(self, item: dict) -> int:
         # buy rows use "buy_price"; sell rows already normalize to "price".
@@ -317,4 +324,5 @@ class ItemShopScene(MenuSfxMixin, Scene):
             owned_qty=self._owned_qty,
             display_name=self._display_name,
             row_price=self._row_price,
+            description=self._description,
         )

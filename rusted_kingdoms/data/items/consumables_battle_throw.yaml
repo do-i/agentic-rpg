@@ -8,6 +8,7 @@
     target: single_enemy
   buy_price: null
   sell_price: 0
+  description: "A fragile vial of volatile oil. Bursts into flame on impact."
 
 - id: ice_vial
   name: Ice Vial
@@ -19,6 +20,7 @@
     target: single_enemy
   buy_price: null
   sell_price: 0
+  description: "Frigid liquid that flashes to needle-ice when shattered."
 
 - id: shock_vial
   name: Shock Vial
@@ -30,6 +32,7 @@
     target: single_enemy
   buy_price: null
   sell_price: 0
+  description: "Crackling brine. Discharges a sharp jolt on contact."
 
 - id: holy_water
   name: Holy Water
@@ -42,3 +45,4 @@
     bonus_vs: [undead, demon]
   buy_price: 200
   sell_price: 100
+  description: "Blessed water. Sears undead and demons; harmless to the living."

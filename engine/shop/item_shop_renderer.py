@@ -21,10 +21,12 @@ from engine.shop.shop_renderer import (
 )
 
 # ── Colors (item-shop-specific) ──────────────────────────────
-C_BORDER  = (160, 160, 100)
-C_HEADER  = (220, 220, 180)
-C_SEL_BG  = (45, 42, 75)
-C_SEL_BDR = (180, 160, 255)
+C_BORDER   = (160, 160, 100)
+C_HEADER   = (220, 220, 180)
+C_SEL_BG   = (45, 42, 75)
+C_SEL_BDR  = (180, 160, 255)
+C_DESC_BG  = (32, 32, 54)
+C_DESC_BDR = (55, 55, 80)
 
 # ── Layout (item-shop-specific) ──────────────────────────────
 PAD          = 24
@@ -32,6 +34,9 @@ SPRITE_SIZE  = 64
 FOOTER_H     = 36
 VISIBLE_ROWS = 7
 POPUP_W      = 360
+DESC_PAD     = 12
+DESC_LINES   = 2
+DESC_GAP     = 10
 
 
 def _theme() -> ItemSelectionTheme:
@@ -58,7 +63,12 @@ class ItemShopRenderer:
         self._font_arrow  = f.get(20)
         self._font_hint   = f.get(15)
         self._font_toast  = f.get(20, bold=True)
+        self._font_desc   = f.get(18)
         self._fonts_ready = True
+
+    def _desc_panel_height(self) -> int:
+        lh = self._font_desc.get_height() + 4
+        return DESC_PAD * 2 + lh * DESC_LINES
 
     # ── Main entry point ─────────────────────────────────────
 
@@ -80,14 +90,16 @@ class ItemShopRenderer:
         mode: str = "buy",
         row_price: Callable[[dict], int] | None = None,
         sell_tag: str | None = None,
+        description: Callable[[dict], str] | None = None,
     ) -> None:
         if not self._fonts_ready:
             self._init_fonts()
 
+        desc_h = self._desc_panel_height()
         full_rows = min(len(avail), VISIBLE_ROWS) if avail else 1
         has_overflow = len(avail) > VISIBLE_ROWS
         body_h = self._view.list_height(full_rows, has_overflow) + 12
-        mh     = HEADER_H + body_h + FOOTER_H + PAD * 2
+        mh     = HEADER_H + body_h + DESC_GAP + desc_h + FOOTER_H + PAD * 2
 
         mx = (screen.get_width()  - MODAL_W) // 2
         my = (screen.get_height() - mh) // 2
@@ -114,7 +126,7 @@ class ItemShopRenderer:
         )
 
         list_y = my + HEADER_H + PAD
-        list_h = self._view.list_height(VISIBLE_ROWS, has_overflow)
+        list_h = self._view.list_height(full_rows, has_overflow)
         list_rect = pygame.Rect(mx, list_y, MODAL_W, list_h)
 
         if not avail:
@@ -130,6 +142,12 @@ class ItemShopRenderer:
                 for item in avail
             ]
             self._view.render(screen, list_rect, rows, list_sel, scroll, active=(state == "list"))
+
+        desc_text = description(selected) if (description and selected) else ""
+        self._draw_description(
+            screen, mx + PAD, list_y + list_h + DESC_GAP,
+            MODAL_W - PAD * 2, desc_h, desc_text,
+        )
 
         footer_hint = (
             "TAB sell · ENTER buy · ESC close" if mode == "buy"
@@ -179,6 +197,38 @@ class ItemShopRenderer:
             right_text=f"{price:,} GP",
             locked=False,
         )
+
+    # ── Description band ─────────────────────────────────────
+
+    def _draw_description(
+        self, screen: pygame.Surface, x: int, y: int,
+        panel_w: int, panel_h: int, text: str,
+    ) -> None:
+        pygame.draw.rect(screen, C_DESC_BG,  (x, y, panel_w, panel_h), border_radius=6)
+        pygame.draw.rect(screen, C_DESC_BDR, (x, y, panel_w, panel_h), 1, border_radius=6)
+
+        if not text:
+            text = "—"
+        font = self._font_desc
+        lh = font.get_height() + 4
+        inner_w = panel_w - DESC_PAD * 2
+        words = text.split()
+        lines: list[str] = []
+        line = ""
+        for word in words:
+            test = (line + " " + word).strip()
+            if font.size(test)[0] > inner_w and line:
+                lines.append(line)
+                if len(lines) >= DESC_LINES:
+                    break
+                line = word
+            else:
+                line = test
+        if line and len(lines) < DESC_LINES:
+            lines.append(line)
+        tx, ty = x + DESC_PAD, y + DESC_PAD
+        for i, ln in enumerate(lines):
+            screen.blit(font.render(ln, True, C_TEXT), (tx, ty + i * lh))
 
     # ── Qty overlay ──────────────────────────────────────────
 
