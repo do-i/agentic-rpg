@@ -27,6 +27,7 @@ class ItemEntry:
         self.sell_price = sell_price
         self.sellable = sellable
         self.droppable = droppable
+        self.is_loot = False
 
     def __repr__(self) -> str:
         return f"ItemEntry({self.id!r}, qty={self.qty}, locked={self.locked})"

@@ -21,6 +21,7 @@ def _add_mc(repository: RepositoryState, item_id: str, qty: int) -> None:
     """Add a Magic Core item and ensure it carries the magic_core tag."""
     entry = repository.add_item(item_id, qty)
     entry.tags.add("magic_core")
+    entry.is_loot = True
 
 
 class EncounterManager:

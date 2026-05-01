@@ -136,10 +136,12 @@ def from_save(
         qty     = item.get("qty", 1)
         tags    = set(item.get("tags", []))
         locked  = item.get("locked", False)
+        is_loot = item.get("is_loot", False)
         if item_id:
             entry = state.repository.add_item(item_id, qty)
-            entry.tags   = tags
-            entry.locked = locked
+            entry.tags    = tags
+            entry.locked  = locked
+            entry.is_loot = is_loot
             if item_id.startswith("mc_"):
                 entry.tags.add("magic_core")
 

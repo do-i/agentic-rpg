@@ -81,13 +81,14 @@ class TestFilteredItems:
         result = filtered_items(repo, TABS.index("All"))
         assert [e.id for e in result] == ["aaa_item", "zzz_item"]
 
-    def test_new_tab_reversed(self):
+    def test_new_tab_filters_to_loot(self):
         repo = make_repo_with_items([
-            ("first", 1, {"consumable"}),
-            ("second", 1, {"consumable"}),
+            ("looted", 1, {"consumable"}),
+            ("bought", 1, {"consumable"}),
         ])
+        repo.get_item("looted").is_loot = True
         result = filtered_items(repo, TABS.index("New"))
-        assert [e.id for e in result] == ["second", "first"]
+        assert [e.id for e in result] == ["looted"]
 
     def test_recovery_tab_filters(self):
         repo = make_repo_with_items([

@@ -11,7 +11,7 @@ from engine.item.item_effect_handler import ItemEffectHandler
 from engine.item.magic_core_catalog_state import MagicCoreCatalogState, build_mc_catalog
 
 # ── Tabs — Magic Core inserted between Material and Key ───────
-TABS = ["New", "All", "Recovery", "Status", "Battle", "Material", "Magic Core", "Key"]
+TABS = ["All", "New", "Recovery", "Status", "Battle", "Material", "Magic Core", "Key"]
 
 # ── Tag editor ────────────────────────────────────────────────
 # Curatorial system tags exposed in the Edit Tags UI. Tags driven by item
@@ -79,7 +79,7 @@ def filtered_items(repo: RepositoryState, tab_index: int,
     tab = TABS[tab_index]
 
     if tab == "New":
-        return list(reversed(all_items))
+        return sorted((e for e in all_items if e.is_loot), key=lambda e: e.id)
     if tab == "All":
         return sorted(all_items, key=lambda e: e.id)
     if tab == "Magic Core":

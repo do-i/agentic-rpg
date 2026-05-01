@@ -190,10 +190,11 @@ class GameStateManager:
         items_data = []
         for entry in state.repository.items:
             items_data.append({
-                "id":     entry.id,
-                "qty":    entry.qty,
-                "tags":   sorted(entry.tags),
-                "locked": entry.locked,
+                "id":      entry.id,
+                "qty":     entry.qty,
+                "tags":    sorted(entry.tags),
+                "locked":  entry.locked,
+                "is_loot": entry.is_loot,
             })
 
         return {

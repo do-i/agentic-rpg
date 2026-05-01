@@ -22,7 +22,6 @@ MUTED           = (100, 100, 110)
 TEXT_PRIMARY    = (238, 238, 238)
 TEXT_SECONDARY  = (170, 170, 170)
 TEXT_DIM        = (80, 80, 90)
-TEXT_NEW        = (140, 220, 140)
 
 TAB_BG_ACT      = (55, 55, 90)
 TAB_BG_NORM     = (35, 35, 55)
@@ -104,7 +103,6 @@ class ItemRenderer:
         self._font_btn    = f.get(14, bold=True)
         self._font_hint   = f.get(13)
         self._font_gp     = f.get(16)
-        self._font_new    = f.get(11, bold=True)
         self._fonts_ready = True
 
     @property
@@ -139,7 +137,7 @@ class ItemRenderer:
         det_w  = screen.get_width() - det_x - PAD
 
         self._draw_list_panel(screen, list_x, panel_top, LIST_W, panel_h,
-                              items, list_sel, scroll, tab_index, in_tab, in_action)
+                              items, list_sel, scroll, in_tab)
         self._draw_detail_panel(screen, det_x, panel_top, det_w, panel_h,
                                 selected_entry, in_action, action_sel)
         self._draw_footer(screen)
@@ -195,7 +193,7 @@ class ItemRenderer:
     def _draw_list_panel(self, screen: pygame.Surface,
                          x: int, y: int, w: int, h: int,
                          items: list[ItemEntry], list_sel: int, scroll: int,
-                         tab_index: int, in_tab: bool, in_action: bool) -> None:
+                         in_tab: bool) -> None:
         pygame.draw.rect(screen, LIST_BG, (x, y, w, h), border_radius=6)
         pygame.draw.rect(screen, DIVIDER, (x, y, w, h), 1, border_radius=6)
 
@@ -204,16 +202,13 @@ class ItemRenderer:
             screen.blit(empty, (x + 16, y + 16))
             return
 
-        tab = TABS[tab_index]
         rows = [
             ItemRow(
                 title=display_name(entry, self._mc_catalog),
                 right_text=f"x {entry.qty}",
                 locked=entry.locked,
-                badge="NEW" if (tab == "New" and idx < 3) else None,
-                badge_color=TEXT_NEW,
             )
-            for idx, entry in enumerate(items)
+            for entry in items
         ]
         has_overflow = len(items) > VISIBLE_ROWS
         list_rect_h = self._view.list_height(VISIBLE_ROWS, has_overflow)

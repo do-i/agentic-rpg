@@ -66,7 +66,8 @@ def handle_victory(
     sync_party_state(state, game_state.party)
     EncounterManager.add_mc_drops(game_state.repository, rewards.loot.mc_drops)
     for item in rewards.loot.item_drops:
-        game_state.repository.add_item(item["id"], item.get("qty", 1))
+        entry = game_state.repository.add_item(item["id"], item.get("qty", 1))
+        entry.is_loot = True
     return rewards
 
 
