@@ -65,12 +65,12 @@ class TestUpdate:
         assert c.offset_x == mid_x - SCREEN_W // 2
         assert c.offset_y == mid_y - SCREEN_H // 2
 
-    def test_small_map_clamps_both_axes(self):
-        # map smaller than viewport — offset should stay at 0
+    def test_small_map_centers_on_screen(self):
+        # map smaller than viewport — offset is negative so map renders centered
         small_cam = Camera(SCREEN_W // 2, SCREEN_H // 2, SCREEN_W, SCREEN_H)
         small_cam.update(Position(100, 100))
-        assert small_cam.offset_x == 0
-        assert small_cam.offset_y == 0
+        assert small_cam.offset_x == (SCREEN_W // 2 - SCREEN_W) // 2
+        assert small_cam.offset_y == (SCREEN_H // 2 - SCREEN_H) // 2
 
 
 # ── apply ─────────────────────────────────────────────────────

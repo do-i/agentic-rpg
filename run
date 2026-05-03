@@ -16,6 +16,7 @@ usage() {
     echo "  test          Run tests (./run test [pytest args...])"
     echo "  validate      Run data validation"
     echo "  maps          Render interactive map-connections HTML and open it"
+    echo "  maps-brave    Render interactive map-connections HTML and open it in Brave"
     echo ""
 }
 
@@ -71,6 +72,20 @@ case "$cmd" in
         if command -v xdg-open >/dev/null 2>&1; then
             xdg-open "$OUT" >/dev/null 2>&1 &
         fi
+        ;;
+    maps-brave)
+        OUT="${OUT:-$SCRIPT_DIR/maps_graph.html}"
+        python "$SCRIPT_DIR/tools/visualize_maps.py" \
+            --root "$SCRIPT_DIR/rusted_kingdoms" \
+            --out "$OUT" "$@"
+        for bin in brave brave-browser brave-bin; do
+            if command -v "$bin" >/dev/null 2>&1; then
+                "$bin" "$OUT" >/dev/null 2>&1 &
+                exit 0
+            fi
+        done
+        echo "Error: Brave browser not found in PATH."
+        exit 1
         ;;
     ""|help|--help|-h)
         usage

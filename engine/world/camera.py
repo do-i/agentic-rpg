@@ -29,8 +29,14 @@ class Camera:
         """Recalculate offset so player stays centered."""
         cx = player_pos.x - self._screen_w // 2
         cy = player_pos.y - self._screen_h // 2
-        self.offset_x = max(0, min(cx, self._map_w - self._screen_w))
-        self.offset_y = max(0, min(cy, self._map_h - self._screen_h))
+        if self._map_w < self._screen_w:
+            self.offset_x = (self._map_w - self._screen_w) // 2
+        else:
+            self.offset_x = max(0, min(cx, self._map_w - self._screen_w))
+        if self._map_h < self._screen_h:
+            self.offset_y = (self._map_h - self._screen_h) // 2
+        else:
+            self.offset_y = max(0, min(cy, self._map_h - self._screen_h))
 
     def apply(self, x: int, y: int) -> tuple[int, int]:
         """Convert world coordinates to screen coordinates."""
