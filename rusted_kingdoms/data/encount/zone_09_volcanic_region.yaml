@@ -3,34 +3,46 @@ name: Volcanic Region
 density: 0.16
 
 entries:
-  - formation: [lava_serpent, lava_serpent]
-    weight: 30
+  - formation: [minotaur_brute_base, minotaur_brute_base]
+    weight: 14
     chase_range: 0
-  - formation: [fire_elemental, lava_serpent]
-    weight: 25
-    chase_range: 0
-  - formation: [cerberus]
-    weight: 20
-    chase_range: 0
-  - formation: [vile_imp, vile_imp]
-    weight: 20
-    chase_range: 0
-  - formation: [chimera]
-    weight: 15
-    chase_range: 0
-  - formation: [magma_golem]
+  - formation: [minotaur_brute_club_brute]
     weight: 10
     chase_range: 0
-  - formation: [lava_lizard]
+  - formation: [minotaur_brute_armored_minotaur]
+    weight: 8
+    chase_range: 0
+  - formation: [boarman_berserker_base, boarman_berserker_base]
+    weight: 14
+    chase_range: 0
+  - formation: [boarman_berserker_blackhide_raider, boarman_berserker_base]
     weight: 10
     chase_range: 0
-  - formation: [magma_golem, lava_lizard]
+  - formation: [boarman_berserker_tusk_charger]
+    weight: 8
+    chase_range: 0
+  - formation: [pigman_guard_base, pigman_guard_base]
+    weight: 12
+    chase_range: 0
+  - formation: [pigman_guard_boar_guard, pigman_guard_base]
+    weight: 8
+    chase_range: 0
+  - formation: [pigman_guard_halberd_guard]
+    weight: 6
+    chase_range: 0
+  - formation: [lizard_dragon_guard_base]
     weight: 5
+    chase_range: 0
+  - formation: [lizard_dragon_guard_blue_drake_guard]
+    weight: 3
+    chase_range: 0
+  - formation: [lizard_dragon_guard_trident_guard]
+    weight: 2
     chase_range: 0
 
 boss:
-  id: flame_dragon
-  name: Flame Dragon
+  id: wartotaur_warlord_blackhorn_chief
+  name: Blackhorn Chief
   once: true
   on_complete:
     set_flag: boss_zone09_defeated

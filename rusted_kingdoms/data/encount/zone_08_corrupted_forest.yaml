@@ -3,37 +3,40 @@ name: Corrupted Forest
 density: 0.15
 
 entries:
-  - formation: [shadow_wolf, shadow_wolf]
-    weight: 30
+  - formation: [dark_fairy_base, dark_fairy_base]
+    weight: 18
     chase_range: 0
-  - formation: [phantom, phantom]
-    weight: 25
+  - formation: [dark_fairy_purple_hex_fairy, dark_fairy_base]
+    weight: 14
     chase_range: 0
-  - formation: [wraith, shadow_wolf]
-    weight: 20
-    chase_range: 0
-  - formation: [rot_zombie, rot_zombie]
-    weight: 20
-    chase_range: 0
-  - formation: [cursed_gargoyle, rot_zombie]
-    weight: 15
-    chase_range: 0
-  - formation: [banshee]
+  - formation: [dark_fairy_redcap_fairy]
     weight: 10
     chase_range: 0
-  - formation: [shadow_imp]
+  - formation: [pumpkin_jack_harvest_reaper]
     weight: 10
     chase_range: 0
-  - formation: [blighted_treant]
+  - formation: [sheep_cultist_base, sheep_cultist_base]
+    weight: 12
+    chase_range: 0
+  - formation: [sheep_cultist_white_robed_cultist, sheep_cultist_base]
     weight: 10
     chase_range: 0
-  - formation: [shadow_imp, blighted_treant]
-    weight: 5
+  - formation: [sheep_cultist_crystal_cultist]
+    weight: 8
+    chase_range: 0
+  - formation: [troll_berserker_base]
+    weight: 8
+    chase_range: 0
+  - formation: [troll_berserker_swamp_troll, troll_shaman_swamp_hexer]
+    weight: 6
+    chase_range: 0
+  - formation: [troll_shaman_swamp_hexer]
+    weight: 4
     chase_range: 0
 
 boss:
-  id: succubus
-  name: Succubus
+  id: troll_shaman_base
+  name: Troll Sage
   once: true
   on_complete:
     set_flag: boss_zone08_defeated

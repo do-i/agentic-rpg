@@ -3,39 +3,42 @@ name: Mountain Foothills
 density: 0.14
 
 entries:
-  - formation: [stone_golem, stone_golem]
-    weight: 30
+  - formation: [goblin_bomber_base, goblin_bomber_base]
+    weight: 22
     chase_range: 0
-  - formation: [plague_rat, plague_rat]
-    weight: 25
-    chase_range: 0
-  - formation: [stone_golem, plague_rat]
-    weight: 20
-    chase_range: 0
-  - formation: [iron_golem, iron_golem]
-    weight: 20
-    chase_range: 0
-  - formation: [iron_golem, rock_crab]
+  - formation: [goblin_bomber_redcap_bomber]
     weight: 15
     chase_range: 0
-  - formation: [rock_crab]
+  - formation: [goblin_bomber_club_sapper, goblin_bomber_base]
+    weight: 12
+    chase_range: 0
+  - formation: [goblin_crossbowman_base, goblin_crossbowman_base]
+    weight: 15
+    chase_range: 0
+  - formation: [goblin_crossbowman_hooded_marksman]
     weight: 10
     chase_range: 0
-  - formation: [sand_worm]
+  - formation: [goblin_crossbowman_knife_backup, goblin_crossbowman_base]
     weight: 10
     chase_range: 0
-  - formation: [wind_elemental]
+  - formation: [frankenstein_brawler_base]
+    weight: 8
+    chase_range: 0
+  - formation: [frankenstein_brawler_scarred_construct]
     weight: 5
+    chase_range: 0
+  - formation: [pumpkin_jack_lantern_duelist]
+    weight: 3
     chase_range: 0
 
 barrier_enemies:
-  - id: wind_elemental
+  - id: pumpkin_jack_lantern_duelist
     requires_item: veil_breaker
     blocked_message: "A mysterious force blocks your attack."
 
 boss:
-  id: wyvern
-  name: Wyvern
+  id: titch_the_ticker_171
+  name: Titch the Ticker
   once: true
   on_complete:
     set_flag: boss_zone05_defeated

@@ -3,39 +3,42 @@ name: Ancient Ruins
 density: 0.13
 
 entries:
-  - formation: [mimic]
-    weight: 30
-    chase_range: 0
-  - formation: [will_o_wisp, will_o_wisp]
-    weight: 25
-    chase_range: 0
-  - formation: [skeleton, will_o_wisp]
+  - formation: [skeleton_monster_base, skeleton_monster_base]
     weight: 20
     chase_range: 0
-  - formation: [bone_archer, bone_archer]
-    weight: 20
-    chase_range: 0
-  - formation: [plague_zombie, plague_zombie]
+  - formation: [skeleton_monster_rusted_sword, skeleton_archer_base]
     weight: 15
     chase_range: 0
-  - formation: [skeleton]
+  - formation: [zombie_guard_base, zombie_guard_wounded_guard]
+    weight: 15
+    chase_range: 0
+  - formation: [zombie_guard_rusted_sentry]
     weight: 10
     chase_range: 0
-  - formation: [stone_gargoyle]
+  - formation: [zombie_monster_base, zombie_monster_ragged_worker]
+    weight: 12
+    chase_range: 0
+  - formation: [zombie_monster_armed_zombie, zombie_monster_base]
     weight: 10
     chase_range: 0
-  - formation: [ghost]
-    weight: 5
+  - formation: [skeleton_archer_base, skeleton_monster_base]
+    weight: 8
+    chase_range: 0
+  - formation: [pumpkin_jack_base]
+    weight: 7
+    chase_range: 0
+  - formation: [bat_demon_red_wing_fiend]
+    weight: 3
     chase_range: 0
 
 barrier_enemies:
-  - id: ghost
+  - id: bat_demon_red_wing_fiend
     requires_item: veil_breaker
     blocked_message: "A mysterious force blocks your attack."
 
 boss:
-  id: plague_zombie_ancient
-  name: Plague Zombie (Ancient)
+  id: skeleton_knight_base
+  name: Skeleton Knight
   once: true
   on_complete:
     set_flag: boss_zone04_defeated

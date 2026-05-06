@@ -1,83 +1,16 @@
-# Rank E Enemies
+# Rank E Enemies — Zone 2 Open Plains
 ---
-id: forest_spider
-name: Forest Spider
+id: rabbit_bandit_base
+name: Rabbit Bandit
 type: beast
 rank: E
-hp: 36
+sprite_scale: 220
+hp: 38
 atk: 12
 def: 5
 mres: 3
-dex: 12
-exp: 40
-drops:
-  mc:
-    - size: XS
-      qty: 2
-    - size: S
-      qty: 1
-  loot:
-    - pool:
-        - item: spider_silk
-          weight: 55
-        - item: venom_sac
-          weight: 45
-ai:
-  pattern: random
-  moves:
-    - action: attack
-      weight: 60
-    - action: ability
-      id: poison_bite       # poison single target
-      weight: 40
-targeting:
-  default: random_alive
-
----
-id: sand_serpent
-name: Sand Serpent
-type: beast
-rank: E
-hp: 38
-atk: 13
-def: 5
-mres: 4
 dex: 13
-exp: 45
-drops:
-  mc:
-    - size: XS
-      qty: 2
-    - size: S
-      qty: 1
-  loot:
-    - pool:
-        - item: serpent_scale
-          weight: 65
-        - item: venom_gland
-          weight: 35
-ai:
-  pattern: random
-  moves:
-    - action: attack
-      weight: 70
-    - action: ability
-      id: constrict         # DEX down 20% single target, 2 turns
-      weight: 30
-targeting:
-  default: random_alive
-
----
-id: horned_rabbit
-name: Horned Rabbit
-type: beast
-rank: E
-hp: 35
-atk: 14
-def: 5
-mres: 3
-dex: 14
-exp: 42
+exp: 40
 drops:
   mc:
     - size: XS
@@ -94,24 +27,165 @@ ai:
   pattern: random
   moves:
     - action: attack
-      weight: 80
+      weight: 70
     - action: ability
-      id: horn_charge       # 130% physical, single target
-      weight: 20
+      id: horn_charge
+      weight: 30
 targeting:
   default: random_alive
 
 ---
-id: forest_wolf
-name: Forest Wolf
+id: rabbit_bandit_brown_rabbit
+name: Brown Rabbit
 type: beast
 rank: E
-hp: 45
-atk: 12
-def: 6
+sprite_scale: 220
+hp: 36
+atk: 13
+def: 5
 mres: 3
 dex: 14
-exp: 38
+exp: 42
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: rabbit_horn
+          weight: 50
+        - item: soft_fur
+          weight: 50
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: horn_charge
+      weight: 30
+targeting:
+  default: random_alive
+
+---
+id: rabbit_bandit_knife_bandit
+name: Knife Bandit
+type: humanoid
+rank: E
+sprite_scale: 220
+hp: 40
+atk: 14
+def: 6
+mres: 4
+dex: 14
+exp: 48
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: rusty_blade
+          weight: 55
+        - item: soft_fur
+          weight: 45
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: shadow_bite
+      weight: 40
+targeting:
+  default: random_alive
+
+---
+id: mouse_thief_base
+name: Mouse Thief
+type: beast
+rank: E
+sprite_scale: 200
+hp: 35
+atk: 13
+def: 5
+mres: 4
+dex: 14
+exp: 44
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: rat_tail
+          weight: 60
+        - item: rat_hide
+          weight: 40
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: gnaw
+      weight: 40
+targeting:
+  default: random_alive
+
+---
+id: mouse_thief_white_mouse
+name: White Mouse
+type: beast
+rank: E
+sprite_scale: 200
+hp: 36
+atk: 13
+def: 5
+mres: 5
+dex: 14
+exp: 46
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: rat_tail
+          weight: 50
+        - item: soft_fur
+          weight: 50
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 70
+    - action: ability
+      id: gnaw
+      weight: 30
+targeting:
+  default: random_alive
+
+---
+id: wolf_beast_base
+name: Plains Wolf
+type: beast
+rank: E
+sprite_scale: 240
+hp: 50
+atk: 14
+def: 6
+mres: 4
+dex: 13
+exp: 52
 drops:
   mc:
     - size: XS
@@ -123,158 +197,80 @@ drops:
         - item: wolf_fang
           weight: 60
         - item: wolf_pelt
-          weight: 30
-        - item: sharp_claw
-          weight: 10
-ai:
-  pattern: random
-  moves:
-    - action: attack
-      weight: 70
-    - action: ability
-      id: howl              # ATK up 20% self, 2 turns
-      weight: 30
-targeting:
-  default: random_alive
-  overrides:
-    - ability: howl
-      target: self
-
----
-id: marsh_frog
-name: Marsh Frog
-type: beast
-rank: E
-hp: 50
-atk: 14
-def: 7
-mres: 6
-dex: 12
-exp: 55
-drops:
-  mc:
-    - size: XS
-      qty: 2
-    - size: S
-      qty: 1
-  loot:
-    - pool:
-        - item: frog_leg
-          weight: 65
-        - item: poison_mucus
-          weight: 35
-ai:
-  pattern: random
-  moves:
-    - action: attack
-      weight: 70
-    - action: ability
-      id: tongue_lash       # 110% physical, single target
-      weight: 30
-targeting:
-  default: random_alive
-
----
-id: marsh_rat
-name: Marsh Rat
-type: beast
-rank: E
-hp: 52
-atk: 14
-def: 7
-mres: 5
-dex: 13
-exp: 58
-drops:
-  mc:
-    - size: XS
-      qty: 2
-    - size: S
-      qty: 1
-  loot:
-    - pool:
-        - item: rat_tail
-          weight: 70
-        - item: rat_hide
-          weight: 30
-ai:
-  pattern: random
-  moves:
-    - action: attack
-      weight: 80
-    - action: ability
-      id: gnaw              # DEF down 15% single target, 2 turns
-      weight: 20
-targeting:
-  default: random_alive
-
----
-id: bog_leech
-name: Bog Leech
-type: beast
-rank: E
-hp: 55
-atk: 15
-def: 6
-mres: 5
-dex: 12
-exp: 60
-drops:
-  mc:
-    - size: XS
-      qty: 2
-    - size: S
-      qty: 1
-  loot:
-    - pool:
-        - item: leech_oil
-          weight: 70
-        - item: dark_fluid
-          weight: 30
-ai:
-  pattern: random
-  moves:
-    - action: attack
-      weight: 60
-    - action: ability
-      id: drain             # steals 10% target HP, heals self
-      weight: 40
-targeting:
-  default: highest_hp
-  overrides:
-    - ability: drain
-      target: highest_hp
-
----
-id: plague_rat
-name: Plague Rat
-type: beast
-rank: E
-hp: 54
-atk: 15
-def: 7
-mres: 5
-dex: 14
-exp: 62
-drops:
-  mc:
-    - size: XS
-      qty: 2
-    - size: S
-      qty: 1
-  loot:
-    - pool:
-        - item: rat_tail
-          weight: 60
-        - item: plague_sample
           weight: 40
 ai:
   pattern: random
   moves:
     - action: attack
-      weight: 60
+      weight: 70
     - action: ability
-      id: plague_bite       # poison single target
-      weight: 40
+      id: lunge
+      weight: 30
 targeting:
   default: random_alive
+
+---
+id: wolf_beast_spear_beast
+name: Spear Beast
+type: humanoid
+rank: E
+sprite_scale: 240
+hp: 52
+atk: 15
+def: 7
+mres: 5
+dex: 12
+exp: 56
+drops:
+  mc:
+    - size: XS
+      qty: 2
+    - size: S
+      qty: 1
+  loot:
+    - pool:
+        - item: wolf_fang
+          weight: 50
+        - item: rusty_blade
+          weight: 50
+ai:
+  pattern: random
+  moves:
+    - action: attack
+      weight: 60
+    - action: ability
+      id: lunge
+      weight: 25
+    - action: ability
+      id: shield_bash
+      weight: 15
+targeting:
+  default: random_alive
+
+---
+id: wolf_beast_black_fur
+name: Black Fur Alpha
+type: beast
+rank: E
+boss: true
+immune_to: [instant_kill]
+sprite_scale: 280
+hp: 130
+atk: 22
+def: 11
+mres: 8
+dex: 18
+exp: 180
+drops:
+  mc:
+    - size: S
+      qty: 2
+    - size: M
+      qty: 1
+  loot:
+    - pool:
+        - item: wolf_pelt
+          weight: 50
+        - item: bear_claw
+          weight: 50
+ai_ref: boss_move_sets/wolf_beast_black_fur.yaml

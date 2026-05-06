@@ -3,34 +3,37 @@ name: Sunken Cave
 density: 0.15
 
 entries:
-  - formation: [venom_spider, venom_spider]
-    weight: 30
-    chase_range: 0
-  - formation: [bone_archer, dark_skeleton]
-    weight: 25
-    chase_range: 0
-  - formation: [dark_skeleton, dark_skeleton]
+  - formation: [lizard_monster_base, lizard_monster_base]
     weight: 20
     chase_range: 0
-  - formation: [iron_gargoyle, iron_gargoyle]
-    weight: 20
+  - formation: [lizard_monster_blue_scale_lizard]
+    weight: 14
     chase_range: 0
-  - formation: [fungus_spore, fungus_spore]
-    weight: 15
+  - formation: [lizard_monster_winged_lizard, lizard_monster_base]
+    weight: 12
     chase_range: 0
-  - formation: [cave_golem]
+  - formation: [pirate_captain_base, pirate_captain_base]
+    weight: 14
+    chase_range: 0
+  - formation: [pirate_captain_cutlass_raider, pirate_captain_base]
+    weight: 12
+    chase_range: 0
+  - formation: [skeleton_archer_greatbow_bones]
     weight: 10
     chase_range: 0
-  - formation: [blood_bat, blood_bat]
-    weight: 10
+  - formation: [skeleton_archer_hooded_archer, skeleton_monster_hooded_bones]
+    weight: 8
     chase_range: 0
-  - formation: [cave_golem, blood_bat]
-    weight: 5
+  - formation: [skeleton_monster_hooded_bones]
+    weight: 6
+    chase_range: 0
+  - formation: [frankenstein_brawler_graveyard_smasher]
+    weight: 4
     chase_range: 0
 
 boss:
-  id: stone_dragon
-  name: Stone Dragon
+  id: pirate_captain_eyepatch_captain
+  name: Eyepatch Captain
   once: true
   on_complete:
     set_flag: boss_zone07_defeated

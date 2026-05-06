@@ -3,34 +3,34 @@ name: Mountain Pass
 density: 0.14
 
 entries:
-  - formation: [iron_golem, griffon]
-    weight: 30
-    chase_range: 0
-  - formation: [griffon, griffon]
-    weight: 25
-    chase_range: 0
-  - formation: [iron_gargoyle, iron_gargoyle]
+  - formation: [orc_raider_base, orc_raider_base]
     weight: 20
     chase_range: 0
-  - formation: [iron_golem, frost_wolf]
+  - formation: [orc_raider_shield_bruiser, orc_raider_base]
     weight: 15
     chase_range: 0
-  - formation: [griffon, iron_gargoyle]
+  - formation: [orc_raider_spear_raider]
+    weight: 12
+    chase_range: 0
+  - formation: [orc_archer_base, orc_archer_base]
     weight: 15
     chase_range: 0
-  - formation: [frost_wolf]
+  - formation: [orc_archer_forest_bowman, orc_raider_base]
+    weight: 12
+    chase_range: 0
+  - formation: [orc_archer_greatbow_raider]
     weight: 10
     chase_range: 0
-  - formation: [harpy]
+  - formation: [orc_shaman_base, orc_raider_base]
     weight: 10
     chase_range: 0
-  - formation: [dark_knight]
-    weight: 5
+  - formation: [orc_shaman_bone_caller]
+    weight: 6
     chase_range: 0
 
 boss:
-  id: frost_dragon
-  name: Frost Dragon
+  id: orc_shaman_red_hood_shaman
+  name: Red Hood Shaman
   once: true
   on_complete:
     set_flag: boss_zone06_defeated

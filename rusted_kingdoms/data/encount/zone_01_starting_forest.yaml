@@ -9,13 +9,22 @@ entries:
     weight: 25
     chase_range: 8
   - formation: [goblin, goblin]
-    weight: 25
+    weight: 20
     chase_range: 7
-  - formation: [goblin, goblin, goblin]
-    weight: 25
+  - formation: [goblin_scout_base, goblin]
+    weight: 15
+    chase_range: 7
+  - formation: [goblin_scout_sling_scout]
+    weight: 12
+    chase_range: 6
+  - formation: [goblin_scout_hooded_goblin, goblin]
+    weight: 10
+    chase_range: 6
+  - formation: [goblin, goblin, goblin_scout_base]
+    weight: 10
     chase_range: 6
   - formation: [goblin_warrier, goblin, goblin]
-    weight: 25
+    weight: 8
     chase_range: 10
 
 boss:
