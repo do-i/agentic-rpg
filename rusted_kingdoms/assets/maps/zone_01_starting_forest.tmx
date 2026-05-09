@@ -13,8 +13,8 @@
   <object id="2" name="zone_02_open_plains" x="1.5" y="805.5" width="2.5" height="48.5">
    <properties>
     <property name="target_map" value="zone_02_open_plains"/>
-    <property name="target_position_x" type="int" value="29"/>
-    <property name="target_position_y" type="int" value="1"/>
+    <property name="target_position_x" type="int" value="28"/>
+    <property name="target_position_y" type="int" value="6"/>
    </properties>
   </object>
  </objectgroup>
