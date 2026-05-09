@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="9">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="10">
  <tileset firstgid="1" source="../tilesets/grass_cave_walls_24x14.tsx"/>
  <tileset firstgid="337" source="../tilesets/icon_table_stage_14x9.tsx"/>
  <tileset firstgid="463" source="../tilesets/ground/terrain-v7.tsx"/>
@@ -16,6 +16,13 @@
     <property name="target_map" value="zone_01_starting_forest"/>
     <property name="target_position_x" type="int" value="1"/>
     <property name="target_position_y" type="int" value="26"/>
+   </properties>
+  </object>
+  <object id="9" name="zone_03_marshland" x="82.25" y="632.25" width="61.25" height="7.5">
+   <properties>
+    <property name="target_map" value="zone_03_marshland"/>
+    <property name="target_position_x" type="int" value="27"/>
+    <property name="target_position_y" type="int" value="1"/>
    </properties>
   </object>
  </objectgroup>

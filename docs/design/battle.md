@@ -112,7 +112,7 @@ id: zone_01_starting_forest
 name: Starting Forest
 density: 0.70             # share of walkable tiles eligible for spawns
 spawn_frequency: 25.0     # respawn cadence after a battle
-background: world1-bg-1280x468
+background: zone1-bg-1280x468
 
 entries:
   - formation: [goblin]

@@ -1,11 +1,12 @@
 id: zone_03_marshland
 name: Marshland
-density: 0.13
+density: 0.53
+background: zone3-bg-1280x468
 
 entries:
   - formation: [ratkin_cutpurse_base, ratkin_cutpurse_base]
     weight: 25
-    chase_range: 0
+    chase_range: 10
   - formation: [ratkin_cutpurse_sewer_archer]
     weight: 15
     chase_range: 0

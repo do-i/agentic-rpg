@@ -2,6 +2,7 @@ id: zone_02_open_plains
 name: Open Plains
 density: 0.65
 spawn_frequency: 20.0
+background: zone2-bg-1280x468
 
 entries:
   - formation: [rabbit_bandit_base, rabbit_bandit_base]

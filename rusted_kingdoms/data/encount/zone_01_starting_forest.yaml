@@ -2,7 +2,7 @@ id: zone_01_starting_forest
 name: Starting Forest
 density: 0.70
 spawn_frequency: 25.0
-background: world1-bg-1280x468
+background: zone1-bg-1280x468
 
 entries:
   - formation: [goblin]
