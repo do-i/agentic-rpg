@@ -17,6 +17,7 @@ usage() {
     echo "  validate      Run data validation"
     echo "  maps          Render interactive map-connections HTML and open it"
     echo "  maps-brave    Render interactive map-connections HTML and open it in Brave"
+    echo "  wangset       Export Wang terrain connection graphs from a TSX file"
     echo ""
 }
 
@@ -86,6 +87,9 @@ case "$cmd" in
         done
         echo "Error: Brave browser not found in PATH."
         exit 1
+        ;;
+    wangset)
+        exec python "$SCRIPT_DIR/tools/wangset-graph.py" "$@"
         ;;
     ""|help|--help|-h)
         usage

@@ -8,7 +8,7 @@ graph TD
   subgraph g1_Terrains_01___connected_grass["Terrains 01 - connected-grass"]
     g1_Terrains_01___connected_grass__Dirt_Roots["Dirt_Roots<br/>branch (2)"]
     class g1_Terrains_01___connected_grass__Dirt_Roots branch
-    g1_Terrains_01___connected_grass__Grass["Grass<br/>hub (7)"]
+    g1_Terrains_01___connected_grass__Grass["Grass<br/>hub (8)"]
     class g1_Terrains_01___connected_grass__Grass hub
     g1_Terrains_01___connected_grass__Grass_Dark["Grass_Dark<br/>branch (2)"]
     class g1_Terrains_01___connected_grass__Grass_Dark branch
@@ -20,6 +20,8 @@ graph TD
     class g1_Terrains_01___connected_grass__Mudstone_Brown leaf
     g1_Terrains_01___connected_grass__Mudstone_Gray["Mudstone_Gray<br/>leaf (1)"]
     class g1_Terrains_01___connected_grass__Mudstone_Gray leaf
+    g1_Terrains_01___connected_grass__Rock["Rock<br/>leaf (1)"]
+    class g1_Terrains_01___connected_grass__Rock leaf
     g1_Terrains_01___connected_grass__Sand["Sand<br/>branch (2)"]
     class g1_Terrains_01___connected_grass__Sand branch
     g1_Terrains_01___connected_grass__Snow_1["Snow_1<br/>bridge (3)"]
@@ -42,6 +44,7 @@ graph TD
     g1_Terrains_01___connected_grass__Dirt_Roots ---|14| g1_Terrains_01___connected_grass__Grass_Dark
     g1_Terrains_01___connected_grass__Grass ---|14| g1_Terrains_01___connected_grass__Mudstone_Brown
     g1_Terrains_01___connected_grass__Grass ---|14| g1_Terrains_01___connected_grass__Mudstone_Gray
+    g1_Terrains_01___connected_grass__Grass ---|14| g1_Terrains_01___connected_grass__Rock
     g1_Terrains_01___connected_grass__Grass ---|14| g1_Terrains_01___connected_grass__Soil
     g1_Terrains_01___connected_grass__Grass ---|14| g1_Terrains_01___connected_grass__Stone_Tan
     g1_Terrains_01___connected_grass__Grass ---|14| g1_Terrains_01___connected_grass__Stone_White
@@ -62,7 +65,8 @@ graph TD
   linkStyle 4 stroke:#f59e0b,stroke-width:3px;
   linkStyle 5 stroke:#f59e0b,stroke-width:3px;
   linkStyle 6 stroke:#f59e0b,stroke-width:3px;
-  linkStyle 11 stroke:#f59e0b,stroke-width:3px;
-  linkStyle 15 stroke:#f59e0b,stroke-width:3px;
+  linkStyle 7 stroke:#f59e0b,stroke-width:3px;
+  linkStyle 12 stroke:#f59e0b,stroke-width:3px;
   linkStyle 16 stroke:#f59e0b,stroke-width:3px;
+  linkStyle 17 stroke:#f59e0b,stroke-width:3px;
 ```
