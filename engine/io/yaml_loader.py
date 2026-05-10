@@ -11,6 +11,13 @@ from typing import Any, Iterator
 
 import yaml
 
+# Use libyaml-backed loader when available — ~9× faster on the scenario YAML
+# corpus than the pure-Python SafeLoader.
+try:
+    from yaml import CSafeLoader as SafeLoader
+except ImportError:
+    from yaml import SafeLoader  # type: ignore[assignment]
+
 
 # Process-wide cache for YAML files that don't change between loads.
 # Keyed on the resolved path. Use clear_yaml_cache() on scenario reload.
@@ -60,7 +67,7 @@ def load_yaml_required(path: Path) -> Any:
     if not path.exists():
         raise FileNotFoundError(f"Required YAML file not found: {path}")
     with open(path, "r") as f:
-        return yaml.safe_load(f)
+        return yaml.load(f, Loader=SafeLoader)
 
 
 def load_yaml_optional(path: Path) -> Any | None:
@@ -73,7 +80,7 @@ def load_yaml_optional(path: Path) -> Any | None:
     if not path.exists():
         return None
     with open(path, "r") as f:
-        return yaml.safe_load(f)
+        return yaml.load(f, Loader=SafeLoader)
 
 
 def iter_yaml_documents(path: Path) -> Iterator[Any]:
@@ -85,4 +92,4 @@ def iter_yaml_documents(path: Path) -> Iterator[Any]:
     if not path.exists():
         raise FileNotFoundError(f"Required YAML file not found: {path}")
     with open(path, "r") as f:
-        yield from yaml.safe_load_all(f)
+        yield from yaml.load_all(f, Loader=SafeLoader)

@@ -11,6 +11,8 @@ from pathlib import Path
 import pygame
 import yaml
 
+from engine.io.yaml_loader import SafeLoader
+
 _log = logging.getLogger(__name__)
 
 SFX_VOLUME = 0.8
@@ -31,7 +33,7 @@ class SfxManager:
         if not sfx_map_path.exists():
             return
         with open(sfx_map_path) as f:
-            sfx_map: dict = yaml.safe_load(f) or {}
+            sfx_map: dict = yaml.load(f, Loader=SafeLoader) or {}
         audio_root = scenario_path / "assets" / "audio"
         for _category, entries in sfx_map.items():
             if not isinstance(entries, dict):

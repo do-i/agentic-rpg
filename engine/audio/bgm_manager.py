@@ -11,6 +11,8 @@ from pathlib import Path
 import pygame
 import yaml
 
+from engine.io.yaml_loader import SafeLoader
+
 SOUND_VOLUME = 0.3
 
 
@@ -32,7 +34,7 @@ class BgmManager:
         if not index_path.exists():
             return
         with open(index_path) as f:
-            data: dict = yaml.safe_load(f) or {}
+            data: dict = yaml.load(f, Loader=SafeLoader) or {}
         audio_root = scenario_path / "assets" / "audio"
         for category, entries in data.items():
             if not isinstance(entries, dict):

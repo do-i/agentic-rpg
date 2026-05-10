@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 import yaml
 
+from engine.io.yaml_loader import SafeLoader
+
 
 SETTINGS_PATH = Path(__file__).parent / "settings.yaml"
 
@@ -37,7 +39,7 @@ class EngineConfigData:
     @classmethod
     def load(cls, path: Path = SETTINGS_PATH) -> "EngineConfigData":
         with open(path, "r") as f:
-            data = yaml.safe_load(f) or {}
+            data = yaml.load(f, Loader=SafeLoader) or {}
 
         display       = data.get("display") or {}
         tiles         = data.get("tiles")   or {}

@@ -10,6 +10,8 @@ from pathlib import Path
 
 import yaml
 
+from engine.io.yaml_loader import SafeLoader
+
 
 @dataclass(frozen=True)
 class BalanceData:
@@ -43,7 +45,7 @@ class BalanceData:
             raise FileNotFoundError(f"balance file not found: {path}")
 
         with open(path, "r") as f:
-            data = yaml.safe_load(f) or {}
+            data = yaml.load(f, Loader=SafeLoader) or {}
 
         prog  = data.get("progression") or {}
         econ  = data.get("economy")     or {}
