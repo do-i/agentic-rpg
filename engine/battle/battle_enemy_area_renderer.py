@@ -7,6 +7,9 @@
 
 from __future__ import annotations
 
+import math
+import time
+
 import pygame
 
 from engine.battle.battle_asset_cache import BattleAssetCache
@@ -19,6 +22,18 @@ from engine.battle.battle_renderer_constants import (
     C_FLOOR, C_HP_LOW, C_HP_OK,
 )
 from engine.common.color_constants import HP_LOW_THRESHOLD
+
+# Idle "breathing" squash: vertical compression on a sine wave with the
+# feet anchored to the floor. Sprite height is shortened by 0..MAX px on
+# a slow cycle; the draw position is shifted down by the same amount so
+# the bottom edge doesn't move. Per-enemy phase offset prevents a row of
+# enemies from squashing in lockstep.
+SQUASH_MAX_PX     = 2
+SQUASH_PERIOD_SEC = 1.4
+SQUASH_PHASE_OFFSET = 0.6
+# Fraction of the sprite (from the top) that participates in the squash —
+# head, shoulders, and upper chest move; waist/legs/feet stay planted.
+SQUASH_TOP_FRACTION = 0.60
 
 
 class EnemyAreaRenderer:
@@ -72,14 +87,33 @@ class EnemyAreaRenderer:
         rx, ry = cx - w // 2, cy - h // 2
 
         shake_dx = fx.shake_offset(enemy) if fx else 0
-        sx, sy = rx + shake_dx, ry
+        squash = 0
+        if not enemy.is_ko:
+            phase = time.monotonic() * (2 * math.pi / SQUASH_PERIOD_SEC) + index * SQUASH_PHASE_OFFSET
+            squash = round(SQUASH_MAX_PX * (0.5 - 0.5 * math.cos(phase)))
+        sx, sy = rx + shake_dx, ry + squash
 
         sprite = self._assets.load_enemy_sprite(enemy)
         if sprite is not None:
             img = self._ko_ghost(enemy.id, sprite) if enemy.is_ko else sprite
-            screen.blit(img, (sx, sy))
-            self._hit_flash.apply(screen, enemy, sx, sy,
-                                  img.get_width(), img.get_height(), fx, sprite=img)
+            if squash > 0:
+                # Squash only the top half of the sprite so the legs/feet
+                # row stays pixel-exact; pygame.transform.scale on the full
+                # image drops sample rows from the bottom too, which reads
+                # as feet drifting up.
+                iw, ih = img.get_width(), img.get_height()
+                top_h = int(ih * SQUASH_TOP_FRACTION)
+                top = img.subsurface((0, 0, iw, top_h))
+                bot = img.subsurface((0, top_h, iw, ih - top_h))
+                top_squashed = pygame.transform.scale(top, (iw, top_h - squash))
+                screen.blit(top_squashed, (sx, ry + squash))
+                screen.blit(bot, (sx, ry + top_h))
+                self._hit_flash.apply(screen, enemy, sx, ry + squash,
+                                      iw, ih - squash, fx, sprite=img)
+            else:
+                screen.blit(img, (sx, sy))
+                self._hit_flash.apply(screen, enemy, sx, sy,
+                                      img.get_width(), img.get_height(), fx, sprite=img)
         else:
             base_col = (30, 30, 40) if enemy.is_ko else (42, 58, 90)
             bdr_col  = (50, 50, 60) if enemy.is_ko else (74, 106, 154)
