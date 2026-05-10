@@ -23,7 +23,7 @@ entries:
   - formation: [goblin, goblin, goblin_scout_base]
     weight: 10
     chase_range: 6
-  - formation: [goblin_warrier, goblin, goblin]
+  - formation: [goblin_warrior, goblin, goblin]
     weight: 8
     chase_range: 10
 

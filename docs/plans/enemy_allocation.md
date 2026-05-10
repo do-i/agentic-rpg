@@ -27,7 +27,7 @@ Format: `id` — name (type) — HP / ATK / DEF / MRES / DEX / EXP.
 | id | name | type | HP | ATK | DEF | MRES | DEX | EXP |
 |---|---|---|---:|---:|---:|---:|---:|---:|
 | goblin | Goblin | humanoid | 25 | 9 | 3 | 2 | 12 | 24 |
-| goblin_warrier | Goblin Warrior | humanoid | 35 | 11 | 5 | 3 | 10 | 34 |
+| goblin_warrior | Goblin Warrior | humanoid | 35 | 11 | 5 | 3 | 10 | 34 |
 | goblin_scout_base | Goblin Scout | humanoid | 22 | 10 | 3 | 2 | 12 | 26 |
 | goblin_scout_sling_scout | Sling Scout | humanoid | 24 | 11 | 4 | 3 | 11 | 28 |
 | goblin_scout_hooded_goblin | Hooded Goblin | humanoid | 28 | 11 | 4 | 3 | 12 | 30 |

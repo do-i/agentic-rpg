@@ -221,4 +221,11 @@ class EnemySpawner:
 
     def _load_sprite(self, enemy_id: str) -> SpriteSheet | None:
         tsx_path = self._scenario_path / "assets" / "sprites" / "enemies" / f"{enemy_id}.tsx"
-        return self._sprite_cache.get(tsx_path)
+        sheet = self._sprite_cache.get(tsx_path)
+        if sheet is not None and sheet.row_count != 12:
+            raise ValueError(
+                f"Enemy sprite sheet {tsx_path} has {sheet.row_count} rows; "
+                f"enemy sheets must be 12-row LPC layout (walk cycle at rows 8-11). "
+                f"Re-export the source PNG at 576x768 px (9 cols x 12 rows of 64 px frames)."
+            )
+        return sheet

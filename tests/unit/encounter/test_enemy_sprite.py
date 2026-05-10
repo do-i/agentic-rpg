@@ -110,8 +110,8 @@ class TestStateTransitions:
 
 class TestFormationAndProperties:
     def test_formation_stored(self):
-        sprite = make_sprite(formation=["goblin", "goblin_warrier"])
-        assert sprite.formation == ["goblin", "goblin_warrier"]
+        sprite = make_sprite(formation=["goblin", "goblin_warrior"])
+        assert sprite.formation == ["goblin", "goblin_warrior"]
 
     def test_pixel_y_property(self):
         ts = 32

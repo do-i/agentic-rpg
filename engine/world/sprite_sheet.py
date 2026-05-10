@@ -82,6 +82,14 @@ class SpriteSheet:
     def frame_count(self) -> int:
         return FRAMES_PER_ROW
 
+    @property
+    def row_count(self) -> int:
+        return self._row_count
+
+    @property
+    def tsx_path(self) -> Path:
+        return self._tsx_path
+
     def __repr__(self) -> str:
         return f"SpriteSheet({self._tsx_path.name}, frames={len(self._frames)})"
 

@@ -33,7 +33,7 @@ targeting:
   default: random_alive
 
 ---
-id: goblin_warrier
+id: goblin_warrior
 name: Goblin Warrior
 type: humanoid
 rank: F
