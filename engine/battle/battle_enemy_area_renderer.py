@@ -35,6 +35,14 @@ SQUASH_PHASE_OFFSET = 0.6
 # head, shoulders, and upper chest move; waist/legs/feet stay planted.
 SQUASH_TOP_FRACTION = 0.60
 
+# Attack-triggered animations. LPC layout:
+#   row 2 = spellcast DOWN (7 frames, cols 0-6)
+#   row 6 = thrust    DOWN (8 frames, cols 0-7)
+SPELLCAST_ROW_OFFSET = 0   # Direction.DOWN.value (=2) + offset 0 → row 2
+SPELLCAST_FRAME_COUNT = 7
+THRUST_ROW_OFFSET    = 4   # Direction.DOWN.value (=2) + offset 4 → row 6
+THRUST_FRAME_COUNT   = 8
+
 
 class EnemyAreaRenderer:
     def __init__(
@@ -87,33 +95,41 @@ class EnemyAreaRenderer:
         rx, ry = cx - w // 2, cy - h // 2
 
         shake_dx = fx.shake_offset(enemy) if fx else 0
+        attack = fx.attack_progress(enemy) if fx and not enemy.is_ko else None
         squash = 0
-        if not enemy.is_ko:
+        if not enemy.is_ko and attack is None:
             phase = time.monotonic() * (2 * math.pi / SQUASH_PERIOD_SEC) + index * SQUASH_PHASE_OFFSET
             squash = round(SQUASH_MAX_PX * (0.5 - 0.5 * math.cos(phase)))
         sx, sy = rx + shake_dx, ry + squash
 
         sprite = self._assets.load_enemy_sprite(enemy)
         if sprite is not None:
-            img = self._ko_ghost(enemy.id, sprite) if enemy.is_ko else sprite
-            if squash > 0:
-                # Squash only the top half of the sprite so the legs/feet
-                # row stays pixel-exact; pygame.transform.scale on the full
-                # image drops sample rows from the bottom too, which reads
-                # as feet drifting up.
-                iw, ih = img.get_width(), img.get_height()
-                top_h = int(ih * SQUASH_TOP_FRACTION)
-                top = img.subsurface((0, 0, iw, top_h))
-                bot = img.subsurface((0, top_h, iw, ih - top_h))
-                top_squashed = pygame.transform.scale(top, (iw, top_h - squash))
-                screen.blit(top_squashed, (sx, ry + squash))
-                screen.blit(bot, (sx, ry + top_h))
-                self._hit_flash.apply(screen, enemy, sx, ry + squash,
-                                      iw, ih - squash, fx, sprite=img)
+            anim_frame = self._attack_frame(enemy, attack) if attack else None
+            if anim_frame is not None:
+                screen.blit(anim_frame, (sx, ry))
+                self._hit_flash.apply(screen, enemy, sx, ry,
+                                      anim_frame.get_width(), anim_frame.get_height(),
+                                      fx, sprite=anim_frame)
             else:
-                screen.blit(img, (sx, sy))
-                self._hit_flash.apply(screen, enemy, sx, sy,
-                                      img.get_width(), img.get_height(), fx, sprite=img)
+                img = self._ko_ghost(enemy.id, sprite) if enemy.is_ko else sprite
+                if squash > 0:
+                    # Squash only the top portion of the sprite so the
+                    # legs/feet stay pixel-exact; pygame.transform.scale on
+                    # the full image drops sample rows from the bottom
+                    # too, which reads as feet drifting up.
+                    iw, ih = img.get_width(), img.get_height()
+                    top_h = int(ih * SQUASH_TOP_FRACTION)
+                    top = img.subsurface((0, 0, iw, top_h))
+                    bot = img.subsurface((0, top_h, iw, ih - top_h))
+                    top_squashed = pygame.transform.scale(top, (iw, top_h - squash))
+                    screen.blit(top_squashed, (sx, ry + squash))
+                    screen.blit(bot, (sx, ry + top_h))
+                    self._hit_flash.apply(screen, enemy, sx, ry + squash,
+                                          iw, ih - squash, fx, sprite=img)
+                else:
+                    screen.blit(img, (sx, sy))
+                    self._hit_flash.apply(screen, enemy, sx, sy,
+                                          img.get_width(), img.get_height(), fx, sprite=img)
         else:
             base_col = (30, 30, 40) if enemy.is_ko else (42, 58, 90)
             bdr_col  = (50, 50, 60) if enemy.is_ko else (74, 106, 154)
@@ -147,6 +163,20 @@ class EnemyAreaRenderer:
                 and target_pool[target_sel] is enemy):
             pygame.draw.rect(screen, (204, 170, 255),
                              (rx - 2, ry - 2, w + 4, h + 4), 2, border_radius=5)
+
+    def _attack_frame(
+        self, enemy: Combatant, attack: tuple[str, float],
+    ) -> pygame.Surface | None:
+        kind, progress = attack
+        if kind == "thrust":
+            row_offset, count = THRUST_ROW_OFFSET, THRUST_FRAME_COUNT
+        else:
+            row_offset, count = SPELLCAST_ROW_OFFSET, SPELLCAST_FRAME_COUNT
+        frames = self._assets.load_enemy_attack_frames(enemy, row_offset, count)
+        if not frames:
+            return None
+        idx = min(len(frames) - 1, int(progress * len(frames)))
+        return frames[idx]
 
     def _ko_ghost(self, enemy_id: str, sprite: pygame.Surface) -> pygame.Surface:
         """Return a 80-alpha copy of the sprite, baked once per (enemy, sprite)."""

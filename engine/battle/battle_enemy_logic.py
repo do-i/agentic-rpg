@@ -44,6 +44,7 @@ def resolve_enemy_turn(state: BattleState, screen_width: int,
         actual = target.apply_damage(dmg, rng)
         state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_PHYS)
         if fx:
+            fx.play_attack(active, kind="thrust")
             fx.hit(target)
         sfx_manager.play("atk_impact")
         if alive_before and target.is_ko:
@@ -52,6 +53,8 @@ def resolve_enemy_turn(state: BattleState, screen_width: int,
 
     # ability — display ability name, deal ATK-based damage to targets
     ability_name = ability_id.replace("_", " ").title()
+    if fx:
+        fx.play_attack(active, kind="spellcast")
     msg_parts: list[str] = []
     newly_ko = False
     for target in target_list:

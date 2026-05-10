@@ -29,6 +29,8 @@ class BattleAssetCache:
         self._portraits: dict[str, pygame.Surface] = {}
         self._enemy_size: dict[str, tuple] = {}
         self._enemy_sprites: dict[str, pygame.Surface | None] = {}
+        self._enemy_sheets: dict[str, SpriteSheet | None] = {}
+        self._enemy_anim_frames: dict[tuple[str, int, int], list[pygame.Surface]] = {}
         self._bg_cache: dict[str, pygame.Surface | None] = {}
 
     # ── Fonts ─────────────────────────────────────────────────
@@ -82,21 +84,62 @@ class BattleAssetCache:
         sprite_id = enemy.sprite_id or enemy.id
         if sprite_id in self._enemy_sprites:
             return self._enemy_sprites[sprite_id]
-        tsx_path = self._scenario_path / "assets" / "sprites" / "enemies" / f"{sprite_id}.tsx"
-        if not tsx_path.exists():
+        sheet = self._load_enemy_sheet(sprite_id)
+        if sheet is None:
             self._enemy_sprites[sprite_id] = None
             return None
         try:
-            sheet = SpriteSheet(tsx_path)
             frame = sheet.get_frame(Direction.DOWN, 0)
             w, h = self.enemy_rect_size(enemy)
             scaled = pygame.transform.scale(frame, (w, h))
             self._enemy_sprites[sprite_id] = scaled
             return scaled
-        except (pygame.error, OSError, ParseError, KeyError, ValueError) as e:
-            _log.warning("Enemy battle sprite load failed: %s — %s", tsx_path, e)
+        except (pygame.error, KeyError, ValueError) as e:
+            _log.warning("Enemy idle frame failed: %s — %s", sprite_id, e)
             self._enemy_sprites[sprite_id] = None
             return None
+
+    def load_enemy_attack_frames(
+        self, enemy: Combatant, row_offset: int, frame_count: int,
+    ) -> list[pygame.Surface]:
+        """Return the row's frames (cols 0..frame_count-1) scaled to the
+        enemy's rect size. Cached per (sprite_id, row_offset, frame_count).
+        Returns an empty list if the sheet can't be loaded."""
+        sprite_id = enemy.sprite_id or enemy.id
+        key = (sprite_id, row_offset, frame_count)
+        if key in self._enemy_anim_frames:
+            return self._enemy_anim_frames[key]
+        sheet = self._load_enemy_sheet(sprite_id)
+        if sheet is None:
+            self._enemy_anim_frames[key] = []
+            return []
+        w, h = self.enemy_rect_size(enemy)
+        frames: list[pygame.Surface] = []
+        try:
+            for col in range(frame_count):
+                frame = sheet.get_frame(Direction.DOWN, col, row_offset=row_offset)
+                frames.append(pygame.transform.scale(frame, (w, h)))
+        except (pygame.error, KeyError, ValueError) as e:
+            _log.warning("Enemy attack frames failed: %s row=%d — %s",
+                         sprite_id, row_offset, e)
+            frames = []
+        self._enemy_anim_frames[key] = frames
+        return frames
+
+    def _load_enemy_sheet(self, sprite_id: str) -> SpriteSheet | None:
+        if sprite_id in self._enemy_sheets:
+            return self._enemy_sheets[sprite_id]
+        tsx_path = self._scenario_path / "assets" / "sprites" / "enemies" / f"{sprite_id}.tsx"
+        if not tsx_path.exists():
+            self._enemy_sheets[sprite_id] = None
+            return None
+        try:
+            sheet: SpriteSheet | None = SpriteSheet(tsx_path)
+        except (pygame.error, OSError, ParseError, KeyError, ValueError) as e:
+            _log.warning("Enemy sprite sheet load failed: %s — %s", tsx_path, e)
+            sheet = None
+        self._enemy_sheets[sprite_id] = sheet
+        return sheet
 
     # ── Backgrounds ───────────────────────────────────────────
 
