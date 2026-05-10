@@ -27,18 +27,16 @@ FRAMES_PER_ROW = 9
 class SpriteSheet:
     """
     Loads a TSX file, reads the referenced image, slices into frames.
-    Frames indexed by (direction, frame_index).
-
-    TSX layout assumption:
-        row 0 — UP    (frames 1 - 8)
-        row 1 — LEFT  (frames 10 - 17)
-        row 2 — DOWN  (frames 19 - 26)
-        row 3 — RIGHT (frames 28 - 35)
+    Frames indexed by (row, frame_index). Callers fetch via get_frame
+    with a Direction and an optional row_offset for sheets where the
+    walk cycle is not in rows 0-3 (e.g. LPC 12-row enemy sheets place
+    walk in rows 8-11).
     """
 
     def __init__(self, tsx_path: str | Path) -> None:
         self._tsx_path = Path(tsx_path)
-        self._frames: dict[tuple[Direction, int], pygame.Surface] = {}
+        self._frames: dict[tuple[int, int], pygame.Surface] = {}
+        self._row_count: int = 0
         self._load()
 
     def _load(self) -> None:
@@ -51,16 +49,15 @@ class SpriteSheet:
 
         image_src = image_el.attrib["source"]
         image_path = (self._tsx_path.parent / image_src).resolve()
-        # sheet = pygame.image.load(str(image_path)).convert_alpha()
         sheet = pygame.image.load(str(image_path))
 
-        for direction in Direction:
-            row = direction.value
+        self._row_count = sheet.get_height() // FRAME_HEIGHT
+        for row in range(self._row_count):
             for col in range(FRAMES_PER_ROW):
                 x = col * FRAME_WIDTH
                 y = row * FRAME_HEIGHT
                 frame = sheet.subsurface(pygame.Rect(x, y, FRAME_WIDTH, FRAME_HEIGHT))
-                self._frames[(direction, col)] = frame
+                self._frames[(row, col)] = frame
 
     def get_portrait(self, direction: Direction = Direction.DOWN) -> pygame.Surface:
         """Return the head region of the idle frame, suitable for dialogue portraits."""
@@ -71,9 +68,14 @@ class SpriteSheet:
         head = idle.subsurface(pygame.Rect(16, 10, crop_w, crop_h))
         return head
 
-    def get_frame(self, direction: Direction, frame_index: int) -> pygame.Surface:
-        """Returns the surface for the given direction and frame index."""
-        key = (direction, frame_index % FRAMES_PER_ROW)
+    def get_frame(
+        self, direction: Direction, frame_index: int, row_offset: int = 0
+    ) -> pygame.Surface:
+        """Returns the surface for the given direction and frame index.
+        row_offset shifts the row used (e.g. LPC 12-row sheets put the
+        walk cycle at rows 8-11, so callers pass row_offset=8).
+        """
+        key = (direction.value + row_offset, frame_index % FRAMES_PER_ROW)
         return self._frames[key]
 
     @property

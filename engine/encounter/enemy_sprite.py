@@ -33,6 +33,10 @@ if TYPE_CHECKING:
 ENEMY_COLOR           = (200, 60, 60)   # red placeholder rect
 ENEMY_BOSS_COLOR      = (160, 0, 200)   # purple for bosses
 
+# Enemy sheets are LPC-style 12-row layouts; the walk cycle lives at
+# rows 8-11 (UP/LEFT/DOWN/RIGHT, matching Direction enum order).
+ENEMY_WALK_ROW_OFFSET = 8
+
 _DIR_DX = {Direction.LEFT: -1, Direction.RIGHT: 1, Direction.UP: 0,  Direction.DOWN: 0}
 _DIR_DY = {Direction.UP:   -1, Direction.DOWN:  1, Direction.LEFT: 0, Direction.RIGHT: 0}
 
@@ -296,7 +300,9 @@ class EnemySprite:
         sy = int(self._py) - offset_y
 
         if self._sprite_sheet:
-            frame = self._sprite_sheet.get_frame(self._facing_dir, self._frame_index)
+            frame = self._sprite_sheet.get_frame(
+                self._facing_dir, self._frame_index, row_offset=ENEMY_WALK_ROW_OFFSET
+            )
             scaled = pygame.transform.scale(frame, (ENEMY_SIZE, ENEMY_SIZE))
             screen.blit(scaled, (sx, sy))
         else:
