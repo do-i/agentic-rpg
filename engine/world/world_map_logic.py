@@ -12,6 +12,8 @@ from engine.world.position_data import Position
 from engine.common.game_state_holder import GameStateHolder
 from engine.io.save_manager import GameStateManager
 from engine.dialogue.dialogue_engine import DialogueEngine
+from engine.party.member_state import MemberState
+from engine.party.party_state import calc_exp_next
 from engine.world.item_box import ItemBox
 from engine.world.npc import Npc
 from engine.world.player import Player, COLLISION_W, COLLISION_H
@@ -119,6 +121,47 @@ def dispatch_dialogue_result(on_complete: dict, flags, repository, dialogue_engi
     if not on_complete:
         return {}
     return dialogue_engine.dispatch_on_complete(on_complete, flags, repository)
+
+
+def apply_join_party(scenario_path: Path, party, member_id: str) -> bool:
+    """Load and add a companion by id. Returns True when a member was added."""
+    if not member_id:
+        return False
+    if any(member.id == member_id for member in party.members):
+        return False
+
+    char_data = load_yaml_required(scenario_path / "data" / "characters" / f"{member_id}.yaml")
+    class_name = char_data["class"]
+    class_data = load_yaml_required(scenario_path / "data" / "classes" / f"{class_name}.yaml")
+
+    member = MemberState(
+        member_id=char_data["id"],
+        name=char_data["name"],
+        protagonist=False,
+        class_name=class_name,
+        level=char_data["level"],
+        exp=char_data["exp"],
+        hp=char_data["hp"],
+        hp_max=char_data["hp_max"],
+        mp=char_data["mp"],
+        mp_max=char_data["mp_max"],
+        str_=char_data["str"],
+        dex=char_data["dex"],
+        con=char_data["con"],
+        int_=char_data["int"],
+        equipped=char_data["equipped"],
+    )
+    member.load_class_data(class_data)
+    row = char_data["row"]
+    if row not in ("front", "back"):
+        raise ValueError(
+            f"character {member_id!r} row must be 'front' or 'back', got {row!r}. "
+            f"Example:\n  row: back"
+        )
+    member.row = row
+    member.exp_next = calc_exp_next(member, member.level)
+    party.add_member(member)
+    return True
 
 
 def check_portals(tile_map: TileMap, player: Player) -> dict | None:

@@ -28,3 +28,10 @@ shop:
       buy_price: 800
       unlock_flag: story_act4_started
 
+npcs:
+  - id: ashenveil_oracle
+    name: "Ashenveil Oracle"
+    dialogue: ashenveil_oracle_hint
+    position: [8, 5]
+    sprite: assets/sprites/npc/village_female_person_elder_matron.tsx
+    default_facing: down

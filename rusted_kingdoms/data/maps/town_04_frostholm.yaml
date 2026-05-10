@@ -32,3 +32,16 @@ npcs:
   - id: frostholm_captain
     dialogue: frostholm_captain_hint
     position: [6, 5]
+    sprite: assets/sprites/npc/plate_knight_open_helmet.tsx
+    default_facing: down
+  - id: kael
+    name: "Kael"
+    dialogue: kael_join
+    position: [9, 6]
+    sprite: assets/sprites/npc/male_sword_fighter_axe_fighter.tsx
+    default_facing: left
+    present:
+      excludes: [npc_kael_joined]
+    animation:
+      mode: step
+      speed: 0.8

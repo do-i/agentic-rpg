@@ -36,6 +36,16 @@ npcs:
   - id: ruinwatch_scholar
     dialogue: ruinwatch_scholar_hint
     position: [10, 6]
+    sprite: assets/sprites/npc/wizard_blue_robed_mage.tsx
+    default_facing: down
   - id: jep
     dialogue: jep_join
     position: [5, 9]
+    sprite: assets/sprites/npc/rogue_hooded_rogue.tsx
+    default_facing: right
+    present:
+      excludes: [npc_jep_joined]
+    animation:
+      mode: wander
+      speed: 2.0
+      range: 4

@@ -43,6 +43,7 @@ from engine.world.world_map_init import init_world_map
 from engine.world.world_map_logic import (
     _is_player_facing,
     apply_item_box_loot,
+    apply_join_party,
     apply_transition,
     check_portals,
     dispatch_dialogue_result,
@@ -300,6 +301,10 @@ class WorldMapScene(Scene):
         remaining = dispatch_dialogue_result(
             on_complete, state.flags, state.repository, self._dialogue_engine,
         )
+
+        join_party = remaining.get("join_party")
+        if join_party:
+            apply_join_party(self._loader.scenario_path, state.party, join_party)
 
         shop_type = remaining.get("open_shop")
         if shop_type == "magic_core":

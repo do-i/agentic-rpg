@@ -9,10 +9,12 @@ from pathlib import Path
 from engine.world.position_data import Position
 from engine.world.world_map_logic import (
     try_interact, dispatch_dialogue_result,
+    apply_join_party,
     check_portals, apply_transition,
     load_inn_cost, load_shop_items, load_recipes,
 )
 from engine.world.sprite_sheet import Direction
+from engine.party.party_state import PartyState
 
 
 # ── try_interact ──────────────────────────────────────────────
@@ -140,6 +142,69 @@ class TestDispatchDialogueResult:
 
         assert result == {"open_shop": "item"}
         engine.dispatch_on_complete.assert_called_with({"some": "data"}, "flags", "repo")
+
+
+# ── apply_join_party ──────────────────────────────────────────
+
+class TestApplyJoinParty:
+    def test_adds_missing_companion(self, tmp_path):
+        _write_join_fixture(tmp_path, "elise", class_name="cleric", row="back")
+        party = PartyState()
+
+        added = apply_join_party(tmp_path, party, "elise")
+
+        assert added is True
+        assert [m.id for m in party.members] == ["elise"]
+        assert party.members[0].row == "back"
+        assert party.members[0].exp_next > 0
+
+    def test_skips_existing_companion(self, tmp_path):
+        _write_join_fixture(tmp_path, "elise", class_name="cleric", row="back")
+        party = PartyState()
+
+        assert apply_join_party(tmp_path, party, "elise") is True
+        assert apply_join_party(tmp_path, party, "elise") is False
+
+        assert [m.id for m in party.members] == ["elise"]
+
+
+def _write_join_fixture(tmp_path: Path, member_id: str, class_name: str, row: str) -> None:
+    char_dir = tmp_path / "data" / "characters"
+    class_dir = tmp_path / "data" / "classes"
+    char_dir.mkdir(parents=True)
+    class_dir.mkdir(parents=True)
+    (char_dir / f"{member_id}.yaml").write_text(
+        f"""
+id: {member_id}
+name: Elise
+class: {class_name}
+row: {row}
+level: 1
+exp: 0
+hp: 18
+hp_max: 18
+mp: 18
+mp_max: 18
+str: 8
+dex: 9
+con: 10
+int: 11
+equipped: {{}}
+""".lstrip()
+    )
+    (class_dir / f"{class_name}.yaml").write_text(
+        """
+default_row: back
+exp_base: 95
+exp_factor: 2.0
+stat_growth:
+  str: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+  dex: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+  con: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+  int: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+equipment_slots: {}
+""".lstrip()
+    )
 
 
 # ── check_portals ─────────────────────────────────────────────

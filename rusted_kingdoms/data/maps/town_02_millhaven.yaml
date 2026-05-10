@@ -27,3 +27,26 @@ shop:
       qty: 3
       buy_price: 500
       unlock_flag: story_act2_started
+
+npcs:
+  - id: millhaven_elder
+    name: "Millhaven Elder"
+    dialogue: millhaven_elder_hint
+    position: [9, 5]
+    sprite: assets/sprites/npc/village_male_person_older_villager.tsx
+    default_facing: down
+    animation:
+      mode: step
+      speed: 0.6
+  - id: reiya
+    name: "Reiya"
+    dialogue: reiya_join
+    position: [12, 7]
+    sprite: assets/sprites/npc/female_wiz_01.tsx
+    default_facing: left
+    present:
+      excludes: [npc_reiya_joined]
+    animation:
+      mode: wander
+      speed: 1.4
+      range: 3
