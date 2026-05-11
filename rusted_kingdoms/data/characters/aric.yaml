@@ -1,0 +1,26 @@
+# story_content/characters/aric.yaml
+id: aric
+name: "Aric"
+age: 17
+gender: male
+class: hero
+protagonist: true
+row: front
+level: 1
+exp: 0
+hp: 22
+hp_max: 22
+mp: 12
+mp_max: 12
+str: 28
+dex: 17
+con: 28
+int: 5
+equipped:
+  weapon: iron_sword
+  shield: buckler
+  helmet: leather_hat
+  body: leather_vest
+  accessory: ""
+abilities_unlocked: []
+status_effects: []

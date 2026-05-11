@@ -1,0 +1,25 @@
+# story_content/characters/elise.yaml
+id: elise
+name: "Elise"
+age: 16
+gender: female
+class: cleric
+row: back
+level: 1
+exp: 0
+hp: 18
+hp_max: 18
+mp: 18
+mp_max: 18
+str: 26
+dex: 26
+con: 27
+int: 9
+equipped:
+  weapon: oak_staff
+  shield: buckler
+  helmet: silver_circlet
+  body: cloth_robe
+  accessory: ""
+abilities_unlocked: [heal]
+status_effects: []

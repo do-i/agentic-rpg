@@ -53,21 +53,19 @@ def build_item_registry(root: Path) -> dict[str, Path]:
 
 
 # ─────────────────────────────────────────────
-# Character registry — build from data/party.yaml
-# (Characters are inlined as party entries since the data/characters/
-# directory was collapsed into a single roster file.)
+# Character registry — build from data/characters/**
 # ─────────────────────────────────────────────
 
 def build_character_registry(root: Path) -> dict[str, Path]:
     """Returns {character_id: source_file}"""
     registry = {}
-    party_path = root / "data" / "party.yaml"
-    if not party_path.exists():
+    chars_dir = root / "data" / "characters"
+    if not chars_dir.exists():
         return registry
-    data = load_yaml(party_path)
-    for entry in data.get("party", []):
-        if isinstance(entry, dict) and "id" in entry:
-            registry[entry["id"]] = party_path
+    for f in chars_dir.rglob("*.yaml"):
+        data = load_yaml(f)
+        if isinstance(data, dict) and "id" in data:
+            registry[data["id"]] = f
     return registry
 
 
@@ -230,8 +228,14 @@ def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict)
     visit(manifest_path)
     manifest = load_yaml(manifest_path)
 
-    # protagonist's character data now lives in data/party.yaml (no separate file).
-    proto_id = manifest.get("protagonist", {}).get("id")
+    # manifest → protagonist character file
+    proto_char = manifest.get("protagonist", {}).get("character")
+    if proto_char:
+        p = root / proto_char
+        if not p.exists():
+            err(f"[manifest] protagonist.character not found: {proto_char}")
+        else:
+            visit(p)
 
     # manifest → intro_dialogue
     intro = manifest.get("start", {}).get("intro_dialogue")
@@ -251,7 +255,7 @@ def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict)
         else:
             visit(balance_path)
 
-    # manifest → refs.party (now the single source of truth for character data)
+    # manifest → refs.party
     party_ref = manifest.get("refs", {}).get("party")
     if party_ref:
         party_path = root / party_ref
@@ -260,26 +264,14 @@ def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict)
         else:
             visit(party_path)
             party_data = load_yaml(party_path)
-            member_ids = {m.get("id") for m in party_data.get("party", []) if isinstance(m, dict)}
-            if proto_id and proto_id not in member_ids:
-                err(f"[manifest] protagonist.id {proto_id!r} has no matching entry in party.yaml")
-
             for member in party_data.get("party", []):
-                mid = member.get("id")
-
-                # portrait → file exists
-                portrait_ref = member.get("portrait")
-                if portrait_ref:
-                    pp = root / portrait_ref
-                    if not pp.exists():
-                        err(f"[party.yaml] portrait file not found for {mid!r}: {portrait_ref}")
-
-                # recruit block — npc id, dialogue id, joined_flag must all line up
-                recruit = member.get("recruit")
-                if recruit:
-                    dlg_id = recruit.get("dialogue")
-                    if dlg_id and dlg_id not in dialogue_reg:
-                        err(f"[party.yaml] {mid!r} recruit.dialogue not found: {dlg_id!r}")
+                char_file = member.get("character")
+                if char_file:
+                    p = root / char_file
+                    if not p.exists():
+                        err(f"[party.yaml] character file not found: {char_file} (member: {member.get('id')})")
+                    else:
+                        visit(p)
 
     # maps — traverse all map files
     maps_dir = root / "data" / "maps"
@@ -387,6 +379,12 @@ def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict)
     items_dir = root / "data" / "items"
     if items_dir.exists():
         for f in items_dir.rglob("*.yaml"):
+            visit(f)
+
+    # visit all character files
+    chars_dir = root / "data" / "characters"
+    if chars_dir.exists():
+        for f in chars_dir.rglob("*.yaml"):
             visit(f)
 
     # visit all encount files

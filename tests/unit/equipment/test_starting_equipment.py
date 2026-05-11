@@ -33,23 +33,16 @@ def catalog() -> ItemCatalog:
 
 @pytest.fixture(scope="module")
 def characters() -> list[tuple[str, dict, dict]]:
-    """List of (char_id, entry, class_data) for each party member.
-
-    Loads from the merged data/party.yaml — see engine/party/party_data.py.
-    The entry dict is flattened so callers can read cd['hp'], cd['equipped'],
-    cd['str'] etc. (stats are nested under 'stats:' in the YAML).
-    """
-    party_path = SCENARIO / "data" / "party.yaml"
+    """List of (char_id, char_data, class_data) for each party member."""
+    char_dir = SCENARIO / "data" / "characters"
     class_dir = SCENARIO / "data" / "classes"
-    if not party_path.is_file() or not class_dir.is_dir():
+    if not char_dir.is_dir() or not class_dir.is_dir():
         pytest.skip("Scenario data not available")
     out = []
-    party_data = _load_yaml(party_path)
-    for entry in party_data["party"]:
-        cd = dict(entry)
-        cd.update(entry["stats"])  # flatten str/dex/con/int for legacy assertions
-        cls = _load_yaml(class_dir / f"{entry['class']}.yaml")
-        out.append((entry["id"], cd, cls))
+    for p in sorted(char_dir.glob("*.yaml")):
+        cd = _load_yaml(p)
+        cls = _load_yaml(class_dir / f"{cd['class']}.yaml")
+        out.append((cd["id"], cd, cls))
     return out
 
 
