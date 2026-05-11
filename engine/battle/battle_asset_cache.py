@@ -15,6 +15,7 @@ from engine.common.font_provider import get_fonts
 from engine.battle.combatant import Combatant
 from engine.battle.constants import ENEMY_SIZES
 from engine.battle.battle_renderer_constants import PORTRAIT_SIZE
+from engine.party.party_data import load_party_entries
 from engine.world.sprite_sheet import SpriteSheet, Direction
 
 _log = logging.getLogger(__name__)
@@ -27,6 +28,7 @@ class BattleAssetCache:
         self._scenario_path = scenario_path
         self._fonts_ready = False
         self._portraits: dict[str, pygame.Surface] = {}
+        self._portrait_paths: dict[str, Path] | None = None
         self._enemy_size: dict[str, tuple] = {}
         self._enemy_sprites: dict[str, pygame.Surface | None] = {}
         self._enemy_sheets: dict[str, SpriteSheet | None] = {}
@@ -55,8 +57,13 @@ class BattleAssetCache:
     def load_portrait(self, member_id: str) -> pygame.Surface | None:
         if member_id in self._portraits:
             return self._portraits[member_id]
-        path = self._scenario_path / "assets" / "images" / f"{member_id}_profile.png"
-        if not path.exists():
+        if self._portrait_paths is None:
+            self._portrait_paths = {
+                e["id"]: self._scenario_path / e["portrait"]
+                for e in load_party_entries(self._scenario_path)
+            }
+        path = self._portrait_paths.get(member_id)
+        if path is None or not path.exists():
             return None
         try:
             img = pygame.image.load(str(path)).convert_alpha()
