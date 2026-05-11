@@ -35,7 +35,7 @@ fonts:
     xlarge: 32
 
 debug:
-  party:     true    # true = add all party members at new game start
+  party:     false  # true = add all party members at new game start
   collision: true   # true = draw player collision rect overlay
 
 enemy_spawn:
