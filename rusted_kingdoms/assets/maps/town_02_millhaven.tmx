@@ -9,10 +9,10 @@
  <tileset firstgid="936" source="../tilesets/ground/terrain-v7.tsx"/>
  <objectgroup id="8" name="portals">
   <object id="11" name="to_x2" x="130" y="20"/>
-  <object id="12" name="weapon_shop" x="658" y="162"/>
-  <object id="13" name="item_shop" x="1170" y="158"/>
-  <object id="14" name="inn" x="302" y="768"/>
-  <object id="15" name="magic_shop" x="1134" y="806"/>
+  <object id="12" name="weapon_shop" x="656.75" y="179.875"/>
+  <object id="13" name="item_shop" x="1167.75" y="178.75"/>
+  <object id="14" name="inn" x="303" y="789.75"/>
+  <object id="15" name="magic_shop" x="1135.75" y="820"/>
   <object id="16" name="to_x1" x="616" y="974" width="50" height="6"/>
  </objectgroup>
  <layer id="1" name="ground" width="41" height="31">
