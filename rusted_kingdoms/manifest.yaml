@@ -33,7 +33,6 @@ protagonist:
   id: aric
   name: "Aric"
   class: hero
-  character: data/characters/aric.yaml
   sprite: assets/sprites/party/01_aric_walk.tsx
 
 start:
@@ -52,7 +51,6 @@ engine_managed_flags:
 
 refs:
   party:      data/party.yaml
-  characters: data/characters/
   classes:    data/classes/
   maps:       data/maps/
   dialogue:   data/dialogue/

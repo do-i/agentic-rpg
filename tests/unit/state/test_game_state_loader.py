@@ -8,18 +8,12 @@ from pathlib import Path
 from unittest.mock import patch
 
 from engine.io.game_state_loader import (
-    from_save, _load_class_data, _load_character_data,
+    from_save, _load_class_data,
 )
 
 FAKE_CLASS_DATA = {
     "stat_growth": {"hp": [10], "mp": [5], "str": [2], "dex": [2], "con": [2], "int": [2]},
     "abilities": [],
-}
-
-FAKE_CHAR_DATA = {
-    "hp_max": 50, "mp_max": 20,
-    "str": 10, "dex": 8, "con": 9, "int": 6,
-    "equipped": {},
 }
 
 
@@ -60,21 +54,6 @@ class TestLoadClassData:
         (tmp_path / "hero.yaml").write_text(yaml.dump(FAKE_CLASS_DATA))
         data = _load_class_data(tmp_path, "hero")
         assert "stat_growth" in data
-
-
-# ── _load_character_data ──────────────────────────────────────
-
-class TestLoadCharacterData:
-    def test_raises_when_file_missing(self, tmp_path):
-        with pytest.raises(FileNotFoundError):
-            _load_character_data(tmp_path, "data/characters/aric.yaml")
-
-    def test_loads_yaml_content(self, tmp_path):
-        char_dir = tmp_path / "data" / "characters"
-        char_dir.mkdir(parents=True)
-        (char_dir / "aric.yaml").write_text(yaml.dump(FAKE_CHAR_DATA))
-        data = _load_character_data(tmp_path, "data/characters/aric.yaml")
-        assert data["hp_max"] == 50
 
 
 # ── from_save — exp_next fallback ─────────────────────────────

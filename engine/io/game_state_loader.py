@@ -9,8 +9,9 @@ from engine.common.game_state import GameState
 from engine.common.flag_state import FlagState
 from engine.common.map_state import MapState
 from engine.common.opened_boxes_state import OpenedBoxesState
-from engine.io.yaml_loader import load_yaml_required, load_yaml_required_cached
+from engine.io.yaml_loader import load_yaml_required_cached
 from engine.party.member_state import MemberState
+from engine.party.party_data import build_member, load_party_entry
 from engine.world.position_data import Position
 from engine.party.party_state import calc_exp_next
 from engine.util.playtime import Playtime
@@ -22,10 +23,6 @@ if TYPE_CHECKING:
 
 def _load_class_data(classes_dir: Path, class_name: str) -> dict:
     return load_yaml_required_cached(classes_dir / f"{class_name}.yaml")
-
-
-def _load_character_data(scenario_path: Path, char_path_str: str) -> dict:
-    return load_yaml_required(scenario_path / char_path_str)
 
 
 def from_new_game(
@@ -42,29 +39,9 @@ def from_new_game(
     state.flags.add_flags(bootstrap_flags)
 
     proto      = manifest["protagonist"]
-    class_name = proto["class"]
-    class_data = _load_class_data(classes_dir, class_name)
-    char_data  = _load_character_data(scenario_path, proto["character"])
-
-    member = MemberState(
-        member_id=proto["id"],
-        name=protagonist_name,
-        protagonist=True,
-        class_name=class_name,
-        level=1,
-        exp=0,
-        hp=char_data["hp_max"],
-        hp_max=char_data["hp_max"],
-        mp=char_data["mp_max"],
-        mp_max=char_data["mp_max"],
-        str_=char_data["str"],
-        dex=char_data["dex"],
-        con=char_data["con"],
-        int_=char_data["int"],
-        equipped=char_data.get("equipped", {}),
-    )
-    member.load_class_data(class_data)
-    member.exp_next = calc_exp_next(member, member.level)
+    entry      = load_party_entry(scenario_path, proto["id"])
+    class_data = _load_class_data(classes_dir, entry["class"])
+    member     = build_member(entry, class_data, name_override=protagonist_name)
     state.party.add_member(member)
 
     start = manifest["start"]

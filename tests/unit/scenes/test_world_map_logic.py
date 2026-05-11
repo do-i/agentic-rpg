@@ -169,27 +169,28 @@ class TestApplyJoinParty:
 
 
 def _write_join_fixture(tmp_path: Path, member_id: str, class_name: str, row: str) -> None:
-    char_dir = tmp_path / "data" / "characters"
-    class_dir = tmp_path / "data" / "classes"
-    char_dir.mkdir(parents=True)
-    class_dir.mkdir(parents=True)
-    (char_dir / f"{member_id}.yaml").write_text(
+    from engine.io.yaml_loader import clear_yaml_cache
+
+    data_dir = tmp_path / "data"
+    class_dir = data_dir / "classes"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    class_dir.mkdir(parents=True, exist_ok=True)
+    (data_dir / "party.yaml").write_text(
         f"""
-id: {member_id}
-name: Elise
-class: {class_name}
-row: {row}
-level: 1
-exp: 0
-hp: 18
-hp_max: 18
-mp: 18
-mp_max: 18
-str: 8
-dex: 9
-con: 10
-int: 11
-equipped: {{}}
+party:
+  - id: {member_id}
+    name: Elise
+    class: {class_name}
+    protagonist: false
+    row: {row}
+    level: 1
+    exp: 0
+    hp: 18
+    hp_max: 18
+    mp: 18
+    mp_max: 18
+    stats: {{ str: 8, dex: 9, con: 10, int: 11 }}
+    equipped: {{}}
 """.lstrip()
     )
     (class_dir / f"{class_name}.yaml").write_text(
@@ -205,6 +206,8 @@ stat_growth:
 equipment_slots: {}
 """.lstrip()
     )
+    # party.yaml is cached by path — clear so each tmp_path test reads its own.
+    clear_yaml_cache()
 
 
 # ── check_portals ─────────────────────────────────────────────

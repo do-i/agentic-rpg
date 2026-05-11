@@ -12,12 +12,7 @@ from engine.io.save_manager import GameStateManager
 from engine.io.game_state_loader import from_new_game
 
 MANIFEST_STUB = {
-    "protagonist": {
-        "id": "aric",
-        "name": "Aric",
-        "class": "hero",
-        "character": "data/characters/aric.yaml",
-    },
+    "protagonist": {"id": "aric", "name": "Aric", "class": "hero"},
     "start": {"map": "town_01_ardel", "position": [12, 8]},
     "bootstrap_flags": ["story_quest_started"],
 }
@@ -26,9 +21,11 @@ FAKE_CLASS_DATA = {
     "stat_growth": {"hp": [10], "mp": [5], "str": [2], "dex": [2], "con": [2], "int": [2]},
 }
 
-FAKE_CHAR_DATA = {
-    "hp_max": 50, "mp_max": 20,
-    "str": 10, "dex": 8, "con": 9, "int": 6,
+FAKE_PARTY_ENTRY = {
+    "id": "aric", "name": "Aric", "class": "hero", "protagonist": True,
+    "row": "front", "level": 1, "exp": 0,
+    "hp": 50, "hp_max": 50, "mp": 20, "mp_max": 20,
+    "stats": {"str": 10, "dex": 8, "con": 9, "int": 6},
     "equipped": {},
 }
 
@@ -54,7 +51,7 @@ def manager(saves_dir: Path, classes_dir: Path) -> GameStateManager:
 @pytest.fixture
 def state() -> GameState:
     with patch("engine.io.game_state_loader._load_class_data", return_value=FAKE_CLASS_DATA), \
-         patch("engine.io.game_state_loader._load_character_data", return_value=FAKE_CHAR_DATA):
+         patch("engine.io.game_state_loader.load_party_entry", return_value=FAKE_PARTY_ENTRY):
         return from_new_game(
             MANIFEST_STUB, "Aric",
             classes_dir=Path("/fake/classes"),
