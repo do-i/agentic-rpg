@@ -42,7 +42,7 @@ npcs:
     name: "Reiya"
     dialogue: reiya_join
     position: [12, 7]
-    sprite: assets/sprites/npc/female_wiz_01.tsx
+    sprite: assets/sprites/party/03_reiya_walk.tsx
     default_facing: left
     present:
       excludes: [npc_reiya_joined]

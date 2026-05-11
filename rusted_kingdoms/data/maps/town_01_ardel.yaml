@@ -43,7 +43,7 @@ npcs:
     name: "Elise"
     dialogue: elise_join
     position: [12, 6]
-    sprite: assets/sprites/npc/female_blue_01.tsx
+    sprite: assets/sprites/party/02_elise_walk.tsx
     default_facing: down
     present:
       excludes: [npc_elise_joined]

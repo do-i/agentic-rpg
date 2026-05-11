@@ -38,7 +38,7 @@ npcs:
     name: "Kael"
     dialogue: kael_join
     position: [9, 6]
-    sprite: assets/sprites/npc/male_sword_fighter_axe_fighter.tsx
+    sprite: assets/sprites/party/05_kael_walk.tsx
     default_facing: left
     present:
       excludes: [npc_kael_joined]

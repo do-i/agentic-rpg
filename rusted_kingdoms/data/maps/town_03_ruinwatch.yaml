@@ -41,7 +41,7 @@ npcs:
   - id: jep
     dialogue: jep_join
     position: [5, 9]
-    sprite: assets/sprites/npc/rogue_hooded_rogue.tsx
+    sprite: assets/sprites/party/04_jep_walk.tsx
     default_facing: right
     present:
       excludes: [npc_jep_joined]
