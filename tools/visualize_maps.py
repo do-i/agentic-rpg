@@ -197,50 +197,95 @@ def collect_tmx_dims(tmx_dir: Path) -> dict[str, dict]:
     return dims
 
 
+def _int_property(value: str | None) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
+
+
+def parse_tmx_portals(tmx_path: Path) -> dict | None:
+    """Extract portal objects and editable TMX data from one map file."""
+    try:
+        xml_text = tmx_path.read_text()
+        root = ET.fromstring(xml_text)
+    except (OSError, ET.ParseError):
+        return None
+
+    tw = int(root.get("tilewidth") or 1)
+    th = int(root.get("tileheight") or 1)
+    map_w = int(root.get("width") or 0)
+    map_h = int(root.get("height") or 0)
+    portals: list[dict] = []
+
+    for og in root.findall("objectgroup"):
+        if (og.get("name") or "").lower() != "portals":
+            continue
+        for obj in og.findall("object"):
+            name = obj.get("name") or ""
+            ox = float(obj.get("x") or 0)
+            oy = float(obj.get("y") or 0)
+            ow = float(obj.get("width") or 0)
+            oh = float(obj.get("height") or 0)
+            src_tx = int(ox // tw)
+            src_ty = int(oy // th)
+            src_tw = max(1, int(ow // tw))
+            src_th = max(1, int(oh // th))
+            props = {
+                prop.get("name"): prop.get("value")
+                for prop in obj.findall("./properties/property")
+                if prop.get("name")
+            }
+            tx = _int_property(props.get("target_position_x"))
+            ty = _int_property(props.get("target_position_y"))
+            portals.append({
+                "id": obj.get("id"),
+                "name": name,
+                "bounds_px": [ox, oy, ow, oh],
+                "source_pos": [src_tx, src_ty],
+                "source_size": [src_tw, src_th],
+                "target_map": props.get("target_map"),
+                "target_pos": [tx, ty] if tx is not None and ty is not None else None,
+            })
+
+    return {
+        "map_id": tmx_path.stem,
+        "tmx_file": tmx_path.name,
+        "xml": xml_text,
+        "tile_w": tw,
+        "tile_h": th,
+        "map_w": map_w,
+        "map_h": map_h,
+        "portals": portals,
+    }
+
+
+def collect_portal_edit_data(tmx_dir: Path) -> dict[str, dict]:
+    edit_data: dict[str, dict] = {}
+    for tmx_path in sorted(tmx_dir.glob("*.tmx")):
+        parsed = parse_tmx_portals(tmx_path)
+        if parsed is not None:
+            edit_data[parsed["map_id"]] = parsed
+    return edit_data
+
+
 def collect_portal_edges(tmx_dir: Path) -> list[dict]:
     edges: list[dict] = []
-    for tmx_path in sorted(tmx_dir.glob("*.tmx")):
-        source = tmx_path.stem
-        try:
-            tree = ET.parse(tmx_path)
-        except ET.ParseError:
-            continue
-        root = tree.getroot()
-        tw = int(root.get("tilewidth") or 1)
-        th = int(root.get("tileheight") or 1)
-        for og in root.findall("objectgroup"):
-            if (og.get("name") or "").lower() != "portals":
-                continue
-            for obj in og.findall("object"):
-                name = obj.get("name") or ""
-                ox = float(obj.get("x") or 0)
-                oy = float(obj.get("y") or 0)
-                ow = float(obj.get("width") or 0)
-                oh = float(obj.get("height") or 0)
-                src_tx = int(ox // tw)
-                src_ty = int(oy // th)
-                src_tw = max(1, int(ow // tw))
-                src_th = max(1, int(oh // th))
-                target_map = None
-                tx = ty = None
-                for prop in obj.findall("./properties/property"):
-                    pname = prop.get("name")
-                    pval = prop.get("value")
-                    if pname == "target_map":
-                        target_map = pval
-                    elif pname == "target_position_x":
-                        tx = int(pval) if pval is not None else None
-                    elif pname == "target_position_y":
-                        ty = int(pval) if pval is not None else None
-                if target_map:
-                    edges.append({
-                        "source": source,
-                        "target": target_map,
-                        "label": name,
-                        "source_pos": [src_tx, src_ty],
-                        "source_size": [src_tw, src_th],
-                        "target_pos": [tx, ty] if tx is not None and ty is not None else None,
-                    })
+    for source, parsed in collect_portal_edit_data(tmx_dir).items():
+        for portal in parsed["portals"]:
+            target_map = portal.get("target_map")
+            if target_map:
+                edges.append({
+                    "source": source,
+                    "target": target_map,
+                    "label": portal.get("name") or "",
+                    "portal_id": portal.get("id"),
+                    "source_pos": portal.get("source_pos"),
+                    "source_size": portal.get("source_size"),
+                    "target_pos": portal.get("target_pos"),
+                })
     return edges
 
 
@@ -258,7 +303,8 @@ __ROOT_VARS__
   a { color: var(--ui-link); text-decoration: none; }
   a:hover { text-decoration: underline; }
   #app { display: flex; height: 100vh; }
-  #graph { flex: 1; min-width: 100px; background: var(--ui-graph_bg); }
+  #graph { position: relative; flex: 1; min-width: 100px; background: var(--ui-graph_bg); }
+  #network { position: absolute; inset: 0; }
   #splitter { width: 6px; cursor: col-resize; background: var(--ui-splitter); flex: 0 0 6px; transition: background 0.1s; }
   #splitter:hover, #splitter.dragging { background: var(--ui-splitter_hover); }
   #panel { width: 360px; min-width: 200px; padding: 16px 20px; overflow-y: auto; background: var(--ui-panel_bg); border-left: 1px solid var(--ui-border); box-sizing: border-box; }
@@ -289,6 +335,34 @@ __ROOT_VARS__
   .toggles { display: flex; gap: 14px; flex-wrap: wrap; margin: 0 0 10px; }
   .toggle { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; font-size: 12px; color: var(--ui-text_muted); }
   .toggle input { accent-color: var(--ui-heading); }
+  .mapping-toolbar { position: absolute; left: 14px; top: 14px; z-index: 20; display: flex; align-items: center; gap: 10px; max-width: calc(100% - 28px); padding: 10px 12px; border: 1px solid var(--ui-border); border-radius: 6px; background: rgba(10, 14, 20, 0.88); box-shadow: 0 8px 24px rgba(0,0,0,0.35); backdrop-filter: blur(4px); }
+  .mapping-toggle { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; cursor: pointer; user-select: none; font-size: 13px; color: var(--ui-text); }
+  .mapping-toggle input { accent-color: var(--ui-heading); }
+  .mapping-status { color: var(--ui-heading); font-size: 13px; font-weight: 600; }
+  .mapping-substatus { color: var(--ui-text_muted); font-size: 12px; max-width: 460px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mapping-dirty { color: var(--ui-text_muted); font-size: 12px; white-space: nowrap; }
+  .editor-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0; }
+  .editor-button { border: 1px solid var(--ui-border); border-radius: 4px; background: var(--ui-code_bg); color: var(--ui-text); padding: 5px 8px; font-size: 12px; cursor: pointer; }
+  .editor-button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .editor-pill { display: inline-block; border: 1px solid var(--ui-border); border-radius: 999px; padding: 2px 8px; font-size: 11px; color: var(--ui-text_muted); }
+  .editor-dirty-list { max-height: 90px; overflow: auto; margin: 6px 0 0; padding-left: 16px; }
+  body.editor-mode .screenshot { cursor: crosshair; }
+  body.editor-mode .map-marker.out { pointer-events: auto; cursor: pointer; }
+  .map-marker.selected { outline: 3px solid #fff; outline-offset: 3px; }
+  .pending-line { position: absolute; height: 3px; transform-origin: 0 50%; background: #fff; box-shadow: 0 0 8px #ff4a2a; pointer-events: none; z-index: 3; }
+  #tile-modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: var(--ui-lightbox_bg); z-index: 120; }
+  #tile-modal.open { display: flex; }
+  .tile-dialog { width: min(94vw, 1100px); max-height: 92vh; display: flex; flex-direction: column; border: 1px solid var(--ui-border); border-radius: 6px; background: var(--ui-panel_bg); box-shadow: 0 18px 60px rgba(0,0,0,0.55); overflow: hidden; }
+  .tile-dialog-header { display: flex; align-items: center; gap: 12px; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--ui-border); }
+  .tile-dialog-title { font-size: 15px; font-weight: 600; color: var(--ui-heading); }
+  .tile-dialog-body { padding: 12px 14px 14px; overflow: auto; }
+  .tile-error { min-height: 18px; color: #ff9c8b; font-size: 12px; margin-bottom: 8px; }
+  .tile-picker-wrap { position: relative; display: inline-block; max-width: 100%; line-height: 0; background: #000; border: 1px solid var(--ui-screenshot_border); }
+  #tile-modal-img { display: block; max-width: 100%; max-height: 74vh; image-rendering: pixelated; cursor: crosshair; }
+  #tile-modal-overlays { position: absolute; inset: 0; pointer-events: none; }
+  .tile-cell-marker { position: absolute; box-sizing: border-box; border: 2px solid #fff; background: rgba(255,255,255,0.18); box-shadow: 0 0 10px rgba(255,255,255,0.8); }
+  .tile-cell-marker.source { border-color: #ffd200; box-shadow: 0 0 10px #ff4a2a; }
+  .tile-cell-marker.dest { border-color: #3acfff; box-shadow: 0 0 10px #3acfff; }
   .sprite { position: absolute; pointer-events: none; box-sizing: border-box; }
   .sprite.npc  { border: 2px solid #4ad04a; background: rgba(74,208,74,0.35); border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.6); }
   .sprite.item { border: 2px solid #d0a04a; background: rgba(208,160,74,0.45); border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,0.6); }
@@ -323,7 +397,15 @@ __ROOT_VARS__
 </head>
 <body>
 <div id="app">
-  <div id="graph"></div>
+  <div id="graph">
+    <div id="network"></div>
+    <div class="mapping-toolbar">
+      <label class="mapping-toggle"><input type="checkbox" id="mapping-toggle"> Mapping Edit Mode</label>
+      <span id="mapping-status" class="mapping-status">Off</span>
+      <span id="mapping-substatus" class="mapping-substatus">Turn on to retarget portals from the graph.</span>
+      <span id="mapping-dirty" class="mapping-dirty"></span>
+    </div>
+  </div>
   <div id="splitter" title="Drag to resize"></div>
   <div id="panel">
     <h1>Map Details</h1>
@@ -342,10 +424,29 @@ __ROOT_VARS__
   </div>
 </div>
 <div id="lightbox"><div id="lightbox-frame"><img id="lightbox-img" alt=""><div id="lightbox-markers"></div></div></div>
+<div id="tile-modal">
+  <div class="tile-dialog">
+    <div class="tile-dialog-header">
+      <div>
+        <div id="tile-modal-title" class="tile-dialog-title">Select Tile</div>
+        <div id="tile-modal-help" class="muted"></div>
+      </div>
+      <button id="tile-modal-cancel" class="editor-button">Cancel</button>
+    </div>
+    <div class="tile-dialog-body">
+      <div id="tile-modal-error" class="tile-error"></div>
+      <div class="tile-picker-wrap">
+        <img id="tile-modal-img" alt="">
+        <div id="tile-modal-overlays"></div>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
 const NODES = __NODES__;
 const EDGES = __EDGES__;
 const COLORS = __COLORS__;
+const TMX_EDIT_DATA = __TMX_EDIT_DATA__;
 
 function classify(id, hasMeta) {
   const n = COLORS.node;
@@ -390,7 +491,7 @@ const visEdges = EDGES.map((e, i) => ({
 const edgeMap = {};
 visEdges.forEach((ve, i) => { edgeMap[ve.id] = EDGES[i]; });
 
-const container = document.getElementById("graph");
+const container = document.getElementById("network");
 const data = { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) };
 const options = {
   interaction: { hover: true, multiselect: false },
@@ -439,16 +540,326 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
+const editorState = {
+  enabled: false,
+  step: "idle",
+  sourceMap: null,
+  sourcePortal: null,
+  destMap: null,
+  selected: null,
+  currentMapId: null,
+  edits: {},
+  modal: null,
+  lastMessage: "",
+};
+
+function portalKey(source, portalId) {
+  return source + "::" + String(portalId);
+}
+
+function getPortal(source, portalId) {
+  const data = TMX_EDIT_DATA[source];
+  if (!data) return null;
+  return (data.portals || []).find(p => String(p.id) === String(portalId)) || null;
+}
+
+function getPortalEdit(source, portalId) {
+  return (editorState.edits[source] || {})[String(portalId)] || null;
+}
+
+function currentPortalTarget(source, portalId) {
+  const portal = getPortal(source, portalId);
+  if (!portal) return null;
+  const edit = getPortalEdit(source, portalId);
+  if (edit) return { target_map: edit.target_map, target_pos: [edit.target_position_x, edit.target_position_y] };
+  return { target_map: portal.target_map, target_pos: portal.target_pos };
+}
+
+function edgeWithCurrentTarget(edge) {
+  if (!edge) return edge;
+  if (!edge.portal_id) return edge;
+  const current = currentPortalTarget(edge.source, edge.portal_id);
+  if (!current) return edge;
+  return Object.assign({}, edge, {
+    target: current.target_map || edge.target,
+    target_pos: current.target_pos || edge.target_pos,
+  });
+}
+
+function setPortalEdit(source, portalId, targetMap, tileX, tileY) {
+  if (!editorState.edits[source]) editorState.edits[source] = {};
+  editorState.edits[source][String(portalId)] = {
+    target_map: targetMap,
+    target_position_x: tileX,
+    target_position_y: tileY,
+  };
+  refreshEditedEdges();
+}
+
+function refreshEditedEdges() {
+  Object.entries(edgeMap).forEach(([edgeId, edge]) => {
+    const current = edgeWithCurrentTarget(edge);
+    if (current && data.edges.get(edgeId)) {
+      data.edges.update({ id: edgeId, to: current.target, label: current.label || "" });
+    }
+  });
+}
+
+function dirtyEntries() {
+  const entries = [];
+  Object.entries(editorState.edits).forEach(([source, byPortal]) => {
+    Object.entries(byPortal).forEach(([portalId, edit]) => {
+      const original = getPortal(source, portalId);
+      if (!original) return;
+      const same = original.target_map === edit.target_map
+        && original.target_pos
+        && original.target_pos[0] === edit.target_position_x
+        && original.target_pos[1] === edit.target_position_y;
+      if (!same) entries.push({ source, portalId, edit, original });
+    });
+  });
+  return entries;
+}
+
+function updateEditorPanel() {
+  const status = document.getElementById("mapping-status");
+  const substatus = document.getElementById("mapping-substatus");
+  const dirtyEl = document.getElementById("mapping-dirty");
+  const dirty = dirtyEntries();
+  if (!editorState.enabled) {
+    status.textContent = "Off";
+    substatus.textContent = editorState.lastMessage || "Turn on to retarget portals from the graph.";
+  } else {
+    status.textContent = instructionForStep();
+    substatus.textContent = editorState.lastMessage || detailForStep();
+  }
+  dirtyEl.textContent = dirty.length ? dirty.length + " pending change" + (dirty.length === 1 ? "" : "s") : "";
+}
+
+function rerenderCurrentDetails() {
+  if (!editorState.currentMapId) return;
+  renderDetails(editorState.currentMapId);
+}
+
+function instructionForStep() {
+  if (editorState.step === "source-node") return "Select Source Map Node";
+  if (editorState.step === "source-tile") return "Select Source Tile";
+  if (editorState.step === "dest-node") return "Select Destination Node";
+  if (editorState.step === "dest-tile") return "Select Destination Tile";
+  return "Mapping Edit Mode";
+}
+
+function detailForStep() {
+  if (editorState.step === "source-node") return "Click a graph node for the map that contains the outbound portal.";
+  if (editorState.step === "source-tile") return "Click an existing portal tile on " + editorState.sourceMap + ".";
+  if (editorState.step === "dest-node") return "Click the graph node for the destination map.";
+  if (editorState.step === "dest-tile") return "Click the arrival tile on " + editorState.destMap + ".";
+  return "";
+}
+
+function startMappingEditMode() {
+  editorState.enabled = true;
+  editorState.step = "source-node";
+  editorState.sourceMap = null;
+  editorState.sourcePortal = null;
+  editorState.destMap = null;
+  editorState.selected = null;
+  editorState.lastMessage = "";
+  document.body.classList.add("editor-mode");
+  updateEditorPanel();
+}
+
+function finishMappingEditMode() {
+  editorState.enabled = false;
+  editorState.step = "idle";
+  editorState.sourceMap = null;
+  editorState.sourcePortal = null;
+  editorState.destMap = null;
+  editorState.selected = null;
+  document.body.classList.remove("editor-mode");
+  closeTileModal();
+  const dirty = dirtyEntries();
+  if (dirty.length) {
+    exportChangedMapsZip();
+    editorState.lastMessage = "Downloaded map_portal_changes.zip with " + dirty.length + " changed portal" + (dirty.length === 1 ? "." : "s.");
+  } else {
+    editorState.lastMessage = "No mapping changes to export.";
+  }
+  updateEditorPanel();
+}
+
+function resetMappingCycle(message) {
+  editorState.step = "source-node";
+  editorState.sourceMap = null;
+  editorState.sourcePortal = null;
+  editorState.destMap = null;
+  editorState.selected = null;
+  editorState.lastMessage = message || "";
+  if (network.unselectAll) network.unselectAll();
+  updateEditorPanel();
+}
+
+function selectSourceMap(mapId) {
+  const tmx = TMX_EDIT_DATA[mapId];
+  if (!tmx || !(tmx.portals || []).length) {
+    editorState.lastMessage = "Source map has no portal objects: " + mapId;
+    updateEditorPanel();
+    return;
+  }
+  editorState.sourceMap = mapId;
+  editorState.step = "source-tile";
+  editorState.lastMessage = "";
+  updateEditorPanel();
+  openTileModal(mapId, "source");
+}
+
+function selectDestinationMap(mapId) {
+  editorState.destMap = mapId;
+  editorState.step = "dest-tile";
+  editorState.lastMessage = "";
+  updateEditorPanel();
+  openTileModal(mapId, "dest");
+}
+
+function handleMappingNodeClick(mapId) {
+  if (editorState.step === "source-node") {
+    selectSourceMap(mapId);
+  } else if (editorState.step === "dest-node") {
+    selectDestinationMap(mapId);
+  }
+}
+
+function mapMetaForTilePicker(mapId) {
+  const meta = NODES[mapId];
+  const tmx = TMX_EDIT_DATA[mapId];
+  if (!meta || !meta.screenshot || !meta.map_w || !meta.map_h) return null;
+  return { meta, tmx };
+}
+
+function openTileModal(mapId, mode) {
+  const bundle = mapMetaForTilePicker(mapId);
+  if (!bundle) {
+    editorState.lastMessage = "No screenshot or map dimensions available for " + mapId + ".";
+    if (mode === "source") resetMappingCycle(editorState.lastMessage);
+    else editorState.step = "dest-node";
+    updateEditorPanel();
+    return;
+  }
+  const modal = document.getElementById("tile-modal");
+  const img = document.getElementById("tile-modal-img");
+  document.getElementById("tile-modal-title").textContent = mode === "source" ? "Select Source Tile" : "Select Destination Tile";
+  document.getElementById("tile-modal-help").textContent = mode === "source"
+    ? "Click an existing portal tile on " + mapId + "."
+    : "Click the destination arrival tile on " + mapId + ".";
+  document.getElementById("tile-modal-error").textContent = "";
+  document.getElementById("tile-modal-overlays").innerHTML = "";
+  img.src = bundle.meta.screenshot;
+  img.setAttribute("data-map-id", mapId);
+  editorState.modal = { mapId, mode };
+  renderTileModalOverlays(mapId, mode);
+  modal.classList.add("open");
+}
+
+function closeTileModal() {
+  document.getElementById("tile-modal").classList.remove("open");
+  editorState.modal = null;
+}
+
+function tileFromModalEvent(ev) {
+  const img = document.getElementById("tile-modal-img");
+  const mapId = img.getAttribute("data-map-id");
+  const meta = NODES[mapId];
+  const rect = img.getBoundingClientRect();
+  const relX = Math.max(0, Math.min(rect.width, ev.clientX - rect.left));
+  const relY = Math.max(0, Math.min(rect.height, ev.clientY - rect.top));
+  return {
+    mapId,
+    x: Math.max(0, Math.min(meta.map_w - 1, Math.floor(relX / rect.width * meta.map_w))),
+    y: Math.max(0, Math.min(meta.map_h - 1, Math.floor(relY / rect.height * meta.map_h))),
+  };
+}
+
+function portalContainsTile(portal, x, y) {
+  if (!portal || !portal.source_pos || !portal.source_size) return false;
+  const px = portal.source_pos[0], py = portal.source_pos[1];
+  const pw = portal.source_size[0], ph = portal.source_size[1];
+  return x >= px && x < px + pw && y >= py && y < py + ph;
+}
+
+function findPortalAtTile(mapId, x, y) {
+  const data = TMX_EDIT_DATA[mapId];
+  const matches = ((data && data.portals) || [])
+    .filter(p => portalContainsTile(p, x, y))
+    .sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+  return matches[0] || null;
+}
+
+function renderTileModalOverlays(mapId, mode) {
+  const overlays = document.getElementById("tile-modal-overlays");
+  const meta = NODES[mapId];
+  overlays.innerHTML = "";
+  if (!meta || !meta.map_w || !meta.map_h) return;
+  function addMarker(pos, size, cls, title) {
+    if (!pos) return;
+    const tw = (size && size[0]) || 1;
+    const th = (size && size[1]) || 1;
+    const div = document.createElement("div");
+    div.className = "tile-cell-marker " + cls;
+    div.title = title || "";
+    div.style.left = (pos[0] / meta.map_w * 100).toFixed(3) + "%";
+    div.style.top = (pos[1] / meta.map_h * 100).toFixed(3) + "%";
+    div.style.width = (tw / meta.map_w * 100).toFixed(3) + "%";
+    div.style.height = (th / meta.map_h * 100).toFixed(3) + "%";
+    overlays.appendChild(div);
+  }
+  if (mode === "source") {
+    ((TMX_EDIT_DATA[mapId] && TMX_EDIT_DATA[mapId].portals) || []).forEach(p => {
+      addMarker(p.source_pos, p.source_size, "source", p.name || "portal #" + p.id);
+    });
+  } else if (editorState.sourcePortal && editorState.destMap === mapId) {
+    const current = currentPortalTarget(editorState.sourceMap, editorState.sourcePortal.id);
+    if (current && current.target_map === mapId) addMarker(current.target_pos, [1, 1], "dest", "current target");
+  }
+}
+
+function handleTileModalClick(ev) {
+  if (!editorState.modal) return;
+  const tile = tileFromModalEvent(ev);
+  if (editorState.modal.mode === "source") {
+    const portal = findPortalAtTile(tile.mapId, tile.x, tile.y);
+    if (!portal) {
+      document.getElementById("tile-modal-error").textContent = "No existing portal object at tile [" + tile.x + "," + tile.y + "].";
+      return;
+    }
+    editorState.sourcePortal = portal;
+    editorState.selected = { source: tile.mapId, portalId: portal.id };
+    editorState.step = "dest-node";
+    editorState.lastMessage = "Source portal selected: " + tile.mapId + " #" + portal.id + ".";
+    closeTileModal();
+    updateEditorPanel();
+  } else {
+    setPortalEdit(editorState.sourceMap, editorState.sourcePortal.id, tile.mapId, tile.x, tile.y);
+    const portalName = editorState.sourcePortal.name || "portal #" + editorState.sourcePortal.id;
+    refreshEditedEdges();
+    rerenderCurrentDetails();
+    closeTileModal();
+    resetMappingCycle("Changed " + editorState.sourceMap + " " + portalName + " -> " + tile.mapId + " [" + tile.x + "," + tile.y + "].");
+  }
+}
+
 function renderDetails(id) {
   const el = document.getElementById("details");
+  editorState.currentMapId = id;
   const meta = NODES[id];
   if (!meta) {
     el.classList.remove("empty");
     el.innerHTML = "<h2>" + escapeHtml(id) + "</h2><p class=\\"muted\\">No YAML metadata found — referenced as portal target only.</p>";
+    updateEditorPanel();
     return;
   }
-  const incoming = EDGES.filter(e => e.target === id);
-  const outgoing = EDGES.filter(e => e.source === id);
+  const currentEdges = EDGES.map(edgeWithCurrentTarget);
+  const incoming = currentEdges.filter(e => e.target === id);
+  const outgoing = currentEdges.filter(e => e.source === id);
 
   const badges = [];
   if (meta.has_inn) badges.push('<span class="badge inn">inn</span>');
@@ -463,7 +874,7 @@ function renderDetails(id) {
   if (meta.yaml_file) html += '<div class="muted">' + escapeHtml(meta.yaml_file) + "</div>";
   if (meta.screenshot) {
     const markers = [];
-    outgoing.forEach(e => { if (e.source_pos) markers.push({ kind: "out", pos: e.source_pos, size: e.source_size, label: "out: " + (e.label || "") + " -> " + e.target }); });
+    outgoing.forEach(e => { if (e.source_pos) markers.push({ kind: "out", portalId: e.portal_id, source: e.source, pos: e.source_pos, size: e.source_size, label: "out: " + (e.label || "") + " -> " + e.target }); });
     incoming.forEach(e => { if (e.target_pos) markers.push({ kind: "in",  pos: e.target_pos, size: [1, 1], label: "in: " + e.source + " -> " + (e.label || "") }); });
     html += renderMapWithMarkers(meta, id, markers);
   }
@@ -515,6 +926,7 @@ function renderDetails(id) {
 
   el.querySelectorAll("img[data-zoom]").forEach(img => {
     img.addEventListener("click", () => {
+      if (editorState.enabled) return;
       const lb = document.getElementById("lightbox");
       const lbMarkers = document.getElementById("lightbox-markers");
       document.getElementById("lightbox-img").src = img.src;
@@ -528,6 +940,9 @@ function renderDetails(id) {
       lb.style.display = "flex";
     });
   });
+
+  attachEditorHandlers(el, id);
+  updateEditorPanel();
 
   el.querySelectorAll("a[data-target]").forEach(a => {
     a.addEventListener("click", ev => {
@@ -543,7 +958,7 @@ function renderDetails(id) {
 function renderMapWithMarkers(meta, mapId, markers) {
   if (!meta || !meta.screenshot) return "";
   let html = '<div class="map-wrap">';
-  html += '<img class="screenshot" data-zoom src="' + escapeHtml(meta.screenshot) + '" alt="' + escapeHtml(mapId) + '">';
+  html += '<img class="screenshot" data-zoom data-map-id="' + escapeHtml(mapId) + '" src="' + escapeHtml(meta.screenshot) + '" alt="' + escapeHtml(mapId) + '">';
   const mw = meta.map_w || 0, mh = meta.map_h || 0;
   if (mw > 0 && mh > 0) {
     const mapTW = meta.tile_w || 32, mapTH = meta.tile_h || 32;
@@ -589,17 +1004,247 @@ function renderMapWithMarkers(meta, mapId, markers) {
       const h    = (th / mh * 100).toFixed(3);
       const title = m.label ? ' title="' + escapeHtml(m.label) + '"' : "";
       const kind = m.kind === "in" ? "in" : "out";
-      html += '<div class="map-marker ' + kind + '" style="left:' + left + '%; top:' + top + '%; width:' + w + '%; height:' + h + '%"' + title + '></div>';
+      const selected = editorState.selected
+        && m.source === editorState.selected.source
+        && String(m.portalId) === String(editorState.selected.portalId);
+      let attrs = title;
+      if (m.portalId != null && m.source) {
+        attrs += ' data-source="' + escapeHtml(m.source) + '" data-portal-id="' + escapeHtml(m.portalId) + '"';
+      }
+      html += '<div class="map-marker ' + kind + (selected ? " selected" : "") + '" style="left:' + left + '%; top:' + top + '%; width:' + w + '%; height:' + h + '%"' + attrs + '></div>';
     });
+  }
+  const selected = editorState.selected;
+  if (mw > 0 && mh > 0 && selected) {
+    const current = currentPortalTarget(selected.source, selected.portalId);
+    const portal = getPortal(selected.source, selected.portalId);
+    if (portal && current && selected.source === mapId && current.target_map === mapId && current.target_pos) {
+      const x1 = ((portal.source_pos[0] + portal.source_size[0] / 2) / mw * 100);
+      const y1 = ((portal.source_pos[1] + portal.source_size[1] / 2) / mh * 100);
+      const x2 = ((current.target_pos[0] + 0.5) / mw * 100);
+      const y2 = ((current.target_pos[1] + 0.5) / mh * 100);
+      const dx = x2 - x1, dy = y2 - y1;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      html += '<div class="pending-line" style="left:' + x1.toFixed(3) + '%; top:' + y1.toFixed(3)
+        + '%; width:' + length.toFixed(3) + '%; transform:rotate(' + angle.toFixed(3) + 'deg);"></div>';
+    }
   }
   html += '</div>';
   return html;
 }
 
+function attachEditorHandlers(root, mapId) {
+  // Mapping edit mode uses graph node clicks plus the modal tile picker.
+  // Side-panel screenshots remain read-only so edit clicks are not swallowed by zoom/details behavior.
+  return;
+  root.querySelectorAll(".map-marker.out[data-portal-id]").forEach(marker => {
+    marker.addEventListener("click", ev => {
+      if (!editorState.enabled) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      editorState.selected = {
+        source: marker.getAttribute("data-source"),
+        portalId: marker.getAttribute("data-portal-id"),
+      };
+      rerenderCurrentDetails();
+    });
+  });
+
+  root.querySelectorAll("img.screenshot[data-map-id]").forEach(img => {
+    img.addEventListener("click", ev => {
+      if (!editorState.enabled || !editorState.selected) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      const targetMap = img.getAttribute("data-map-id");
+      const meta = NODES[targetMap];
+      if (!meta || !meta.map_w || !meta.map_h) return;
+      const rect = img.getBoundingClientRect();
+      const relX = Math.max(0, Math.min(rect.width, ev.clientX - rect.left));
+      const relY = Math.max(0, Math.min(rect.height, ev.clientY - rect.top));
+      const tileX = Math.max(0, Math.min(meta.map_w - 1, Math.floor(relX / rect.width * meta.map_w)));
+      const tileY = Math.max(0, Math.min(meta.map_h - 1, Math.floor(relY / rect.height * meta.map_h)));
+      setPortalEdit(editorState.selected.source, editorState.selected.portalId, targetMap, tileX, tileY);
+      rerenderCurrentDetails();
+    });
+  });
+}
+
+function setProperty(doc, objectEl, name, value) {
+  let propsEl = null;
+  Array.from(objectEl.children).forEach(child => {
+    if (child.tagName === "properties") propsEl = child;
+  });
+  if (!propsEl) {
+    propsEl = doc.createElement("properties");
+    objectEl.appendChild(propsEl);
+  }
+  let propEl = null;
+  Array.from(propsEl.children).forEach(child => {
+    if (child.tagName === "property" && child.getAttribute("name") === name) propEl = child;
+  });
+  if (!propEl) {
+    propEl = doc.createElement("property");
+    propEl.setAttribute("name", name);
+    propsEl.appendChild(propEl);
+  }
+  propEl.setAttribute("value", String(value));
+}
+
+function serializeChangedMap(source) {
+  const data = TMX_EDIT_DATA[source];
+  const edits = editorState.edits[source];
+  if (!data || !edits) return null;
+  const doc = new DOMParser().parseFromString(data.xml, "application/xml");
+  if (doc.querySelector("parsererror")) throw new Error("Could not parse embedded TMX for " + source);
+  Object.entries(edits).forEach(([portalId, edit]) => {
+    const objectEl = Array.from(doc.getElementsByTagName("object"))
+      .find(el => el.getAttribute("id") === String(portalId));
+    if (!objectEl) throw new Error("Portal object #" + portalId + " not found in " + source);
+    setProperty(doc, objectEl, "target_map", edit.target_map);
+    setProperty(doc, objectEl, "target_position_x", edit.target_position_x);
+    setProperty(doc, objectEl, "target_position_y", edit.target_position_y);
+  });
+  return new XMLSerializer().serializeToString(doc);
+}
+
+function downloadText(filename, text) {
+  const blob = new Blob([text], { type: "application/xml" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function exportChangedMaps() {
+  const sources = Array.from(new Set(dirtyEntries().map(d => d.source)));
+  sources.forEach(source => {
+    const xml = serializeChangedMap(source);
+    if (xml != null) downloadText((TMX_EDIT_DATA[source].tmx_file || source + ".tmx"), xml);
+  });
+}
+
+const CRC_TABLE = (() => {
+  const table = [];
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+
+function crc32(bytes) {
+  let c = 0xffffffff;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+function dosDateTime(date) {
+  const year = Math.max(1980, date.getFullYear());
+  const dosTime = (date.getHours() << 11) | (date.getMinutes() << 5) | Math.floor(date.getSeconds() / 2);
+  const dosDate = ((year - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
+  return { dosTime, dosDate };
+}
+
+function pushU16(out, value) {
+  out.push(value & 0xff, (value >>> 8) & 0xff);
+}
+
+function pushU32(out, value) {
+  out.push(value & 0xff, (value >>> 8) & 0xff, (value >>> 16) & 0xff, (value >>> 24) & 0xff);
+}
+
+function makeZip(files) {
+  const encoder = new TextEncoder();
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+  const stamp = dosDateTime(new Date());
+
+  files.forEach(file => {
+    const nameBytes = encoder.encode(file.name);
+    const dataBytes = encoder.encode(file.text);
+    const crc = crc32(dataBytes);
+    const local = [];
+    pushU32(local, 0x04034b50);
+    pushU16(local, 20);
+    pushU16(local, 0x0800);
+    pushU16(local, 0);
+    pushU16(local, stamp.dosTime);
+    pushU16(local, stamp.dosDate);
+    pushU32(local, crc);
+    pushU32(local, dataBytes.length);
+    pushU32(local, dataBytes.length);
+    pushU16(local, nameBytes.length);
+    pushU16(local, 0);
+    localParts.push(new Uint8Array(local), nameBytes, dataBytes);
+
+    const central = [];
+    pushU32(central, 0x02014b50);
+    pushU16(central, 20);
+    pushU16(central, 20);
+    pushU16(central, 0x0800);
+    pushU16(central, 0);
+    pushU16(central, stamp.dosTime);
+    pushU16(central, stamp.dosDate);
+    pushU32(central, crc);
+    pushU32(central, dataBytes.length);
+    pushU32(central, dataBytes.length);
+    pushU16(central, nameBytes.length);
+    pushU16(central, 0);
+    pushU16(central, 0);
+    pushU16(central, 0);
+    pushU16(central, 0);
+    pushU32(central, 0);
+    pushU32(central, offset);
+    centralParts.push(new Uint8Array(central), nameBytes);
+    offset += local.length + nameBytes.length + dataBytes.length;
+  });
+
+  const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
+  const centralOffset = offset;
+  const end = [];
+  pushU32(end, 0x06054b50);
+  pushU16(end, 0);
+  pushU16(end, 0);
+  pushU16(end, files.length);
+  pushU16(end, files.length);
+  pushU32(end, centralSize);
+  pushU32(end, centralOffset);
+  pushU16(end, 0);
+  return new Blob([...localParts, ...centralParts, new Uint8Array(end)], { type: "application/zip" });
+}
+
+function exportChangedMapsZip() {
+  const sources = Array.from(new Set(dirtyEntries().map(d => d.source)));
+  if (!sources.length) return null;
+  const files = sources.map(source => ({
+    name: TMX_EDIT_DATA[source].tmx_file || source + ".tmx",
+    text: serializeChangedMap(source),
+  })).filter(file => file.text != null);
+  if (!files.length) return null;
+  const blob = makeZip(files);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "map_portal_changes.zip";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return blob;
+}
+
 function renderEdgeDetails(edgeId) {
   const el = document.getElementById("details");
-  const e = edgeMap[edgeId];
+  const e = edgeWithCurrentTarget(edgeMap[edgeId]);
   if (!e) return;
+  editorState.currentMapId = e.source;
   const srcMeta = NODES[e.source];
   const tgtMeta = NODES[e.target];
   const srcName = srcMeta ? srcMeta.name : e.source;
@@ -614,7 +1259,7 @@ function renderEdgeDetails(edgeId) {
   html += "<p><strong>From:</strong> <a href=\\"#\\" data-target=\\"" + escapeHtml(e.source) + "\\">"
        + escapeHtml(srcName) + "</a> <code>" + escapeHtml(e.source) + "</code></p>";
   html += "<ul><li>tile: <code>" + srcPos + "</code> (size " + srcSize + ")</li></ul>";
-  html += renderMapWithMarkers(srcMeta, e.source, [{ kind: "out", pos: e.source_pos, size: e.source_size, label: e.label }]);
+  html += renderMapWithMarkers(srcMeta, e.source, [{ kind: "out", source: e.source, portalId: e.portal_id, pos: e.source_pos, size: e.source_size, label: e.label }]);
   html += "<p><strong>To:</strong> <a href=\\"#\\" data-target=\\"" + escapeHtml(e.target) + "\\">"
        + escapeHtml(tgtName) + "</a> <code>" + escapeHtml(e.target) + "</code></p>";
   html += "<ul><li>tile: <code>" + tgtPos + "</code></li></ul>";
@@ -625,6 +1270,7 @@ function renderEdgeDetails(edgeId) {
 
   el.querySelectorAll("img[data-zoom]").forEach(img => {
     img.addEventListener("click", () => {
+      if (editorState.enabled) return;
       const lb = document.getElementById("lightbox");
       const lbMarkers = document.getElementById("lightbox-markers");
       document.getElementById("lightbox-img").src = img.src;
@@ -639,6 +1285,8 @@ function renderEdgeDetails(edgeId) {
     });
   });
 
+  attachEditorHandlers(el, e.source);
+
   el.querySelectorAll("a[data-target]").forEach(a => {
     a.addEventListener("click", ev => {
       ev.preventDefault();
@@ -648,6 +1296,7 @@ function renderEdgeDetails(edgeId) {
       renderDetails(t);
     });
   });
+  updateEditorPanel();
 }
 
 [
@@ -660,7 +1309,30 @@ function renderEdgeDetails(edgeId) {
   });
 });
 
+document.getElementById("mapping-toggle").addEventListener("change", e => {
+  if (e.target.checked) startMappingEditMode();
+  else finishMappingEditMode();
+});
+
+document.getElementById("tile-modal-img").addEventListener("click", handleTileModalClick);
+document.getElementById("tile-modal-cancel").addEventListener("click", () => {
+  closeTileModal();
+  if (editorState.enabled) {
+    if (editorState.step === "source-tile") resetMappingCycle("Source tile selection cancelled.");
+    else if (editorState.step === "dest-tile") {
+      editorState.step = "dest-node";
+      editorState.destMap = null;
+      editorState.lastMessage = "Destination tile selection cancelled.";
+      updateEditorPanel();
+    }
+  }
+});
+
 network.on("click", params => {
+  if (editorState.enabled) {
+    if (params.nodes.length) handleMappingNodeClick(params.nodes[0]);
+    return;
+  }
   if (params.nodes.length) {
     renderDetails(params.nodes[0]);
   } else if (params.edges.length) {
@@ -671,6 +1343,20 @@ network.on("click", params => {
 document.getElementById("lightbox").addEventListener("click", () => {
   document.getElementById("lightbox").style.display = "none";
 });
+
+window.__portalEditorTest = {
+  editorState,
+  setPortalEdit,
+  dirtyEntries,
+  serializeChangedMap,
+  makeZip,
+  exportChangedMapsZip,
+  handleMappingNodeClick,
+  findPortalAtTile,
+  handleTileModalClick,
+  currentPortalTarget,
+};
+updateEditorPanel();
 </script>
 </body>
 </html>
@@ -703,7 +1389,7 @@ def build_root_vars(colors: dict) -> str:
     return "\n".join(lines)
 
 
-def build_html(title: str, nodes: dict, edges: list, colors: dict) -> str:
+def build_html(title: str, nodes: dict, edges: list, colors: dict, tmx_edit_data: dict | None = None) -> str:
     return (
         HTML_TEMPLATE
         .replace("__TITLE__", title)
@@ -711,6 +1397,7 @@ def build_html(title: str, nodes: dict, edges: list, colors: dict) -> str:
         .replace("__NODES__", json.dumps(nodes, indent=2))
         .replace("__EDGES__", json.dumps(edges, indent=2))
         .replace("__COLORS__", json.dumps(colors, indent=2))
+        .replace("__TMX_EDIT_DATA__", json.dumps(tmx_edit_data or {}, indent=2))
     )
 
 
@@ -740,6 +1427,7 @@ def main():
     tmx_dir = args.root / (manifest.get("refs", {}).get("tmx") or "assets/maps")
 
     nodes = collect_map_metadata(maps_dir)
+    tmx_edit_data = collect_portal_edit_data(tmx_dir)
     edges = collect_portal_edges(tmx_dir)
     dims = collect_tmx_dims(tmx_dir)
     for mid, d in dims.items():
@@ -771,7 +1459,7 @@ def main():
                     nodes[mid].update(dims[mid])
 
     title = manifest.get("name", str(args.root))
-    html = build_html(title, nodes, edges, colors)
+    html = build_html(title, nodes, edges, colors, tmx_edit_data)
     args.out.write_text(html)
 
     referenced = {e["target"] for e in edges} | {e["source"] for e in edges}
