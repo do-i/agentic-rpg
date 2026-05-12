@@ -4,6 +4,7 @@ display:
   screen_width: 1280
   screen_height: 766
   fps: 60
+  window_position: center   # "center" or "X,Y" pixel offset like "100,50"
 
 tiles:
   tile_size: 32

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import pygame
 from engine.settings.engine_config_data import EngineConfigData
 from engine.util.frame_clock import FrameClock
@@ -23,6 +24,7 @@ class Game:
         window_title: str,
         playback_speed: float = 1.0,
     ) -> None:
+        self._apply_window_position(config.window_position)
         pygame.init()
         self._screen = pygame.display.set_mode(
             (config.screen_width, config.screen_height),
@@ -35,6 +37,20 @@ class Game:
         self._playback_speed = playback_speed
         self._running = False
         self._held: dict[int, float] = {}  # key → seconds until next synthetic KEYDOWN
+
+    @staticmethod
+    def _apply_window_position(value: str) -> None:
+        if value == "center":
+            os.environ["SDL_VIDEO_CENTERED"] = "1"
+            return
+        parts = value.split(",")
+        if len(parts) != 2 or not all(p.strip().lstrip("-").isdigit() for p in parts):
+            raise ValueError(
+                f"Invalid display.window_position {value!r} in settings.yaml: "
+                f'expected "center" or "X,Y" (e.g. "100,50")'
+            )
+        x, y = (int(p.strip()) for p in parts)
+        os.environ["SDL_VIDEO_WINDOW_POS"] = f"{x},{y}"
 
     def run(self) -> None:
         self._running = True

@@ -17,9 +17,10 @@ _REQUIRED_FONT_SIZES = ("small", "medium", "large", "xlarge")
 @dataclass(frozen=True)
 class EngineConfigData:
     # display
-    screen_width:  int
-    screen_height: int
-    fps:           int
+    screen_width:    int
+    screen_height:   int
+    fps:             int
+    window_position: str
     # tiles
     tile_size: int
     # runtime
@@ -46,6 +47,7 @@ class EngineConfigData:
         screen_width  = display.get("screen_width")
         screen_height = display.get("screen_height")
         fps           = display.get("fps")
+        window_position = display.get("window_position")
         tile_size     = tiles.get("tile_size")
         saves_dir     = (data.get("saves")    or {}).get("dir")
         text_speed    = (data.get("dialogue") or {}).get("text_speed")
@@ -76,6 +78,8 @@ class EngineConfigData:
             missing.append("display.screen_height")
         if fps is None:
             missing.append("display.fps")
+        if window_position is None:
+            missing.append("display.window_position")
         if tile_size is None:
             missing.append("tiles.tile_size")
         if saves_dir is None:
@@ -103,6 +107,7 @@ class EngineConfigData:
             screen_width=screen_width,
             screen_height=screen_height,
             fps=fps,
+            window_position=str(window_position),
             tile_size=tile_size,
             saves_dir=saves_dir,
             text_speed=text_speed,
