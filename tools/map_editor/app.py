@@ -26,6 +26,10 @@ class App:
         pygame.init()
         pygame.display.set_caption(f"Map Editor — {scenario_root.name}")
         self._screen = pygame.display.set_mode(WINDOW_SIZE, pygame.RESIZABLE)
+        try:
+            pygame.scrap.init()
+        except (pygame.error, AttributeError):
+            pass
         self._clock = pygame.time.Clock()
         self._font = pygame.font.SysFont("monospace", 16)
         self._small_font = pygame.font.SysFont("monospace", 13)

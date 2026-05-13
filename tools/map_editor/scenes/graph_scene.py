@@ -1,17 +1,19 @@
 """Graph view of the scenario: nodes (maps with thumbnails) and edges (portals).
 
 Interactions:
-  - Click node: select node (details show in right panel).
+  - Click node: select node (details in right panel).
   - Click portal edge: select edge.
   - Click empty: deselect.
-  - Drag node: move it around (click vs. drag distinguished by motion threshold).
+  - Drag node: move it around.
   - Drag background: pan camera.
+  - Drag panel separator: resize the side panel.
+  - Click a value in the side panel: copy to clipboard.
   - Mouse wheel: zoom camera.
   - Enter: open selected node in detail viewer.
-  - 0: refit camera to all nodes.
+  - 0: refit camera.
   - Esc: deselect.
 
-Each portal is its own directed edge anchored to the portal's source tile on
+Each portal is its own directed edge, anchored to the portal's source tile on
 the source map's thumbnail and the destination tile on the target map's
 thumbnail.
 """
@@ -28,7 +30,7 @@ from engine.common.scene.scene import Scene
 from tools.map_editor.graph.portal_graph import GraphEdge, GraphNode, PortalGraph
 from tools.map_editor.graph.spring_layout import spring_layout
 from tools.map_editor.graph.thumbnails import ThumbnailCache
-from tools.map_editor.scenes.side_panel import PANEL_WIDTH, render_side_panel
+from tools.map_editor.scenes.side_panel import PanelLayout, render_side_panel
 
 
 NODE_BG = (28, 28, 36)
@@ -38,11 +40,17 @@ NODE_BORDER_SELECTED = (240, 220, 120)
 EDGE_COLOR = (110, 130, 160)
 EDGE_COLOR_HOVER = (180, 200, 230)
 EDGE_COLOR_SELECTED = (240, 220, 120)
-ARROW_SIZE = 10
+ARROW_LEN = 16
+ARROW_HALF_WIDTH = 8
 NODE_PADDING = 8
 LABEL_HEIGHT = 18
 CLICK_PIXEL_THRESHOLD = 4
 EDGE_PICK_THRESHOLD_PX = 8
+
+PANEL_WIDTH_DEFAULT = 360
+PANEL_WIDTH_MIN = 240
+PANEL_WIDTH_MAX_RESERVE = 200  # leave at least this much for the graph
+TOAST_MS = 1400
 
 
 Selection = Union[GraphNode, GraphEdge, None]
@@ -105,7 +113,14 @@ class GraphScene(Scene):
         self._panning = False
         self._last_mouse: tuple[int, int] | None = None
 
-        self._panel_rect: pygame.Rect | None = None
+        self._panel_width = PANEL_WIDTH_DEFAULT
+        self._resizing_panel = False
+        self._handle_hovered = False
+        self._panel_layout: PanelLayout | None = None
+        self._hovered_copy_idx: int | None = None
+
+        self._toast_text: str | None = None
+        self._toast_until_ms = 0
 
     # ── input ────────────────────────────────────────────────────────────
 
@@ -123,7 +138,12 @@ class GraphScene(Scene):
                 self._on_key_down(event)
 
     def _on_mouse_down(self, event: pygame.event.Event) -> None:
+        if event.button == 1 and self._on_handle(event.pos):
+            self._resizing_panel = True
+            return
         if self._in_panel(event.pos):
+            if event.button == 1:
+                self._maybe_copy(event.pos)
             return
         if event.button == 1:
             hit_node = self._node_at_screen(event.pos)
@@ -143,19 +163,32 @@ class GraphScene(Scene):
             self._last_mouse = event.pos
 
     def _on_mouse_up(self, event: pygame.event.Event) -> None:
-        if event.button == 1 and self._drag_node_id is not None:
-            if self._drag_total_pixels <= CLICK_PIXEL_THRESHOLD:
-                self._selection = self._graph.nodes_by_id[self._drag_node_id]
-            self._drag_node_id = None
+        if event.button == 1:
+            self._resizing_panel = False
+            if self._drag_node_id is not None:
+                if self._drag_total_pixels <= CLICK_PIXEL_THRESHOLD:
+                    self._selection = self._graph.nodes_by_id[self._drag_node_id]
+                self._drag_node_id = None
         if event.button in (1, 2, 3):
             self._panning = False
             self._last_mouse = None
 
     def _on_mouse_motion(self, event: pygame.event.Event) -> None:
+        if self._resizing_panel:
+            screen_w = pygame.display.get_surface().get_width()
+            new_width = screen_w - event.pos[0]
+            self._panel_width = max(
+                PANEL_WIDTH_MIN, min(screen_w - PANEL_WIDTH_MAX_RESERVE, new_width)
+            )
+            return
+
+        self._handle_hovered = self._on_handle(event.pos)
         if self._in_panel(event.pos):
             self._hover_node = None
             self._hover_edge_idx = None
+            self._hovered_copy_idx = self._copy_target_at(event.pos)
         else:
+            self._hovered_copy_idx = None
             self._hover_node = self._node_at_screen(event.pos)
             self._hover_edge_idx = (
                 self._edge_at_screen(event.pos) if self._hover_node is None else None
@@ -186,6 +219,31 @@ class GraphScene(Scene):
         elif event.key == pygame.K_ESCAPE:
             self._selection = None
 
+    # ── copy handling ────────────────────────────────────────────────────
+
+    def _copy_target_at(self, pos: tuple[int, int]) -> int | None:
+        if self._panel_layout is None:
+            return None
+        for i, (rect, _) in enumerate(self._panel_layout.copy_targets):
+            if rect.collidepoint(pos):
+                return i
+        return None
+
+    def _maybe_copy(self, pos: tuple[int, int]) -> None:
+        idx = self._copy_target_at(pos)
+        if idx is None or self._panel_layout is None:
+            return
+        _, text = self._panel_layout.copy_targets[idx]
+        self._copy_to_clipboard(text)
+        self._toast_text = f"Copied: {text}"
+        self._toast_until_ms = pygame.time.get_ticks() + TOAST_MS
+
+    def _copy_to_clipboard(self, text: str) -> None:
+        try:
+            pygame.scrap.put(pygame.SCRAP_TEXT, text.encode("utf-8"))
+        except (pygame.error, AttributeError):
+            pass
+
     # ── render ───────────────────────────────────────────────────────────
 
     def render(self, screen: pygame.Surface) -> None:
@@ -199,7 +257,7 @@ class GraphScene(Scene):
             self._render_node(screen, view)
         self._render_hud(screen)
 
-        self._panel_rect = render_side_panel(
+        self._panel_layout = render_side_panel(
             screen=screen,
             selection=self._selection,
             graph=self._graph,
@@ -207,51 +265,93 @@ class GraphScene(Scene):
             font=self._font,
             small_font=self._small_font,
             header_font=self._header_font,
+            panel_width=self._panel_width,
+            handle_hovered=self._handle_hovered or self._resizing_panel,
+            hovered_copy_idx=self._hovered_copy_idx,
         )
+        self._render_toast(screen)
 
     def _render_edges(self, screen: pygame.Surface) -> None:
+        # Two passes: regular edges first, then hover/selected on top so the
+        # label and arrow aren't covered by other lines.
+        decorated: list[tuple[int, GraphEdge, tuple[int, int], tuple[int, int], bool, bool]] = []
         for idx, edge in enumerate(self._graph.edges):
             endpoints = self._edge_endpoints(edge)
             if endpoints is None:
                 continue
             (sx, sy), (tx, ty) = endpoints
-
             is_selected = self._selection is edge
             is_hover = self._hover_edge_idx == idx
+            decorated.append((idx, edge, (sx, sy), (tx, ty), is_selected, is_hover))
+
+        for _, _, (sx, sy), (tx, ty), is_selected, is_hover in decorated:
+            if is_selected or is_hover:
+                continue
+            self._draw_arrow(screen, sx, sy, tx, ty, EDGE_COLOR, 1)
+
+        for _, edge, (sx, sy), (tx, ty), is_selected, is_hover in decorated:
+            if not (is_selected or is_hover):
+                continue
             if is_selected:
                 color, width = EDGE_COLOR_SELECTED, 3
-            elif is_hover:
-                color, width = EDGE_COLOR_HOVER, 2
             else:
-                color, width = EDGE_COLOR, 1
+                color, width = EDGE_COLOR_HOVER, 2
+            self._draw_arrow(screen, sx, sy, tx, ty, color, width)
+            dest = self._graph.nodes_by_id.get(edge.target)
+            if dest is not None:
+                self._draw_edge_label(screen, sx, sy, tx, ty, dest.display_name)
 
-            pygame.draw.line(screen, color, (sx, sy), (tx, ty), width)
-            self._draw_arrowhead(screen, sx, sy, tx, ty, color)
-
-    def _draw_arrowhead(
-        self, screen: pygame.Surface, sx: int, sy: int, tx: int, ty: int, color
+    def _draw_arrow(
+        self,
+        screen: pygame.Surface,
+        sx: int,
+        sy: int,
+        tx: int,
+        ty: int,
+        color: tuple[int, int, int],
+        width: int,
     ) -> None:
         dx, dy = tx - sx, ty - sy
         length = math.hypot(dx, dy)
         if length < 1.0:
             return
         angle = math.atan2(dy, dx)
-        back = min(20, length * 0.4)
-        bx = tx - math.cos(angle) * back
-        by = ty - math.sin(angle) * back
+        # Line stops at the arrow base so the arrowhead's apex coincides with (tx, ty).
+        base_x = tx - math.cos(angle) * ARROW_LEN
+        base_y = ty - math.sin(angle) * ARROW_LEN
+        pygame.draw.line(screen, color, (sx, sy), (base_x, base_y), width)
         left = (
-            bx + math.cos(angle + math.pi / 2) * ARROW_SIZE / 2,
-            by + math.sin(angle + math.pi / 2) * ARROW_SIZE / 2,
+            base_x + math.cos(angle + math.pi / 2) * ARROW_HALF_WIDTH,
+            base_y + math.sin(angle + math.pi / 2) * ARROW_HALF_WIDTH,
         )
         right = (
-            bx + math.cos(angle - math.pi / 2) * ARROW_SIZE / 2,
-            by + math.sin(angle - math.pi / 2) * ARROW_SIZE / 2,
+            base_x + math.cos(angle - math.pi / 2) * ARROW_HALF_WIDTH,
+            base_y + math.sin(angle - math.pi / 2) * ARROW_HALF_WIDTH,
         )
-        tip = (
-            bx + math.cos(angle) * ARROW_SIZE,
-            by + math.sin(angle) * ARROW_SIZE,
+        pygame.draw.polygon(screen, color, [(tx, ty), left, right])
+
+    def _draw_edge_label(
+        self,
+        screen: pygame.Surface,
+        sx: int,
+        sy: int,
+        tx: int,
+        ty: int,
+        text: str,
+    ) -> None:
+        # Place label two-thirds along the edge so it sits closer to the destination.
+        lx = int(sx + (tx - sx) * 0.66)
+        ly = int(sy + (ty - sy) * 0.66)
+        label = self._small_font.render(text, True, (240, 240, 240))
+        pad_x, pad_y = 6, 2
+        bg = pygame.Surface(
+            (label.get_width() + pad_x * 2, label.get_height() + pad_y * 2),
+            pygame.SRCALPHA,
         )
-        pygame.draw.polygon(screen, color, [tip, left, right])
+        bg.fill((20, 20, 28, 210))
+        bg_rect = bg.get_rect(center=(lx, ly))
+        screen.blit(bg, bg_rect.topleft)
+        screen.blit(label, (bg_rect.left + pad_x, bg_rect.top + pad_y))
 
     def _render_node(self, screen: pygame.Surface, view: _NodeView) -> None:
         cx, cy = self._layout_to_screen(view.layout_x, view.layout_y)
@@ -316,16 +416,38 @@ class GraphScene(Scene):
         )
         screen.blit(hud, (10, 10))
 
+    def _render_toast(self, screen: pygame.Surface) -> None:
+        if self._toast_text is None:
+            return
+        if pygame.time.get_ticks() > self._toast_until_ms:
+            self._toast_text = None
+            return
+        label = self._font.render(self._toast_text, True, (255, 255, 255))
+        pad_x, pad_y = 12, 6
+        bg = pygame.Surface(
+            (label.get_width() + pad_x * 2, label.get_height() + pad_y * 2),
+            pygame.SRCALPHA,
+        )
+        bg.fill((30, 80, 50, 230))
+        sw, sh = screen.get_size()
+        x = sw - self._panel_width - bg.get_width() - 16
+        y = sh - bg.get_height() - 16
+        screen.blit(bg, (x, y))
+        screen.blit(label, (x + pad_x, y + pad_y))
+
     def update(self, dt: float) -> None:
         return
 
     # ── geometry helpers ─────────────────────────────────────────────────
 
     def _graph_viewport(self, screen_size: tuple[int, int]) -> tuple[int, int, int, int]:
-        return (0, 0, max(1, screen_size[0] - PANEL_WIDTH), screen_size[1])
+        return (0, 0, max(1, screen_size[0] - self._panel_width), screen_size[1])
 
     def _in_panel(self, pos: tuple[int, int]) -> bool:
-        return self._panel_rect is not None and self._panel_rect.collidepoint(pos)
+        return self._panel_layout is not None and self._panel_layout.rect.collidepoint(pos)
+
+    def _on_handle(self, pos: tuple[int, int]) -> bool:
+        return self._panel_layout is not None and self._panel_layout.handle_rect.collidepoint(pos)
 
     def _layout_to_screen(self, lx: float, ly: float) -> tuple[int, int]:
         return (
@@ -373,10 +495,6 @@ class GraphScene(Scene):
     def _portal_point_on_node(
         self, view: _NodeView, tile: tuple[int, int]
     ) -> tuple[int, int]:
-        """Map a tile coord on this node's map to a screen point on its thumbnail.
-
-        Falls back to the node center if thumbnail or map dims are unavailable.
-        """
         cx, cy = self._layout_to_screen(view.layout_x, view.layout_y)
         thumb = self._thumbnails.get(view.node.tmx_path)
         map_w_px, map_h_px = view.node.map_size_px
