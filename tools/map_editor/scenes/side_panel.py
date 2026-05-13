@@ -1,7 +1,8 @@
 """Right-side detail panel for the graph view.
 
-Renders either a node's details (map metadata, NPCs, item boxes, badges)
-or an edge's details (list of portals between the two maps).
+Shows either a node's details (map metadata, NPCs, item boxes, badges)
+or a portal edge's details (two thumbnails with outbound/inbound markers
+on the source and destination tiles).
 """
 
 from __future__ import annotations
@@ -11,9 +12,10 @@ from typing import Union
 import pygame
 
 from tools.map_editor.graph.portal_graph import GraphEdge, GraphNode, PortalGraph
+from tools.map_editor.graph.thumbnails import ThumbnailCache
 
 
-PANEL_WIDTH = 340
+PANEL_WIDTH = 360
 PANEL_BG = (22, 22, 30)
 PANEL_BORDER = (60, 60, 80)
 TEXT = (220, 220, 220)
@@ -26,6 +28,12 @@ BADGE_PAD_X = 6
 BADGE_PAD_Y = 2
 SECTION_GAP = 8
 
+# Marker colors matching maps_graph.html.
+OUTBOUND_FILL = (255, 74, 42)
+OUTBOUND_RING = (255, 210, 0)
+INBOUND_FILL = (58, 207, 255)
+INBOUND_RING = (184, 243, 255)
+
 
 Selection = Union[GraphNode, GraphEdge, None]
 
@@ -34,7 +42,7 @@ def render_side_panel(
     screen: pygame.Surface,
     selection: Selection,
     graph: PortalGraph,
-    thumbnail: pygame.Surface | None,
+    thumbnails: ThumbnailCache,
     font: pygame.font.Font,
     small_font: pygame.font.Font,
     header_font: pygame.font.Font,
@@ -48,9 +56,9 @@ def render_side_panel(
     if selection is None:
         _render_empty(screen, rect, font)
     elif isinstance(selection, GraphNode):
-        _render_node(screen, rect, selection, thumbnail, font, small_font, header_font)
+        _render_node(screen, rect, selection, thumbnails, font, small_font, header_font)
     else:
-        _render_edge(screen, rect, selection, graph, font, small_font, header_font)
+        _render_edge(screen, rect, selection, graph, thumbnails, font, small_font, header_font)
 
     return rect
 
@@ -64,7 +72,7 @@ def _render_node(
     screen: pygame.Surface,
     rect: pygame.Rect,
     node: GraphNode,
-    thumbnail: pygame.Surface | None,
+    thumbnails: ThumbnailCache,
     font: pygame.font.Font,
     small_font: pygame.font.Font,
     header_font: pygame.font.Font,
@@ -79,15 +87,11 @@ def _render_node(
 
     sub = small_font.render(node.map_id, True, TEXT_DIM)
     screen.blit(sub, (x, y))
-    y += sub.get_height() + 4
+    y += sub.get_height() + 6
 
-    if node.yaml_path is not None:
-        yaml_label = small_font.render(_truncate(str(node.yaml_path.name), 44), True, TEXT_DIM)
-        screen.blit(yaml_label, (x, y))
-        y += yaml_label.get_height() + 6
-
-    if thumbnail is not None:
-        scaled = _fit_image(thumbnail, inner_w, 200)
+    thumb = thumbnails.get(node.tmx_path)
+    if thumb is not None:
+        scaled = _fit_image(thumb, inner_w, 200)
         screen.blit(scaled, (x, y))
         y += scaled.get_height() + SECTION_GAP
 
@@ -100,9 +104,9 @@ def _render_node(
         y = _render_kv(screen, x, y, "bgm", node.bgm, font, small_font)
 
     if node.encounter:
-        encounter_summary = _summarize_encounter(node.encounter)
-        if encounter_summary:
-            y = _render_kv(screen, x, y, "encounter", encounter_summary, font, small_font)
+        summary = _summarize_encounter(node.encounter)
+        if summary:
+            y = _render_kv(screen, x, y, "encounter", summary, font, small_font)
 
     y += SECTION_GAP
     y = _render_section_title(screen, x, y, f"NPCs ({len(node.npcs)})", font)
@@ -137,12 +141,14 @@ def _render_edge(
     rect: pygame.Rect,
     edge: GraphEdge,
     graph: PortalGraph,
+    thumbnails: ThumbnailCache,
     font: pygame.font.Font,
     small_font: pygame.font.Font,
     header_font: pygame.font.Font,
 ) -> None:
     x = rect.left + 14
     y = rect.top + 14
+    inner_w = rect.width - 28
 
     source_node = graph.nodes_by_id.get(edge.source)
     target_node = graph.nodes_by_id.get(edge.target)
@@ -151,21 +157,85 @@ def _render_edge(
 
     title = header_font.render("Portal", True, TEXT_HEADER)
     screen.blit(title, (x, y))
-    y += title.get_height() + 4
+    y += title.get_height() + 6
 
-    y = _render_kv(screen, x, y, "from", f"{src_name}  ({edge.source})", font, small_font)
-    y = _render_kv(screen, x, y, "to",   f"{dst_name}  ({edge.target})", font, small_font)
+    y = _render_kv(
+        screen, x, y, "from",
+        f"{src_name}  @{edge.source_tile[0]},{edge.source_tile[1]}",
+        font, small_font,
+    )
+    y = _render_kv(
+        screen, x, y, "to",
+        f"{dst_name}  @{edge.target_tile[0]},{edge.target_tile[1]}",
+        font, small_font,
+    )
 
     y += SECTION_GAP
-    y = _render_section_title(screen, x, y, f"Connections ({len(edge.portals)})", font)
-    for i, portal in enumerate(edge.portals, start=1):
-        sx, sy = portal.source_tile
-        tx, ty = portal.target_tile
-        line = f"#{i}: ({sx},{sy})  →  ({tx},{ty})"
-        y = _render_dim_line(screen, x, y, line, small_font)
+    y = _render_section_title(screen, x, y, "Source", small_font)
+    if source_node is not None:
+        y = _render_map_with_marker(
+            screen, x, y, inner_w, source_node, thumbnails,
+            edge.source_tile, kind="outbound",
+        )
+    y += SECTION_GAP
+
+    y = _render_section_title(screen, x, y, "Destination", small_font)
+    if target_node is not None:
+        y = _render_map_with_marker(
+            screen, x, y, inner_w, target_node, thumbnails,
+            edge.target_tile, kind="inbound",
+        )
 
     footer = small_font.render("[Esc] deselect", True, TEXT_DIM)
     screen.blit(footer, (x, rect.bottom - footer.get_height() - 10))
+
+
+def _render_map_with_marker(
+    screen: pygame.Surface,
+    x: int,
+    y: int,
+    max_w: int,
+    node: GraphNode,
+    thumbnails: ThumbnailCache,
+    tile: tuple[int, int],
+    kind: str,
+) -> int:
+    thumb = thumbnails.get(node.tmx_path)
+    if thumb is None:
+        return y
+    scaled = _fit_image(thumb, max_w, 220)
+    screen.blit(scaled, (x, y))
+
+    map_w_px, map_h_px = node.map_size_px
+    tile_w_px, tile_h_px = node.tile_size_px
+    if map_w_px > 0 and map_h_px > 0:
+        sw, sh = scaled.get_size()
+        col, row = tile
+        # Marker box covers a single tile, mapped into the scaled thumbnail.
+        mw = max(4, int(tile_w_px * sw / map_w_px))
+        mh = max(4, int(tile_h_px * sh / map_h_px))
+        mx = x + int(col * tile_w_px * sw / map_w_px)
+        my = y + int(row * tile_h_px * sh / map_h_px)
+        _draw_marker(screen, pygame.Rect(mx, my, mw, mh), kind)
+
+    return y + scaled.get_height() + 2
+
+
+def _draw_marker(screen: pygame.Surface, rect: pygame.Rect, kind: str) -> None:
+    if kind == "outbound":
+        # Red square with yellow inner ring + small filled dot.
+        outer = rect.inflate(6, 6)
+        pygame.draw.rect(screen, OUTBOUND_FILL, outer, width=3)
+        pygame.draw.rect(screen, OUTBOUND_RING, rect, width=2)
+        cx, cy = rect.center
+        pygame.draw.circle(screen, OUTBOUND_RING, (cx, cy), max(2, min(rect.w, rect.h) // 4))
+    else:
+        # Cyan circle with lighter outer ring.
+        cx, cy = rect.center
+        r = max(rect.w, rect.h) // 2 + 3
+        pygame.draw.circle(screen, INBOUND_FILL, (cx, cy), r, width=3)
+        pygame.draw.circle(screen, INBOUND_RING, (cx, cy), r + 4, width=1)
+        pygame.draw.circle(screen, INBOUND_FILL, (cx, cy), max(2, r // 3))
 
 
 def _render_section_title(
@@ -262,4 +332,6 @@ def _fit_image(surf: pygame.Surface, max_w: int, max_h: int) -> pygame.Surface:
     scale = min(max_w / sw, max_h / sh, 1.0)
     if scale >= 1.0:
         return surf
-    return pygame.transform.smoothscale(surf, (max(1, int(sw * scale)), max(1, int(sh * scale))))
+    return pygame.transform.smoothscale(
+        surf, (max(1, int(sw * scale)), max(1, int(sh * scale)))
+    )

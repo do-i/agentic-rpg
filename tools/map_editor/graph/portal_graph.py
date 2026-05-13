@@ -1,9 +1,9 @@
 """Build a node/edge graph of the scenario from portal connections.
 
 Nodes are map ids (TMX file stems). Edges are directed portal links read
-from the 'portals' object group in each TMX. Maps that fail to parse are
-skipped, but still appear as nodes (the user should be able to see them
-in the graph and click to investigate).
+from the 'portals' object group in each TMX: one edge per portal, so two
+portals between the same pair of maps produce two edges. Maps that fail
+to parse are skipped, but still appear as nodes.
 """
 
 from __future__ import annotations
@@ -29,12 +29,6 @@ class ItemBoxMeta:
     position: tuple[int, int] | None
 
 
-@dataclass(frozen=True)
-class PortalRecord:
-    source_tile: tuple[int, int]       # tile coordinates of the portal's top-left
-    target_tile: tuple[int, int]       # destination tile on the target map
-
-
 @dataclass
 class GraphNode:
     map_id: str
@@ -49,17 +43,16 @@ class GraphNode:
     npcs: tuple[NpcMeta, ...]
     item_boxes: tuple[ItemBoxMeta, ...]
     encounter: dict | None
+    map_size_px: tuple[int, int]    # full map pixel dimensions
+    tile_size_px: tuple[int, int]   # individual tile pixel dimensions
 
 
 @dataclass
 class GraphEdge:
     source: str
     target: str
-    portals: tuple[PortalRecord, ...]
-
-    @property
-    def count(self) -> int:
-        return len(self.portals)
+    source_tile: tuple[int, int]    # portal's top-left tile on the source map
+    target_tile: tuple[int, int]    # destination tile on the target map
 
 
 @dataclass
@@ -68,24 +61,19 @@ class PortalGraph:
     edges: list[GraphEdge]
     nodes_by_id: dict[str, GraphNode] = field(default_factory=dict)
 
-    def edge_between(self, source: str, target: str) -> GraphEdge | None:
-        for e in self.edges:
-            if e.source == source and e.target == target:
-                return e
-        return None
-
 
 def build_portal_graph(
     tmx_paths: list[Path],
     yaml_for: callable,
 ) -> PortalGraph:
     nodes: list[GraphNode] = []
-    edge_buckets: dict[tuple[str, str], list[PortalRecord]] = {}
+    edges: list[GraphEdge] = []
 
     for tmx_path in tmx_paths:
         map_id = tmx_path.stem
         yaml_path = yaml_for(tmx_path)
         meta = _read_yaml_meta(yaml_path) if yaml_path else _empty_meta()
+        tmx_info = _read_tmx_info(tmx_path)
         nodes.append(
             GraphNode(
                 map_id=map_id,
@@ -100,22 +88,22 @@ def build_portal_graph(
                 npcs=meta["npcs"],
                 item_boxes=meta["item_boxes"],
                 encounter=meta["encounter"],
+                map_size_px=(tmx_info["map_w_px"], tmx_info["map_h_px"]),
+                tile_size_px=(tmx_info["tile_w"], tmx_info["tile_h"]),
             )
         )
-        tw, th, records = _read_portal_records(tmx_path)
-        for record in records:
-            key = (map_id, record["target_map"])
-            edge_buckets.setdefault(key, []).append(
-                PortalRecord(
-                    source_tile=(record["source_x"] // (tw or 1), record["source_y"] // (th or 1)),
+        tw = tmx_info["tile_w"] or 1
+        th = tmx_info["tile_h"] or 1
+        for record in tmx_info["portals"]:
+            edges.append(
+                GraphEdge(
+                    source=map_id,
+                    target=record["target_map"],
+                    source_tile=(record["source_x"] // tw, record["source_y"] // th),
                     target_tile=(record["target_x"], record["target_y"]),
                 )
             )
 
-    edges = [
-        GraphEdge(source=s, target=t, portals=tuple(records))
-        for (s, t), records in edge_buckets.items()
-    ]
     nodes_by_id = {n.map_id: n for n in nodes}
     return PortalGraph(nodes=nodes, edges=edges, nodes_by_id=nodes_by_id)
 
@@ -179,12 +167,18 @@ def _read_yaml_meta(yaml_path: Path) -> dict:
     }
 
 
-def _read_portal_records(tmx_path: Path) -> tuple[int, int, list[dict]]:
+def _read_tmx_info(tmx_path: Path) -> dict:
     try:
         tmx = pytmx.load_pygame(str(tmx_path), pixelalpha=True)
     except Exception:
-        return 0, 0, []
-    out: list[dict] = []
+        return {
+            "tile_w": 0,
+            "tile_h": 0,
+            "map_w_px": 0,
+            "map_h_px": 0,
+            "portals": [],
+        }
+    portals: list[dict] = []
     for layer in tmx.layers:
         if not isinstance(layer, pytmx.TiledObjectGroup):
             continue
@@ -197,7 +191,7 @@ def _read_portal_records(tmx_path: Path) -> tuple[int, int, list[dict]]:
             ty = props.get("target_position_y")
             if not target or tx is None or ty is None:
                 continue
-            out.append(
+            portals.append(
                 {
                     "target_map": str(target),
                     "source_x": int(obj.x),
@@ -206,4 +200,10 @@ def _read_portal_records(tmx_path: Path) -> tuple[int, int, list[dict]]:
                     "target_y": int(ty),
                 }
             )
-    return tmx.tilewidth, tmx.tileheight, out
+    return {
+        "tile_w": tmx.tilewidth,
+        "tile_h": tmx.tileheight,
+        "map_w_px": tmx.width * tmx.tilewidth,
+        "map_h_px": tmx.height * tmx.tileheight,
+        "portals": portals,
+    }

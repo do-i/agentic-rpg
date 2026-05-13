@@ -9,7 +9,11 @@ Interactions:
   - Mouse wheel: zoom camera.
   - Enter: open selected node in detail viewer.
   - 0: refit camera to all nodes.
-  - Esc: deselect (handled by app for window close when nothing selected).
+  - Esc: deselect.
+
+Each portal is its own directed edge anchored to the portal's source tile on
+the source map's thumbnail and the destination tile on the target map's
+thumbnail.
 """
 
 from __future__ import annotations
@@ -75,17 +79,16 @@ class GraphScene(Scene):
             edges=[(e.source, e.target) for e in graph.edges],
         )
         self._node_views: dict[str, _NodeView] = {}
-        for n in graph.nodes:
-            thumb = self._thumbnails.get(n.tmx_path)
-            tw = thumb.get_width() if thumb else 96
-            th = thumb.get_height() if thumb else 64
-            x, y = layout.get(n.map_id, (500.0, 350.0))
-            self._node_views[n.map_id] = _NodeView(
-                node=n,
-                layout_x=x,
-                layout_y=y,
-                width=tw + NODE_PADDING * 2,
-                height=th + NODE_PADDING * 2 + LABEL_HEIGHT,
+        for node in graph.nodes:
+            thumb = thumbnails.get(node.tmx_path)
+            if thumb is not None:
+                w = thumb.get_width() + NODE_PADDING * 2
+                h = thumb.get_height() + NODE_PADDING * 2 + LABEL_HEIGHT
+            else:
+                w, h = 180, 120
+            lx, ly = layout.get(node.map_id, (0.0, 0.0))
+            self._node_views[node.map_id] = _NodeView(
+                node=node, layout_x=lx, layout_y=ly, width=w, height=h
             )
 
         self._cam_x = 0.0
@@ -94,7 +97,7 @@ class GraphScene(Scene):
         self._needs_fit = True
 
         self._hover_node: str | None = None
-        self._hover_edge: tuple[str, str] | None = None
+        self._hover_edge_idx: int | None = None
         self._selection: Selection = None
 
         self._drag_node_id: str | None = None
@@ -128,13 +131,10 @@ class GraphScene(Scene):
                 self._drag_node_id = hit_node
                 self._drag_total_pixels = 0
                 return
-            hit_edge = self._edge_at_screen(event.pos)
-            if hit_edge is not None:
-                edge = self._graph.edge_between(*hit_edge)
-                if edge is not None:
-                    self._selection = edge
+            hit_edge_idx = self._edge_at_screen(event.pos)
+            if hit_edge_idx is not None:
+                self._selection = self._graph.edges[hit_edge_idx]
                 return
-            # Background click: start pan + clear selection on release-if-no-drag.
             self._panning = True
             self._last_mouse = event.pos
             self._selection = None
@@ -145,7 +145,6 @@ class GraphScene(Scene):
     def _on_mouse_up(self, event: pygame.event.Event) -> None:
         if event.button == 1 and self._drag_node_id is not None:
             if self._drag_total_pixels <= CLICK_PIXEL_THRESHOLD:
-                # Click without significant drag → select node.
                 self._selection = self._graph.nodes_by_id[self._drag_node_id]
             self._drag_node_id = None
         if event.button in (1, 2, 3):
@@ -155,10 +154,12 @@ class GraphScene(Scene):
     def _on_mouse_motion(self, event: pygame.event.Event) -> None:
         if self._in_panel(event.pos):
             self._hover_node = None
-            self._hover_edge = None
+            self._hover_edge_idx = None
         else:
             self._hover_node = self._node_at_screen(event.pos)
-            self._hover_edge = self._edge_at_screen(event.pos) if self._hover_node is None else None
+            self._hover_edge_idx = (
+                self._edge_at_screen(event.pos) if self._hover_node is None else None
+            )
 
         if self._drag_node_id is not None:
             dx, dy = event.rel
@@ -173,8 +174,6 @@ class GraphScene(Scene):
             self._last_mouse = event.pos
 
     def _on_wheel(self, event: pygame.event.Event) -> None:
-        if event.y == 0:
-            return
         factor = 1.15 if event.y > 0 else 1.0 / 1.15
         self._zoom = max(0.25, min(2.5, self._zoom * factor))
 
@@ -200,34 +199,25 @@ class GraphScene(Scene):
             self._render_node(screen, view)
         self._render_hud(screen)
 
-        selected_thumb = None
-        if isinstance(self._selection, GraphNode):
-            selected_thumb = self._thumbnails.get(self._selection.tmx_path)
         self._panel_rect = render_side_panel(
             screen=screen,
             selection=self._selection,
             graph=self._graph,
-            thumbnail=selected_thumb,
+            thumbnails=self._thumbnails,
             font=self._font,
             small_font=self._small_font,
             header_font=self._header_font,
         )
 
     def _render_edges(self, screen: pygame.Surface) -> None:
-        for edge in self._graph.edges:
-            src = self._node_views.get(edge.source)
-            dst = self._node_views.get(edge.target)
-            if src is None or dst is None:
+        for idx, edge in enumerate(self._graph.edges):
+            endpoints = self._edge_endpoints(edge)
+            if endpoints is None:
                 continue
-            sx, sy = self._layout_to_screen(src.layout_x, src.layout_y)
-            tx, ty = self._layout_to_screen(dst.layout_x, dst.layout_y)
+            (sx, sy), (tx, ty) = endpoints
 
-            is_selected = (
-                isinstance(self._selection, GraphEdge)
-                and self._selection.source == edge.source
-                and self._selection.target == edge.target
-            )
-            is_hover = self._hover_edge == (edge.source, edge.target)
+            is_selected = self._selection is edge
+            is_hover = self._hover_edge_idx == idx
             if is_selected:
                 color, width = EDGE_COLOR_SELECTED, 3
             elif is_hover:
@@ -241,19 +231,27 @@ class GraphScene(Scene):
     def _draw_arrowhead(
         self, screen: pygame.Surface, sx: int, sy: int, tx: int, ty: int, color
     ) -> None:
-        angle = math.atan2(ty - sy, tx - sx)
-        back = 40
+        dx, dy = tx - sx, ty - sy
+        length = math.hypot(dx, dy)
+        if length < 1.0:
+            return
+        angle = math.atan2(dy, dx)
+        back = min(20, length * 0.4)
         bx = tx - math.cos(angle) * back
         by = ty - math.sin(angle) * back
         left = (
-            bx - math.cos(angle - 0.4) * ARROW_SIZE,
-            by - math.sin(angle - 0.4) * ARROW_SIZE,
+            bx + math.cos(angle + math.pi / 2) * ARROW_SIZE / 2,
+            by + math.sin(angle + math.pi / 2) * ARROW_SIZE / 2,
         )
         right = (
-            bx - math.cos(angle + 0.4) * ARROW_SIZE,
-            by - math.sin(angle + 0.4) * ARROW_SIZE,
+            bx + math.cos(angle - math.pi / 2) * ARROW_SIZE / 2,
+            by + math.sin(angle - math.pi / 2) * ARROW_SIZE / 2,
         )
-        pygame.draw.polygon(screen, color, [(bx, by), left, right])
+        tip = (
+            bx + math.cos(angle) * ARROW_SIZE,
+            by + math.sin(angle) * ARROW_SIZE,
+        )
+        pygame.draw.polygon(screen, color, [tip, left, right])
 
     def _render_node(self, screen: pygame.Surface, view: _NodeView) -> None:
         cx, cy = self._layout_to_screen(view.layout_x, view.layout_y)
@@ -305,7 +303,7 @@ class GraphScene(Scene):
         label = self._small_font.render(view.node.display_name, True, (230, 230, 230))
         screen.blit(
             label,
-            (rect.x + 6, rect.bottom - int(LABEL_HEIGHT * self._zoom) - 2),
+            (rect.x + 6, rect.bottom - LABEL_HEIGHT * self._zoom - 2),
         )
 
     def _render_hud(self, screen: pygame.Surface) -> None:
@@ -316,15 +314,14 @@ class GraphScene(Scene):
             True,
             (220, 220, 220),
         )
-        bg = pygame.Surface((hud.get_width() + 12, hud.get_height() + 6), pygame.SRCALPHA)
-        bg.fill((0, 0, 0, 160))
-        screen.blit(bg, (8, 8))
-        screen.blit(hud, (14, 11))
+        screen.blit(hud, (10, 10))
+
+    def update(self, dt: float) -> None:
+        return
 
     # ── geometry helpers ─────────────────────────────────────────────────
 
     def _graph_viewport(self, screen_size: tuple[int, int]) -> tuple[int, int, int, int]:
-        # (x, y, w, h) of the area the graph is allowed to use (excludes panel).
         return (0, 0, max(1, screen_size[0] - PANEL_WIDTH), screen_size[1])
 
     def _in_panel(self, pos: tuple[int, int]) -> bool:
@@ -346,28 +343,67 @@ class GraphScene(Scene):
                 return view.node.map_id
         return None
 
-    def _edge_at_screen(self, pos: tuple[int, int]) -> tuple[str, str] | None:
-        best: tuple[str, str] | None = None
+    def _edge_at_screen(self, pos: tuple[int, int]) -> int | None:
+        best_idx: int | None = None
         best_dist = EDGE_PICK_THRESHOLD_PX
-        for edge in self._graph.edges:
-            src = self._node_views.get(edge.source)
-            dst = self._node_views.get(edge.target)
-            if src is None or dst is None or src is dst:
+        for idx, edge in enumerate(self._graph.edges):
+            endpoints = self._edge_endpoints(edge)
+            if endpoints is None:
                 continue
-            sx, sy = self._layout_to_screen(src.layout_x, src.layout_y)
-            tx, ty = self._layout_to_screen(dst.layout_x, dst.layout_y)
+            (sx, sy), (tx, ty) = endpoints
+            if (sx, sy) == (tx, ty):
+                continue
             d = _distance_point_to_segment(pos, (sx, sy), (tx, ty))
             if d < best_dist:
                 best_dist = d
-                best = (edge.source, edge.target)
-        return best
+                best_idx = idx
+        return best_idx
+
+    def _edge_endpoints(
+        self, edge: GraphEdge
+    ) -> tuple[tuple[int, int], tuple[int, int]] | None:
+        src_view = self._node_views.get(edge.source)
+        dst_view = self._node_views.get(edge.target)
+        if src_view is None or dst_view is None:
+            return None
+        src_pt = self._portal_point_on_node(src_view, edge.source_tile)
+        dst_pt = self._portal_point_on_node(dst_view, edge.target_tile)
+        return src_pt, dst_pt
+
+    def _portal_point_on_node(
+        self, view: _NodeView, tile: tuple[int, int]
+    ) -> tuple[int, int]:
+        """Map a tile coord on this node's map to a screen point on its thumbnail.
+
+        Falls back to the node center if thumbnail or map dims are unavailable.
+        """
+        cx, cy = self._layout_to_screen(view.layout_x, view.layout_y)
+        thumb = self._thumbnails.get(view.node.tmx_path)
+        map_w_px, map_h_px = view.node.map_size_px
+        tile_w_px, tile_h_px = view.node.tile_size_px
+        if thumb is None or map_w_px == 0 or map_h_px == 0:
+            return cx, cy
+        thumb_w, thumb_h = thumb.get_size()
+        col, row = tile
+        tx_thumb = (col + 0.5) * tile_w_px * (thumb_w / map_w_px)
+        ty_thumb = (row + 0.5) * tile_h_px * (thumb_h / map_h_px)
+        node_w = int(view.width * self._zoom)
+        node_h = int(view.height * self._zoom)
+        rect_x = cx - node_w // 2
+        rect_y = cy - node_h // 2
+        thumb_origin_x = rect_x + int(NODE_PADDING * self._zoom)
+        thumb_origin_y = rect_y + int(NODE_PADDING * self._zoom)
+        return (
+            int(thumb_origin_x + tx_thumb * self._zoom),
+            int(thumb_origin_y + ty_thumb * self._zoom),
+        )
 
     def _fit_to_screen(self, viewport: tuple[int, int, int, int]) -> None:
         if not self._node_views:
             return
         min_x = min(v.layout_x - v.width / 2 for v in self._node_views.values())
-        max_x = max(v.layout_x + v.width / 2 for v in self._node_views.values())
         min_y = min(v.layout_y - v.height / 2 for v in self._node_views.values())
+        max_x = max(v.layout_x + v.width / 2 for v in self._node_views.values())
         max_y = max(v.layout_y + v.height / 2 for v in self._node_views.values())
         span_x = max(1.0, max_x - min_x)
         span_y = max(1.0, max_y - min_y)
