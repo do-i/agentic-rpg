@@ -8,6 +8,8 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+TRUNCATION_MARKER = "..."
+MIN_DESCRIPTION_WIDTH = 24
 
 
 @dataclass(frozen=True)
@@ -237,6 +239,25 @@ def format_summary(file_count: int, byte_count: int) -> str:
     return f"{file_count:>5} {file_word:<5} | {format_size(byte_count):>8}"
 
 
+def format_target(target: Target) -> str:
+    suffix = "/" if target.is_dir else ""
+    return f"{target.display}{suffix}"
+
+
+def format_target_description(targets: list[Target]) -> str:
+    if not targets:
+        return "none"
+    return ", ".join(format_target(target) for target in targets)
+
+
+def truncate_description(text: str, width: int) -> str:
+    if len(text) <= width:
+        return text
+    if width <= len(TRUNCATION_MARKER):
+        return TRUNCATION_MARKER[:width]
+    return f"{text[: width - len(TRUNCATION_MARKER)].rstrip()}{TRUNCATION_MARKER}"
+
+
 def print_report(targets_by_group: dict[str, list[Target]]) -> None:
     print("Cache groups:")
     for group in CACHE_GROUPS:
@@ -248,30 +269,37 @@ def print_report(targets_by_group: dict[str, list[Target]]) -> None:
         if targets:
             print("  targets:")
             for target in targets:
-                suffix = "/" if target.is_dir else ""
-                print(f"    {target.display}{suffix}")
+                print(f"    {format_target(target)}")
         else:
             print("  targets: none")
 
 
-def print_selection(title: str, targets: list[Target]) -> None:
+def print_confirmation(selection_name: str, targets: list[Target]) -> None:
     file_count, byte_count = summarize_targets(targets)
-    print(title)
-    print(f"Selected: {format_summary(file_count, byte_count)}")
+    dir_targets = [target for target in targets if target.is_dir]
+    file_targets = [target for target in targets if not target.is_dir]
+
+    print("Confirm removal")
+    print(f"Selection: {selection_name}")
+    print(f"Total:     {format_summary(file_count, byte_count)}")
+    print(f"Targets:   {len(dir_targets)} dirs, {len(file_targets)} files")
     if targets:
+        print("Paths:")
         for target in targets:
-            suffix = "/" if target.is_dir else ""
-            print(f"  {target.display}{suffix}")
+            print(f"  {format_target(target)}")
     else:
-        print("  No matching paths exist.")
+        print("Paths: none")
 
 
-def confirm(prompt: str, assume_yes: bool) -> bool:
+def confirm_go_cancel(assume_yes: bool) -> bool:
     if assume_yes:
         return True
 
-    answer = input(f"{prompt} [y/N] ").strip().lower()
-    return answer in {"y", "yes"}
+    print()
+    print("g. Go")
+    print("c. Cancel")
+    answer = input("Choose an option: ").strip().lower()
+    return answer in {"g", "go"}
 
 
 def remove_target(target: Target) -> None:
@@ -287,12 +315,12 @@ def remove_target(target: Target) -> None:
         shutil.rmtree(path)
 
 
-def delete_targets(targets: list[Target], assume_yes: bool) -> int:
-    print_selection("Selection:", targets)
+def delete_targets(targets: list[Target], assume_yes: bool, selection_name: str = "Selected cache paths") -> int:
+    print_confirmation(selection_name, targets)
     if not targets:
         return 0
 
-    if not confirm("Remove these paths?", assume_yes):
+    if not confirm_go_cancel(assume_yes):
         print("Cancelled.")
         return 0
 
@@ -328,6 +356,8 @@ def collect_groups(groups: list[CacheGroup], targets_by_group: dict[str, list[Ta
 
 
 def interactive_menu(targets_by_group: dict[str, list[Target]]) -> int:
+    columns = shutil.get_terminal_size(fallback=(120, 24)).columns
+    child_indent = "   "
     print("Cache buster")
     print()
     all_safe_targets = collect_groups(safe_groups(include_venv=False), targets_by_group)
@@ -338,9 +368,10 @@ def interactive_menu(targets_by_group: dict[str, list[Target]]) -> int:
             continue
         targets = targets_by_group[group.key]
         file_count, byte_count = summarize_targets(targets)
-        target_text = ", ".join(target.display + ("/" if target.is_dir else "") for target in targets)
-        target_text = target_text or "none"
-        print(f"{index}. {format_summary(file_count, byte_count)}  {group.label}: {target_text}")
+        prefix = f"{child_indent}{index}. {format_summary(file_count, byte_count)}  {group.label}: "
+        width = max(MIN_DESCRIPTION_WIDTH, columns - len(prefix))
+        target_text = truncate_description(format_target_description(targets), width)
+        print(f"{prefix}{target_text}")
 
     venv_targets = targets_by_group["venv"]
     venv_files, venv_bytes = summarize_targets(venv_targets)
@@ -353,10 +384,10 @@ def interactive_menu(targets_by_group: dict[str, list[Target]]) -> int:
         print("No changes made.")
         return 0
     if choice == "v":
-        return delete_targets(venv_targets, assume_yes=False)
+        return delete_targets(venv_targets, assume_yes=False, selection_name=".venv")
     if choice == "1":
         targets = collect_groups(safe_groups(include_venv=False), targets_by_group)
-        return delete_targets(targets, assume_yes=False)
+        return delete_targets(targets, assume_yes=False, selection_name="All safe groups")
 
     if choice.isdigit():
         selected_index = int(choice)
@@ -364,7 +395,7 @@ def interactive_menu(targets_by_group: dict[str, list[Target]]) -> int:
         offset = selected_index - 2
         if 0 <= offset < len(selectable):
             group = selectable[offset]
-            return delete_targets(targets_by_group[group.key], assume_yes=False)
+            return delete_targets(targets_by_group[group.key], assume_yes=False, selection_name=group.label)
 
     print(f"Unknown option: {choice}")
     return 1
@@ -394,7 +425,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.all:
         targets = collect_groups(safe_groups(include_venv=args.include_venv), targets_by_group)
-        return delete_targets(targets, assume_yes=args.yes)
+        selection_name = "All groups" if args.include_venv else "All safe groups"
+        return delete_targets(targets, assume_yes=args.yes, selection_name=selection_name)
 
     if args.group:
         group = group_by_key(args.group)
@@ -404,7 +436,7 @@ def main(argv: list[str] | None = None) -> int:
         if group.protected and not args.include_venv:
             print("Error: .venv is protected. Use --include-venv to delete it.", file=sys.stderr)
             return 2
-        return delete_targets(targets_by_group[group.key], assume_yes=args.yes)
+        return delete_targets(targets_by_group[group.key], assume_yes=args.yes, selection_name=group.label)
 
     return interactive_menu(targets_by_group)
 
