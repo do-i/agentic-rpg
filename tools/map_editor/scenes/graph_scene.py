@@ -27,10 +27,19 @@ from typing import Callable, Union
 import pygame
 
 from engine.common.scene.scene import Scene
+from tools.map_editor.edit.editor_state import (
+    EditorState,
+    STEP_DEST_NODE,
+    STEP_DEST_TILE,
+    STEP_SOURCE_NODE,
+    STEP_SOURCE_TILE,
+)
+from tools.map_editor.edit.tmx_writer import save_portal_target
 from tools.map_editor.graph.portal_graph import GraphEdge, GraphNode, PortalGraph
 from tools.map_editor.graph.spring_layout import spring_layout
 from tools.map_editor.graph.thumbnails import ThumbnailCache
 from tools.map_editor.scenes.side_panel import PanelLayout, render_side_panel
+from tools.map_editor.scenes.tile_picker import PortalOption, TilePicker
 
 
 NODE_BG = (28, 28, 36)
@@ -124,10 +133,16 @@ class GraphScene(Scene):
         self._toast_text: str | None = None
         self._toast_until_ms = 0
 
+        self._editor = EditorState()
+        self._tile_picker: TilePicker | None = None
+
     # ── input ────────────────────────────────────────────────────────────
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
         for event in events:
+            if self._tile_picker is not None:
+                self._tile_picker.handle_event(event)
+                continue
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self._on_mouse_down(event)
             elif event.type == pygame.MOUSEBUTTONUP:
@@ -146,6 +161,13 @@ class GraphScene(Scene):
         if self._in_panel(event.pos):
             if event.button == 1:
                 self._maybe_copy(event.pos)
+            return
+        if event.button == 1 and self._editor.enabled and self._editor.step in (
+            STEP_SOURCE_NODE, STEP_DEST_NODE
+        ):
+            hit_node = self._node_at_screen(event.pos)
+            if hit_node is not None:
+                self._on_editor_node_click(hit_node)
             return
         if event.button == 1:
             hit_node = self._node_at_screen(event.pos)
@@ -227,13 +249,142 @@ class GraphScene(Scene):
         self._panel_scroll_y = max(0, min(max_scroll, self._panel_scroll_y + delta))
 
     def _on_key_down(self, event: pygame.event.Event) -> None:
+        if event.key == pygame.K_e and not (event.mod & (pygame.KMOD_CTRL | pygame.KMOD_META)):
+            self._toggle_edit_mode()
+            return
+        if event.key == pygame.K_s and not (event.mod & (pygame.KMOD_CTRL | pygame.KMOD_META)):
+            if self._editor.enabled:
+                self._save_pending_edits()
+                return
         if event.key in (pygame.K_0, pygame.K_KP_0):
             self._needs_fit = True
         elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             if isinstance(self._selection, GraphNode):
                 self._on_open_map(self._selection)
         elif event.key == pygame.K_ESCAPE:
+            if self._editor.enabled:
+                if self._editor.step != STEP_SOURCE_NODE:
+                    self._editor.cancel_cycle("Cancelled")
+                else:
+                    self._editor.disable()
+                return
             self._selection = None
+
+    # ── editor flow ──────────────────────────────────────────────────────
+
+    def _toggle_edit_mode(self) -> None:
+        if self._editor.enabled:
+            self._editor.disable()
+        else:
+            self._editor.enable()
+
+    def _on_editor_node_click(self, map_id: str) -> None:
+        if self._editor.step == STEP_SOURCE_NODE:
+            portals = self._portals_for_map(map_id)
+            if not portals:
+                self._editor.last_message = f"{map_id} has no portals."
+                return
+            self._editor.set_source_map(map_id)
+            self._open_picker_for_source(map_id, portals)
+        elif self._editor.step == STEP_DEST_NODE:
+            self._editor.set_dest_map(map_id)
+            self._open_picker_for_dest(map_id)
+
+    def _portals_for_map(self, map_id: str) -> list[PortalOption]:
+        opts: list[PortalOption] = []
+        for edge in self._graph.edges:
+            if edge.source != map_id:
+                continue
+            opts.append(
+                PortalOption(
+                    portal_obj_id=edge.portal_obj_id,
+                    source_tile=edge.source_tile,
+                    target_map=edge.target,
+                    target_tile=edge.target_tile,
+                )
+            )
+        return opts
+
+    def _open_picker_for_source(
+        self, map_id: str, portals: list[PortalOption]
+    ) -> None:
+        node = self._graph.nodes_by_id[map_id]
+        self._tile_picker = TilePicker(
+            node=node,
+            thumbnails=self._thumbnails,
+            font=self._font,
+            small_font=self._small_font,
+            hint_text=f"Pick a portal tile on {map_id}",
+            mode="portals",
+            on_pick=self._on_source_tile_picked,
+            portals=portals,
+        )
+
+    def _open_picker_for_dest(self, map_id: str) -> None:
+        node = self._graph.nodes_by_id[map_id]
+        self._tile_picker = TilePicker(
+            node=node,
+            thumbnails=self._thumbnails,
+            font=self._font,
+            small_font=self._small_font,
+            hint_text=f"Click arrival tile on {map_id}",
+            mode="free",
+            on_pick=self._on_dest_tile_picked,
+        )
+
+    def _on_source_tile_picked(self, picked) -> None:
+        self._tile_picker = None
+        if picked is None:
+            self._editor.cancel_cycle("Cancelled")
+            return
+        # `picked` is a PortalOption
+        self._editor.set_source_portal(
+            portal_obj_id=picked.portal_obj_id,
+            source_tile=picked.source_tile,
+            original_target_map=picked.target_map,
+            original_target_tile=picked.target_tile,
+        )
+
+    def _on_dest_tile_picked(self, picked) -> None:
+        self._tile_picker = None
+        if picked is None:
+            self._editor.cancel_cycle("Cancelled")
+            return
+        assert self._editor.source_map is not None
+        source_node = self._graph.nodes_by_id[self._editor.source_map]
+        edit = self._editor.record_edit(
+            source_tmx=source_node.tmx_path, dest_tile=picked
+        )
+        self._apply_edit_to_graph(edit)
+
+    def _apply_edit_to_graph(self, edit) -> None:
+        """Update the in-memory graph so the visualization reflects the pending edit."""
+        for e in self._graph.edges:
+            if e.source == edit.source_map_id and e.portal_obj_id == edit.portal_obj_id:
+                e.target = edit.new_target_map
+                e.target_tile = edit.new_target_tile
+
+    def _save_pending_edits(self) -> None:
+        if not self._editor.pending:
+            self._editor.last_message = "No pending edits to save."
+            return
+        n = 0
+        for (map_id, obj_id), edit in list(self._editor.pending.items()):
+            try:
+                save_portal_target(
+                    tmx_path=edit.source_tmx,
+                    portal_obj_id=edit.portal_obj_id,
+                    new_target_map=edit.new_target_map,
+                    new_target_tile=edit.new_target_tile,
+                )
+                n += 1
+            except Exception as exc:
+                self._editor.last_message = f"Save failed for {map_id}: {exc}"
+                return
+        self._editor.pending.clear()
+        self._editor.last_message = f"Saved {n} portal edit(s) to TMX (.bak created)."
+        self._toast_text = self._editor.last_message
+        self._toast_until_ms = pygame.time.get_ticks() + TOAST_MS
 
     # ── copy handling ────────────────────────────────────────────────────
 
@@ -300,6 +451,11 @@ class GraphScene(Scene):
         if self._panel_scroll_y > max_scroll:
             self._panel_scroll_y = max_scroll
         self._render_toast(screen)
+
+        if self._editor.enabled:
+            self._render_editor_hud(screen)
+        if self._tile_picker is not None:
+            self._tile_picker.render(screen, pygame.time.get_ticks())
 
     def _render_edges(self, screen: pygame.Surface) -> None:
         # Two passes: regular edges first, then hover/selected on top so the
@@ -440,11 +596,28 @@ class GraphScene(Scene):
         hud = self._font.render(
             f"Map Graph   nodes={len(self._graph.nodes)}  edges={len(self._graph.edges)}   "
             f"zoom={self._zoom:.2f}   "
-            f"[click=select  drag=move  wheel=zoom  Enter=open  0=fit]",
+            f"[click=select  drag=move  wheel=zoom  Enter=open  0=fit  E=edit]",
             True,
             (220, 220, 220),
         )
         screen.blit(hud, (10, 10))
+
+    def _render_editor_hud(self, screen: pygame.Surface) -> None:
+        lines = [
+            f"EDIT MODE — {self._editor.step_label()}",
+            self._editor.last_message or "",
+            f"pending: {len(self._editor.pending)}   [S] save   [Esc] cancel/exit",
+        ]
+        rendered = [self._font.render(line, True, (255, 245, 200)) for line in lines if line]
+        width = max((s.get_width() for s in rendered), default=0) + 24
+        height = sum(s.get_height() for s in rendered) + 16
+        bg = pygame.Surface((width, height), pygame.SRCALPHA)
+        bg.fill((40, 30, 10, 220))
+        screen.blit(bg, (10, 40))
+        y = 48
+        for s in rendered:
+            screen.blit(s, (22, y))
+            y += s.get_height()
 
     def _render_toast(self, screen: pygame.Surface) -> None:
         if self._toast_text is None:

@@ -53,6 +53,7 @@ class GraphEdge:
     target: str
     source_tile: tuple[int, int]    # portal's top-left tile on the source map
     target_tile: tuple[int, int]    # destination tile on the target map
+    portal_obj_id: int              # Tiled object id of the portal on the source map
 
 
 @dataclass
@@ -101,6 +102,7 @@ def build_portal_graph(
                     target=record["target_map"],
                     source_tile=(record["source_x"] // tw, record["source_y"] // th),
                     target_tile=(record["target_x"], record["target_y"]),
+                    portal_obj_id=record["obj_id"],
                 )
             )
 
@@ -198,6 +200,7 @@ def _read_tmx_info(tmx_path: Path) -> dict:
                     "source_y": int(obj.y),
                     "target_x": int(tx),
                     "target_y": int(ty),
+                    "obj_id": int(getattr(obj, "id", 0)),
                 }
             )
     return {
