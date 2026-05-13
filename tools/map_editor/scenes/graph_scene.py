@@ -36,6 +36,7 @@ from tools.map_editor.edit.editor_state import (
 )
 from tools.map_editor.edit.tmx_writer import create_portal, save_portal_target
 from tools.map_editor.graph.portal_graph import GraphEdge, GraphNode, PortalGraph
+from tools.map_editor.graph.sprite_cache import SpriteCache
 from tools.map_editor.graph.spring_layout import spring_layout
 from tools.map_editor.graph.thumbnails import ThumbnailCache
 from tools.map_editor.scenes.side_panel import PanelLayout, render_side_panel
@@ -79,6 +80,7 @@ class GraphScene(Scene):
         self,
         graph: PortalGraph,
         thumbnails: ThumbnailCache,
+        sprites: SpriteCache,
         on_open_map: Callable[[GraphNode], None],
         font: pygame.font.Font,
         small_font: pygame.font.Font,
@@ -86,6 +88,7 @@ class GraphScene(Scene):
     ) -> None:
         self._graph = graph
         self._thumbnails = thumbnails
+        self._sprites = sprites
         self._on_open_map = on_open_map
         self._font = font
         self._small_font = small_font
@@ -314,6 +317,7 @@ class GraphScene(Scene):
         self._tile_picker = TilePicker(
             node=node,
             thumbnails=self._thumbnails,
+            sprites=self._sprites,
             font=self._font,
             small_font=self._small_font,
             hint_text=hint,
@@ -327,6 +331,7 @@ class GraphScene(Scene):
         self._tile_picker = TilePicker(
             node=node,
             thumbnails=self._thumbnails,
+            sprites=self._sprites,
             font=self._font,
             small_font=self._small_font,
             hint_text=f"Click arrival tile on {map_id}",
@@ -466,6 +471,7 @@ class GraphScene(Scene):
             selection=self._selection,
             graph=self._graph,
             thumbnails=self._thumbnails,
+            sprites=self._sprites,
             font=self._font,
             small_font=self._small_font,
             header_font=self._header_font,

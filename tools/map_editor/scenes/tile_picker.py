@@ -18,6 +18,7 @@ from typing import Callable
 import pygame
 
 from tools.map_editor.graph.portal_graph import GraphNode
+from tools.map_editor.graph.sprite_cache import SpriteCache
 from tools.map_editor.graph.thumbnails import ThumbnailCache
 
 
@@ -46,6 +47,7 @@ class TilePicker:
         self,
         node: GraphNode,
         thumbnails: ThumbnailCache,
+        sprites: SpriteCache,
         font: pygame.font.Font,
         small_font: pygame.font.Font,
         hint_text: str,
@@ -57,6 +59,7 @@ class TilePicker:
             raise ValueError(f"Unknown TilePicker mode: {mode}")
         self._node = node
         self._thumbnails = thumbnails
+        self._sprites = sprites
         self._font = font
         self._small_font = small_font
         self._hint_text = hint_text
@@ -125,6 +128,9 @@ class TilePicker:
         self._map_rect = map_rect
         screen.blit(scaled, map_rect.topleft)
 
+        # Overlay NPC + item-box sprites so the user can see actor positions in context.
+        self._draw_actor_sprites(screen, map_rect)
+
         # Tile size in the rendered map.
         tw, th = self._tile_dims_screen()
 
@@ -135,6 +141,33 @@ class TilePicker:
             self._draw_hover(screen, map_rect, tw, th)
 
         self._draw_hint(screen, self._hint_text)
+
+    def _draw_actor_sprites(self, screen: pygame.Surface, map_rect: pygame.Rect) -> None:
+        map_w_px, map_h_px = self._node.map_size_px
+        tile_w_px, tile_h_px = self._node.tile_size_px
+        if map_w_px <= 0 or map_h_px <= 0:
+            return
+        sx = map_rect.width / map_w_px
+        sy = map_rect.height / map_h_px
+        tw_screen = max(8, int(tile_w_px * sx))
+        th_screen = max(8, int(tile_h_px * sy))
+
+        def _blit(icon, col: int, row: int) -> None:
+            if icon is None:
+                return
+            scaled = pygame.transform.smoothscale(icon, (tw_screen, th_screen))
+            bx = map_rect.left + int(col * tile_w_px * sx)
+            by = map_rect.top + int(row * tile_h_px * sy)
+            screen.blit(scaled, (bx, by))
+
+        for npc in self._node.npcs:
+            if npc.position is None:
+                continue
+            _blit(self._sprites.npc_icon(npc.sprite), npc.position[0], npc.position[1])
+        for box in self._node.item_boxes:
+            if box.position is None:
+                continue
+            _blit(self._sprites.item_box_icon(box.sprite), box.position[0], box.position[1])
 
     def _draw_portal_options(
         self,

@@ -21,12 +21,14 @@ class NpcMeta:
     name: str | None
     dialogue: str | None
     position: tuple[int, int] | None
+    sprite: str | None  # scenario-relative path to a .tsx (or .png) for the NPC
 
 
 @dataclass(frozen=True)
 class ItemBoxMeta:
     box_id: str
     position: tuple[int, int] | None
+    sprite: str | None  # optional override; usually None → default item-box sprite
 
 
 @dataclass
@@ -139,6 +141,7 @@ def _read_yaml_meta(yaml_path: Path) -> dict:
                 name=entry.get("name"),
                 dialogue=entry.get("dialogue"),
                 position=(int(pos[0]), int(pos[1])) if pos else None,
+                sprite=entry.get("sprite"),
             )
         )
 
@@ -151,6 +154,7 @@ def _read_yaml_meta(yaml_path: Path) -> dict:
             ItemBoxMeta(
                 box_id=str(entry.get("id") or "?"),
                 position=(int(pos[0]), int(pos[1])) if pos else None,
+                sprite=entry.get("sprite"),
             )
         )
 

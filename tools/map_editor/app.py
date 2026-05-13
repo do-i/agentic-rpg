@@ -10,6 +10,7 @@ import pygame
 
 from engine.common.scene.scene_manager import SceneManager
 from tools.map_editor.graph.portal_graph import GraphNode, build_portal_graph
+from tools.map_editor.graph.sprite_cache import SpriteCache
 from tools.map_editor.graph.thumbnails import ThumbnailCache
 from tools.map_editor.io.scenario_loader import ScenarioMaps, load_scenario_maps
 from tools.map_editor.scenes.graph_scene import GraphScene
@@ -37,6 +38,7 @@ class App:
         self._scene_manager = SceneManager()
 
         self._thumbnails = ThumbnailCache(self._scenario.scenario_root)
+        self._sprites = SpriteCache(self._scenario.scenario_root)
         self._graph = build_portal_graph(
             tmx_paths=self._scenario.tmx_paths,
             yaml_for=self._scenario.yaml_for,
@@ -47,6 +49,7 @@ class App:
         scene = GraphScene(
             graph=self._graph,
             thumbnails=self._thumbnails,
+            sprites=self._sprites,
             on_open_map=self._open_node,
             font=self._font,
             small_font=self._small_font,

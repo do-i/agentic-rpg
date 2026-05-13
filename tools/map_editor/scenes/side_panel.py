@@ -21,6 +21,7 @@ from typing import Union
 import pygame
 
 from tools.map_editor.graph.portal_graph import GraphEdge, GraphNode, PortalGraph
+from tools.map_editor.graph.sprite_cache import SpriteCache
 from tools.map_editor.graph.thumbnails import ThumbnailCache
 
 
@@ -71,6 +72,7 @@ def render_side_panel(
     selection: Selection,
     graph: PortalGraph,
     thumbnails: ThumbnailCache,
+    sprites: SpriteCache,
     font: pygame.font.Font,
     small_font: pygame.font.Font,
     header_font: pygame.font.Font,
@@ -112,12 +114,12 @@ def render_side_panel(
         final_y = start_y + msg.get_height()
     elif isinstance(selection, GraphNode):
         final_y = _render_node(
-            screen, rect, selection, thumbnails, font, small_font, header_font,
-            layout, start_y,
+            screen, rect, selection, thumbnails, sprites,
+            font, small_font, header_font, layout, start_y,
         )
     else:
         final_y = _render_edge(
-            screen, rect, selection, graph, thumbnails,
+            screen, rect, selection, graph, thumbnails, sprites,
             font, small_font, header_font, layout, start_y, now_ms,
         )
 
@@ -193,6 +195,7 @@ def _render_node(
     rect: pygame.Rect,
     node: GraphNode,
     thumbnails: ThumbnailCache,
+    sprites: SpriteCache,
     font: pygame.font.Font,
     small_font: pygame.font.Font,
     header_font: pygame.font.Font,
@@ -219,6 +222,10 @@ def _render_node(
         max_h = max(200, rect.height - 240)
         scaled = _fit_image(thumb, inner_w, max_h)
         screen.blit(scaled, (x, y))
+        _overlay_actors(
+            screen, pygame.Rect(x, y, scaled.get_width(), scaled.get_height()),
+            node, sprites,
+        )
         y += scaled.get_height() + SECTION_GAP
 
     badges = _build_badges(node)
@@ -265,6 +272,7 @@ def _render_edge(
     edge: GraphEdge,
     graph: PortalGraph,
     thumbnails: ThumbnailCache,
+    sprites: SpriteCache,
     font: pygame.font.Font,
     small_font: pygame.font.Font,
     header_font: pygame.font.Font,
@@ -303,7 +311,7 @@ def _render_edge(
     y = _render_section_title(screen, x, y, "Source", small_font)
     if source_node is not None:
         y = _render_map_with_marker(
-            screen, x, y, inner_w, map_max_h, source_node, thumbnails,
+            screen, x, y, inner_w, map_max_h, source_node, thumbnails, sprites,
             edge.source_tile, kind="outbound", now_ms=now_ms,
         )
     y += SECTION_GAP
@@ -311,7 +319,7 @@ def _render_edge(
     y = _render_section_title(screen, x, y, "Destination", small_font)
     if target_node is not None:
         y = _render_map_with_marker(
-            screen, x, y, inner_w, map_max_h, target_node, thumbnails,
+            screen, x, y, inner_w, map_max_h, target_node, thumbnails, sprites,
             edge.target_tile, kind="inbound", now_ms=now_ms,
         )
 
@@ -326,6 +334,7 @@ def _render_map_with_marker(
     max_h: int,
     node: GraphNode,
     thumbnails: ThumbnailCache,
+    sprites: SpriteCache,
     tile: tuple[int, int],
     kind: str,
     now_ms: int,
@@ -335,6 +344,8 @@ def _render_map_with_marker(
         return y
     scaled = _fit_image(thumb, max_w, max_h)
     screen.blit(scaled, (x, y))
+    map_rect = pygame.Rect(x, y, scaled.get_width(), scaled.get_height())
+    _overlay_actors(screen, map_rect, node, sprites)
 
     map_w_px, map_h_px = node.map_size_px
     tile_w_px, tile_h_px = node.tile_size_px
@@ -348,6 +359,41 @@ def _render_map_with_marker(
         _draw_marker(screen, pygame.Rect(mx, my, mw, mh), kind, now_ms)
 
     return y + scaled.get_height() + 2
+
+
+def _overlay_actors(
+    screen: pygame.Surface,
+    map_rect: pygame.Rect,
+    node: GraphNode,
+    sprites: SpriteCache,
+) -> None:
+    """Blit NPC and item-box sprites at their tile positions on a rendered map."""
+    map_w_px, map_h_px = node.map_size_px
+    tile_w_px, tile_h_px = node.tile_size_px
+    if map_w_px <= 0 or map_h_px <= 0 or tile_w_px <= 0 or tile_h_px <= 0:
+        return
+    sx = map_rect.width / map_w_px
+    sy = map_rect.height / map_h_px
+    tw_screen = max(6, int(tile_w_px * sx))
+    th_screen = max(6, int(tile_h_px * sy))
+
+    def _blit(icon, col: int, row: int) -> None:
+        if icon is None:
+            return
+        scaled = pygame.transform.smoothscale(icon, (tw_screen, th_screen))
+        bx = map_rect.left + int(col * tile_w_px * sx)
+        by = map_rect.top + int(row * tile_h_px * sy)
+        screen.blit(scaled, (bx, by))
+
+    for npc in node.npcs:
+        if npc.position is None:
+            continue
+        _blit(sprites.npc_icon(npc.sprite), npc.position[0], npc.position[1])
+
+    for box in node.item_boxes:
+        if box.position is None:
+            continue
+        _blit(sprites.item_box_icon(box.sprite), box.position[0], box.position[1])
 
 
 def _draw_marker(
