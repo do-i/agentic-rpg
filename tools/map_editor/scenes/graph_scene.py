@@ -118,6 +118,8 @@ class GraphScene(Scene):
         self._handle_hovered = False
         self._panel_layout: PanelLayout | None = None
         self._hovered_copy_idx: int | None = None
+        self._panel_scroll_y = 0
+        self._last_selection_id: int | None = None
 
         self._toast_text: str | None = None
         self._toast_until_ms = 0
@@ -207,8 +209,22 @@ class GraphScene(Scene):
             self._last_mouse = event.pos
 
     def _on_wheel(self, event: pygame.event.Event) -> None:
+        if self._mouse_in_panel():
+            self._scroll_panel(-event.y * 60)
+            return
         factor = 1.15 if event.y > 0 else 1.0 / 1.15
         self._zoom = max(0.25, min(2.5, self._zoom * factor))
+
+    def _mouse_in_panel(self) -> bool:
+        return self._in_panel(pygame.mouse.get_pos())
+
+    def _scroll_panel(self, delta: int) -> None:
+        if self._panel_layout is None:
+            return
+        max_scroll = max(
+            0, self._panel_layout.content_height - self._panel_layout.viewable_height
+        )
+        self._panel_scroll_y = max(0, min(max_scroll, self._panel_scroll_y + delta))
 
     def _on_key_down(self, event: pygame.event.Event) -> None:
         if event.key in (pygame.K_0, pygame.K_KP_0):
@@ -257,6 +273,12 @@ class GraphScene(Scene):
             self._render_node(screen, view)
         self._render_hud(screen)
 
+        # Reset scroll when the selection changes.
+        sel_id = id(self._selection) if self._selection is not None else None
+        if sel_id != self._last_selection_id:
+            self._panel_scroll_y = 0
+            self._last_selection_id = sel_id
+
         self._panel_layout = render_side_panel(
             screen=screen,
             selection=self._selection,
@@ -268,7 +290,15 @@ class GraphScene(Scene):
             panel_width=self._panel_width,
             handle_hovered=self._handle_hovered or self._resizing_panel,
             hovered_copy_idx=self._hovered_copy_idx,
+            scroll_y=self._panel_scroll_y,
+            now_ms=pygame.time.get_ticks(),
         )
+        # Clamp in case panel/content size shrank after a resize.
+        max_scroll = max(
+            0, self._panel_layout.content_height - self._panel_layout.viewable_height
+        )
+        if self._panel_scroll_y > max_scroll:
+            self._panel_scroll_y = max_scroll
         self._render_toast(screen)
 
     def _render_edges(self, screen: pygame.Surface) -> None:

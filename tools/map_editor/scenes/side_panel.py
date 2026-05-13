@@ -1,16 +1,20 @@
 """Right-side detail panel for the graph view.
 
 Shows either a node's details (map metadata, NPCs, item boxes, badges)
-or a portal edge's details (two thumbnails with outbound/inbound markers
-on the source and destination tiles).
+or a portal edge's details (two stacked thumbnails with outbound/inbound
+markers on the source and destination tiles).
 
-The panel is resizable: callers pass in the current width, and the
-returned PanelLayout exposes the resize-handle rect plus a list of
-click-to-copy targets (so the graph scene can dispatch clicks).
+The panel:
+  - is resizable via a drag handle on its left edge,
+  - scrolls vertically (mouse wheel) when content overflows, with a
+    visible scrollbar,
+  - exposes click-to-copy targets,
+  - pulses the portal markers (animation matches maps_graph.html).
 """
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Union
 
@@ -25,6 +29,10 @@ PANEL_BORDER = (60, 60, 80)
 HANDLE_COLOR = (90, 90, 120)
 HANDLE_HOVER = (140, 160, 200)
 HANDLE_WIDTH = 6
+SCROLLBAR_WIDTH = 8
+SCROLLBAR_TRACK = (40, 40, 56)
+SCROLLBAR_THUMB = (110, 120, 150)
+FOOTER_RESERVE = 30
 TEXT = (220, 220, 220)
 TEXT_DIM = (160, 160, 170)
 TEXT_HEADER = (250, 230, 130)
@@ -41,6 +49,9 @@ OUTBOUND_FILL = (255, 74, 42)
 OUTBOUND_RING = (255, 210, 0)
 INBOUND_FILL = (58, 207, 255)
 INBOUND_RING = (184, 243, 255)
+# Pulse periods (ms).
+PULSE_PERIOD_MS = 800
+BLINK_PERIOD_MS = 450
 
 
 Selection = Union[GraphNode, GraphEdge, None]
@@ -50,6 +61,8 @@ Selection = Union[GraphNode, GraphEdge, None]
 class PanelLayout:
     rect: pygame.Rect
     handle_rect: pygame.Rect
+    content_height: int = 0
+    viewable_height: int = 0
     copy_targets: list[tuple[pygame.Rect, str]] = field(default_factory=list)
 
 
@@ -64,6 +77,8 @@ def render_side_panel(
     panel_width: int,
     handle_hovered: bool,
     hovered_copy_idx: int | None,
+    scroll_y: int,
+    now_ms: int,
 ) -> PanelLayout:
     sw, sh = screen.get_size()
     rect = pygame.Rect(sw - panel_width, 0, panel_width, sh)
@@ -78,20 +93,47 @@ def render_side_panel(
         2 if handle_hovered else 1,
     )
 
-    layout = PanelLayout(rect=rect, handle_rect=handle_rect)
+    content_clip = pygame.Rect(
+        rect.left,
+        rect.top,
+        rect.width - SCROLLBAR_WIDTH - 2,
+        rect.height - FOOTER_RESERVE,
+    )
+
+    layout = PanelLayout(rect=rect, handle_rect=handle_rect, viewable_height=content_clip.height)
+
+    prev_clip = screen.get_clip()
+    screen.set_clip(content_clip)
+    start_y = rect.top + 14 - scroll_y
 
     if selection is None:
-        _render_empty(screen, rect, font)
+        msg = font.render("Click a map or portal edge.", True, TEXT_DIM)
+        screen.blit(msg, (rect.left + 14, start_y + 2))
+        final_y = start_y + msg.get_height()
     elif isinstance(selection, GraphNode):
-        _render_node(screen, rect, selection, thumbnails, font, small_font, header_font, layout)
+        final_y = _render_node(
+            screen, rect, selection, thumbnails, font, small_font, header_font,
+            layout, start_y,
+        )
     else:
-        _render_edge(
+        final_y = _render_edge(
             screen, rect, selection, graph, thumbnails,
-            font, small_font, header_font, layout,
+            font, small_font, header_font, layout, start_y, now_ms,
         )
 
+    screen.set_clip(prev_clip)
+
+    layout.content_height = (final_y - start_y) + 28  # top + bottom padding
+
+    _render_footer(screen, rect, selection, small_font)
+    _render_scrollbar(screen, rect, scroll_y, layout.content_height, layout.viewable_height)
+    _filter_copy_targets(layout, content_clip)
     _highlight_hovered_copy(screen, layout, hovered_copy_idx)
     return layout
+
+
+def _filter_copy_targets(layout: PanelLayout, clip: pygame.Rect) -> None:
+    layout.copy_targets = [(r, t) for r, t in layout.copy_targets if clip.colliderect(r)]
 
 
 def _highlight_hovered_copy(
@@ -105,9 +147,45 @@ def _highlight_hovered_copy(
     screen.blit(overlay, rect.topleft)
 
 
-def _render_empty(screen: pygame.Surface, rect: pygame.Rect, font: pygame.font.Font) -> None:
-    msg = font.render("Click a map or portal edge.", True, TEXT_DIM)
-    screen.blit(msg, (rect.left + 14, rect.top + 16))
+def _render_footer(
+    screen: pygame.Surface,
+    rect: pygame.Rect,
+    selection: Selection,
+    small_font: pygame.font.Font,
+) -> None:
+    if selection is None:
+        return
+    if isinstance(selection, GraphNode):
+        text = "[Enter] open  [Esc] deselect  click value to copy"
+    else:
+        text = "[Esc] deselect  click value to copy  wheel to scroll"
+    label = small_font.render(text, True, TEXT_DIM)
+    screen.blit(label, (rect.left + 14, rect.bottom - label.get_height() - 10))
+
+
+def _render_scrollbar(
+    screen: pygame.Surface,
+    rect: pygame.Rect,
+    scroll_y: int,
+    content_height: int,
+    viewable_height: int,
+) -> None:
+    if content_height <= viewable_height:
+        return
+    track = pygame.Rect(
+        rect.right - SCROLLBAR_WIDTH - 2,
+        rect.top + 4,
+        SCROLLBAR_WIDTH,
+        viewable_height - 8,
+    )
+    pygame.draw.rect(screen, SCROLLBAR_TRACK, track, border_radius=3)
+
+    ratio = viewable_height / content_height
+    thumb_h = max(20, int(track.height * ratio))
+    max_scroll = content_height - viewable_height
+    thumb_y_off = int((track.height - thumb_h) * scroll_y / max_scroll) if max_scroll > 0 else 0
+    thumb = pygame.Rect(track.x, track.y + thumb_y_off, track.width, thumb_h)
+    pygame.draw.rect(screen, SCROLLBAR_THUMB, thumb, border_radius=3)
 
 
 def _render_node(
@@ -119,10 +197,10 @@ def _render_node(
     small_font: pygame.font.Font,
     header_font: pygame.font.Font,
     layout: PanelLayout,
-) -> None:
+    y: int,
+) -> int:
     x = rect.left + 14
-    y = rect.top + 14
-    inner_w = rect.width - 28
+    inner_w = rect.width - 28 - SCROLLBAR_WIDTH
 
     title_surf = header_font.render(node.display_name, True, TEXT_HEADER)
     title_rect = pygame.Rect(x, y, title_surf.get_width(), title_surf.get_height())
@@ -138,8 +216,6 @@ def _render_node(
 
     thumb = thumbnails.get_full(node.tmx_path) or thumbnails.get(node.tmx_path)
     if thumb is not None:
-        # Reserve ~240px for header, badges, footer, and a few list rows; the
-        # rest is the map. Widening the panel grows the map until the cap.
         max_h = max(200, rect.height - 240)
         scaled = _fit_image(thumb, inner_w, max_h)
         screen.blit(scaled, (x, y))
@@ -163,31 +239,24 @@ def _render_node(
     if not node.npcs:
         y = _render_dim_line(screen, x, y, "—", small_font, layout)
     else:
-        for npc in node.npcs[:12]:
+        for npc in node.npcs:
             label = f"{npc.name or npc.npc_id}"
             if npc.position:
                 label += f"  @{npc.position[0]},{npc.position[1]}"
             y = _render_dim_line(screen, x, y, label, small_font, layout)
-        if len(node.npcs) > 12:
-            y = _render_dim_line(
-                screen, x, y, f"  …+{len(node.npcs) - 12} more", small_font, layout
-            )
 
     y += SECTION_GAP
     y = _render_section_title(screen, x, y, f"Item Boxes ({len(node.item_boxes)})", font)
     if not node.item_boxes:
         y = _render_dim_line(screen, x, y, "—", small_font, layout)
     else:
-        for box in node.item_boxes[:12]:
+        for box in node.item_boxes:
             label = f"{box.box_id}"
             if box.position:
                 label += f"  @{box.position[0]},{box.position[1]}"
             y = _render_dim_line(screen, x, y, label, small_font, layout)
 
-    footer = small_font.render(
-        "[Enter] open  [Esc] deselect  click value to copy", True, TEXT_DIM
-    )
-    screen.blit(footer, (x, rect.bottom - footer.get_height() - 10))
+    return y
 
 
 def _render_edge(
@@ -200,10 +269,11 @@ def _render_edge(
     small_font: pygame.font.Font,
     header_font: pygame.font.Font,
     layout: PanelLayout,
-) -> None:
+    y: int,
+    now_ms: int,
+) -> int:
     x = rect.left + 14
-    y = rect.top + 14
-    inner_w = rect.width - 28
+    inner_w = rect.width - 28 - SCROLLBAR_WIDTH
 
     source_node = graph.nodes_by_id.get(edge.source)
     target_node = graph.nodes_by_id.get(edge.target)
@@ -225,54 +295,27 @@ def _render_edge(
         font, small_font, layout,
     )
 
+    # Each map can be as tall as needed to honor the panel width (preserving
+    # aspect ratio). Content that runs past the viewable area is reachable
+    # via the scrollbar.
+    map_max_h = rect.height  # effectively uncapped; width is the binding constraint
     y += SECTION_GAP
-    side_by_side = inner_w >= 520
-    footer_reserve = 30  # space for the bottom footer line
+    y = _render_section_title(screen, x, y, "Source", small_font)
+    if source_node is not None:
+        y = _render_map_with_marker(
+            screen, x, y, inner_w, map_max_h, source_node, thumbnails,
+            edge.source_tile, kind="outbound", now_ms=now_ms,
+        )
+    y += SECTION_GAP
 
-    if side_by_side:
-        # Two columns: source on the left, destination on the right.
-        gap = 12
-        col_w = (inner_w - gap) // 2
-        max_h = max(200, rect.bottom - y - footer_reserve - 24)  # 24 for section title
-        left_x = x
-        right_x = x + col_w + gap
+    y = _render_section_title(screen, x, y, "Destination", small_font)
+    if target_node is not None:
+        y = _render_map_with_marker(
+            screen, x, y, inner_w, map_max_h, target_node, thumbnails,
+            edge.target_tile, kind="inbound", now_ms=now_ms,
+        )
 
-        _render_section_title(screen, left_x, y, "Source", small_font)
-        _render_section_title(screen, right_x, y, "Destination", small_font)
-        map_y = y + small_font.get_linesize() + 4
-
-        if source_node is not None:
-            _render_map_with_marker(
-                screen, left_x, map_y, col_w, max_h, source_node, thumbnails,
-                edge.source_tile, kind="outbound",
-            )
-        if target_node is not None:
-            _render_map_with_marker(
-                screen, right_x, map_y, col_w, max_h, target_node, thumbnails,
-                edge.target_tile, kind="inbound",
-            )
-    else:
-        # Stacked: split the remaining vertical space between the two maps.
-        remaining = rect.bottom - y - footer_reserve
-        per_map_max_h = max(200, remaining // 2 - 24)
-
-        y = _render_section_title(screen, x, y, "Source", small_font)
-        if source_node is not None:
-            y = _render_map_with_marker(
-                screen, x, y, inner_w, per_map_max_h, source_node, thumbnails,
-                edge.source_tile, kind="outbound",
-            )
-        y += SECTION_GAP
-
-        y = _render_section_title(screen, x, y, "Destination", small_font)
-        if target_node is not None:
-            y = _render_map_with_marker(
-                screen, x, y, inner_w, per_map_max_h, target_node, thumbnails,
-                edge.target_tile, kind="inbound",
-            )
-
-    footer = small_font.render("[Esc] deselect  click value to copy", True, TEXT_DIM)
-    screen.blit(footer, (x, rect.bottom - footer.get_height() - 10))
+    return y
 
 
 def _render_map_with_marker(
@@ -285,6 +328,7 @@ def _render_map_with_marker(
     thumbnails: ThumbnailCache,
     tile: tuple[int, int],
     kind: str,
+    now_ms: int,
 ) -> int:
     thumb = thumbnails.get_full(node.tmx_path) or thumbnails.get(node.tmx_path)
     if thumb is None:
@@ -301,24 +345,72 @@ def _render_map_with_marker(
         mh = max(4, int(tile_h_px * sh / map_h_px))
         mx = x + int(col * tile_w_px * sw / map_w_px)
         my = y + int(row * tile_h_px * sh / map_h_px)
-        _draw_marker(screen, pygame.Rect(mx, my, mw, mh), kind)
+        _draw_marker(screen, pygame.Rect(mx, my, mw, mh), kind, now_ms)
 
     return y + scaled.get_height() + 2
 
 
-def _draw_marker(screen: pygame.Surface, rect: pygame.Rect, kind: str) -> None:
+def _draw_marker(
+    screen: pygame.Surface, rect: pygame.Rect, kind: str, now_ms: int
+) -> None:
+    # Pulse phase in [0, 1) — used to grow/fade an outer ring like the CSS animation.
+    pulse_phase = (now_ms % PULSE_PERIOD_MS) / PULSE_PERIOD_MS
+    pulse_radius_factor = pulse_phase
+    pulse_alpha = int(220 * (1.0 - pulse_phase))
+    # Blink phase: dot visible for the first half of each blink period.
+    blink_on = (now_ms % BLINK_PERIOD_MS) < (BLINK_PERIOD_MS / 2)
+
+    cx, cy = rect.center
     if kind == "outbound":
         outer = rect.inflate(6, 6)
         pygame.draw.rect(screen, OUTBOUND_FILL, outer, width=3)
         pygame.draw.rect(screen, OUTBOUND_RING, rect, width=2)
-        cx, cy = rect.center
-        pygame.draw.circle(screen, OUTBOUND_RING, (cx, cy), max(2, min(rect.w, rect.h) // 4))
+        # Pulsing yellow square ring around the marker.
+        max_grow = max(rect.w, rect.h) + 18
+        grow = int(max_grow * pulse_radius_factor)
+        ring_rect = rect.inflate(grow, grow)
+        _draw_alpha_rect(screen, ring_rect, OUTBOUND_RING, pulse_alpha, width=2)
+        if blink_on:
+            pygame.draw.circle(screen, OUTBOUND_RING, (cx, cy), max(2, min(rect.w, rect.h) // 4))
     else:
-        cx, cy = rect.center
         r = max(rect.w, rect.h) // 2 + 3
         pygame.draw.circle(screen, INBOUND_FILL, (cx, cy), r, width=3)
         pygame.draw.circle(screen, INBOUND_RING, (cx, cy), r + 4, width=1)
-        pygame.draw.circle(screen, INBOUND_FILL, (cx, cy), max(2, r // 3))
+        # Pulsing cyan ring expanding outward.
+        pulse_r = r + int(28 * pulse_radius_factor)
+        _draw_alpha_circle(screen, (cx, cy), pulse_r, INBOUND_RING, pulse_alpha, width=2)
+        if blink_on:
+            pygame.draw.circle(screen, INBOUND_FILL, (cx, cy), max(2, r // 3))
+
+
+def _draw_alpha_rect(
+    screen: pygame.Surface,
+    rect: pygame.Rect,
+    color: tuple[int, int, int],
+    alpha: int,
+    width: int,
+) -> None:
+    if alpha <= 0 or rect.w <= 0 or rect.h <= 0:
+        return
+    surf = pygame.Surface((rect.w, rect.h), pygame.SRCALPHA)
+    pygame.draw.rect(surf, (*color, alpha), surf.get_rect(), width=width)
+    screen.blit(surf, rect.topleft)
+
+
+def _draw_alpha_circle(
+    screen: pygame.Surface,
+    center: tuple[int, int],
+    radius: int,
+    color: tuple[int, int, int],
+    alpha: int,
+    width: int,
+) -> None:
+    if alpha <= 0 or radius <= 0:
+        return
+    size = (radius + width) * 2
+    surf = pygame.Surface((size, size), pygame.SRCALPHA)
+    pygame.draw.circle(surf, (*color, alpha), (size // 2, size // 2), radius, width=width)
+    screen.blit(surf, (center[0] - size // 2, center[1] - size // 2))
 
 
 def _render_section_title(
@@ -416,11 +508,6 @@ def _summarize_encounter(encounter: dict) -> str:
 
 
 def _fit_image(surf: pygame.Surface, max_w: int, max_h: int) -> pygame.Surface:
-    """Scale `surf` to fit (max_w, max_h) while preserving aspect ratio.
-
-    Scales up as well as down, so the displayed map grows with the side
-    panel even past the source's native resolution.
-    """
     sw, sh = surf.get_size()
     if sw == 0 or sh == 0:
         return surf
@@ -429,7 +516,6 @@ def _fit_image(surf: pygame.Surface, max_w: int, max_h: int) -> pygame.Surface:
     new_h = max(1, int(sh * scale))
     if (new_w, new_h) == (sw, sh):
         return surf
-    # smoothscale on upscale can blur pixel art; use plain scale for crispness.
     if scale > 1.0:
         return pygame.transform.scale(surf, (new_w, new_h))
     return pygame.transform.smoothscale(surf, (new_w, new_h))
