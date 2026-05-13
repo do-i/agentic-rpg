@@ -387,10 +387,20 @@ def _summarize_encounter(encounter: dict) -> str:
 
 
 def _fit_image(surf: pygame.Surface, max_w: int, max_h: int) -> pygame.Surface:
+    """Scale `surf` to fit (max_w, max_h) while preserving aspect ratio.
+
+    Scales up as well as down, so the displayed map grows with the side
+    panel even past the source's native resolution.
+    """
     sw, sh = surf.get_size()
-    scale = min(max_w / sw, max_h / sh, 1.0)
-    if scale >= 1.0:
+    if sw == 0 or sh == 0:
         return surf
-    return pygame.transform.smoothscale(
-        surf, (max(1, int(sw * scale)), max(1, int(sh * scale)))
-    )
+    scale = min(max_w / sw, max_h / sh)
+    new_w = max(1, int(sw * scale))
+    new_h = max(1, int(sh * scale))
+    if (new_w, new_h) == (sw, sh):
+        return surf
+    # smoothscale on upscale can blur pixel art; use plain scale for crispness.
+    if scale > 1.0:
+        return pygame.transform.scale(surf, (new_w, new_h))
+    return pygame.transform.smoothscale(surf, (new_w, new_h))
