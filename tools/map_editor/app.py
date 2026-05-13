@@ -29,6 +29,7 @@ class App:
         self._clock = pygame.time.Clock()
         self._font = pygame.font.SysFont("monospace", 16)
         self._small_font = pygame.font.SysFont("monospace", 13)
+        self._header_font = pygame.font.SysFont("monospace", 22, bold=True)
         self._scene_manager = SceneManager()
 
         self._thumbnails = ThumbnailCache(self._scenario.scenario_root)
@@ -45,6 +46,7 @@ class App:
             on_open_map=self._open_node,
             font=self._font,
             small_font=self._small_font,
+            header_font=self._header_font,
         )
         self._scene_manager.switch(scene)
 
@@ -69,7 +71,11 @@ class App:
             for event in events:
                 if event.type == pygame.QUIT:
                     running = False
-                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                elif (
+                    event.type == pygame.KEYDOWN
+                    and event.key == pygame.K_q
+                    and event.mod & (pygame.KMOD_CTRL | pygame.KMOD_META)
+                ):
                     running = False
                 elif event.type == pygame.VIDEORESIZE:
                     self._screen = pygame.display.set_mode(

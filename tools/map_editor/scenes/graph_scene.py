@@ -1,19 +1,22 @@
 """Graph view of the scenario: nodes (maps with thumbnails) and edges (portals).
 
 Interactions:
-  - Left click on a node: open that map's detail view.
-  - Left drag on a node: move it around.
-  - Middle drag / right drag on background: pan the camera.
-  - Mouse wheel: zoom the camera.
-  - '0': reset camera to fit-all.
+  - Click node: select node (details show in right panel).
+  - Click portal edge: select edge.
+  - Click empty: deselect.
+  - Drag node: move it around (click vs. drag distinguished by motion threshold).
+  - Drag background: pan camera.
+  - Mouse wheel: zoom camera.
+  - Enter: open selected node in detail viewer.
+  - 0: refit camera to all nodes.
+  - Esc: deselect (handled by app for window close when nothing selected).
 """
 
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Callable
+from typing import Callable, Union
 
 import pygame
 
@@ -21,25 +24,32 @@ from engine.common.scene.scene import Scene
 from tools.map_editor.graph.portal_graph import GraphEdge, GraphNode, PortalGraph
 from tools.map_editor.graph.spring_layout import spring_layout
 from tools.map_editor.graph.thumbnails import ThumbnailCache
+from tools.map_editor.scenes.side_panel import PANEL_WIDTH, render_side_panel
 
 
 NODE_BG = (28, 28, 36)
 NODE_BORDER = (90, 90, 110)
-NODE_BORDER_HOVER = (240, 220, 120)
+NODE_BORDER_HOVER = (180, 180, 200)
+NODE_BORDER_SELECTED = (240, 220, 120)
 EDGE_COLOR = (110, 130, 160)
-EDGE_COLOR_HIGHLIGHT = (240, 220, 120)
+EDGE_COLOR_HOVER = (180, 200, 230)
+EDGE_COLOR_SELECTED = (240, 220, 120)
 ARROW_SIZE = 10
-NODE_PADDING = 8       # px of padding around the thumbnail inside a node
+NODE_PADDING = 8
 LABEL_HEIGHT = 18
-CLICK_PIXEL_THRESHOLD = 4  # drag distance below this counts as a click
+CLICK_PIXEL_THRESHOLD = 4
+EDGE_PICK_THRESHOLD_PX = 8
+
+
+Selection = Union[GraphNode, GraphEdge, None]
 
 
 @dataclass
 class _NodeView:
     node: GraphNode
-    layout_x: float       # graph-space coordinates (from spring layout)
+    layout_x: float
     layout_y: float
-    width: int            # screen-space, derived from thumbnail
+    width: int
     height: int
 
 
@@ -51,12 +61,14 @@ class GraphScene(Scene):
         on_open_map: Callable[[GraphNode], None],
         font: pygame.font.Font,
         small_font: pygame.font.Font,
+        header_font: pygame.font.Font,
     ) -> None:
         self._graph = graph
         self._thumbnails = thumbnails
         self._on_open_map = on_open_map
         self._font = font
         self._small_font = small_font
+        self._header_font = header_font
 
         layout = spring_layout(
             node_ids=[n.map_id for n in graph.nodes],
@@ -81,12 +93,16 @@ class GraphScene(Scene):
         self._zoom = 1.0
         self._needs_fit = True
 
-        self._hover_id: str | None = None
+        self._hover_node: str | None = None
+        self._hover_edge: tuple[str, str] | None = None
+        self._selection: Selection = None
+
         self._drag_node_id: str | None = None
-        self._drag_started_at: tuple[int, int] | None = None
         self._drag_total_pixels = 0
         self._panning = False
         self._last_mouse: tuple[int, int] | None = None
+
+        self._panel_rect: pygame.Rect | None = None
 
     # ── input ────────────────────────────────────────────────────────────
 
@@ -100,45 +116,56 @@ class GraphScene(Scene):
                 self._on_mouse_motion(event)
             elif event.type == pygame.MOUSEWHEEL:
                 self._on_wheel(event)
-            elif event.type == pygame.KEYDOWN and event.key in (pygame.K_0, pygame.K_KP_0):
-                self._needs_fit = True
+            elif event.type == pygame.KEYDOWN:
+                self._on_key_down(event)
 
     def _on_mouse_down(self, event: pygame.event.Event) -> None:
+        if self._in_panel(event.pos):
+            return
         if event.button == 1:
-            hit = self._node_at_screen(event.pos)
-            if hit is not None:
-                self._drag_node_id = hit
-                self._drag_started_at = event.pos
+            hit_node = self._node_at_screen(event.pos)
+            if hit_node is not None:
+                self._drag_node_id = hit_node
                 self._drag_total_pixels = 0
-            else:
-                self._panning = True
-                self._last_mouse = event.pos
+                return
+            hit_edge = self._edge_at_screen(event.pos)
+            if hit_edge is not None:
+                edge = self._graph.edge_between(*hit_edge)
+                if edge is not None:
+                    self._selection = edge
+                return
+            # Background click: start pan + clear selection on release-if-no-drag.
+            self._panning = True
+            self._last_mouse = event.pos
+            self._selection = None
         elif event.button in (2, 3):
             self._panning = True
             self._last_mouse = event.pos
 
     def _on_mouse_up(self, event: pygame.event.Event) -> None:
-        if event.button == 1:
-            if self._drag_node_id is not None and self._drag_total_pixels <= CLICK_PIXEL_THRESHOLD:
-                node = self._graph.nodes_by_id[self._drag_node_id]
-                self._drag_node_id = None
-                self._drag_started_at = None
-                self._on_open_map(node)
-                return
+        if event.button == 1 and self._drag_node_id is not None:
+            if self._drag_total_pixels <= CLICK_PIXEL_THRESHOLD:
+                # Click without significant drag → select node.
+                self._selection = self._graph.nodes_by_id[self._drag_node_id]
             self._drag_node_id = None
-            self._drag_started_at = None
         if event.button in (1, 2, 3):
             self._panning = False
             self._last_mouse = None
 
     def _on_mouse_motion(self, event: pygame.event.Event) -> None:
-        self._hover_id = self._node_at_screen(event.pos)
+        if self._in_panel(event.pos):
+            self._hover_node = None
+            self._hover_edge = None
+        else:
+            self._hover_node = self._node_at_screen(event.pos)
+            self._hover_edge = self._edge_at_screen(event.pos) if self._hover_node is None else None
+
         if self._drag_node_id is not None:
-            dx_screen, dy_screen = event.rel
-            self._drag_total_pixels += abs(dx_screen) + abs(dy_screen)
+            dx, dy = event.rel
+            self._drag_total_pixels += abs(dx) + abs(dy)
             view = self._node_views[self._drag_node_id]
-            view.layout_x += dx_screen / self._zoom
-            view.layout_y += dy_screen / self._zoom
+            view.layout_x += dx / self._zoom
+            view.layout_y += dy / self._zoom
         elif self._panning and self._last_mouse is not None:
             dx, dy = event.rel
             self._cam_x -= dx / self._zoom
@@ -151,11 +178,20 @@ class GraphScene(Scene):
         factor = 1.15 if event.y > 0 else 1.0 / 1.15
         self._zoom = max(0.25, min(2.5, self._zoom * factor))
 
+    def _on_key_down(self, event: pygame.event.Event) -> None:
+        if event.key in (pygame.K_0, pygame.K_KP_0):
+            self._needs_fit = True
+        elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+            if isinstance(self._selection, GraphNode):
+                self._on_open_map(self._selection)
+        elif event.key == pygame.K_ESCAPE:
+            self._selection = None
+
     # ── render ───────────────────────────────────────────────────────────
 
     def render(self, screen: pygame.Surface) -> None:
         if self._needs_fit:
-            self._fit_to_screen(screen.get_size())
+            self._fit_to_screen(self._graph_viewport(screen.get_size()))
             self._needs_fit = False
 
         screen.fill((14, 14, 20))
@@ -164,24 +200,48 @@ class GraphScene(Scene):
             self._render_node(screen, view)
         self._render_hud(screen)
 
+        selected_thumb = None
+        if isinstance(self._selection, GraphNode):
+            selected_thumb = self._thumbnails.get(self._selection.tmx_path)
+        self._panel_rect = render_side_panel(
+            screen=screen,
+            selection=self._selection,
+            graph=self._graph,
+            thumbnail=selected_thumb,
+            font=self._font,
+            small_font=self._small_font,
+            header_font=self._header_font,
+        )
+
     def _render_edges(self, screen: pygame.Surface) -> None:
         for edge in self._graph.edges:
             src = self._node_views.get(edge.source)
             dst = self._node_views.get(edge.target)
             if src is None or dst is None:
                 continue
-            highlight = self._hover_id in (edge.source, edge.target)
-            color = EDGE_COLOR_HIGHLIGHT if highlight else EDGE_COLOR
             sx, sy = self._layout_to_screen(src.layout_x, src.layout_y)
             tx, ty = self._layout_to_screen(dst.layout_x, dst.layout_y)
-            pygame.draw.line(screen, color, (sx, sy), (tx, ty), 2 if highlight else 1)
+
+            is_selected = (
+                isinstance(self._selection, GraphEdge)
+                and self._selection.source == edge.source
+                and self._selection.target == edge.target
+            )
+            is_hover = self._hover_edge == (edge.source, edge.target)
+            if is_selected:
+                color, width = EDGE_COLOR_SELECTED, 3
+            elif is_hover:
+                color, width = EDGE_COLOR_HOVER, 2
+            else:
+                color, width = EDGE_COLOR, 1
+
+            pygame.draw.line(screen, color, (sx, sy), (tx, ty), width)
             self._draw_arrowhead(screen, sx, sy, tx, ty, color)
 
     def _draw_arrowhead(
         self, screen: pygame.Surface, sx: int, sy: int, tx: int, ty: int, color
     ) -> None:
         angle = math.atan2(ty - sy, tx - sx)
-        # Pull the arrow back so it sits before the target's center, not on it.
         back = 40
         bx = tx - math.cos(angle) * back
         by = ty - math.sin(angle) * back
@@ -201,26 +261,45 @@ class GraphScene(Scene):
         h = int(view.height * self._zoom)
         rect = pygame.Rect(cx - w // 2, cy - h // 2, w, h)
 
-        if rect.right < 0 or rect.bottom < 0 or rect.left > screen.get_width() or rect.top > screen.get_height():
+        viewport = self._graph_viewport(screen.get_size())
+        if (
+            rect.right < viewport[0]
+            or rect.bottom < viewport[1]
+            or rect.left > viewport[0] + viewport[2]
+            or rect.top > viewport[1] + viewport[3]
+        ):
             return
 
-        is_hover = self._hover_id == view.node.map_id
-        pygame.draw.rect(screen, NODE_BG, rect)
-        pygame.draw.rect(
-            screen,
-            NODE_BORDER_HOVER if is_hover else NODE_BORDER,
-            rect,
-            width=2 if is_hover else 1,
+        is_selected = (
+            isinstance(self._selection, GraphNode)
+            and self._selection.map_id == view.node.map_id
         )
+        is_hover = self._hover_node == view.node.map_id
+
+        pygame.draw.rect(screen, NODE_BG, rect)
+        if is_selected:
+            border, bw = NODE_BORDER_SELECTED, 3
+        elif is_hover:
+            border, bw = NODE_BORDER_HOVER, 2
+        else:
+            border, bw = NODE_BORDER, 1
+        pygame.draw.rect(screen, border, rect, width=bw)
 
         thumb = self._thumbnails.get(view.node.tmx_path)
         if thumb is not None:
             scaled = pygame.transform.scale(
-                thumb, (int(thumb.get_width() * self._zoom), int(thumb.get_height() * self._zoom))
+                thumb,
+                (
+                    int(thumb.get_width() * self._zoom),
+                    int(thumb.get_height() * self._zoom),
+                ),
             )
             screen.blit(
                 scaled,
-                (rect.x + int(NODE_PADDING * self._zoom), rect.y + int(NODE_PADDING * self._zoom)),
+                (
+                    rect.x + int(NODE_PADDING * self._zoom),
+                    rect.y + int(NODE_PADDING * self._zoom),
+                ),
             )
 
         label = self._small_font.render(view.node.display_name, True, (230, 230, 230))
@@ -232,7 +311,8 @@ class GraphScene(Scene):
     def _render_hud(self, screen: pygame.Surface) -> None:
         hud = self._font.render(
             f"Map Graph   nodes={len(self._graph.nodes)}  edges={len(self._graph.edges)}   "
-            f"zoom={self._zoom:.2f}   [click=open, drag node=move, drag bg=pan, wheel=zoom, 0=fit]",
+            f"zoom={self._zoom:.2f}   "
+            f"[click=select  drag=move  wheel=zoom  Enter=open  0=fit]",
             True,
             (220, 220, 220),
         )
@@ -243,6 +323,13 @@ class GraphScene(Scene):
 
     # ── geometry helpers ─────────────────────────────────────────────────
 
+    def _graph_viewport(self, screen_size: tuple[int, int]) -> tuple[int, int, int, int]:
+        # (x, y, w, h) of the area the graph is allowed to use (excludes panel).
+        return (0, 0, max(1, screen_size[0] - PANEL_WIDTH), screen_size[1])
+
+    def _in_panel(self, pos: tuple[int, int]) -> bool:
+        return self._panel_rect is not None and self._panel_rect.collidepoint(pos)
+
     def _layout_to_screen(self, lx: float, ly: float) -> tuple[int, int]:
         return (
             int((lx - self._cam_x) * self._zoom),
@@ -250,7 +337,6 @@ class GraphScene(Scene):
         )
 
     def _node_at_screen(self, pos: tuple[int, int]) -> str | None:
-        # Reverse order so visually-on-top (last-drawn) wins.
         for view in reversed(list(self._node_views.values())):
             cx, cy = self._layout_to_screen(view.layout_x, view.layout_y)
             w = int(view.width * self._zoom)
@@ -260,7 +346,23 @@ class GraphScene(Scene):
                 return view.node.map_id
         return None
 
-    def _fit_to_screen(self, screen_size: tuple[int, int]) -> None:
+    def _edge_at_screen(self, pos: tuple[int, int]) -> tuple[str, str] | None:
+        best: tuple[str, str] | None = None
+        best_dist = EDGE_PICK_THRESHOLD_PX
+        for edge in self._graph.edges:
+            src = self._node_views.get(edge.source)
+            dst = self._node_views.get(edge.target)
+            if src is None or dst is None or src is dst:
+                continue
+            sx, sy = self._layout_to_screen(src.layout_x, src.layout_y)
+            tx, ty = self._layout_to_screen(dst.layout_x, dst.layout_y)
+            d = _distance_point_to_segment(pos, (sx, sy), (tx, ty))
+            if d < best_dist:
+                best_dist = d
+                best = (edge.source, edge.target)
+        return best
+
+    def _fit_to_screen(self, viewport: tuple[int, int, int, int]) -> None:
         if not self._node_views:
             return
         min_x = min(v.layout_x - v.width / 2 for v in self._node_views.values())
@@ -269,11 +371,28 @@ class GraphScene(Scene):
         max_y = max(v.layout_y + v.height / 2 for v in self._node_views.values())
         span_x = max(1.0, max_x - min_x)
         span_y = max(1.0, max_y - min_y)
-        margin = 80
-        zx = (screen_size[0] - margin * 2) / span_x
-        zy = (screen_size[1] - margin * 2) / span_y
+        margin = 60
+        vw, vh = viewport[2], viewport[3]
+        zx = (vw - margin * 2) / span_x
+        zy = (vh - margin * 2) / span_y
         self._zoom = max(0.25, min(2.0, min(zx, zy)))
         center_x = (min_x + max_x) / 2
         center_y = (min_y + max_y) / 2
-        self._cam_x = center_x - (screen_size[0] / 2) / self._zoom
-        self._cam_y = center_y - (screen_size[1] / 2) / self._zoom
+        self._cam_x = center_x - (vw / 2) / self._zoom
+        self._cam_y = center_y - (vh / 2) / self._zoom
+
+
+def _distance_point_to_segment(
+    p: tuple[float, float], a: tuple[float, float], b: tuple[float, float]
+) -> float:
+    px, py = p
+    ax, ay = a
+    bx, by = b
+    abx, aby = bx - ax, by - ay
+    length_sq = abx * abx + aby * aby
+    if length_sq == 0:
+        return math.hypot(px - ax, py - ay)
+    t = max(0.0, min(1.0, ((px - ax) * abx + (py - ay) * aby) / length_sq))
+    proj_x = ax + t * abx
+    proj_y = ay + t * aby
+    return math.hypot(px - proj_x, py - proj_y)
