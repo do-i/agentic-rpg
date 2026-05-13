@@ -17,6 +17,8 @@ usage() {
     echo "  validate      Run data validation"
     echo "  maps          Render interactive map-connections HTML and open it"
     echo "  maps-brave    Render interactive map-connections HTML and open it in Brave"
+    echo "  map-editor    Launch the scenario map viewer/editor"
+    echo "  rm_cache      List or delete generated cache artifacts"
     echo "  wangset       Export Wang terrain connection graphs from a TSX file"
     echo ""
 }
@@ -24,7 +26,7 @@ usage() {
 cmd="${1:-}"
 shift || true
 
-if [[ "$cmd" != "setup" && "$cmd" != "" && "$cmd" != "help" && "$cmd" != "--help" && "$cmd" != "-h" ]]; then
+if [[ "$cmd" != "setup" && "$cmd" != "rm_cache" && "$cmd" != "" && "$cmd" != "help" && "$cmd" != "--help" && "$cmd" != "-h" ]]; then
     if [[ ! -f "$VENV/bin/activate" ]]; then
         echo "Error: venv not found. Run './run setup' first."
         exit 1
@@ -87,6 +89,12 @@ case "$cmd" in
         done
         echo "Error: Brave browser not found in PATH."
         exit 1
+        ;;
+    map-editor)
+        exec python -m tools.map_editor --scenario ./rusted_kingdoms "$@"
+        ;;
+    rm_cache)
+        exec python "$SCRIPT_DIR/tools/cache_buster.py" "$@"
         ;;
     wangset)
         exec python "$SCRIPT_DIR/tools/wangset-graph.py" "$@"
