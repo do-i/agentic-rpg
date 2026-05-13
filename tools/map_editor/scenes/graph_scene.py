@@ -484,13 +484,30 @@ class GraphScene(Scene):
     def _edge_endpoints(
         self, edge: GraphEdge
     ) -> tuple[tuple[int, int], tuple[int, int]] | None:
+        """Return the visible line endpoints (clipped to each node's outer border).
+
+        The interior points are the portal tile positions on each thumbnail;
+        we then clip them to the node bounding rects so the arrowhead apex
+        sits on the destination node's outer edge instead of being covered
+        by the thumbnail.
+        """
         src_view = self._node_views.get(edge.source)
         dst_view = self._node_views.get(edge.target)
         if src_view is None or dst_view is None:
             return None
-        src_pt = self._portal_point_on_node(src_view, edge.source_tile)
-        dst_pt = self._portal_point_on_node(dst_view, edge.target_tile)
+        src_inner = self._portal_point_on_node(src_view, edge.source_tile)
+        dst_inner = self._portal_point_on_node(dst_view, edge.target_tile)
+        src_rect = self._node_rect(src_view)
+        dst_rect = self._node_rect(dst_view)
+        src_pt = _exit_point(src_inner, dst_inner, src_rect) or src_inner
+        dst_pt = _exit_point(dst_inner, src_inner, dst_rect) or dst_inner
         return src_pt, dst_pt
+
+    def _node_rect(self, view: _NodeView) -> pygame.Rect:
+        cx, cy = self._layout_to_screen(view.layout_x, view.layout_y)
+        w = int(view.width * self._zoom)
+        h = int(view.height * self._zoom)
+        return pygame.Rect(cx - w // 2, cy - h // 2, w, h)
 
     def _portal_point_on_node(
         self, view: _NodeView, tile: tuple[int, int]
@@ -534,6 +551,33 @@ class GraphScene(Scene):
         center_y = (min_y + max_y) / 2
         self._cam_x = center_x - (vw / 2) / self._zoom
         self._cam_y = center_y - (vh / 2) / self._zoom
+
+
+def _exit_point(
+    inside: tuple[int, int], outside: tuple[int, int], rect: pygame.Rect
+) -> tuple[int, int] | None:
+    """Where the ray from `inside` toward `outside` crosses the rect's border.
+
+    `inside` is expected to lie inside `rect`. Returns None if the segment
+    doesn't actually cross the border (e.g., `outside` also inside).
+    """
+    sx, sy = inside
+    tx, ty = outside
+    dx, dy = tx - sx, ty - sy
+    if dx == 0 and dy == 0:
+        return None
+    t_exit = 1.0
+    if dx > 0:
+        t_exit = min(t_exit, (rect.right - sx) / dx)
+    elif dx < 0:
+        t_exit = min(t_exit, (rect.left - sx) / dx)
+    if dy > 0:
+        t_exit = min(t_exit, (rect.bottom - sy) / dy)
+    elif dy < 0:
+        t_exit = min(t_exit, (rect.top - sy) / dy)
+    if t_exit <= 0:
+        return None
+    return (int(sx + t_exit * dx), int(sy + t_exit * dy))
 
 
 def _distance_point_to_segment(

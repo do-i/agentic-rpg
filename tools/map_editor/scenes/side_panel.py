@@ -138,7 +138,7 @@ def _render_node(
 
     thumb = thumbnails.get_full(node.tmx_path) or thumbnails.get(node.tmx_path)
     if thumb is not None:
-        scaled = _fit_image(thumb, inner_w, max(140, rect.height // 4))
+        scaled = _fit_image(thumb, inner_w, max(200, rect.height // 2))
         screen.blit(scaled, (x, y))
         y += scaled.get_height() + SECTION_GAP
 
