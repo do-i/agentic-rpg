@@ -136,9 +136,9 @@ def _render_node(
     layout.copy_targets.append((sub_rect, node.map_id))
     y += sub_surf.get_height() + 6
 
-    thumb = thumbnails.get(node.tmx_path)
+    thumb = thumbnails.get_full(node.tmx_path) or thumbnails.get(node.tmx_path)
     if thumb is not None:
-        scaled = _fit_image(thumb, inner_w, 220)
+        scaled = _fit_image(thumb, inner_w, max(140, rect.height // 4))
         screen.blit(scaled, (x, y))
         y += scaled.get_height() + SECTION_GAP
 
@@ -223,10 +223,14 @@ def _render_edge(
     )
 
     y += SECTION_GAP
+    # Reserve room for the two map sections (titles + spacing + footer).
+    remaining = rect.bottom - y - 60
+    per_map_max_h = max(160, remaining // 2 - 24)
+
     y = _render_section_title(screen, x, y, "Source", small_font)
     if source_node is not None:
         y = _render_map_with_marker(
-            screen, x, y, inner_w, source_node, thumbnails,
+            screen, x, y, inner_w, per_map_max_h, source_node, thumbnails,
             edge.source_tile, kind="outbound",
         )
     y += SECTION_GAP
@@ -234,7 +238,7 @@ def _render_edge(
     y = _render_section_title(screen, x, y, "Destination", small_font)
     if target_node is not None:
         y = _render_map_with_marker(
-            screen, x, y, inner_w, target_node, thumbnails,
+            screen, x, y, inner_w, per_map_max_h, target_node, thumbnails,
             edge.target_tile, kind="inbound",
         )
 
@@ -247,15 +251,16 @@ def _render_map_with_marker(
     x: int,
     y: int,
     max_w: int,
+    max_h: int,
     node: GraphNode,
     thumbnails: ThumbnailCache,
     tile: tuple[int, int],
     kind: str,
 ) -> int:
-    thumb = thumbnails.get(node.tmx_path)
+    thumb = thumbnails.get_full(node.tmx_path) or thumbnails.get(node.tmx_path)
     if thumb is None:
         return y
-    scaled = _fit_image(thumb, max_w, 260)
+    scaled = _fit_image(thumb, max_w, max_h)
     screen.blit(scaled, (x, y))
 
     map_w_px, map_h_px = node.map_size_px
