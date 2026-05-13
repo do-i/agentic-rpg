@@ -138,7 +138,10 @@ def _render_node(
 
     thumb = thumbnails.get_full(node.tmx_path) or thumbnails.get(node.tmx_path)
     if thumb is not None:
-        scaled = _fit_image(thumb, inner_w, max(200, rect.height // 2))
+        # Reserve ~240px for header, badges, footer, and a few list rows; the
+        # rest is the map. Widening the panel grows the map until the cap.
+        max_h = max(200, rect.height - 240)
+        scaled = _fit_image(thumb, inner_w, max_h)
         screen.blit(scaled, (x, y))
         y += scaled.get_height() + SECTION_GAP
 
@@ -223,9 +226,9 @@ def _render_edge(
     )
 
     y += SECTION_GAP
-    # Reserve room for the two map sections (titles + spacing + footer).
+    # Reserve ~60px for the footer; the rest splits evenly between the two maps.
     remaining = rect.bottom - y - 60
-    per_map_max_h = max(160, remaining // 2 - 24)
+    per_map_max_h = max(200, remaining // 2 - 16)
 
     y = _render_section_title(screen, x, y, "Source", small_font)
     if source_node is not None:
