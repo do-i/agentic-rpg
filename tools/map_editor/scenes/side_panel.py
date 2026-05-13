@@ -226,24 +226,50 @@ def _render_edge(
     )
 
     y += SECTION_GAP
-    # Reserve ~60px for the footer; the rest splits evenly between the two maps.
-    remaining = rect.bottom - y - 60
-    per_map_max_h = max(200, remaining // 2 - 16)
+    side_by_side = inner_w >= 520
+    footer_reserve = 30  # space for the bottom footer line
 
-    y = _render_section_title(screen, x, y, "Source", small_font)
-    if source_node is not None:
-        y = _render_map_with_marker(
-            screen, x, y, inner_w, per_map_max_h, source_node, thumbnails,
-            edge.source_tile, kind="outbound",
-        )
-    y += SECTION_GAP
+    if side_by_side:
+        # Two columns: source on the left, destination on the right.
+        gap = 12
+        col_w = (inner_w - gap) // 2
+        max_h = max(200, rect.bottom - y - footer_reserve - 24)  # 24 for section title
+        left_x = x
+        right_x = x + col_w + gap
 
-    y = _render_section_title(screen, x, y, "Destination", small_font)
-    if target_node is not None:
-        y = _render_map_with_marker(
-            screen, x, y, inner_w, per_map_max_h, target_node, thumbnails,
-            edge.target_tile, kind="inbound",
-        )
+        _render_section_title(screen, left_x, y, "Source", small_font)
+        _render_section_title(screen, right_x, y, "Destination", small_font)
+        map_y = y + small_font.get_linesize() + 4
+
+        if source_node is not None:
+            _render_map_with_marker(
+                screen, left_x, map_y, col_w, max_h, source_node, thumbnails,
+                edge.source_tile, kind="outbound",
+            )
+        if target_node is not None:
+            _render_map_with_marker(
+                screen, right_x, map_y, col_w, max_h, target_node, thumbnails,
+                edge.target_tile, kind="inbound",
+            )
+    else:
+        # Stacked: split the remaining vertical space between the two maps.
+        remaining = rect.bottom - y - footer_reserve
+        per_map_max_h = max(200, remaining // 2 - 24)
+
+        y = _render_section_title(screen, x, y, "Source", small_font)
+        if source_node is not None:
+            y = _render_map_with_marker(
+                screen, x, y, inner_w, per_map_max_h, source_node, thumbnails,
+                edge.source_tile, kind="outbound",
+            )
+        y += SECTION_GAP
+
+        y = _render_section_title(screen, x, y, "Destination", small_font)
+        if target_node is not None:
+            y = _render_map_with_marker(
+                screen, x, y, inner_w, per_map_max_h, target_node, thumbnails,
+                edge.target_tile, kind="inbound",
+            )
 
     footer = small_font.render("[Esc] deselect  click value to copy", True, TEXT_DIM)
     screen.blit(footer, (x, rect.bottom - footer.get_height() - 10))
