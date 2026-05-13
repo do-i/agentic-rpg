@@ -55,8 +55,6 @@ class TilePicker:
     ) -> None:
         if mode not in ("free", "portals"):
             raise ValueError(f"Unknown TilePicker mode: {mode}")
-        if mode == "portals" and not portals:
-            raise ValueError("portals list required for 'portals' mode")
         self._node = node
         self._thumbnails = thumbnails
         self._font = font
@@ -84,8 +82,8 @@ class TilePicker:
                 match = next(
                     (p for p in self._portals if p.source_tile == tile), None
                 )
-                if match is not None:
-                    self._on_pick(match)
+                # Existing portal → retarget; empty tile → create new portal here.
+                self._on_pick(match if match is not None else tile)
             else:
                 self._on_pick(tile)
             return True

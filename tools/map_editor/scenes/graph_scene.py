@@ -34,7 +34,7 @@ from tools.map_editor.edit.editor_state import (
     STEP_SOURCE_NODE,
     STEP_SOURCE_TILE,
 )
-from tools.map_editor.edit.tmx_writer import save_portal_target
+from tools.map_editor.edit.tmx_writer import create_portal, save_portal_target
 from tools.map_editor.graph.portal_graph import GraphEdge, GraphNode, PortalGraph
 from tools.map_editor.graph.spring_layout import spring_layout
 from tools.map_editor.graph.thumbnails import ThumbnailCache
@@ -281,9 +281,6 @@ class GraphScene(Scene):
     def _on_editor_node_click(self, map_id: str) -> None:
         if self._editor.step == STEP_SOURCE_NODE:
             portals = self._portals_for_map(map_id)
-            if not portals:
-                self._editor.last_message = f"{map_id} has no portals."
-                return
             self._editor.set_source_map(map_id)
             self._open_picker_for_source(map_id, portals)
         elif self._editor.step == STEP_DEST_NODE:
@@ -309,12 +306,17 @@ class GraphScene(Scene):
         self, map_id: str, portals: list[PortalOption]
     ) -> None:
         node = self._graph.nodes_by_id[map_id]
+        hint = (
+            f"Click an existing portal to retarget on {map_id}, or any tile to add new"
+            if portals
+            else f"{map_id} has no portals — click any tile to add one"
+        )
         self._tile_picker = TilePicker(
             node=node,
             thumbnails=self._thumbnails,
             font=self._font,
             small_font=self._small_font,
-            hint_text=f"Pick a portal tile on {map_id}",
+            hint_text=hint,
             mode="portals",
             on_pick=self._on_source_tile_picked,
             portals=portals,
@@ -337,13 +339,16 @@ class GraphScene(Scene):
         if picked is None:
             self._editor.cancel_cycle("Cancelled")
             return
-        # `picked` is a PortalOption
-        self._editor.set_source_portal(
-            portal_obj_id=picked.portal_obj_id,
-            source_tile=picked.source_tile,
-            original_target_map=picked.target_map,
-            original_target_tile=picked.target_tile,
-        )
+        if isinstance(picked, PortalOption):
+            self._editor.set_source_portal(
+                portal_obj_id=picked.portal_obj_id,
+                source_tile=picked.source_tile,
+                original_target_map=picked.target_map,
+                original_target_tile=picked.target_tile,
+            )
+        else:
+            # `picked` is a (col, row) tile — user wants a new portal here.
+            self._editor.set_new_source_tile(picked)
 
     def _on_dest_tile_picked(self, picked) -> None:
         self._tile_picker = None
@@ -359,6 +364,17 @@ class GraphScene(Scene):
 
     def _apply_edit_to_graph(self, edit) -> None:
         """Update the in-memory graph so the visualization reflects the pending edit."""
+        if edit.is_new:
+            self._graph.edges.append(
+                GraphEdge(
+                    source=edit.source_map_id,
+                    target=edit.new_target_map,
+                    source_tile=edit.source_tile,
+                    target_tile=edit.new_target_tile,
+                    portal_obj_id=edit.portal_obj_id,
+                )
+            )
+            return
         for e in self._graph.edges:
             if e.source == edit.source_map_id and e.portal_obj_id == edit.portal_obj_id:
                 e.target = edit.new_target_map
@@ -371,12 +387,21 @@ class GraphScene(Scene):
         n = 0
         for (map_id, obj_id), edit in list(self._editor.pending.items()):
             try:
-                save_portal_target(
-                    tmx_path=edit.source_tmx,
-                    portal_obj_id=edit.portal_obj_id,
-                    new_target_map=edit.new_target_map,
-                    new_target_tile=edit.new_target_tile,
-                )
+                if edit.is_new:
+                    real_id = create_portal(
+                        tmx_path=edit.source_tmx,
+                        source_tile=edit.source_tile,
+                        new_target_map=edit.new_target_map,
+                        new_target_tile=edit.new_target_tile,
+                    )
+                    self._replace_temp_portal_id(map_id, edit.portal_obj_id, real_id)
+                else:
+                    save_portal_target(
+                        tmx_path=edit.source_tmx,
+                        portal_obj_id=edit.portal_obj_id,
+                        new_target_map=edit.new_target_map,
+                        new_target_tile=edit.new_target_tile,
+                    )
                 n += 1
             except Exception as exc:
                 self._editor.last_message = f"Save failed for {map_id}: {exc}"
@@ -385,6 +410,12 @@ class GraphScene(Scene):
         self._editor.last_message = f"Saved {n} portal edit(s) to TMX (.bak created)."
         self._toast_text = self._editor.last_message
         self._toast_until_ms = pygame.time.get_ticks() + TOAST_MS
+
+    def _replace_temp_portal_id(self, map_id: str, temp_id: int, real_id: int) -> None:
+        for e in self._graph.edges:
+            if e.source == map_id and e.portal_obj_id == temp_id:
+                e.portal_obj_id = real_id
+                return
 
     # ── copy handling ────────────────────────────────────────────────────
 
