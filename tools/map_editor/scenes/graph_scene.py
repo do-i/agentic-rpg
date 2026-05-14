@@ -50,8 +50,12 @@ NODE_BORDER_SELECTED = (240, 220, 120)
 EDGE_COLOR = (110, 130, 160)
 EDGE_COLOR_HOVER = (180, 200, 230)
 EDGE_COLOR_SELECTED = (240, 220, 120)
+EDGE_COLOR_OUTGOING = (120, 210, 140)
+EDGE_COLOR_INCOMING = (235, 150, 110)
 ARROW_LEN = 16
 ARROW_HALF_WIDTH = 8
+# Quadratic-bezier sideways bow as a fraction of the edge length.
+EDGE_CURVE_RATIO = 0.16
 NODE_PADDING = 8
 LABEL_HEIGHT = 18
 CLICK_PIXEL_THRESHOLD = 4
@@ -94,11 +98,7 @@ class GraphScene(Scene):
         self._small_font = small_font
         self._header_font = header_font
 
-        layout = spring_layout(
-            node_ids=[n.map_id for n in graph.nodes],
-            edges=[(e.source, e.target) for e in graph.edges],
-        )
-        self._node_views: dict[str, _NodeView] = {}
+        node_sizes: dict[str, tuple[float, float]] = {}
         for node in graph.nodes:
             thumb = thumbnails.get(node.tmx_path)
             if thumb is not None:
@@ -106,6 +106,16 @@ class GraphScene(Scene):
                 h = thumb.get_height() + NODE_PADDING * 2 + LABEL_HEIGHT
             else:
                 w, h = 180, 120
+            node_sizes[node.map_id] = (w, h)
+
+        layout = spring_layout(
+            node_ids=[n.map_id for n in graph.nodes],
+            edges=[(e.source, e.target) for e in graph.edges],
+            sizes=node_sizes,
+        )
+        self._node_views: dict[str, _NodeView] = {}
+        for node in graph.nodes:
+            w, h = node_sizes[node.map_id]
             lx, ly = layout.get(node.map_id, (0.0, 0.0))
             self._node_views[node.map_id] = _NodeView(
                 node=node, layout_x=lx, layout_y=ly, width=w, height=h
@@ -238,7 +248,12 @@ class GraphScene(Scene):
             self._scroll_panel(-event.y * 60)
             return
         factor = 1.15 if event.y > 0 else 1.0 / 1.15
-        self._zoom = max(0.25, min(2.5, self._zoom * factor))
+        new_zoom = max(0.25, min(2.5, self._zoom * factor))
+        # Keep the world point under the mouse pointer fixed on screen.
+        mx, my = pygame.mouse.get_pos()
+        self._cam_x += mx / self._zoom - mx / new_zoom
+        self._cam_y += my / self._zoom - my / new_zoom
+        self._zoom = new_zoom
 
     def _mouse_in_panel(self) -> bool:
         return self._in_panel(pygame.mouse.get_pos())
@@ -495,8 +510,14 @@ class GraphScene(Scene):
             self._tile_picker.render(screen, pygame.time.get_ticks())
 
     def _render_edges(self, screen: pygame.Surface) -> None:
-        # Two passes: regular edges first, then hover/selected on top so the
-        # label and arrow aren't covered by other lines.
+        # Edges connected to a selected node are highlighted: outgoing in one
+        # color, incoming in another. Drawn in priority passes (plain first,
+        # then connected, then hover/selected) so important edges sit on top.
+        selected_node_id = (
+            self._selection.map_id
+            if isinstance(self._selection, GraphNode)
+            else None
+        )
         decorated: list[tuple[int, GraphEdge, tuple[int, int], tuple[int, int], bool, bool]] = []
         for idx, edge in enumerate(self._graph.edges):
             endpoints = self._edge_endpoints(edge)
@@ -507,10 +528,26 @@ class GraphScene(Scene):
             is_hover = self._hover_edge_idx == idx
             decorated.append((idx, edge, (sx, sy), (tx, ty), is_selected, is_hover))
 
-        for _, _, (sx, sy), (tx, ty), is_selected, is_hover in decorated:
-            if is_selected or is_hover:
+        def _connection(edge: GraphEdge) -> tuple[tuple[int, int, int], int] | None:
+            if selected_node_id is None:
+                return None
+            if edge.source == selected_node_id:
+                return EDGE_COLOR_OUTGOING, 3
+            if edge.target == selected_node_id:
+                return EDGE_COLOR_INCOMING, 3
+            return None
+
+        for _, edge, (sx, sy), (tx, ty), is_selected, is_hover in decorated:
+            if is_selected or is_hover or _connection(edge) is not None:
                 continue
             self._draw_arrow(screen, sx, sy, tx, ty, EDGE_COLOR, 1)
+
+        for _, edge, (sx, sy), (tx, ty), is_selected, is_hover in decorated:
+            conn = _connection(edge)
+            if is_selected or is_hover or conn is None:
+                continue
+            color, width = conn
+            self._draw_arrow(screen, sx, sy, tx, ty, color, width)
 
         for _, edge, (sx, sy), (tx, ty), is_selected, is_hover in decorated:
             if not (is_selected or is_hover):
@@ -524,6 +561,34 @@ class GraphScene(Scene):
             if dest is not None:
                 self._draw_edge_label(screen, sx, sy, tx, ty, dest.display_name)
 
+    def _edge_curve(
+        self, sx: int, sy: int, tx: int, ty: int
+    ) -> tuple[float, float]:
+        """Quadratic-bezier control point, bowed to one side of the segment.
+
+        The sideways offset has a consistent sign so opposite-direction edges
+        between the same two nodes bow apart instead of overlapping.
+        """
+        dx, dy = tx - sx, ty - sy
+        length = math.hypot(dx, dy)
+        if length < 1.0:
+            return (sx + dx / 2, sy + dy / 2)
+        nx, ny = -dy / length, dx / length
+        bow = length * EDGE_CURVE_RATIO
+        return (sx + dx / 2 + nx * bow, sy + dy / 2 + ny * bow)
+
+    def _bezier_points(
+        self, sx: int, sy: int, cx: float, cy: float, tx: int, ty: int, steps: int = 18
+    ) -> list[tuple[float, float]]:
+        points = []
+        for i in range(steps + 1):
+            t = i / steps
+            mt = 1.0 - t
+            x = mt * mt * sx + 2 * mt * t * cx + t * t * tx
+            y = mt * mt * sy + 2 * mt * t * cy + t * t * ty
+            points.append((x, y))
+        return points
+
     def _draw_arrow(
         self,
         screen: pygame.Surface,
@@ -534,15 +599,18 @@ class GraphScene(Scene):
         color: tuple[int, int, int],
         width: int,
     ) -> None:
-        dx, dy = tx - sx, ty - sy
-        length = math.hypot(dx, dy)
-        if length < 1.0:
+        if math.hypot(tx - sx, ty - sy) < 1.0:
             return
-        angle = math.atan2(dy, dx)
-        # Line stops at the arrow base so the arrowhead's apex coincides with (tx, ty).
+        cx, cy = self._edge_curve(sx, sy, tx, ty)
+        points = self._bezier_points(sx, sy, cx, cy, tx, ty)
+        # Tangent at the destination end gives the arrowhead direction.
+        px, py = points[-2]
+        angle = math.atan2(ty - py, tx - px)
         base_x = tx - math.cos(angle) * ARROW_LEN
         base_y = ty - math.sin(angle) * ARROW_LEN
-        pygame.draw.line(screen, color, (sx, sy), (base_x, base_y), width)
+        pygame.draw.lines(
+            screen, color, False, [*points[:-1], (base_x, base_y)], width
+        )
         left = (
             base_x + math.cos(angle + math.pi / 2) * ARROW_HALF_WIDTH,
             base_y + math.sin(angle + math.pi / 2) * ARROW_HALF_WIDTH,
@@ -562,9 +630,11 @@ class GraphScene(Scene):
         ty: int,
         text: str,
     ) -> None:
-        # Place label two-thirds along the edge so it sits closer to the destination.
-        lx = int(sx + (tx - sx) * 0.66)
-        ly = int(sy + (ty - sy) * 0.66)
+        # Place label two-thirds along the curve so it sits closer to the destination.
+        cx, cy = self._edge_curve(sx, sy, tx, ty)
+        t, mt = 0.66, 0.34
+        lx = int(mt * mt * sx + 2 * mt * t * cx + t * t * tx)
+        ly = int(mt * mt * sy + 2 * mt * t * cy + t * t * ty)
         label = self._small_font.render(text, True, (240, 240, 240))
         pad_x, pad_y = 6, 2
         bg = pygame.Surface(
@@ -715,7 +785,12 @@ class GraphScene(Scene):
             (sx, sy), (tx, ty) = endpoints
             if (sx, sy) == (tx, ty):
                 continue
-            d = _distance_point_to_segment(pos, (sx, sy), (tx, ty))
+            cx, cy = self._edge_curve(sx, sy, tx, ty)
+            points = self._bezier_points(sx, sy, cx, cy, tx, ty)
+            d = min(
+                _distance_point_to_segment(pos, points[i], points[i + 1])
+                for i in range(len(points) - 1)
+            )
             if d < best_dist:
                 best_dist = d
                 best_idx = idx

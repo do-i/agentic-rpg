@@ -7,6 +7,8 @@ import pygame
 
 from engine.common.scene.scene import Scene
 from engine.world.tile_map import TileMap
+from tools.map_editor.graph.portal_graph import GraphNode
+from tools.map_editor.graph.sprite_cache import SpriteCache
 from tools.map_editor.overlay import (
     KIND_ORDER,
     collect_overlay,
@@ -29,10 +31,14 @@ class MapViewScene(Scene):
         yaml_path: Path | None,
         on_back: Callable[[], None],
         font: pygame.font.Font,
+        node: GraphNode,
+        sprites: SpriteCache,
     ) -> None:
         self._tmx_path = tmx_path
         self._on_back = on_back
         self._font = font
+        self._node = node
+        self._sprites = sprites
         self._tile_map = TileMap(str(tmx_path))
         self._cam_x = 0.0
         self._cam_y = 0.0
@@ -114,6 +120,8 @@ class MapViewScene(Scene):
             scaled = pygame.transform.scale(buf, (zoomed_w, zoomed_h))
             screen.blit(scaled, (-int(self._cam_x * self._zoom), -int(self._cam_y * self._zoom)))
 
+        self._render_sprites(screen)
+
         render_overlay(
             screen=screen,
             objects=self._overlay,
@@ -138,9 +146,45 @@ class MapViewScene(Scene):
 
         render_legend(screen=screen, visible_kinds=self._visible_kinds, font=self._font)
 
+    def _render_sprites(self, screen: pygame.Surface) -> None:
+        """Blit NPC and item-box sprites at their tile positions.
+
+        Sprites are sized in native map pixels (a 64px character sheet tile
+        spans 2 map tiles); they scale with zoom and anchor at the tile's
+        top-left, matching the engine's on-map rendering.
+        """
+        tw = self._tile_map.tile_width
+        th = self._tile_map.tile_height
+
+        def _blit(icon: pygame.Surface | None, col: int, row: int) -> None:
+            if icon is None:
+                return
+            dw = max(2, int(icon.get_width() * self._zoom))
+            dh = max(2, int(icon.get_height() * self._zoom))
+            scaled = pygame.transform.scale(icon, (dw, dh))
+            bx = int((col * tw - self._cam_x) * self._zoom)
+            by = int((row * th - self._cam_y) * self._zoom)
+            if bx + dw < 0 or by + dh < 0 or bx > screen.get_width() or by > screen.get_height():
+                return
+            screen.blit(scaled, (bx, by))
+
+        for npc in self._node.npcs:
+            if npc.position is None:
+                continue
+            _blit(self._sprites.npc_icon(npc.sprite), npc.position[0], npc.position[1])
+
+        for box in self._node.item_boxes:
+            if box.position is None:
+                continue
+            _blit(self._sprites.item_box_icon(box.sprite), box.position[0], box.position[1])
+
     def _apply_zoom(self, factor: float) -> None:
         new_zoom = self._zoom * factor
         new_zoom = max(self.MIN_ZOOM, min(self.MAX_ZOOM, new_zoom))
+        # Keep the world point under the mouse pointer fixed on screen.
+        mx, my = pygame.mouse.get_pos()
+        self._cam_x += mx / self._zoom - mx / new_zoom
+        self._cam_y += my / self._zoom - my / new_zoom
         self._zoom = new_zoom
 
     def _toggle_all_overlay(self) -> None:
