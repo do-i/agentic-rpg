@@ -64,6 +64,8 @@ class App:
                 yaml_path=node.yaml_path,
                 on_back=self._show_graph,
                 font=self._font,
+                node=node,
+                sprites=self._sprites,
             )
         except Exception as e:
             print(f"Failed to open {node.tmx_path.name}: {e}", file=sys.stderr)

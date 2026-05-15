@@ -50,10 +50,10 @@ NODE_BORDER_SELECTED = (240, 220, 120)
 EDGE_COLOR = (110, 130, 160)
 EDGE_COLOR_HOVER = (180, 200, 230)
 EDGE_COLOR_SELECTED = (240, 220, 120)
-EDGE_COLOR_OUTGOING = (120, 210, 140)
-EDGE_COLOR_INCOMING = (235, 150, 110)
-ARROW_LEN = 16
-ARROW_HALF_WIDTH = 8
+EDGE_COLOR_OUTGOING = (60, 230, 90)
+EDGE_COLOR_INCOMING = (255, 80, 80)
+ARROW_LEN = 13
+ARROW_HALF_WIDTH = 5
 # Quadratic-bezier sideways bow as a fraction of the edge length.
 EDGE_CURVE_RATIO = 0.16
 NODE_PADDING = 8
@@ -65,6 +65,11 @@ PANEL_WIDTH_DEFAULT = 360
 PANEL_WIDTH_MIN = 240
 PANEL_WIDTH_MAX_RESERVE = 200  # leave at least this much for the graph
 TOAST_MS = 1400
+
+# Header menu bar across the top of the graph area; the graph renders below it.
+HEADER_HEIGHT = 34
+HEADER_BG = (24, 24, 32)
+HEADER_BORDER = (60, 60, 80)
 
 
 Selection = Union[GraphNode, GraphEdge, None]
@@ -175,6 +180,8 @@ class GraphScene(Scene):
             if event.button == 1:
                 self._maybe_copy(event.pos)
             return
+        if self._in_header(event.pos):
+            return
         if event.button == 1 and self._editor.enabled and self._editor.step in (
             STEP_SOURCE_NODE, STEP_DEST_NODE
         ):
@@ -224,6 +231,10 @@ class GraphScene(Scene):
             self._hover_node = None
             self._hover_edge_idx = None
             self._hovered_copy_idx = self._copy_target_at(event.pos)
+        elif self._in_header(event.pos):
+            self._hover_node = None
+            self._hover_edge_idx = None
+            self._hovered_copy_idx = None
         else:
             self._hovered_copy_idx = None
             self._hover_node = self._node_at_screen(event.pos)
@@ -246,6 +257,8 @@ class GraphScene(Scene):
     def _on_wheel(self, event: pygame.event.Event) -> None:
         if self._mouse_in_panel():
             self._scroll_panel(-event.y * 60)
+            return
+        if self._in_header(pygame.mouse.get_pos()):
             return
         factor = 1.15 if event.y > 0 else 1.0 / 1.15
         new_zoom = max(0.25, min(2.5, self._zoom * factor))
@@ -470,10 +483,15 @@ class GraphScene(Scene):
             self._needs_fit = False
 
         screen.fill((14, 14, 20))
+        # Clip graph drawing to the dedicated viewport so nodes/edges never
+        # bleed into the header menu bar.
+        viewport = self._graph_viewport(screen.get_size())
+        screen.set_clip(pygame.Rect(*viewport))
         self._render_edges(screen)
         for view in self._node_views.values():
             self._render_node(screen, view)
-        self._render_hud(screen)
+        screen.set_clip(None)
+        self._render_header(screen)
 
         # Reset scroll when the selection changes.
         sel_id = id(self._selection) if self._selection is not None else None
@@ -532,9 +550,9 @@ class GraphScene(Scene):
             if selected_node_id is None:
                 return None
             if edge.source == selected_node_id:
-                return EDGE_COLOR_OUTGOING, 3
+                return EDGE_COLOR_OUTGOING, 4
             if edge.target == selected_node_id:
-                return EDGE_COLOR_INCOMING, 3
+                return EDGE_COLOR_INCOMING, 4
             return None
 
         for _, edge, (sx, sy), (tx, ty), is_selected, is_hover in decorated:
@@ -578,7 +596,7 @@ class GraphScene(Scene):
         return (sx + dx / 2 + nx * bow, sy + dy / 2 + ny * bow)
 
     def _bezier_points(
-        self, sx: int, sy: int, cx: float, cy: float, tx: int, ty: int, steps: int = 18
+        self, sx: int, sy: int, cx: float, cy: float, tx: int, ty: int, steps: int = 40
     ) -> list[tuple[float, float]]:
         points = []
         for i in range(steps + 1):
@@ -608,9 +626,11 @@ class GraphScene(Scene):
         angle = math.atan2(ty - py, tx - px)
         base_x = tx - math.cos(angle) * ARROW_LEN
         base_y = ty - math.sin(angle) * ARROW_LEN
-        pygame.draw.lines(
-            screen, color, False, [*points[:-1], (base_x, base_y)], width
-        )
+        path = [*points[:-1], (base_x, base_y)]
+        # Thick pass for body, anti-aliased pass on top to smooth the staircase.
+        if width > 1:
+            pygame.draw.lines(screen, color, False, path, width)
+        pygame.draw.aalines(screen, color, False, path)
         left = (
             base_x + math.cos(angle + math.pi / 2) * ARROW_HALF_WIDTH,
             base_y + math.sin(angle + math.pi / 2) * ARROW_HALF_WIDTH,
@@ -619,7 +639,9 @@ class GraphScene(Scene):
             base_x + math.cos(angle - math.pi / 2) * ARROW_HALF_WIDTH,
             base_y + math.sin(angle - math.pi / 2) * ARROW_HALF_WIDTH,
         )
-        pygame.draw.polygon(screen, color, [(tx, ty), left, right])
+        head = [(tx, ty), left, right]
+        pygame.draw.polygon(screen, color, head)
+        pygame.draw.aalines(screen, color, True, head)
 
     def _draw_edge_label(
         self,
@@ -699,7 +721,13 @@ class GraphScene(Scene):
             (rect.x + 6, rect.bottom - LABEL_HEIGHT * self._zoom - 2),
         )
 
-    def _render_hud(self, screen: pygame.Surface) -> None:
+    def _render_header(self, screen: pygame.Surface) -> None:
+        bar_w = max(1, screen.get_width() - self._panel_width)
+        pygame.draw.rect(screen, HEADER_BG, pygame.Rect(0, 0, bar_w, HEADER_HEIGHT))
+        pygame.draw.line(
+            screen, HEADER_BORDER,
+            (0, HEADER_HEIGHT - 1), (bar_w, HEADER_HEIGHT - 1),
+        )
         hud = self._font.render(
             f"Map Graph   nodes={len(self._graph.nodes)}  edges={len(self._graph.edges)}   "
             f"zoom={self._zoom:.2f}   "
@@ -707,7 +735,7 @@ class GraphScene(Scene):
             True,
             (220, 220, 220),
         )
-        screen.blit(hud, (10, 10))
+        screen.blit(hud, (10, (HEADER_HEIGHT - hud.get_height()) // 2))
 
     def _render_editor_hud(self, screen: pygame.Surface) -> None:
         lines = [
@@ -751,10 +779,18 @@ class GraphScene(Scene):
     # ── geometry helpers ─────────────────────────────────────────────────
 
     def _graph_viewport(self, screen_size: tuple[int, int]) -> tuple[int, int, int, int]:
-        return (0, 0, max(1, screen_size[0] - self._panel_width), screen_size[1])
+        return (
+            0,
+            HEADER_HEIGHT,
+            max(1, screen_size[0] - self._panel_width),
+            max(1, screen_size[1] - HEADER_HEIGHT),
+        )
 
     def _in_panel(self, pos: tuple[int, int]) -> bool:
         return self._panel_layout is not None and self._panel_layout.rect.collidepoint(pos)
+
+    def _in_header(self, pos: tuple[int, int]) -> bool:
+        return pos[1] < HEADER_HEIGHT and not self._in_panel(pos)
 
     def _on_handle(self, pos: tuple[int, int]) -> bool:
         return self._panel_layout is not None and self._panel_layout.handle_rect.collidepoint(pos)
@@ -858,14 +894,14 @@ class GraphScene(Scene):
         span_x = max(1.0, max_x - min_x)
         span_y = max(1.0, max_y - min_y)
         margin = 60
-        vw, vh = viewport[2], viewport[3]
+        vx, vy, vw, vh = viewport
         zx = (vw - margin * 2) / span_x
         zy = (vh - margin * 2) / span_y
         self._zoom = max(0.25, min(2.0, min(zx, zy)))
         center_x = (min_x + max_x) / 2
         center_y = (min_y + max_y) / 2
-        self._cam_x = center_x - (vw / 2) / self._zoom
-        self._cam_y = center_y - (vh / 2) / self._zoom
+        self._cam_x = center_x - (vx + vw / 2) / self._zoom
+        self._cam_y = center_y - (vy + vh / 2) / self._zoom
 
 
 def _exit_point(

@@ -1,9 +1,10 @@
 """Loads single-tile icons from Tiled .tsx sprite sheets for the map editor.
 
-NPCs reference a .tsx character sheet (4-direction × multiple frames); we pull
-the first tile, which is conventionally the down-facing standing pose, and
-use it as a small icon to overlay on map thumbnails. Item boxes use the
-scenario's default object sprite when no per-instance sprite is set.
+NPCs reference a .tsx character sheet (4-direction × multiple frames); rows
+are ordered UP, LEFT, DOWN, RIGHT (see engine.world.sprite_sheet), so the
+down-facing idle pose is the first frame of row 2. We pull that tile when the
+sheet has the rows for it, otherwise fall back to the first tile. Item boxes
+use the scenario's default object sprite when no per-instance sprite is set.
 
 Loaders return None on failure (missing file, malformed tsx, etc.) — the
 caller skips the overlay in that case.
@@ -57,7 +58,11 @@ class SpriteCache:
             sheet = pygame.image.load(str(image_path)).convert_alpha()
             if tile_w <= 0 or tile_h <= 0:
                 return sheet
-            tile = sheet.subsurface(pygame.Rect(0, 0, tile_w, tile_h)).copy()
+            # Row 2 is the down-facing pose on character sheets; fall back to
+            # row 0 for short sheets (e.g. the 1-row item-box tileset).
+            down_row = 2
+            row_y = down_row * tile_h if (down_row + 1) * tile_h <= sheet.get_height() else 0
+            tile = sheet.subsurface(pygame.Rect(0, row_y, tile_w, tile_h)).copy()
             return tile
         except (FileNotFoundError, pygame.error, ET.ParseError):
             return None

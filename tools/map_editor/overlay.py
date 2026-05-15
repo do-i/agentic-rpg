@@ -72,7 +72,12 @@ def collect_overlay(
     out.extend(_collect_boss_spawn(tmx, tile_width, tile_height))
     out.extend(_collect_enemy_spawn(tmx, tile_width, tile_height))
     if yaml_path is not None:
-        out.extend(_collect_from_yaml(yaml_path, tile_width, tile_height))
+        with yaml_path.open("r", encoding="utf-8") as f:
+            yaml_data = yaml.safe_load(f) or {}
+        out.extend(_collect_from_yaml(yaml_data, tile_width, tile_height))
+        inn = _collect_inn(yaml_data, tmx, tile_width, tile_height)
+        if inn is not None:
+            out.append(inn)
     return out
 
 
@@ -150,11 +155,8 @@ def _collect_enemy_spawn(
 
 
 def _collect_from_yaml(
-    yaml_path: Path, tw: int, th: int
+    data: dict, tw: int, th: int
 ) -> list[OverlayObject]:
-    with yaml_path.open("r", encoding="utf-8") as f:
-        data = yaml.safe_load(f) or {}
-
     found: list[OverlayObject] = []
 
     for entry in data.get("npcs") or []:
@@ -187,21 +189,73 @@ def _collect_from_yaml(
             )
         )
 
+    return found
+
+
+def _collect_inn(
+    data: dict, tmx: pytmx.TiledMap, tw: int, th: int
+) -> OverlayObject | None:
+    """Place the inn marker on a real on-map feature.
+
+    The `inn:` block's `position` is unused by the engine (only `cost` is
+    read), and in practice it is stale copy-pasted data. So we ignore it and
+    anchor the marker to the inn-keeper NPC if this map has one, otherwise to
+    the portal that leads into the inn interior.
+    """
     inn = data.get("inn")
-    if isinstance(inn, dict) and "position" in inn:
-        pos = inn["position"]
-        found.append(
-            OverlayObject(
+    if not isinstance(inn, dict):
+        return None
+    label = f"inn ({inn.get('cost', '?')}g)"
+
+    for entry in data.get("npcs") or []:
+        if not _is_inn_keeper(entry):
+            continue
+        pos = entry.get("position")
+        if pos:
+            return OverlayObject(
                 kind=KIND_INN,
                 x_px=int(pos[0]) * tw,
                 y_px=int(pos[1]) * th,
                 w_px=tw,
                 h_px=th,
-                label=f"inn ({inn.get('cost', '?')}g)",
+                label=label,
             )
-        )
 
-    return found
+    portal_tile = _find_inn_portal(tmx)
+    if portal_tile is not None:
+        col, row = portal_tile
+        return OverlayObject(
+            kind=KIND_INN,
+            x_px=col * tw,
+            y_px=row * th,
+            w_px=tw,
+            h_px=th,
+            label=label,
+        )
+    return None
+
+
+def _is_inn_keeper(npc_entry: dict) -> bool:
+    npc_id = str(npc_entry.get("id") or "")
+    dialogue = str(npc_entry.get("dialogue") or "")
+    return "inn" in npc_id or dialogue.startswith("inn")
+
+
+def _find_inn_portal(tmx: pytmx.TiledMap) -> tuple[int, int] | None:
+    """Return the tile of the portal leading into the inn interior, if any."""
+    for layer in tmx.layers:
+        if not isinstance(layer, pytmx.TiledObjectGroup):
+            continue
+        if layer.name != "portals":
+            continue
+        for obj in layer:
+            props = obj.properties or {}
+            target = str(props.get("target_map") or "")
+            if str(obj.name or "") == "inn" or "_inn" in target:
+                tw = tmx.tilewidth
+                th = tmx.tileheight
+                return round(obj.x / tw), round(obj.y / th)
+    return None
 
 
 def render_overlay(

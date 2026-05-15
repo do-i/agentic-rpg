@@ -374,13 +374,16 @@ def _overlay_actors(
         return
     sx = map_rect.width / map_w_px
     sy = map_rect.height / map_h_px
-    tw_screen = max(6, int(tile_w_px * sx))
-    th_screen = max(6, int(tile_h_px * sy))
 
     def _blit(icon, col: int, row: int) -> None:
         if icon is None:
             return
-        scaled = pygame.transform.smoothscale(icon, (tw_screen, th_screen))
+        # Sprites are sized in native map pixels (a 64px character sheet tile
+        # spans 2 map tiles, a 32px item box spans 1). Scale by the map→panel
+        # ratio and anchor at the tile's top-left, matching the engine.
+        dw = max(4, int(icon.get_width() * sx))
+        dh = max(4, int(icon.get_height() * sy))
+        scaled = pygame.transform.smoothscale(icon, (dw, dh))
         bx = map_rect.left + int(col * tile_w_px * sx)
         by = map_rect.top + int(row * tile_h_px * sy)
         screen.blit(scaled, (bx, by))
