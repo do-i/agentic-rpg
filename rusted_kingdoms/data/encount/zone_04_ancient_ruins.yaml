@@ -1,6 +1,7 @@
 id: zone_04_ancient_ruins
 name: Ancient Ruins
 density: 0.13
+background: zone4-bg-1280x468
 
 entries:
   - formation: [skeleton_monster_base, skeleton_monster_base]
