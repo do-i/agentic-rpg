@@ -70,6 +70,29 @@ TOAST_MS = 1400
 HEADER_HEIGHT = 34
 HEADER_BG = (24, 24, 32)
 HEADER_BORDER = (60, 60, 80)
+HAMBURGER_SIZE = 26
+HAMBURGER_MARGIN = 4
+MENU_BG = (32, 32, 42)
+MENU_BORDER = (90, 90, 110)
+MENU_ITEM_HOVER = (60, 70, 100)
+MENU_ITEM_HEIGHT = 30
+MENU_WIDTH = 220
+MODAL_BG = (24, 24, 34, 240)
+MODAL_BORDER = (110, 110, 140)
+MODAL_BACKDROP = (0, 0, 0, 140)
+
+HELP_LINES = [
+    ("click node", "select node"),
+    ("click edge", "select portal edge"),
+    ("drag node", "move node"),
+    ("drag background", "pan camera"),
+    ("wheel", "zoom (centered on cursor)"),
+    ("Enter", "open selected map"),
+    ("0", "refit camera"),
+    ("E", "toggle edit mode"),
+    ("S", "save pending edits (edit mode)"),
+    ("Esc", "deselect / cancel"),
+]
 
 
 Selection = Union[GraphNode, GraphEdge, None]
@@ -154,12 +177,40 @@ class GraphScene(Scene):
         self._editor = EditorState()
         self._tile_picker: TilePicker | None = None
 
+        # Header / modal menu state.
+        self._hamburger_rect = pygame.Rect(0, 0, 0, 0)
+        self._menu_open = False
+        self._menu_rect = pygame.Rect(0, 0, 0, 0)
+        self._menu_item_rects: list[tuple[pygame.Rect, str]] = []
+        self._menu_hover_idx: int | None = None
+        self._help_open = False
+
     # ── input ────────────────────────────────────────────────────────────
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
         for event in events:
             if self._tile_picker is not None:
                 self._tile_picker.handle_event(event)
+                continue
+            if self._help_open:
+                if (event.type == pygame.KEYDOWN
+                        and event.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER)):
+                    self._help_open = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    self._help_open = False
+                continue
+            if self._menu_open:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    self._menu_open = False
+                elif event.type == pygame.MOUSEMOTION:
+                    self._update_menu_hover(event.pos)
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    self._on_menu_click(event.pos)
+                continue
+            if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1
+                    and self._hamburger_rect.collidepoint(event.pos)):
+                self._menu_open = True
+                self._menu_hover_idx = None
                 continue
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self._on_mouse_down(event)
@@ -524,6 +575,10 @@ class GraphScene(Scene):
 
         if self._editor.enabled:
             self._render_editor_hud(screen)
+        if self._menu_open:
+            self._render_menu(screen)
+        if self._help_open:
+            self._render_help_modal(screen)
         if self._tile_picker is not None:
             self._tile_picker.render(screen, pygame.time.get_ticks())
 
@@ -728,14 +783,142 @@ class GraphScene(Scene):
             screen, HEADER_BORDER,
             (0, HEADER_HEIGHT - 1), (bar_w, HEADER_HEIGHT - 1),
         )
-        hud = self._font.render(
+        self._hamburger_rect = pygame.Rect(
+            HAMBURGER_MARGIN,
+            (HEADER_HEIGHT - HAMBURGER_SIZE) // 2,
+            HAMBURGER_SIZE,
+            HAMBURGER_SIZE,
+        )
+        self._render_hamburger(screen, self._hamburger_rect)
+        title = self._font.render(
             f"Map Graph   nodes={len(self._graph.nodes)}  edges={len(self._graph.edges)}   "
-            f"zoom={self._zoom:.2f}   "
-            f"[click=select  drag=move  wheel=zoom  Enter=open  0=fit  E=edit]",
+            f"zoom={self._zoom:.2f}",
             True,
             (220, 220, 220),
         )
-        screen.blit(hud, (10, (HEADER_HEIGHT - hud.get_height()) // 2))
+        title_x = self._hamburger_rect.right + 12
+        screen.blit(title, (title_x, (HEADER_HEIGHT - title.get_height()) // 2))
+
+    def _render_hamburger(self, screen: pygame.Surface, rect: pygame.Rect) -> None:
+        mx, my = pygame.mouse.get_pos()
+        hovered = rect.collidepoint(mx, my) or self._menu_open
+        bg = (50, 55, 70) if hovered else HEADER_BG
+        pygame.draw.rect(screen, bg, rect, border_radius=4)
+        pygame.draw.rect(screen, HEADER_BORDER, rect, width=1, border_radius=4)
+        # Three horizontal bars.
+        bar_w = rect.width - 10
+        bar_h = 2
+        gap = 5
+        total = bar_h * 3 + gap * 2
+        y0 = rect.y + (rect.height - total) // 2
+        x0 = rect.x + (rect.width - bar_w) // 2
+        for i in range(3):
+            pygame.draw.rect(
+                screen, (220, 220, 230),
+                pygame.Rect(x0, y0 + i * (bar_h + gap), bar_w, bar_h),
+                border_radius=1,
+            )
+
+    # ── menu / help modal ────────────────────────────────────────────────
+
+    def _menu_entries(self) -> list[tuple[str, str]]:
+        """Returns list of (id, label). Add new options here as features land."""
+        edit_label = "Exit Edit Mode" if self._editor.enabled else "Enter Edit Mode"
+        return [
+            ("help", "Help"),
+            ("edit", edit_label),
+            ("fit", "Refit Camera"),
+        ]
+
+    def _update_menu_hover(self, pos: tuple[int, int]) -> None:
+        self._menu_hover_idx = None
+        for i, (rect, _) in enumerate(self._menu_item_rects):
+            if rect.collidepoint(pos):
+                self._menu_hover_idx = i
+                return
+
+    def _on_menu_click(self, pos: tuple[int, int]) -> None:
+        for rect, item_id in self._menu_item_rects:
+            if rect.collidepoint(pos):
+                self._menu_open = False
+                self._invoke_menu(item_id)
+                return
+        # Click outside closes the menu.
+        self._menu_open = False
+
+    def _invoke_menu(self, item_id: str) -> None:
+        if item_id == "help":
+            self._help_open = True
+        elif item_id == "edit":
+            self._toggle_edit_mode()
+        elif item_id == "fit":
+            self._needs_fit = True
+
+    def _render_menu(self, screen: pygame.Surface) -> None:
+        entries = self._menu_entries()
+        height = MENU_ITEM_HEIGHT * len(entries) + 8
+        self._menu_rect = pygame.Rect(
+            HAMBURGER_MARGIN, HEADER_HEIGHT + 2, MENU_WIDTH, height,
+        )
+        pygame.draw.rect(screen, MENU_BG, self._menu_rect, border_radius=6)
+        pygame.draw.rect(screen, MENU_BORDER, self._menu_rect, width=1, border_radius=6)
+        self._menu_item_rects = []
+        for i, (item_id, label) in enumerate(entries):
+            item_rect = pygame.Rect(
+                self._menu_rect.x + 4,
+                self._menu_rect.y + 4 + i * MENU_ITEM_HEIGHT,
+                self._menu_rect.width - 8,
+                MENU_ITEM_HEIGHT,
+            )
+            if self._menu_hover_idx == i:
+                pygame.draw.rect(screen, MENU_ITEM_HOVER, item_rect, border_radius=4)
+            text = self._font.render(label, True, (230, 230, 235))
+            screen.blit(
+                text,
+                (item_rect.x + 10,
+                 item_rect.y + (item_rect.height - text.get_height()) // 2),
+            )
+            self._menu_item_rects.append((item_rect, item_id))
+
+    def _render_help_modal(self, screen: pygame.Surface) -> None:
+        sw, sh = screen.get_size()
+        backdrop = pygame.Surface((sw, sh), pygame.SRCALPHA)
+        backdrop.fill(MODAL_BACKDROP)
+        screen.blit(backdrop, (0, 0))
+
+        key_surfs = [self._font.render(k, True, (255, 230, 150)) for k, _ in HELP_LINES]
+        desc_surfs = [self._font.render(d, True, (230, 230, 235)) for _, d in HELP_LINES]
+        key_col_w = max(s.get_width() for s in key_surfs) + 24
+        desc_col_w = max(s.get_width() for s in desc_surfs)
+        row_h = max(key_surfs[0].get_height(), desc_surfs[0].get_height()) + 6
+        title = self._header_font.render("Keys & Commands", True, (255, 245, 200))
+        pad_x, pad_y = 24, 20
+        content_w = max(key_col_w + desc_col_w, title.get_width())
+        content_h = title.get_height() + 14 + row_h * len(HELP_LINES)
+        modal_w = content_w + pad_x * 2
+        modal_h = content_h + pad_y * 2 + 28  # +28 for footer hint
+        modal_rect = pygame.Rect(
+            (sw - modal_w) // 2, (sh - modal_h) // 2, modal_w, modal_h,
+        )
+        panel = pygame.Surface((modal_w, modal_h), pygame.SRCALPHA)
+        panel.fill(MODAL_BG)
+        screen.blit(panel, modal_rect.topleft)
+        pygame.draw.rect(screen, MODAL_BORDER, modal_rect, width=1, border_radius=6)
+
+        screen.blit(title, (modal_rect.x + pad_x, modal_rect.y + pad_y))
+        y = modal_rect.y + pad_y + title.get_height() + 14
+        for k_surf, d_surf in zip(key_surfs, desc_surfs):
+            screen.blit(k_surf, (modal_rect.x + pad_x, y))
+            screen.blit(d_surf, (modal_rect.x + pad_x + key_col_w, y))
+            y += row_h
+        hint = self._small_font.render(
+            "click anywhere or press Esc to close", True, (170, 170, 190),
+        )
+        screen.blit(
+            hint,
+            (modal_rect.x + (modal_w - hint.get_width()) // 2,
+             modal_rect.bottom - pad_y - hint.get_height() + 4),
+        )
 
     def _render_editor_hud(self, screen: pygame.Surface) -> None:
         lines = [

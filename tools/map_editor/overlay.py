@@ -20,16 +20,15 @@ import yaml
 KIND_PORTAL       = "portal"
 KIND_BOSS_SPAWN   = "boss_spawn"
 KIND_ENEMY_SPAWN  = "enemy_spawn"
-KIND_NPC          = "npc"
-KIND_ITEM_BOX     = "item_box"
 KIND_INN          = "inn"
 
+# NPCs and item boxes intentionally omitted: their actual sprites are blitted
+# on top of the map by the scene renderer, so a separate colored placeholder
+# square only adds visual noise.
 KIND_ORDER: tuple[str, ...] = (
     KIND_PORTAL,
     KIND_BOSS_SPAWN,
     KIND_ENEMY_SPAWN,
-    KIND_NPC,
-    KIND_ITEM_BOX,
     KIND_INN,
 )
 
@@ -37,8 +36,6 @@ KIND_COLORS: dict[str, tuple[int, int, int]] = {
     KIND_PORTAL:      (80, 200, 240),   # cyan
     KIND_BOSS_SPAWN:  (240, 80, 80),    # red
     KIND_ENEMY_SPAWN: (240, 160, 60),   # orange
-    KIND_NPC:         (120, 220, 120),  # green
-    KIND_ITEM_BOX:    (240, 220, 90),   # yellow
     KIND_INN:         (160, 140, 240),  # purple
 }
 
@@ -157,39 +154,9 @@ def _collect_enemy_spawn(
 def _collect_from_yaml(
     data: dict, tw: int, th: int
 ) -> list[OverlayObject]:
-    found: list[OverlayObject] = []
-
-    for entry in data.get("npcs") or []:
-        pos = entry.get("position")
-        if not pos:
-            continue
-        found.append(
-            OverlayObject(
-                kind=KIND_NPC,
-                x_px=int(pos[0]) * tw,
-                y_px=int(pos[1]) * th,
-                w_px=tw,
-                h_px=th,
-                label=str(entry.get("name") or entry.get("id") or "npc"),
-            )
-        )
-
-    for entry in data.get("item_boxes") or []:
-        pos = entry.get("position")
-        if not pos:
-            continue
-        found.append(
-            OverlayObject(
-                kind=KIND_ITEM_BOX,
-                x_px=int(pos[0]) * tw,
-                y_px=int(pos[1]) * th,
-                w_px=tw,
-                h_px=th,
-                label=str(entry.get("id") or "box"),
-            )
-        )
-
-    return found
+    # NPCs and item boxes are rendered as their actual sprites by the scene,
+    # so we don't emit overlay placeholders for them here.
+    return []
 
 
 def _collect_inn(
@@ -316,7 +283,9 @@ def render_legend(
     panel.fill((0, 0, 0, 170))
     screen.blit(panel, (panel_x, panel_y))
 
-    header = font.render("Overlay  (Tab=all, 1-6=toggle)", True, (220, 220, 220))
+    header = font.render(
+        f"Overlay  (Tab=all, 1-{len(KIND_ORDER)}=toggle)", True, (220, 220, 220)
+    )
     screen.blit(header, (panel_x + 8, panel_y + 4))
 
     for i, kind in enumerate(KIND_ORDER):

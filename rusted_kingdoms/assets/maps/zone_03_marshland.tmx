@@ -11,7 +11,13 @@
     <property name="target_position_y" type="int" value="18"/>
    </properties>
   </object>
-  <object id="12" name="zone_04_todo" x="10" y="1000"/>
+  <object id="12" name="zone_04_ancient_ruins_01_gate" x="0" y="992" width="96" height="32">
+   <properties>
+    <property name="target_map" value="zone_04_ancient_ruins_01_gate"/>
+    <property name="target_position_x" type="int" value="2"/>
+    <property name="target_position_y" type="int" value="14"/>
+   </properties>
+  </object>
  </objectgroup>
  <layer id="1" name="ground" width="50" height="40">
   <data encoding="csv">

@@ -149,13 +149,17 @@ class TilePicker:
             return
         sx = map_rect.width / map_w_px
         sy = map_rect.height / map_h_px
-        tw_screen = max(8, int(tile_w_px * sx))
-        th_screen = max(8, int(tile_h_px * sy))
 
         def _blit(icon, col: int, row: int) -> None:
             if icon is None:
                 return
-            scaled = pygame.transform.smoothscale(icon, (tw_screen, th_screen))
+            # Sprites are sized in native map pixels (a 64px character sheet
+            # tile spans 2 map tiles); scale by the map→screen ratio and anchor
+            # at the tile's top-left to match the engine. Squashing to one
+            # screen tile would mis-place 2-tile-tall sprites by a tile.
+            dw = max(4, int(icon.get_width() * sx))
+            dh = max(4, int(icon.get_height() * sy))
+            scaled = pygame.transform.smoothscale(icon, (dw, dh))
             bx = map_rect.left + int(col * tile_w_px * sx)
             by = map_rect.top + int(row * tile_h_px * sy)
             screen.blit(scaled, (bx, by))
