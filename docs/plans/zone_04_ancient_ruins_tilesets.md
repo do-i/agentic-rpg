@@ -54,3 +54,20 @@ Nearby maps already use the core outdoor/stone set:
   `spawn_tile`, `portals`, and `boss_enemy` when needed.
 - Portal progression should connect Marshland to `zone_04_ancient_ruins`, then
   onward toward the Ruinwatch/Frostholm route.
+
+## Candidate Map Chain
+
+Initial candidate maps were created with the primary recommended tilesets:
+`ground/terrain-v7.tsx`, `grass_cave_walls_24x14.tsx`, and
+`stone_tile_stares_16x16.tsx`.
+
+| TMX | Role | Entry | Exit |
+|---|---|---|---|
+| `rusted_kingdoms/assets/maps/zone_04_ancient_ruins_01_gate.tmx` | Gate / approach | `zone_03_marshland` | `zone_04_ancient_ruins_02_courtyard` |
+| `rusted_kingdoms/assets/maps/zone_04_ancient_ruins_02_courtyard.tmx` | Broken courtyard route | `zone_04_ancient_ruins_01_gate` | `zone_04_ancient_ruins_03_sanctum` |
+| `rusted_kingdoms/assets/maps/zone_04_ancient_ruins_03_sanctum.tmx` | Inner sanctum / boss arena | `zone_04_ancient_ruins_02_courtyard` | `zone_05_mountain_foothills` |
+
+`zone_03_marshland.tmx` now routes its former `zone_04_todo` portal to
+`zone_04_ancient_ruins_01_gate`. The forward exit from the sanctum points to
+`zone_05_mountain_foothills`, which still needs its TMX map before that final
+transition is playable.
