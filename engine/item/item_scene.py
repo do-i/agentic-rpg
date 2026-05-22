@@ -59,6 +59,7 @@ class ItemScene(Scene):
         self._in_tab:      bool = True
         self._in_action:   bool = False
         self._confirm_discard: bool = False
+        self._discard_qty: int  = 1
 
         # Left filter column (show/hide per item)
         self._in_filter:   bool = False
@@ -281,17 +282,32 @@ class ItemScene(Scene):
             elif label == "Discard" and not entry.locked:
                 self._sfx_manager.play("confirm")
                 self._confirm_discard = True
+                self._discard_qty = 1
 
     def _handle_confirm_discard(self, key: int) -> None:
-        if key in (pygame.K_RETURN, pygame.K_y):
-            entry = self._selected_entry()
-            if entry:
-                discard_item(self._get_repo(), entry)
-                items = self._filtered_items()
-                self._list_sel = min(self._list_sel, max(0, len(items) - 1))
+        entry = self._selected_entry()
+        if not entry:
+            self._confirm_discard = False
+            return
+        if key in (pygame.K_LEFT, pygame.K_DOWN):
+            new = max(1, self._discard_qty - 1)
+            if new != self._discard_qty:
+                self._sfx_manager.play("hover")
+            self._discard_qty = new
+        elif key in (pygame.K_RIGHT, pygame.K_UP):
+            new = min(entry.qty, self._discard_qty + 1)
+            if new != self._discard_qty:
+                self._sfx_manager.play("hover")
+            self._discard_qty = new
+        elif key in (pygame.K_RETURN, pygame.K_y):
+            self._sfx_manager.play("confirm")
+            discard_item(self._get_repo(), entry, self._discard_qty)
+            items = self._filtered_items()
+            self._list_sel = min(self._list_sel, max(0, len(items) - 1))
             self._confirm_discard = False
             self._in_action = False
         elif key in (pygame.K_ESCAPE, pygame.K_n):
+            self._sfx_manager.play("cancel")
             self._confirm_discard = False
 
     def _handle_aoe_confirm(self, key: int) -> None:
@@ -506,6 +522,7 @@ class ItemScene(Scene):
             action_sel=self._action_sel,
             selected_entry=self._selected_entry(),
             confirm_discard=self._confirm_discard,
+            discard_qty=self._discard_qty,
             aoe_confirm=self._aoe_confirm,
             target_overlay=self._target_overlay,
             in_filter=self._in_filter,

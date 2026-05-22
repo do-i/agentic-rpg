@@ -145,9 +145,9 @@ def display_name(entry: ItemEntry, mc_catalog: MagicCoreCatalogState | None = No
     return entry.name or entry.id.replace("_", " ").title()
 
 
-def discard_item(repo: RepositoryState, entry: ItemEntry) -> None:
-    """Remove an item entirely from the repository."""
-    repo.remove_item(entry.id)
+def discard_item(repo: RepositoryState, entry: ItemEntry, qty: int) -> None:
+    """Discard `qty` of an item. Removes the whole stack when qty covers it."""
+    repo.remove_item(entry.id, qty)
 
 
 def clamp_scroll(list_sel: int, scroll: int, visible_rows: int) -> int:

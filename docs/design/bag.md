@@ -48,3 +48,5 @@ Sell UI: filter by tag, show only non-locked items → "Sell all [consumable]"
   is session-only (not saved). Enter it with ← from the list (or ↓ from the
   tabs when the list is empty); ENTER/SPACE toggles.
 - The list shows 15 full rows and a half-row peek of the 16th.
+- **Discard** opens a confirm overlay with a quantity stepper (←/→, 1..stack);
+  discarding the whole stack removes the item.

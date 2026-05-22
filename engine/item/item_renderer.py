@@ -117,7 +117,7 @@ class ItemRenderer:
                items: list[ItemEntry], list_sel: int, scroll: int,
                in_tab: bool, in_action: bool, action_sel: int,
                selected_entry: ItemEntry | None,
-               confirm_discard: bool, aoe_confirm: bool,
+               confirm_discard: bool, discard_qty: int, aoe_confirm: bool,
                target_overlay,
                in_filter: bool,
                filter_items: list[ItemEntry],
@@ -160,7 +160,7 @@ class ItemRenderer:
         self._draw_footer(screen)
 
         if confirm_discard:
-            self._draw_confirm_overlay(screen, selected_entry)
+            self._draw_confirm_overlay(screen, selected_entry, discard_qty)
         if aoe_confirm:
             self._draw_aoe_confirm_overlay(screen, selected_entry)
         if target_overlay:
@@ -340,17 +340,35 @@ class ItemRenderer:
 
     # ── Confirm overlays ──────────────────────────────────────
 
-    def _draw_confirm_overlay(self, screen: pygame.Surface, entry: ItemEntry | None) -> None:
+    def _draw_confirm_overlay(self, screen: pygame.Surface,
+                              entry: ItemEntry | None, qty: int) -> None:
         name  = entry.id.replace("_", " ").title() if entry else "item"
-        ow, oh = 420, 110
+        total = entry.qty if entry else 1
+        ow, oh = 440, 150
         ox = (screen.get_width()  - ow) // 2
         oy = (screen.get_height() - oh) // 2
         pygame.draw.rect(screen, (30, 15, 20), (ox, oy, ow, oh), border_radius=6)
         pygame.draw.rect(screen, (180, 70, 70), (ox, oy, ow, oh), 2, border_radius=6)
-        msg  = self._font_detail.render(f"Discard {name}?", True, (220, 180, 180))
-        hint = self._font_hint.render("ENTER / Y - Confirm    ESC / N - Cancel", True, (160, 120, 120))
-        screen.blit(msg,  (ox + 20, oy + 18))
-        screen.blit(hint, (ox + 20, oy + 58))
+
+        msg = self._font_detail.render(f"Discard {name}?", True, (220, 180, 180))
+        screen.blit(msg, (ox + 20, oy + 16))
+
+        # Quantity stepper:  ◀  qty / total  ▶
+        at_min = qty <= 1
+        at_max = qty >= total
+        left_col  = (110, 90, 90) if at_min else (220, 180, 180)
+        right_col = (110, 90, 90) if at_max else (220, 180, 180)
+        cy = oy + 54
+        screen.blit(self._font_title.render("<", True, left_col), (ox + 24, cy))
+        amount = self._font_title.render(f"{qty} / {total}", True, (240, 220, 220))
+        screen.blit(amount, (ox + ow // 2 - amount.get_width() // 2, cy))
+        rx = ox + ow - 24 - self._font_title.size(">")[0]
+        screen.blit(self._font_title.render(">", True, right_col), (rx, cy))
+
+        hint = self._font_hint.render(
+            "←/→ qty    ENTER / Y - Confirm    ESC / N - Cancel",
+            True, (160, 120, 120))
+        screen.blit(hint, (ox + 20, oy + oh - 30))
 
     def _draw_aoe_confirm_overlay(self, screen: pygame.Surface, entry: ItemEntry | None) -> None:
         name  = entry.id.replace("_", " ").title() if entry else "item"

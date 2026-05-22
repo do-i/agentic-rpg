@@ -230,10 +230,16 @@ class TestDisplayName:
 # ── discard_item ──────────────────────────────────────────────
 
 class TestDiscardItem:
-    def test_removes_item_from_repo(self):
+    def test_discards_partial_qty(self):
         repo = make_repo_with_items([("potion", 5, {"consumable"})])
         entry = repo.get_item("potion")
-        discard_item(repo, entry)
+        discard_item(repo, entry, 2)
+        assert repo.get_item("potion").qty == 3
+
+    def test_discarding_whole_stack_removes_item(self):
+        repo = make_repo_with_items([("potion", 5, {"consumable"})])
+        entry = repo.get_item("potion")
+        discard_item(repo, entry, 5)
         assert repo.get_item("potion") is None
 
 
