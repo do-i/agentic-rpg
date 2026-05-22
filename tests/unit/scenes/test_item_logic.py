@@ -81,14 +81,21 @@ class TestFilteredItems:
         result = filtered_items(repo, TABS.index("All"))
         assert [e.id for e in result] == ["aaa_item", "zzz_item"]
 
-    def test_new_tab_filters_to_loot(self):
+    def test_new_tab_filters_to_latest_batch(self):
         repo = make_repo_with_items([
-            ("looted", 1, {"consumable"}),
+            ("old_loot", 1, {"consumable"}),
+            ("new_loot", 1, {"consumable"}),
             ("bought", 1, {"consumable"}),
         ])
-        repo.get_item("looted").is_loot = True
+        repo.get_item("old_loot").loot_batch = repo.start_loot_batch()
+        repo.get_item("new_loot").loot_batch = repo.start_loot_batch()
         result = filtered_items(repo, TABS.index("New"))
-        assert [e.id for e in result] == ["looted"]
+        # Only the most recent loot batch shows; earlier loot drops off.
+        assert [e.id for e in result] == ["new_loot"]
+
+    def test_new_tab_empty_when_nothing_looted(self):
+        repo = make_repo_with_items([("bought", 1, {"consumable"})])
+        assert filtered_items(repo, TABS.index("New")) == []
 
     def test_recovery_tab_filters(self):
         repo = make_repo_with_items([

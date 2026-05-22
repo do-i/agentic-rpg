@@ -17,11 +17,12 @@ from engine.equipment.equipment_logic import stat_totals
 MC_ITEM_IDS = {"mc_xs", "mc_s", "mc_m", "mc_l", "mc_xl"}
 
 
-def _add_mc(repository: RepositoryState, item_id: str, qty: int) -> None:
+def _add_mc(repository: RepositoryState, item_id: str, qty: int, batch: int) -> None:
     """Add a Magic Core item and ensure it carries the magic_core tag."""
     entry = repository.add_item(item_id, qty)
     entry.tags.add("magic_core")
     entry.is_loot = True
+    entry.loot_batch = batch
 
 
 class EncounterManager:
@@ -64,16 +65,18 @@ class EncounterManager:
     # ── Post-battle MC tagging ────────────────────────────────────
 
     @staticmethod
-    def add_mc_drops(repository: RepositoryState, mc_drops: list[dict]) -> None:
+    def add_mc_drops(repository: RepositoryState, mc_drops: list[dict],
+                     batch: int) -> None:
         """
         Called by BattleScene after victory to add MC drops to the repository.
-        Ensures magic_core tag is set on every MC item.
+        Ensures magic_core tag is set on every MC item. All drops share the
+        caller-supplied loot `batch`.
         """
         for mc in mc_drops:
             size    = mc.get("size", "S").lower()
             qty     = mc.get("qty", 1)
             item_id = f"mc_{size}"
-            _add_mc(repository, item_id, qty)
+            _add_mc(repository, item_id, qty, batch)
 
     # ── Party fill ────────────────────────────────────────────────
 

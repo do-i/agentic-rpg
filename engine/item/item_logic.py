@@ -74,12 +74,21 @@ def item_tab(entry: ItemEntry) -> str:
 
 def filtered_items(repo: RepositoryState, tab_index: int,
                    mc_catalog: MagicCoreCatalogState | None = None) -> list[ItemEntry]:
-    """Return items matching the given tab index."""
-    all_items = repo.items
+    """Return items matching the given tab index.
+
+    Items the player has hidden via the filter column are excluded from every
+    tab's listing (the filter column itself shows them so they can be unhidden).
+    """
+    all_items = [e for e in repo.items if not repo.is_hidden(e.id)]
     tab = TABS[tab_index]
 
     if tab == "New":
-        return sorted((e for e in all_items if e.is_loot), key=lambda e: e.id)
+        # Only the most recent loot batch.
+        latest = repo.latest_loot_batch
+        if latest <= 0:
+            return []
+        return sorted((e for e in all_items if e.loot_batch == latest),
+                      key=lambda e: e.id)
     if tab == "All":
         return sorted(all_items, key=lambda e: e.id)
     if tab == "Magic Core":

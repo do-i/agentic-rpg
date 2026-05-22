@@ -114,12 +114,15 @@ def from_save(
         tags    = set(item.get("tags", []))
         locked  = item.get("locked", False)
         is_loot = item.get("is_loot", False)
+        loot_batch = item.get("loot_batch", 0)
         if item_id:
             entry = state.repository.add_item(item_id, qty)
             entry.tags    = tags
             entry.locked  = locked
             entry.is_loot = is_loot
+            entry.loot_batch = loot_batch
             if item_id.startswith("mc_"):
                 entry.tags.add("magic_core")
 
+    state.repository.sync_loot_batch_seq()
     return state

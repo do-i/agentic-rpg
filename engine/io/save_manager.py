@@ -195,6 +195,7 @@ class GameStateManager:
                 "tags":    sorted(entry.tags),
                 "locked":  entry.locked,
                 "is_loot": entry.is_loot,
+                "loot_batch": entry.loot_batch,
             })
 
         return {

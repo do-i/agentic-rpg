@@ -64,10 +64,13 @@ def handle_victory(
     )
 
     sync_party_state(state, game_state.party)
-    EncounterManager.add_mc_drops(game_state.repository, rewards.loot.mc_drops)
+    # All drops from this single victory share one loot batch.
+    batch = game_state.repository.start_loot_batch()
+    EncounterManager.add_mc_drops(game_state.repository, rewards.loot.mc_drops, batch)
     for item in rewards.loot.item_drops:
         entry = game_state.repository.add_item(item["id"], item.get("qty", 1))
         entry.is_loot = True
+        entry.loot_batch = batch
     return rewards
 
 

@@ -28,6 +28,9 @@ class ItemEntry:
         self.sellable = sellable
         self.droppable = droppable
         self.is_loot = False
+        # Loot batch number (0 = not looted). Set from RepositoryState
+        # .start_loot_batch() at loot time; the New tab shows only the latest.
+        self.loot_batch = 0
 
     def __repr__(self) -> str:
         return f"ItemEntry({self.id!r}, qty={self.qty}, locked={self.locked})"

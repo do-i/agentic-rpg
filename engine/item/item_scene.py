@@ -60,6 +60,11 @@ class ItemScene(Scene):
         self._in_action:   bool = False
         self._confirm_discard: bool = False
 
+        # Left filter column (show/hide per item)
+        self._in_filter:   bool = False
+        self._filter_sel:  int  = 0
+        self._filter_scroll: int = 0
+
         # overlays
         self._target_overlay: TargetSelectOverlay | None = None
         self._aoe_confirm:    bool = False
@@ -87,6 +92,10 @@ class ItemScene(Scene):
 
     def _filtered_items(self) -> list[ItemEntry]:
         return filtered_items(self._get_repo(), self._tab_index, self._mc_catalog)
+
+    def _filter_entries(self) -> list[ItemEntry]:
+        """All owned items (including hidden) for the filter column."""
+        return sorted(self._get_repo().items, key=lambda e: e.id)
 
     def _selected_entry(self) -> ItemEntry | None:
         items = self._filtered_items()
@@ -125,6 +134,8 @@ class ItemScene(Scene):
                 self._close()
             elif self._in_tab:
                 self._handle_tab_key(event.key)
+            elif self._in_filter:
+                self._handle_filter_key(event.key)
             elif not self._in_action:
                 self._handle_list_key(event.key)
             else:
@@ -154,6 +165,12 @@ class ItemScene(Scene):
             if self._filtered_items():
                 self._sfx_manager.play("confirm")
                 self._in_tab = False
+            elif self._filter_entries():
+                # List is empty (e.g. all hidden) — drop into the filter so the
+                # player can still unhide items.
+                self._sfx_manager.play("confirm")
+                self._in_tab = False
+                self._enter_filter()
 
     def _handle_list_key(self, key: int) -> None:
         items = self._filtered_items()
@@ -178,6 +195,10 @@ class ItemScene(Scene):
             self._sfx_manager.play("confirm")
             self._in_action = True
             self._action_sel = 0
+        elif key == pygame.K_LEFT:
+            if self._filter_entries():
+                self._sfx_manager.play("confirm")
+                self._enter_filter()
         elif key == pygame.K_t:
             self._sfx_manager.play("confirm")
             self._open_edit_tags()
@@ -187,6 +208,52 @@ class ItemScene(Scene):
             self._in_action = False
             self._confirm_discard = False
             self._aoe_confirm = False
+
+    # ── Filter column ─────────────────────────────────────────
+
+    def _enter_filter(self) -> None:
+        self._in_filter = True
+        self._filter_sel = min(self._filter_sel, len(self._filter_entries()) - 1)
+        self._filter_scroll = clamp_scroll(
+            self._filter_sel, self._filter_scroll, VISIBLE_ROWS)
+
+    def _handle_filter_key(self, key: int) -> None:
+        entries = self._filter_entries()
+        if not entries:
+            self._in_filter = False
+            return
+        if key == pygame.K_UP:
+            if self._filter_sel == 0:
+                self._sfx_manager.play("cancel")
+                self._in_filter = False
+                self._in_tab = True
+                return
+            new = self._filter_sel - 1
+            self._sfx_manager.play("hover")
+            self._filter_sel = new
+            self._filter_scroll = clamp_scroll(
+                self._filter_sel, self._filter_scroll, VISIBLE_ROWS)
+        elif key == pygame.K_DOWN:
+            new = min(len(entries) - 1, self._filter_sel + 1)
+            if new != self._filter_sel:
+                self._sfx_manager.play("hover")
+            self._filter_sel = new
+            self._filter_scroll = clamp_scroll(
+                self._filter_sel, self._filter_scroll, VISIBLE_ROWS)
+        elif key in (pygame.K_RETURN, pygame.K_SPACE):
+            self._sfx_manager.play("confirm")
+            self._get_repo().toggle_hidden(entries[self._filter_sel].id)
+            # Hiding may shrink the main list; keep its selection in range.
+            items = self._filtered_items()
+            self._list_sel = min(self._list_sel, max(0, len(items) - 1))
+            self._scroll = clamp_scroll(self._list_sel, self._scroll, VISIBLE_ROWS)
+        elif key in (pygame.K_RIGHT, pygame.K_ESCAPE):
+            self._sfx_manager.play("cancel")
+            self._in_filter = False
+            # If the current tab's list is empty, return focus to the tabs
+            # rather than an unselectable empty list.
+            if not self._filtered_items():
+                self._in_tab = True
 
     def _handle_action_key(self, key: int) -> None:
         entry = self._selected_entry()
@@ -441,6 +508,11 @@ class ItemScene(Scene):
             confirm_discard=self._confirm_discard,
             aoe_confirm=self._aoe_confirm,
             target_overlay=self._target_overlay,
+            in_filter=self._in_filter,
+            filter_items=self._filter_entries(),
+            filter_sel=self._filter_sel,
+            filter_scroll=self._filter_scroll,
+            hidden_ids=self._get_repo().hidden_ids,
             edit_tags=self._in_edit_tags,
             editor_rows=self._editor_rows() if self._in_edit_tags else [],
             editor_sel=self._tag_editor_sel,

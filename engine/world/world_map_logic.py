@@ -72,13 +72,17 @@ def try_interact(player: Player, npcs: list[Npc], flags, dialogue_engine: Dialog
 
 def apply_item_box_loot(box: ItemBox, repository, opened_boxes, map_id: str) -> None:
     """Transfer a chest's contents into the party repository and mark it opened."""
+    # One chest = one loot batch shared by all its contents.
+    batch = repository.start_loot_batch()
     for item_id, qty in box.loot_items:
         entry = repository.add_item(item_id, qty)
         entry.is_loot = True
+        entry.loot_batch = batch
     for mc_id, qty in box.loot_magic_cores:
         entry = repository.add_item(mc_id, qty)
         entry.tags.add("magic_core")
         entry.is_loot = True
+        entry.loot_batch = batch
     opened_boxes.mark_opened(map_id, box.id)
 
 

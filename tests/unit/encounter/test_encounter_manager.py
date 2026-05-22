@@ -107,7 +107,7 @@ class TestSetZone:
 class TestAddMcDrops:
     def test_adds_items_with_magic_core_tag(self):
         repo = RepositoryState()
-        EncounterManager.add_mc_drops(repo, [{"size": "S", "qty": 2}])
+        EncounterManager.add_mc_drops(repo, [{"size": "S", "qty": 2}], repo.start_loot_batch())
         assert len(repo.items) == 1
         assert repo.items[0].id == "mc_s"
         assert repo.items[0].qty == 2
@@ -118,14 +118,14 @@ class TestAddMcDrops:
         EncounterManager.add_mc_drops(repo, [
             {"size": "S", "qty": 1},
             {"size": "L", "qty": 3},
-        ])
+        ], repo.start_loot_batch())
         ids = {e.id for e in repo.items}
         assert "mc_s" in ids
         assert "mc_l" in ids
 
     def test_empty_drops_no_change(self):
         repo = RepositoryState()
-        EncounterManager.add_mc_drops(repo, [])
+        EncounterManager.add_mc_drops(repo, [], repo.start_loot_batch())
         assert len(repo.items) == 0
 
 

@@ -35,6 +35,13 @@ class RepositoryState:
         self._gp_cap       = balance.gp_cap            if balance else GP_CAP
         self._item_qty_cap = balance.item_qty_cap      if balance else ITEM_QTY_CAP
         self._max_tags     = balance.max_tags_per_item if balance else MAX_TAGS_PER_ITEM
+        # Monotonic loot-batch sequence. Each distinct loot event (a combat
+        # reward, a chest, a pickup) gets one batch number via start_loot_batch;
+        # the "New" tab shows only items carrying the latest batch.
+        self._loot_batch_seq: int = 0
+        # Session-only per-item visibility filter (item ids the player chose to
+        # hide from the item list). Not persisted to save files.
+        self._hidden_ids: set[str] = set()
 
     def configure_caps(self, balance) -> None:
         """Apply cap values from BalanceData. Called post-construction when
@@ -195,6 +202,42 @@ class RepositoryState:
     def items_by_tag(self, tag: str) -> list[ItemEntry]:
         """Return all items that have the given tag."""
         return [e for e in self._items.values() if tag in e.tags]
+
+    # ── Loot batches ──────────────────────────────────────────
+
+    def start_loot_batch(self) -> int:
+        """Open a new loot batch and return its number. Stamp each entry
+        gained in this loot event with the returned value via
+        `entry.loot_batch = batch`."""
+        self._loot_batch_seq += 1
+        return self._loot_batch_seq
+
+    @property
+    def latest_loot_batch(self) -> int:
+        """The most recent batch number issued (0 if nothing looted yet)."""
+        return self._loot_batch_seq
+
+    def sync_loot_batch_seq(self) -> None:
+        """Restore the sequence to the max batch among loaded items so newly
+        looted items keep getting higher numbers. Called after loading a save."""
+        self._loot_batch_seq = max(
+            (e.loot_batch for e in self._items.values()), default=0
+        )
+
+    # ── Visibility filter (session only) ──────────────────────
+
+    @property
+    def hidden_ids(self) -> set[str]:
+        return self._hidden_ids
+
+    def is_hidden(self, item_id: str) -> bool:
+        return item_id in self._hidden_ids
+
+    def toggle_hidden(self, item_id: str) -> None:
+        if item_id in self._hidden_ids:
+            self._hidden_ids.discard(item_id)
+        else:
+            self._hidden_ids.add(item_id)
 
     def __repr__(self) -> str:
         return f"RepositoryState(gp={self._gp}, items={len(self._items)})"

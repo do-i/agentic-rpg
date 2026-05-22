@@ -59,10 +59,12 @@ TAB_H           = 34
 TAB_GAP         = 4
 FOOTER_H        = 30
 
+FILTER_W        = 240
 LIST_W          = 480
-ITEM_ROW_H      = 36
+ITEM_ROW_H      = 34
 ITEM_ROW_GAP    = 4
-VISIBLE_ROWS    = 14
+VISIBLE_ROWS    = 15
+PEEK_RATIO      = 0.70
 
 BTN_W           = 110
 BTN_H           = 34
@@ -92,6 +94,8 @@ class ItemRenderer:
             font_size=14,
             sub_font_size=11,
         )
+        # Show a half-row peek of the 16th item.
+        self._view.PEEK_RATIO = PEEK_RATIO
 
     def _init_fonts(self) -> None:
         f = get_fonts()
@@ -115,6 +119,11 @@ class ItemRenderer:
                selected_entry: ItemEntry | None,
                confirm_discard: bool, aoe_confirm: bool,
                target_overlay,
+               in_filter: bool,
+               filter_items: list[ItemEntry],
+               filter_sel: int,
+               filter_scroll: int,
+               hidden_ids: set[str],
                edit_tags: bool = False,
                editor_rows: list | None = None,
                editor_sel: int = 0,
@@ -132,14 +141,22 @@ class ItemRenderer:
         panel_bottom = screen.get_height() - FOOTER_H - PAD
         panel_h      = panel_bottom - panel_top
 
-        list_x = PAD
-        det_x  = PAD + LIST_W + PAD
-        det_w  = screen.get_width() - det_x - PAD
+        filter_x = PAD
+        list_x   = PAD + FILTER_W + PAD
+        det_x    = list_x + LIST_W + PAD
+        det_w    = screen.get_width() - det_x - PAD
 
+        self._draw_filter_panel(screen, filter_x, panel_top, FILTER_W, panel_h,
+                                filter_items, filter_sel, filter_scroll,
+                                in_filter, hidden_ids)
+        list_active = not in_tab and not in_filter
         self._draw_list_panel(screen, list_x, panel_top, LIST_W, panel_h,
-                              items, list_sel, scroll, in_tab)
+                              items, list_sel, scroll, list_active)
+        # Detail only shows when the cursor is actually on a list item.
+        show_detail = not in_tab and not in_filter
         self._draw_detail_panel(screen, det_x, panel_top, det_w, panel_h,
-                                selected_entry, in_action, action_sel)
+                                selected_entry if show_detail else None,
+                                in_action, action_sel)
         self._draw_footer(screen)
 
         if confirm_discard:
@@ -174,28 +191,61 @@ class ItemRenderer:
 
     def _draw_tabs(self, screen: pygame.Surface, tab_index: int, in_tab: bool) -> None:
         tab_y = PAD + HEADER_H + TAB_GAP
-        x = PAD
+        avail = screen.get_width() - 2 * PAD
+        n     = len(TABS)
+        tw    = (avail - TAB_GAP * (n - 1)) // n
         for i, label in enumerate(TABS):
+            x      = PAD + i * (tw + TAB_GAP)
             active = (i == tab_index)
-            surf   = self._font_tab.render(label, True, TEXT_PRIMARY)
-            tw     = surf.get_width() + 24
             bg     = TAB_BG_ACT  if active else TAB_BG_NORM
             bdr    = (TAB_BORDER_ACT if in_tab else TAB_BORDER_NORM) if active else TAB_BORDER_NORM
             pygame.draw.rect(screen, bg,  (x, tab_y, tw, TAB_H), border_radius=4)
             pygame.draw.rect(screen, bdr, (x, tab_y, tw, TAB_H), 1, border_radius=4)
             col = HEADER_COLOR if active else TEXT_SECONDARY
             txt = self._font_tab.render(label, True, col)
-            screen.blit(txt, (x + 12, tab_y + (TAB_H - txt.get_height()) // 2))
-            x += tw + TAB_GAP
+            screen.blit(txt, (x + (tw - txt.get_width()) // 2,
+                              tab_y + (TAB_H - txt.get_height()) // 2))
+
+    # ── Filter panel ──────────────────────────────────────────
+
+    def _draw_filter_panel(self, screen: pygame.Surface,
+                           x: int, y: int, w: int, h: int,
+                           items: list[ItemEntry], sel: int, scroll: int,
+                           in_filter: bool, hidden_ids: set[str]) -> None:
+        pygame.draw.rect(screen, LIST_BG, (x, y, w, h), border_radius=6)
+        bdr = LIST_SEL_BDR if in_filter else DIVIDER
+        pygame.draw.rect(screen, bdr, (x, y, w, h), 1, border_radius=6)
+
+        if not items:
+            empty = self._font_hint.render("No items.", True, TEXT_DIM)
+            screen.blit(empty, (x + 12, y + 12))
+            return
+
+        rows = [
+            ItemRow(
+                title=display_name(entry, self._mc_catalog),
+                right_text="off" if entry.id in hidden_ids else "on",
+                locked=entry.id in hidden_ids,
+            )
+            for entry in items
+        ]
+        has_overflow = len(items) > VISIBLE_ROWS
+        list_rect_h = self._view.list_height(VISIBLE_ROWS, has_overflow)
+        list_rect = pygame.Rect(x + 6, y + 6, w - 12, list_rect_h)
+        self._view.render(
+            screen, list_rect, rows, sel, scroll,
+            active=in_filter,
+        )
 
     # ── List panel ────────────────────────────────────────────
 
     def _draw_list_panel(self, screen: pygame.Surface,
                          x: int, y: int, w: int, h: int,
                          items: list[ItemEntry], list_sel: int, scroll: int,
-                         in_tab: bool) -> None:
+                         active: bool) -> None:
         pygame.draw.rect(screen, LIST_BG, (x, y, w, h), border_radius=6)
-        pygame.draw.rect(screen, DIVIDER, (x, y, w, h), 1, border_radius=6)
+        bdr = LIST_SEL_BDR if active else DIVIDER
+        pygame.draw.rect(screen, bdr, (x, y, w, h), 1, border_radius=6)
 
         if not items:
             empty = self._font_detail.render("No items.", True, TEXT_DIM)
@@ -215,7 +265,7 @@ class ItemRenderer:
         list_rect = pygame.Rect(x + 6, y + 6, w - 12, list_rect_h)
         self._view.render(
             screen, list_rect, rows, list_sel, scroll,
-            active=not in_tab,
+            active=active,
         )
 
     # ── Detail panel ──────────────────────────────────────────
@@ -431,7 +481,7 @@ class ItemRenderer:
         fy = screen.get_height() - FOOTER_H
         pygame.draw.line(screen, DIVIDER, (PAD, fy), (screen.get_width() - PAD, fy))
         hint = self._font_hint.render(
-            "navigate \u00b7 Q/E tab \u00b7 actions \u00b7 T edit tags \u00b7 I close",
+            "navigate \u00b7 \u2190 filter \u00b7 ENTER toggle/act \u00b7 T edit tags \u00b7 I close",
             True, MUTED,
         )
         screen.blit(hint, (PAD, fy + 8))
