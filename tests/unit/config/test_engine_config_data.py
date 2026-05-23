@@ -19,7 +19,7 @@ _AUDIO = {"bgm_enabled": True, "sfx_enabled": True}
 _FONTS = {"sizes": {"small": 12, "medium": 16, "large": 20, "xlarge": 28}}
 
 VALID = {
-    "display": {"screen_width": 1280, "screen_height": 766, "fps": 60},
+    "display": {"screen_width": 1280, "screen_height": 766, "fps": 60, "window_position": "centered"},
     "tiles": {"tile_size": 32},
     "saves": {"dir": "~/user_save_data"},
     "dialogue": {"text_speed": "fast"},
@@ -45,7 +45,7 @@ class TestEngineConfigData:
 
     def test_loads_display(self, tmp_path):
         p = write_settings(tmp_path, {**VALID,
-            "display": {"screen_width": 800, "screen_height": 600, "fps": 30},
+            "display": {"screen_width": 800, "screen_height": 600, "fps": 30, "window_position": "centered"},
             "tiles": {"tile_size": 16},
         })
         s = EngineConfigData.load(p)
