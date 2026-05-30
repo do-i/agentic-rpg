@@ -4,7 +4,7 @@
    - Problem: `engine/world/world_map_init.py` only builds an `EnemySpawner` when `spawn_tile` entries exist. A map with only a `boss_enemy` object layer skips boss spawning entirely.
    - Verify: add/use a map with a `boss_enemy` layer and no `spawn_tile` layer; entering the map should show the boss sprite and trigger its battle on collision.
 
-2. [ ] Verify save checksums on load.
+2. [x] Verify save checksums on load.
    - Problem: `GameStateManager.list_slots()` detects checksum mismatches, but `GameStateManager.load()` ignores the checksum and loads tampered files.
    - Verify: corrupt a saved YAML payload after save; the load flow should reject it or surface an unreadable slot instead of restoring the state.
 

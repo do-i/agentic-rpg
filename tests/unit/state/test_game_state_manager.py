@@ -118,6 +118,15 @@ class TestLoad:
         restored = manager.load(path)
         assert isinstance(restored.playtime.total_seconds, int)
 
+    def test_load_rejects_checksum_mismatch(self, manager, state, saves_dir):
+        path = manager.save(state, slot_index=1)
+        data = yaml.safe_load(path.read_text())
+        data["meta"]["location_display"] = "Tampered"
+        path.write_text(yaml.dump(data, allow_unicode=True, sort_keys=False))
+
+        with pytest.raises(ValueError, match="checksum mismatch"):
+            manager.load(path)
+
 
 # ── list_slots ────────────────────────────────────────────────
 

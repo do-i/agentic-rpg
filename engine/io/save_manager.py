@@ -29,6 +29,19 @@ def _checksum(content: str) -> str:
     return f"{binascii.crc32(content.encode()) & 0xFFFFFFFF:08X}"
 
 
+def _load_save_payload(path: Path) -> dict:
+    raw = path.read_text()
+    data = yaml.safe_load(raw)
+    if not isinstance(data, dict):
+        raise ValueError(f"Save file is not a mapping: {path}")
+    stored = data.pop("checksum", None)
+    if stored is not None:
+        recomputed = _checksum(yaml.dump(data, allow_unicode=True, sort_keys=False))
+        if recomputed != stored:
+            raise ValueError(f"Save checksum mismatch: {path}")
+    return data
+
+
 def _slot_path(saves_dir: Path, slot_index: int) -> Path:
     return saves_dir / f"{slot_index:03d}.yaml"
 
@@ -93,9 +106,7 @@ class GameStateManager:
     # ── Load ──────────────────────────────────────────────────
 
     def load(self, path: Path) -> GameState:
-        with open(path, "r") as f:
-            data = yaml.safe_load(f)
-        data.pop("checksum", None)
+        data = _load_save_payload(path)
         return from_save(data, self._classes_dir, self._item_catalog)
 
     # ── Slot list ─────────────────────────────────────────────
@@ -132,15 +143,7 @@ class GameStateManager:
         self, path: Path, index: int, is_autosave: bool = False
     ) -> SaveSlot:
         try:
-            raw  = path.read_text()
-            data = yaml.safe_load(raw)
-
-            stored = data.pop("checksum", None)
-            if stored is not None:
-                recomputed = _checksum(yaml.dump(data, allow_unicode=True, sort_keys=False))
-                if recomputed != stored:
-                    return SaveSlot(slot_index=index, path=path, is_autosave=is_autosave)
-
+            data = _load_save_payload(path)
             meta  = data["meta"]
             party = data["party"]
             proto = next((m for m in party if m.get("protagonist")), party[0])
@@ -154,7 +157,7 @@ class GameStateManager:
                 level=proto["level"],
                 is_autosave=is_autosave,
             )
-        except (yaml.YAMLError, OSError, KeyError, IndexError, TypeError) as e:
+        except (yaml.YAMLError, OSError, KeyError, IndexError, TypeError, ValueError) as e:
             # Truncated / malformed / partially-shaped save: return a stub slot
             # rather than raising so the rest of the slot list still loads.
             _log.warning("Save slot %d unreadable (%s): %s", index, path, e)
