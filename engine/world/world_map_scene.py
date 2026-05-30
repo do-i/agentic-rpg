@@ -421,10 +421,8 @@ class WorldMapScene(Scene):
 
     # ── Battle ────────────────────────────────────────────────
 
-    def _launch_battle_from_enemy(self, enemy: EnemySprite) -> None:
-        # Store the enemy; it will be deactivated on the first update tick after battle ends.
-        self._engaged_enemy = enemy
-        launch_battle_from_enemy(
+    def _launch_battle_from_enemy(self, enemy: EnemySprite) -> bool:
+        launched = launch_battle_from_enemy(
             enemy=enemy,
             holder=self._holder,
             player=self._player,
@@ -442,6 +440,11 @@ class WorldMapScene(Scene):
             screen_width=self._screen_width,
             screen_height=self._screen_height,
         )
+        if launched:
+            # Store only successfully launched enemies; they are deactivated on
+            # the first update tick after battle ends.
+            self._engaged_enemy = enemy
+        return launched
 
     # ── Portal ────────────────────────────────────────────────
 
@@ -526,8 +529,8 @@ class WorldMapScene(Scene):
             player_rect = (col.x, col.y, COLLISION_W, COLLISION_H)
             colliding = self._enemy_spawner.check_player_collision(player_rect)
             if colliding:
-                self._launch_battle_from_enemy(colliding)
-                return
+                if self._launch_battle_from_enemy(colliding):
+                    return
 
         self._check_portals()
 

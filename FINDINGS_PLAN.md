@@ -8,7 +8,7 @@
    - Problem: `GameStateManager.list_slots()` detects checksum mismatches, but `GameStateManager.load()` ignores the checksum and loads tampered files.
    - Verify: corrupt a saved YAML payload after save; the load flow should reject it or surface an unreadable slot instead of restoring the state.
 
-3. [ ] Only mark a world enemy engaged when battle launch succeeds.
+3. [x] Only mark a world enemy engaged when battle launch succeeds.
    - Problem: `WorldMapScene._launch_battle_from_enemy()` stores `_engaged_enemy` before knowing whether `launch_battle_from_enemy()` built and switched to a battle scene.
    - Verify: make an encounter formation resolve to no valid enemies; colliding with that visible enemy should not silently deactivate it unless battle starts.
 
