@@ -153,6 +153,7 @@ class EnemySprite:
         collision_map: CollisionMap | None,
         other_rects: list[tuple[int, int, int, int]],
         effective_chase_range: int,
+        ignore_rect_index: int | None = None,
     ) -> None:
         """Update movement and animation. Called every frame by EnemySpawner."""
         if self.is_boss:
@@ -165,10 +166,13 @@ class EnemySprite:
 
         if effective_chase_range > 0 and dist_tiles <= effective_chase_range:
             self._state = "chasing"
-            self._update_chase(delta, player_px, player_py, collision_map, other_rects)
+            self._update_chase(
+                delta, player_px, player_py, collision_map,
+                other_rects, ignore_rect_index,
+            )
         else:
             self._state = "wandering"
-            self._update_wander(delta, collision_map, other_rects)
+            self._update_wander(delta, collision_map, other_rects, ignore_rect_index)
 
     def _update_chase(
         self,
@@ -177,6 +181,7 @@ class EnemySprite:
         player_py: float,
         collision_map: CollisionMap | None,
         other_rects: list[tuple[int, int, int, int]],
+        ignore_rect_index: int | None = None,
     ) -> None:
         dx = player_px - self._px
         dy = player_py - self._py
@@ -195,7 +200,9 @@ class EnemySprite:
         new_px = self._px + dx * ratio
         new_py = self._py + dy * ratio
 
-        if not self._is_blocked(int(new_px), int(new_py), collision_map, other_rects):
+        if not self._is_blocked(
+            int(new_px), int(new_py), collision_map, other_rects, ignore_rect_index,
+        ):
             self._px = new_px
             self._py = new_py
         self._advance_frame(delta)
@@ -205,12 +212,13 @@ class EnemySprite:
         delta: float,
         collision_map: CollisionMap | None,
         other_rects: list[tuple[int, int, int, int]],
+        ignore_rect_index: int | None = None,
     ) -> None:
         if not self._wander_moving:
             self._wander_pause -= delta
             self._frame_index = IDLE_FRAME
             if self._wander_pause <= 0:
-                if self._pick_wander_target(collision_map, other_rects):
+                if self._pick_wander_target(collision_map, other_rects, ignore_rect_index):
                     self._wander_moving = True
                 else:
                     self._wander_pause = self._rng.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
@@ -223,7 +231,9 @@ class EnemySprite:
         dist = max(abs(dx), abs(dy))
 
         if dist <= self._move_speed * delta:
-            if not self._is_blocked(tx, ty, collision_map, other_rects):
+            if not self._is_blocked(
+                tx, ty, collision_map, other_rects, ignore_rect_index,
+            ):
                 self._px = tx
                 self._py = ty
             self._wander_moving = False
@@ -243,7 +253,9 @@ class EnemySprite:
         new_px = self._px + step_x
         new_py = self._py + step_y
 
-        if self._is_blocked(int(new_px), int(new_py), collision_map, other_rects):
+        if self._is_blocked(
+            int(new_px), int(new_py), collision_map, other_rects, ignore_rect_index,
+        ):
             self._wander_moving = False
             self._wander_pause = self._rng.uniform(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
             self._frame_index = IDLE_FRAME
@@ -257,12 +269,13 @@ class EnemySprite:
         self,
         collision_map: CollisionMap | None,
         other_rects: list[tuple[int, int, int, int]],
+        ignore_rect_index: int | None = None,
     ) -> bool:
         max_offset = self._wander_range * self._tile_size
         for _ in range(8):
             tx = int(self._origin_px + self._rng.randint(-max_offset, max_offset))
             ty = int(self._origin_py + self._rng.randint(-max_offset, max_offset))
-            if not self._is_blocked(tx, ty, collision_map, other_rects):
+            if not self._is_blocked(tx, ty, collision_map, other_rects, ignore_rect_index):
                 self._wander_target_px = tx
                 self._wander_target_py = ty
                 return True
@@ -274,12 +287,15 @@ class EnemySprite:
         py: int,
         collision_map: CollisionMap | None,
         other_rects: list[tuple[int, int, int, int]],
+        ignore_rect_index: int | None = None,
     ) -> bool:
         cx = px + COLLISION_OFFSET_X
         cy = py + COLLISION_OFFSET_Y
         if collision_map and collision_map.is_rect_blocked(cx, cy, COLLISION_W, COLLISION_H):
             return True
-        for ox, oy, ow, oh in other_rects:
+        for index, (ox, oy, ow, oh) in enumerate(other_rects):
+            if ignore_rect_index is not None and index == ignore_rect_index:
+                continue
             if cx < ox + ow and cx + COLLISION_W > ox and cy < oy + oh and cy + COLLISION_H > oy:
                 return True
         return False

@@ -24,7 +24,7 @@
    - Opportunity: `EnemyLoader.load()` reparses a multi-document rank YAML file for every enemy load.
    - Verify: profile repeated battle launches or encounter resolution; enemy loads should avoid repeated YAML parsing.
 
-7. [ ] Reduce per-enemy collision-list allocation.
+7. [x] Reduce per-enemy collision-list allocation.
    - Opportunity: `EnemySpawner.update()` creates sliced `other_rects` lists for every active enemy, which remains O(N^2) allocation as spawn counts grow.
    - Verify: profile maps with high enemy counts; update allocation and frame time should drop.
 

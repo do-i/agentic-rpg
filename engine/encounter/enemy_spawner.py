@@ -122,13 +122,16 @@ class EnemySpawner:
             self._try_activate_one()
 
         # Update active enemies. Build the rect list once and slice around
-        # each enemy's index so we avoid the O(N^2) zip-and-filter pattern.
+        # each enemy's index inside EnemySprite so we avoid O(N^2) list
+        # allocation from repeatedly slicing "all except me" snapshots.
         active = [e for e in self._all_enemies if e.active]
         all_rects = [e.collision_rect for e in active]
         for i, enemy in enumerate(active):
-            other_rects = all_rects[:i] + all_rects[i + 1:]
             eff_chase = max(0, enemy.chase_range - chase_reduction)
-            enemy.update(delta, player_px, player_py, collision_map, other_rects, eff_chase)
+            enemy.update(
+                delta, player_px, player_py, collision_map,
+                all_rects, eff_chase, ignore_rect_index=i,
+            )
 
     def check_player_collision(
         self, player_rect: tuple[int, int, int, int]

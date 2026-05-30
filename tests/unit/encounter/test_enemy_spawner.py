@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from pathlib import Path
 
 from engine.encounter.enemy_spawner import (
@@ -122,6 +122,22 @@ class TestInitSpawn:
         spawner.init_spawn(flags)
         bosses = [e for e in spawner._all_enemies if e.is_boss]
         assert len(bosses) == 0
+
+
+class TestUpdateAllocation:
+    def test_reuses_single_rect_snapshot_for_enemy_updates(self):
+        spawner = make_spawner(spawn_tiles=make_spawn_tiles(3))
+        flags = MagicMock()
+        flags.has_flag.return_value = False
+        spawner.init_spawn(flags)
+
+        with patch.object(EnemySprite, "update", autospec=True) as update:
+            spawner.update(0.016, 0.0, 0.0, MagicMock(), None)
+
+        rect_args = [call.args[5] for call in update.call_args_list]
+        assert len(rect_args) == 3
+        assert all(rects is rect_args[0] for rects in rect_args)
+        assert [call.kwargs["ignore_rect_index"] for call in update.call_args_list] == [0, 1, 2]
 
 
 # ── on_enemy_engaged ──────────────────────────────────────────
