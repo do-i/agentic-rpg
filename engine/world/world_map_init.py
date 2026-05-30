@@ -141,13 +141,15 @@ def _build_spawner(
     balance,
     global_interval: float,
 ) -> EnemySpawner | None:
-    """Create an EnemySpawner if this map has an encounter zone and spawn tiles."""
+    """Create an EnemySpawner if this map has spawn tiles or a boss spawn."""
     zone = encounter_manager.get_zone()
     if zone is None:
         return None
     if encounter_resolver is None:
         return None
-    if not tile_map.enemy_spawn_tiles:
+    has_regular_spawns = bool(tile_map.enemy_spawn_tiles)
+    has_boss_spawn = bool(tile_map.boss_spawn_tile and zone.boss)
+    if not has_regular_spawns and not has_boss_spawn:
         return None
 
     map_interval: float | None = None
