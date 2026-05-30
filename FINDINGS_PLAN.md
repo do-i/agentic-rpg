@@ -12,7 +12,7 @@
    - Problem: `WorldMapScene._launch_battle_from_enemy()` stores `_engaged_enemy` before knowing whether `launch_battle_from_enemy()` built and switched to a battle scene.
    - Verify: make an encounter formation resolve to no valid enemies; colliding with that visible enemy should not silently deactivate it unless battle starts.
 
-4. [ ] Make playback speed honor fractional values.
+4. [x] Make playback speed honor fractional values.
    - Problem: `Game.run()` rounds playback speed to whole update steps, so documented values like `0.5` behave like `1.0`.
    - Verify: play back the same recording at `--playback-speed 0.5`, `1.0`, and `2.0`; elapsed playback should scale accordingly.
 

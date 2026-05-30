@@ -34,7 +34,8 @@ class Game:
         self._clock = clock
         self._scene_manager = scene_manager
         self._recorder = recorder
-        self._playback_speed = playback_speed
+        self._playback_speed = max(playback_speed, 0.01)
+        self._playback_accumulator = 0.0
         self._running = False
         self._held: dict[int, float] = {}  # key → seconds until next synthetic KEYDOWN
 
@@ -54,10 +55,9 @@ class Game:
 
     def run(self) -> None:
         self._running = True
-        steps = max(1, round(self._playback_speed))
         while self._running:
             self._clock.tick()
-            for _ in range(steps):
+            for _ in range(self._playback_steps_this_frame()):
                 events = self._recorder.get_events(self._clock.delta)
                 self._handle_events(events)
                 synthetic = self._tick_key_repeat(self._clock.delta)
@@ -70,6 +70,13 @@ class Game:
             self._scene_manager.render(self._screen)
             pygame.display.flip()
         pygame.quit()
+
+    def _playback_steps_this_frame(self) -> int:
+        self._playback_accumulator += self._playback_speed
+        steps = int(self._playback_accumulator)
+        if steps > 0:
+            self._playback_accumulator -= steps
+        return steps
 
     def _handle_events(self, events: list) -> None:
         for event in events:
