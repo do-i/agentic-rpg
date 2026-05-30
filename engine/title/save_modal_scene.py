@@ -50,6 +50,7 @@ class SaveModalScene(Scene):
         self._popup_text: str = ""
         self._popup_active: bool = False
         self._fonts_ready = False
+        self._dim_overlay: pygame.Surface | None = None
 
     def _init_fonts(self) -> None:
         f = get_fonts()
@@ -140,9 +141,7 @@ class SaveModalScene(Scene):
         if not self._fonts_ready:
             self._init_fonts()
 
-        overlay = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 160))
-        screen.blit(overlay, (0, 0))
+        screen.blit(self._get_dim_overlay(screen), (0, 0))
 
         mx = (screen.get_width()  - MODAL_W) // 2
         my = (screen.get_height() - MODAL_H) // 2
@@ -250,3 +249,10 @@ class SaveModalScene(Scene):
         screen.blit(msg, (px + (POPUP_W - msg.get_width()) // 2, py + 14))
         hint = self._font_hint.render("ENTER / ESC  close", True, (120, 120, 90))
         screen.blit(hint, (px + (POPUP_W - hint.get_width()) // 2, py + ph - 28))
+
+    def _get_dim_overlay(self, screen: pygame.Surface) -> pygame.Surface:
+        size = (screen.get_width(), screen.get_height())
+        if self._dim_overlay is None or self._dim_overlay.get_size() != size:
+            self._dim_overlay = pygame.Surface(size, pygame.SRCALPHA)
+            self._dim_overlay.fill((0, 0, 0, 160))
+        return self._dim_overlay

@@ -28,6 +28,6 @@
    - Opportunity: `EnemySpawner.update()` creates sliced `other_rects` lists for every active enemy, which remains O(N^2) allocation as spawn counts grow.
    - Verify: profile maps with high enemy counts; update allocation and frame time should drop.
 
-8. [ ] Cache save-modal dim overlay surface.
+8. [x] Cache save-modal dim overlay surface.
    - Opportunity: `SaveModalScene.render()` allocates a full-screen alpha surface every frame.
    - Verify: open the save modal and profile allocation/frame time before and after caching the overlay.
