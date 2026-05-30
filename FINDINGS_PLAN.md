@@ -20,7 +20,7 @@
    - Opportunity: player, NPC, and world enemy render paths call `pygame.transform.scale()` every frame.
    - Verify: profile frame time on a populated map before and after caching scaled frames.
 
-6. [ ] Cache loaded enemy definitions or combatant templates.
+6. [x] Cache loaded enemy definitions or combatant templates.
    - Opportunity: `EnemyLoader.load()` reparses a multi-document rank YAML file for every enemy load.
    - Verify: profile repeated battle launches or encounter resolution; enemy loads should avoid repeated YAML parsing.
 

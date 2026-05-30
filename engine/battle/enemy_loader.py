@@ -32,6 +32,7 @@ class EnemyLoader:
         self._enemies_dir = enemies_dir
         self._classes_dir = classes_dir
         self._index: dict[str, Path] = {}
+        self._enemy_docs: dict[str, dict] = {}
         self._class_cache: dict[str, list[dict]] = {}
         self._build_index()
 
@@ -44,17 +45,15 @@ class EnemyLoader:
             for doc in iter_yaml_documents(path):
                 if isinstance(doc, dict) and "id" in doc:
                     self._index[doc["id"]] = path
+                    self._enemy_docs[doc["id"]] = doc
 
     # ── Load ──────────────────────────────────────────────────
 
     def load(self, enemy_id: str) -> Combatant | None:
-        path = self._index.get(enemy_id)
-        if not path:
+        doc = self._enemy_docs.get(enemy_id)
+        if doc is None:
             return None
-        for doc in iter_yaml_documents(path):
-            if isinstance(doc, dict) and doc.get("id") == enemy_id:
-                return self._build(doc)
-        return None
+        return self._build(doc)
 
     _REQUIRED = ("name", "hp", "atk", "def", "mres", "dex", "exp")
 

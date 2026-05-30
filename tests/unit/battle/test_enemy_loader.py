@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 import yaml
 from pathlib import Path
+from unittest.mock import patch
 
 from engine.battle.enemy_loader import EnemyLoader
 
@@ -109,6 +110,15 @@ class TestLoad:
         c = loader.load("bat")
         assert c is not None
         assert c.name == "Bat"
+
+    def test_load_uses_indexed_doc_without_reparsing_rank_file(self, loader):
+        with patch(
+            "engine.battle.enemy_loader.iter_yaml_documents",
+            side_effect=AssertionError("rank file reparsed"),
+        ):
+            c = loader.load("goblin")
+        assert c is not None
+        assert c.name == "Goblin"
 
 
 # ── _build required-field validation ──────────────────────────
