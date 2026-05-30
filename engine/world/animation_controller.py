@@ -63,6 +63,9 @@ class AnimationController:
     def current_frame(self) -> pygame.Surface:
         return self._sheet.get_frame(self._direction, self._frame_index)
 
+    def current_scaled_frame(self, size: tuple[int, int]) -> pygame.Surface:
+        return self._sheet.get_scaled_frame(self._direction, self._frame_index, size)
+
     @property
     def direction(self) -> Direction:
         return self._direction

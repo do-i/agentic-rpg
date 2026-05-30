@@ -240,8 +240,7 @@ class Player:
         screen_y = int(self._y) - offset_y
 
         if self._animation:
-            frame  = self._animation.current_frame
-            scaled = pygame.transform.scale(frame, (PLAYER_WIDTH, PLAYER_HEIGHT))
+            scaled = self._animation.current_scaled_frame((PLAYER_WIDTH, PLAYER_HEIGHT))
             screen.blit(scaled, (screen_x, screen_y))
         else:
             pygame.draw.rect(screen, PLAYER_COLOR,

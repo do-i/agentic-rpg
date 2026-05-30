@@ -292,8 +292,7 @@ class Npc:
 
         if self._sprite_sheet:
             direction = self._facing(player_pos, near)
-            frame = self._sprite_sheet.get_frame(direction, self._frame_index)
-            scaled = pygame.transform.scale(frame, (64, 64))
+            scaled = self._sprite_sheet.get_scaled_frame(direction, self._frame_index, (64, 64))
             screen.blit(scaled, (sx, sy))
         else:
             pygame.draw.rect(screen, NPC_COLOR, (sx, sy, NPC_SIZE, NPC_SIZE))

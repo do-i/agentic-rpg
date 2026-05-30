@@ -40,6 +40,7 @@ def make_npc(
 def make_mock_sprite() -> SpriteSheet:
     sheet = MagicMock(spec=SpriteSheet)
     sheet.get_frame.return_value = pygame.Surface((64, 64))
+    sheet.get_scaled_frame.return_value = pygame.Surface((64, 64))
     return sheet
 
 

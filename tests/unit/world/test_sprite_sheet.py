@@ -79,6 +79,17 @@ class TestGetFrame:
         assert frame.get_height() == FRAME_HEIGHT
 
 
+class TestGetScaledFrame:
+    def test_returns_scaled_surface(self, sprite_sheet):
+        frame = sprite_sheet.get_scaled_frame(Direction.DOWN, 0, (32, 48))
+        assert frame.get_size() == (32, 48)
+
+    def test_reuses_cached_scaled_surface(self, sprite_sheet):
+        first = sprite_sheet.get_scaled_frame(Direction.DOWN, 0, (32, 48))
+        second = sprite_sheet.get_scaled_frame(Direction.DOWN, FRAMES_PER_ROW, (32, 48))
+        assert first is second
+
+
 # ── frame_count ───────────────────────────────────────────────
 
 class TestFrameCount:

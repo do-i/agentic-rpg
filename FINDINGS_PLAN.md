@@ -16,7 +16,7 @@
    - Problem: `Game.run()` rounds playback speed to whole update steps, so documented values like `0.5` behave like `1.0`.
    - Verify: play back the same recording at `--playback-speed 0.5`, `1.0`, and `2.0`; elapsed playback should scale accordingly.
 
-5. [ ] Pre-scale world sprite frames.
+5. [x] Pre-scale world sprite frames.
    - Opportunity: player, NPC, and world enemy render paths call `pygame.transform.scale()` every frame.
    - Verify: profile frame time on a populated map before and after caching scaled frames.
 

@@ -300,10 +300,12 @@ class EnemySprite:
         sy = int(self._py) - offset_y
 
         if self._sprite_sheet:
-            frame = self._sprite_sheet.get_frame(
-                self._facing_dir, self._frame_index, row_offset=ENEMY_WALK_ROW_OFFSET
+            scaled = self._sprite_sheet.get_scaled_frame(
+                self._facing_dir,
+                self._frame_index,
+                (ENEMY_SIZE, ENEMY_SIZE),
+                row_offset=ENEMY_WALK_ROW_OFFSET,
             )
-            scaled = pygame.transform.scale(frame, (ENEMY_SIZE, ENEMY_SIZE))
             screen.blit(scaled, (sx, sy))
         else:
             color = ENEMY_BOSS_COLOR if self.is_boss else ENEMY_COLOR

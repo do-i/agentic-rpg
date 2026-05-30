@@ -36,6 +36,7 @@ class SpriteSheet:
     def __init__(self, tsx_path: str | Path) -> None:
         self._tsx_path = Path(tsx_path)
         self._frames: dict[tuple[int, int], pygame.Surface] = {}
+        self._scaled_frames: dict[tuple[int, int, int, int], pygame.Surface] = {}
         self._row_count: int = 0
         self._load()
 
@@ -77,6 +78,22 @@ class SpriteSheet:
         """
         key = (direction.value + row_offset, frame_index % FRAMES_PER_ROW)
         return self._frames[key]
+
+    def get_scaled_frame(
+        self,
+        direction: Direction,
+        frame_index: int,
+        size: tuple[int, int],
+        row_offset: int = 0,
+    ) -> pygame.Surface:
+        row = direction.value + row_offset
+        col = frame_index % FRAMES_PER_ROW
+        key = (row, col, size[0], size[1])
+        if key not in self._scaled_frames:
+            self._scaled_frames[key] = pygame.transform.scale(
+                self._frames[(row, col)], size
+            )
+        return self._scaled_frames[key]
 
     @property
     def frame_count(self) -> int:
