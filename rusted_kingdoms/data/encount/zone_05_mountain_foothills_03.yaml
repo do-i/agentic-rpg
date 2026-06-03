@@ -1,5 +1,5 @@
-id: zone_05_mountain_foothills
-name: Mountain Foothills
+id: zone_05_mountain_foothills_03
+name: Mountain Foothills - Ticker's Ascent
 background: zone5-bg-1280x468
 density: 0.14
 
@@ -36,3 +36,10 @@ barrier_enemies:
   - id: pumpkin_jack_lantern_duelist
     requires_item: veil_breaker
     blocked_message: "A mysterious force blocks your attack."
+
+boss:
+  id: titch_the_ticker_171
+  name: Titch the Ticker
+  once: true
+  on_complete:
+    set_flag: boss_zone05_defeated

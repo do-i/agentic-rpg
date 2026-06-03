@@ -1,24 +1,21 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="60" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="6" nextobjectid="4">
- <tileset firstgid="1" source="../tilesets/ground/terrain-v7.tsx"/>
+<?xml version='1.0' encoding='UTF-8'?>
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="60" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="6" nextobjectid="3">
+ <tileset firstgid="1" source="../tilesets/ground/terrain-v7.tsx" />
  <objectgroup id="2" name="portals">
   <object id="1" name="entry_zone_04_ancient_ruins_03_sanctum" x="-4" y="544" width="12" height="96">
    <properties>
-    <property name="target_map" value="zone_04_ancient_ruins_03_sanctum"/>
-    <property name="target_position_x" type="int" value="19"/>
-    <property name="target_position_y" type="int" value="2"/>
+    <property name="target_map" value="zone_04_ancient_ruins_03_sanctum" />
+    <property name="target_position_x" type="int" value="19" />
+    <property name="target_position_y" type="int" value="2" />
    </properties>
   </object>
-  <object id="2" name="exit_town_04_frostholm" x="1916" y="576" width="12" height="96">
+  <object id="2" name="exit_zone_05_mountain_foothills_02" x="1916" y="576" width="12" height="96">
    <properties>
-    <property name="target_map" value="town_04_frostholm"/>
-    <property name="target_position_x" type="int" value="3"/>
-    <property name="target_position_y" type="int" value="6"/>
+    <property name="target_map" value="zone_05_mountain_foothills_02" />
+    <property name="target_position_x" type="int" value="2" />
+    <property name="target_position_y" type="int" value="15" />
    </properties>
   </object>
- </objectgroup>
- <objectgroup id="3" name="boss_enemy">
-  <object id="3" name="titch_the_ticker_171" x="1664" y="608" width="32" height="32"/>
  </objectgroup>
  <layer id="1" name="ground" width="60" height="30">
   <data encoding="csv">

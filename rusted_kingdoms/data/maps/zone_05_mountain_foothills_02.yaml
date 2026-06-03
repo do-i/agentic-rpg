@@ -1,0 +1,7 @@
+name: Windcut Shelf
+bgm: zone.alpine
+
+enemy_spawn:
+  init: 4
+  max: 8
+  interval: 22.0
