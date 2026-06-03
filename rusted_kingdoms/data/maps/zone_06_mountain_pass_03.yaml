@@ -1,0 +1,7 @@
+name: Shaman Gate
+bgm: zone.alpine
+
+enemy_spawn:
+  init: 3
+  max: 7
+  interval: 24.0

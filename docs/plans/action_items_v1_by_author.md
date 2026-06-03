@@ -64,7 +64,7 @@ Legend: ✅ tmx + yaml present · 🟡 yaml stub only (needs tmx) · ❌ missing
 - 🟡 `town_05_ashenveil` — city of mourners on the old capital ruins; needs tmx
 - ❌ `town_05_ashenveil_oracle_sanctum` — first Vessel reveal; pivotal exposition scene
 - ❌ `town_05_ashenveil_inn` / `_shop` — town interior set
-- ❌ `zone_06_ash_road` — approach through the rusted heartlands
+- ✅ `zone_06_mountain_pass` / `_02` / `_03` — three-map pass out of Frostholm toward Ashenveil; canonical zone name from the sprite-backed encounter allocation
 
 ---
 

@@ -1,5 +1,5 @@
-id: zone_06_mountain_pass
-name: Mountain Pass
+id: zone_06_mountain_pass_03
+name: Mountain Pass - Shaman Gate
 background: zone6-bg-1280x468
 density: 0.14
 
@@ -28,3 +28,10 @@ entries:
   - formation: [orc_shaman_bone_caller]
     weight: 6
     chase_range: 0
+
+boss:
+  id: orc_shaman_red_hood_shaman
+  name: Red Hood Shaman
+  once: true
+  on_complete:
+    set_flag: boss_zone06_defeated
