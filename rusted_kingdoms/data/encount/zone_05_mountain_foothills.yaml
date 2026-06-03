@@ -1,5 +1,6 @@
 id: zone_05_mountain_foothills
 name: Mountain Foothills
+background: zone5-bg-1280x468
 density: 0.14
 
 entries:

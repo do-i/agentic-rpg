@@ -69,5 +69,4 @@ Initial candidate maps were created with the primary recommended tilesets:
 
 `zone_03_marshland.tmx` now routes its former `zone_04_todo` portal to
 `zone_04_ancient_ruins_01_gate`. The forward exit from the sanctum points to
-`zone_05_mountain_foothills`, which still needs its TMX map before that final
-transition is playable.
+`zone_05_mountain_foothills`.

@@ -57,7 +57,7 @@ Legend: ✅ tmx + yaml present · 🟡 yaml stub only (needs tmx) · ❌ missing
 - ❌ `town_04_frostholm_palace` — eternal court, king's offer scene
 - ❌ `town_04_frostholm_vault` — royal vault holding the third Vessel-flame
 - ❌ `town_04_frostholm_inn` / `_shop` — town interior set
-- ❌ `zone_05_mountain_foothills` — mountain approach; canonical zone name from the sprite-backed encounter allocation
+- ✅ `zone_05_mountain_foothills` — mountain approach; canonical zone name from the sprite-backed encounter allocation
 
 ### Sub-Epic 6 — The Veil of Ash (Ashenveil)
 
