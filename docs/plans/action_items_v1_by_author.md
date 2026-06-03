@@ -57,7 +57,7 @@ Legend: ✅ tmx + yaml present · 🟡 yaml stub only (needs tmx) · ❌ missing
 - ❌ `town_04_frostholm_palace` — eternal court, king's offer scene
 - ❌ `town_04_frostholm_vault` — royal vault holding the third Vessel-flame
 - ❌ `town_04_frostholm_inn` / `_shop` — town interior set
-- ❌ `zone_05_frost_pass` — mountain approach
+- ❌ `zone_05_mountain_foothills` — mountain approach; canonical zone name from the sprite-backed encounter allocation
 
 ### Sub-Epic 6 — The Veil of Ash (Ashenveil)
 
@@ -90,6 +90,7 @@ Legend: ✅ tmx + yaml present · 🟡 yaml stub only (needs tmx) · ❌ missing
 
 ## Cross-Cutting Notes
 
+- **Sprite-driven zone naming:** generated enemy sprites and the encounter zone IDs in `rusted_kingdoms/data/encount/zone_*.yaml` are canonical for production. Older prose names may be revised to fit the available sprite roster; for example, the former `zone_05_frost_pass` concept is now `zone_05_mountain_foothills`.
 - **Tilesets needed beyond current set:** rusted-forest variant, port/dock, cliffside monastery, frozen palace, ash/ruin city, rusted-wasteland, abstract "memory" interior tileset for Zone 10.
 - **Town interior convention:** every settlement currently uses the Ardel pattern (`<town>_inn_01`, `<town>_shop_01`, plus story-specific houses). Apply the same to Millhaven → Ashenveil to unblock shop/inn/dialogue authoring.
 - **Priority ordering for production:** finish Act I/II tmx work first (Millhaven, Harborgate, Ruinwatch already have yaml), then tilesets for Frostholm/Ashenveil (new palettes), then the Zone 10 memory-floor set last (it can reuse earlier tilesets by design).
