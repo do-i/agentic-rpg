@@ -60,6 +60,16 @@ ARROW_HALF_WIDTH = 5
 # spaced this far apart, so reciprocal/parallel edges fan out instead of
 # stacking on one line.
 RISER_LANE_STEP = 22
+# Length of the perpendicular stub where an edge leaves/enters a node, so the
+# arrowhead meets the node side at a right angle.
+EDGE_STUB = 20
+# Outward unit normal for each node side.
+SIDE_NORMAL = {
+    "left": (-1, 0),
+    "right": (1, 0),
+    "top": (0, -1),
+    "bottom": (0, 1),
+}
 JUMP_RADIUS = 6         # semicircle "hop" where a horizontal edge crosses a vertical one
 NODE_PADDING = 8
 LABEL_HEIGHT = 18
@@ -685,8 +695,8 @@ class GraphScene(Scene):
             endpoints = self._edge_endpoints(edge)
             if endpoints is None:
                 continue
-            (sx, sy), (tx, ty) = endpoints
-            path = self._edge_path(sx, sy, tx, ty, edge)
+            src, dst, src_side, dst_side = endpoints
+            path = self._edge_path(edge, src, dst, src_side, dst_side)
             is_selected = self._selection is edge
             is_hover = self._hover_edge_idx == idx
             decorated.append((idx, edge, path, is_selected, is_hover))
@@ -749,23 +759,42 @@ class GraphScene(Scene):
         return offsets
 
     def _edge_path(
-        self, sx: int, sy: int, tx: int, ty: int, edge: GraphEdge
+        self,
+        edge: GraphEdge,
+        src: tuple[int, int],
+        dst: tuple[int, int],
+        src_side: str,
+        dst_side: str,
     ) -> list[tuple[float, float]]:
-        """Orthogonal route from source to destination (H-V-H elbow).
+        """Orthogonal route that leaves/enters each node perpendicular to its side.
 
-        The vertical riser sits in a per-edge lane (see _compute_riser_offsets)
-        so reciprocal and parallel edges between the same maps fan apart instead
-        of overlapping.
+        Each end gets a short stub along its side's outward normal, so the
+        arrowhead meets the destination side at a right angle (pointing right
+        into a left side, down into a top side, and so on). The two stubs are
+        joined by an orthogonal connector whose middle line sits in a per-edge
+        lane (see _compute_riser_offsets) so parallel edges fan apart.
         """
-        if abs(sx - tx) <= 1 or abs(sy - ty) <= 1:
-            return [(float(sx), float(sy)), (float(tx), float(ty))]
-        mid_x = (sx + tx) / 2 + self._riser_offsets.get(id(edge), 0.0)
-        return [
-            (float(sx), float(sy)),
-            (mid_x, float(sy)),
-            (mid_x, float(ty)),
-            (float(tx), float(ty)),
-        ]
+        ns = SIDE_NORMAL[src_side]
+        nd = SIDE_NORMAL[dst_side]
+        a1 = (src[0] + ns[0] * EDGE_STUB, src[1] + ns[1] * EDGE_STUB)
+        a2 = (dst[0] + nd[0] * EDGE_STUB, dst[1] + nd[1] * EDGE_STUB)
+        offset = self._riser_offsets.get(id(edge), 0.0)
+        src_horiz = src_side in ("left", "right")
+        dst_horiz = dst_side in ("left", "right")
+
+        pts: list[tuple[float, float]] = [(float(src[0]), float(src[1])), a1]
+        if src_horiz and dst_horiz:
+            mid_x = (a1[0] + a2[0]) / 2 + offset
+            pts += [(mid_x, a1[1]), (mid_x, a2[1])]
+        elif not src_horiz and not dst_horiz:
+            mid_y = (a1[1] + a2[1]) / 2 + offset
+            pts += [(a1[0], mid_y), (a2[0], mid_y)]
+        elif src_horiz and not dst_horiz:
+            pts.append((a2[0], a1[1]))
+        else:  # source vertical, destination horizontal
+            pts.append((a1[0], a2[1]))
+        pts += [a2, (float(dst[0]), float(dst[1]))]
+        return _simplify_orthogonal(pts)
 
     def _apply_jumps(
         self,
@@ -1205,10 +1234,10 @@ class GraphScene(Scene):
             endpoints = self._edge_endpoints(edge)
             if endpoints is None:
                 continue
-            (sx, sy), (tx, ty) = endpoints
-            if (sx, sy) == (tx, ty):
+            src, dst, src_side, dst_side = endpoints
+            if src == dst:
                 continue
-            path = self._edge_path(sx, sy, tx, ty, edge)
+            path = self._edge_path(edge, src, dst, src_side, dst_side)
             d = min(
                 _distance_point_to_segment(pos, path[i], path[i + 1])
                 for i in range(len(path) - 1)
@@ -1220,13 +1249,13 @@ class GraphScene(Scene):
 
     def _edge_endpoints(
         self, edge: GraphEdge
-    ) -> tuple[tuple[int, int], tuple[int, int]] | None:
-        """Return the visible line endpoints (clipped to each node's outer border).
+    ) -> tuple[tuple[int, int], tuple[int, int], str, str] | None:
+        """Return the line endpoints and the node side each one sits on.
 
         The interior points are the portal tile positions on each thumbnail;
-        we then clip them to the node bounding rects so the arrowhead apex
-        sits on the destination node's outer edge instead of being covered
-        by the thumbnail.
+        we clip them to the node bounding rects so the endpoint lands on the
+        outer edge. The side ("left"/"right"/"top"/"bottom") lets the router
+        leave/enter perpendicular to that side.
         """
         src_view = self._node_views.get(edge.source)
         dst_view = self._node_views.get(edge.target)
@@ -1236,9 +1265,11 @@ class GraphScene(Scene):
         dst_inner = self._portal_point_on_node(dst_view, edge.target_tile)
         src_rect = self._node_rect(src_view)
         dst_rect = self._node_rect(dst_view)
-        src_pt = _exit_point(src_inner, dst_inner, src_rect) or src_inner
-        dst_pt = _exit_point(dst_inner, src_inner, dst_rect) or dst_inner
-        return src_pt, dst_pt
+        src = _exit_point(src_inner, dst_inner, src_rect)
+        dst = _exit_point(dst_inner, src_inner, dst_rect)
+        src_pt, src_side = src if src is not None else (src_inner, _side_of(src_inner, src_rect))
+        dst_pt, dst_side = dst if dst is not None else (dst_inner, _side_of(dst_inner, dst_rect))
+        return src_pt, dst_pt, src_side, dst_side
 
     def _node_rect(self, view: _NodeView) -> pygame.Rect:
         cx, cy = self._layout_to_screen(view.layout_x, view.layout_y)
@@ -1292,10 +1323,11 @@ class GraphScene(Scene):
 
 def _exit_point(
     inside: tuple[int, int], outside: tuple[int, int], rect: pygame.Rect
-) -> tuple[int, int] | None:
+) -> tuple[tuple[int, int], str] | None:
     """Where the ray from `inside` toward `outside` crosses the rect's border.
 
-    `inside` is expected to lie inside `rect`. Returns None if the segment
+    `inside` is expected to lie inside `rect`. Returns the crossing point and
+    the side it crosses ("left"/"right"/"top"/"bottom"), or None if the segment
     doesn't actually cross the border (e.g., `outside` also inside).
     """
     sx, sy = inside
@@ -1303,18 +1335,60 @@ def _exit_point(
     dx, dy = tx - sx, ty - sy
     if dx == 0 and dy == 0:
         return None
-    t_exit = 1.0
+    best_t: float | None = None
+    side: str | None = None
     if dx > 0:
-        t_exit = min(t_exit, (rect.right - sx) / dx)
+        best_t, side = (rect.right - sx) / dx, "right"
     elif dx < 0:
-        t_exit = min(t_exit, (rect.left - sx) / dx)
+        best_t, side = (rect.left - sx) / dx, "left"
     if dy > 0:
-        t_exit = min(t_exit, (rect.bottom - sy) / dy)
+        t = (rect.bottom - sy) / dy
+        if best_t is None or t < best_t:
+            best_t, side = t, "bottom"
     elif dy < 0:
-        t_exit = min(t_exit, (rect.top - sy) / dy)
-    if t_exit <= 0:
+        t = (rect.top - sy) / dy
+        if best_t is None or t < best_t:
+            best_t, side = t, "top"
+    if best_t is None or best_t <= 0 or side is None:
         return None
-    return (int(sx + t_exit * dx), int(sy + t_exit * dy))
+    return (int(sx + best_t * dx), int(sy + best_t * dy)), side
+
+
+def _side_of(point: tuple[int, int], rect: pygame.Rect) -> str:
+    """Nearest rect side to a point that lies on (or near) the border."""
+    x, y = point
+    dists = {
+        "left": abs(x - rect.left),
+        "right": abs(x - rect.right),
+        "top": abs(y - rect.top),
+        "bottom": abs(y - rect.bottom),
+    }
+    return min(dists, key=dists.get)
+
+
+def _simplify_orthogonal(
+    points: list[tuple[float, float]],
+) -> list[tuple[float, float]]:
+    """Drop duplicate and collinear interior points from an axis-aligned path."""
+    out: list[tuple[float, float]] = []
+    for p in points:
+        if out and abs(p[0] - out[-1][0]) < 0.5 and abs(p[1] - out[-1][1]) < 0.5:
+            continue
+        out.append(p)
+    if len(out) <= 2:
+        return out
+    res = [out[0]]
+    for i in range(1, len(out) - 1):
+        ax, ay = res[-1]
+        bx, by = out[i]
+        cx, cy = out[i + 1]
+        horizontal = abs(ay - by) < 0.5 and abs(by - cy) < 0.5
+        vertical = abs(ax - bx) < 0.5 and abs(bx - cx) < 0.5
+        if horizontal or vertical:
+            continue
+        res.append(out[i])
+    res.append(out[-1])
+    return res
 
 
 def _point_along(
