@@ -3,6 +3,7 @@
 Interactions:
   - Click node: select node (details in right panel).
   - Click portal edge: select edge.
+  - Delete: mark the selected portal edge for removal (saved with S).
   - Click empty: deselect.
   - Drag node: move it around.
   - Drag background: pan camera.
@@ -34,13 +35,13 @@ from tools.map_editor.edit.editor_state import (
     STEP_SOURCE_NODE,
     STEP_SOURCE_TILE,
 )
-from tools.map_editor.edit.tmx_writer import create_portal, save_portal_target
+from tools.map_editor.edit.tmx_writer import create_portal, delete_portal, save_portal_target
 from tools.map_editor.graph.portal_graph import GraphEdge, GraphNode, PortalGraph
 from tools.map_editor.graph.sprite_cache import SpriteCache
 from tools.map_editor.graph.spring_layout import spring_layout
 from tools.map_editor.graph.thumbnails import ThumbnailCache
 from tools.map_editor.scenes.side_panel import PanelLayout, render_side_panel
-from tools.map_editor.scenes.tile_picker import PortalOption, TilePicker
+from tools.map_editor.scenes.tile_picker import PortalOption, PortalPick, TilePicker
 
 
 NODE_BG = (28, 28, 36)
@@ -90,7 +91,8 @@ HELP_LINES = [
     ("Enter", "open selected map"),
     ("0", "refit camera"),
     ("E", "toggle edit mode"),
-    ("S", "save pending edits (edit mode)"),
+    ("Delete", "delete selected portal edge"),
+    ("S", "save pending edits"),
     ("Esc", "deselect / cancel"),
 ]
 
@@ -335,8 +337,12 @@ class GraphScene(Scene):
             self._toggle_edit_mode()
             return
         if event.key == pygame.K_s and not (event.mod & (pygame.KMOD_CTRL | pygame.KMOD_META)):
-            if self._editor.enabled:
+            if self._editor.enabled or self._editor.has_pending():
                 self._save_pending_edits()
+                return
+        if event.key in (pygame.K_DELETE, pygame.K_BACKSPACE):
+            if isinstance(self._selection, GraphEdge):
+                self._delete_selected_edge()
                 return
         if event.key in (pygame.K_0, pygame.K_KP_0):
             self._needs_fit = True
@@ -378,6 +384,7 @@ class GraphScene(Scene):
                 PortalOption(
                     portal_obj_id=edge.portal_obj_id,
                     source_tile=edge.source_tile,
+                    source_rect_px=edge.source_rect_px,
                     target_map=edge.target,
                     target_tile=edge.target_tile,
                 )
@@ -389,9 +396,10 @@ class GraphScene(Scene):
     ) -> None:
         node = self._graph.nodes_by_id[map_id]
         hint = (
-            f"Click an existing portal to retarget on {map_id}, or any tile to add new"
+            f"Click a portal to retarget, or drag over it to resize. "
+            f"Drag empty space (or click a tile) to add a new portal on {map_id}"
             if portals
-            else f"{map_id} has no portals — click any tile to add one"
+            else f"{map_id} has no portals — drag an area (or click a tile) to add one"
         )
         self._tile_picker = TilePicker(
             node=node,
@@ -423,16 +431,20 @@ class GraphScene(Scene):
         if picked is None:
             self._editor.cancel_cycle("Cancelled")
             return
-        if isinstance(picked, PortalOption):
+        assert isinstance(picked, PortalPick)
+        if picked.existing is not None:
             self._editor.set_source_portal(
-                portal_obj_id=picked.portal_obj_id,
+                portal_obj_id=picked.existing.portal_obj_id,
                 source_tile=picked.source_tile,
-                original_target_map=picked.target_map,
-                original_target_tile=picked.target_tile,
+                original_target_map=picked.existing.target_map,
+                original_target_tile=picked.existing.target_tile,
+                source_rect_px=picked.source_rect_px,
             )
         else:
-            # `picked` is a (col, row) tile — user wants a new portal here.
-            self._editor.set_new_source_tile(picked)
+            self._editor.set_new_source(
+                source_tile=picked.source_tile,
+                source_rect_px=picked.source_rect_px,
+            )
 
     def _on_dest_tile_picked(self, picked) -> None:
         self._tile_picker = None
@@ -456,6 +468,7 @@ class GraphScene(Scene):
                     source_tile=edit.source_tile,
                     target_tile=edit.new_target_tile,
                     portal_obj_id=edit.portal_obj_id,
+                    source_rect_px=edit.source_rect_px,
                 )
             )
             return
@@ -463,9 +476,35 @@ class GraphScene(Scene):
             if e.source == edit.source_map_id and e.portal_obj_id == edit.portal_obj_id:
                 e.target = edit.new_target_map
                 e.target_tile = edit.new_target_tile
+                # A drag resized the portal; reflect new geometry in the view.
+                if edit.source_rect_px is not None:
+                    e.source_rect_px = edit.source_rect_px
+                    e.source_tile = edit.source_tile
+
+    def _delete_selected_edge(self) -> None:
+        edge = self._selection
+        if not isinstance(edge, GraphEdge):
+            return
+        node = self._graph.nodes_by_id.get(edge.source)
+        if node is None:
+            self._show_toast(f"Cannot delete: source map {edge.source} not loaded.")
+            return
+        self._editor.record_deletion(
+            source_tmx=node.tmx_path,
+            source_map_id=edge.source,
+            portal_obj_id=edge.portal_obj_id,
+            target_map=edge.target,
+            source_tile=edge.source_tile,
+            target_tile=edge.target_tile,
+        )
+        # Drop it from the in-memory graph so the view reflects the pending state.
+        self._graph.edges[:] = [e for e in self._graph.edges if e is not edge]
+        self._selection = None
+        self._hover_edge_idx = None
+        self._show_toast(self._editor.last_message)
 
     def _save_pending_edits(self) -> None:
-        if not self._editor.pending:
+        if not self._editor.has_pending():
             self._editor.last_message = "No pending edits to save."
             return
         n = 0
@@ -474,7 +513,7 @@ class GraphScene(Scene):
                 if edit.is_new:
                     real_id = create_portal(
                         tmx_path=edit.source_tmx,
-                        source_tile=edit.source_tile,
+                        source_rect_px=edit.source_rect_px,
                         new_target_map=edit.new_target_map,
                         new_target_tile=edit.new_target_tile,
                     )
@@ -485,15 +524,26 @@ class GraphScene(Scene):
                         portal_obj_id=edit.portal_obj_id,
                         new_target_map=edit.new_target_map,
                         new_target_tile=edit.new_target_tile,
+                        new_source_rect_px=edit.source_rect_px,
                     )
                 n += 1
             except Exception as exc:
                 self._editor.last_message = f"Save failed for {map_id}: {exc}"
                 return
+        for (map_id, obj_id), deletion in list(self._editor.pending_deletes.items()):
+            try:
+                delete_portal(
+                    tmx_path=deletion.source_tmx,
+                    portal_obj_id=deletion.portal_obj_id,
+                )
+                n += 1
+            except Exception as exc:
+                self._editor.last_message = f"Delete failed for {map_id}: {exc}"
+                return
         self._editor.pending.clear()
-        self._editor.last_message = f"Saved {n} portal edit(s) to TMX (.bak created)."
-        self._toast_text = self._editor.last_message
-        self._toast_until_ms = pygame.time.get_ticks() + TOAST_MS
+        self._editor.pending_deletes.clear()
+        self._editor.last_message = f"Saved {n} portal change(s) to TMX (.bak created)."
+        self._show_toast(self._editor.last_message)
 
     def _replace_temp_portal_id(self, map_id: str, temp_id: int, real_id: int) -> None:
         for e in self._graph.edges:
@@ -525,6 +575,10 @@ class GraphScene(Scene):
             pygame.scrap.put(pygame.SCRAP_TEXT, text.encode("utf-8"))
         except (pygame.error, AttributeError):
             pass
+
+    def _show_toast(self, text: str) -> None:
+        self._toast_text = text
+        self._toast_until_ms = pygame.time.get_ticks() + TOAST_MS
 
     # ── render ───────────────────────────────────────────────────────────
 
@@ -573,7 +627,7 @@ class GraphScene(Scene):
             self._panel_scroll_y = max_scroll
         self._render_toast(screen)
 
-        if self._editor.enabled:
+        if self._editor.enabled or self._editor.has_pending():
             self._render_editor_hud(screen)
         if self._menu_open:
             self._render_menu(screen)
@@ -824,11 +878,14 @@ class GraphScene(Scene):
     def _menu_entries(self) -> list[tuple[str, str]]:
         """Returns list of (id, label). Add new options here as features land."""
         edit_label = "Exit Edit Mode" if self._editor.enabled else "Enter Edit Mode"
-        return [
+        entries = [
             ("help", "Help"),
             ("edit", edit_label),
             ("fit", "Refit Camera"),
         ]
+        if isinstance(self._selection, GraphEdge):
+            entries.append(("delete_edge", "Delete Selected Portal"))
+        return entries
 
     def _update_menu_hover(self, pos: tuple[int, int]) -> None:
         self._menu_hover_idx = None
@@ -853,6 +910,8 @@ class GraphScene(Scene):
             self._toggle_edit_mode()
         elif item_id == "fit":
             self._needs_fit = True
+        elif item_id == "delete_edge":
+            self._delete_selected_edge()
 
     def _render_menu(self, screen: pygame.Surface) -> None:
         entries = self._menu_entries()
@@ -921,10 +980,16 @@ class GraphScene(Scene):
         )
 
     def _render_editor_hud(self, screen: pygame.Surface) -> None:
+        if self._editor.enabled:
+            header = f"EDIT MODE — {self._editor.step_label()}"
+            hint = f"pending: {self._editor.pending_count()}   [S] save   [Esc] cancel/exit"
+        else:
+            header = "PENDING CHANGES"
+            hint = f"pending: {self._editor.pending_count()}   [S] save"
         lines = [
-            f"EDIT MODE — {self._editor.step_label()}",
+            header,
             self._editor.last_message or "",
-            f"pending: {len(self._editor.pending)}   [S] save   [Esc] cancel/exit",
+            hint,
         ]
         rendered = [self._font.render(line, True, (255, 245, 200)) for line in lines if line]
         width = max((s.get_width() for s in rendered), default=0) + 24

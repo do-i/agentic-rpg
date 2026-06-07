@@ -1,6 +1,6 @@
 """State machine for the 4-step portal-retarget wizard.
 
-Mirrors the editor flow from maps_graph.html:
+The editor flow:
 
     source_node  → graph: click the source map's node
     source_tile  → modal: click a portal tile on the source map
@@ -30,17 +30,22 @@ class PortalEdit:
     source_tmx: Path
     source_map_id: str
     portal_obj_id: int                 # >0 for existing; negative sentinel for new (until saved)
-    source_tile: tuple[int, int]       # tile coordinates of the portal on the source map
+    source_tile: tuple[int, int]       # top-left tile of the portal on the source map
     original_target_map: str | None    # None for newly created portals
     original_target_tile: tuple[int, int] | None
     new_target_map: str
     new_target_tile: tuple[int, int]
+    # Portal geometry (x, y, w, h) in map pixels to write. None means "keep the
+    # existing on-disk geometry" (a plain retarget of an existing portal).
+    source_rect_px: tuple[int, int, int, int] | None
     is_new: bool = False
 
     @property
     def changed(self) -> bool:
         if self.is_new:
             return True
+        if self.source_rect_px is not None:
+            return True  # geometry resize requested
         return (
             self.original_target_map != self.new_target_map
             or self.original_target_tile != self.new_target_tile
@@ -61,20 +66,46 @@ class PortalEdit:
 
 
 @dataclass
+class PortalDeletion:
+    source_tmx: Path
+    source_map_id: str
+    portal_obj_id: int
+    target_map: str
+    source_tile: tuple[int, int]
+    target_tile: tuple[int, int]
+
+    def describe(self) -> str:
+        return (
+            f"DEL  {self.source_map_id} #{self.portal_obj_id}  "
+            f"→ {self.target_map}@{self.target_tile[0]},{self.target_tile[1]}"
+        )
+
+
+@dataclass
 class EditorState:
     enabled: bool = False
     step: str = STEP_IDLE
     source_map: str | None = None
     source_portal_obj_id: int | None = None  # negative sentinel for a new portal
     source_portal_tile: tuple[int, int] | None = None
+    # Geometry (x, y, w, h) in map pixels to write, or None to keep existing.
+    source_rect_px: tuple[int, int, int, int] | None = None
     is_creating: bool = False
     original_target_map: str | None = None
     original_target_tile: tuple[int, int] | None = None
     dest_map: str | None = None
     # Keyed by (source_map, portal_obj_id) so re-editing the same portal replaces.
     pending: dict[tuple[str, int], PortalEdit] = field(default_factory=dict)
+    # Portals marked for removal, keyed the same way.
+    pending_deletes: dict[tuple[str, int], PortalDeletion] = field(default_factory=dict)
     last_message: str = ""
     _next_new_id: int = -1
+
+    def has_pending(self) -> bool:
+        return bool(self.pending or self.pending_deletes)
+
+    def pending_count(self) -> int:
+        return len(self.pending) + len(self.pending_deletes)
 
     def enable(self) -> None:
         self.enabled = True
@@ -92,6 +123,7 @@ class EditorState:
         self.source_map = None
         self.source_portal_obj_id = None
         self.source_portal_tile = None
+        self.source_rect_px = None
         self.is_creating = False
         self.original_target_map = None
         self.original_target_tile = None
@@ -116,23 +148,36 @@ class EditorState:
         source_tile: tuple[int, int],
         original_target_map: str,
         original_target_tile: tuple[int, int],
+        source_rect_px: tuple[int, int, int, int] | None,
     ) -> None:
+        """Select an existing portal to retarget.
+
+        `source_rect_px` resizes the portal area (drag); pass None to keep its
+        current geometry (a plain click retarget).
+        """
         self.source_portal_obj_id = portal_obj_id
         self.source_portal_tile = source_tile
+        self.source_rect_px = source_rect_px
         self.is_creating = False
         self.original_target_map = original_target_map
         self.original_target_tile = original_target_tile
         self.step = STEP_DEST_NODE
+        resized = " (resized)" if source_rect_px is not None else ""
         self.last_message = (
-            f"Source: {self.source_map} #{portal_obj_id} "
+            f"Source: {self.source_map} #{portal_obj_id}{resized} "
             f"(was → {original_target_map}@{original_target_tile[0]},{original_target_tile[1]})"
         )
 
-    def set_new_source_tile(self, source_tile: tuple[int, int]) -> None:
-        """Begin a 'create new portal' cycle at the given tile on the source map."""
+    def set_new_source(
+        self,
+        source_tile: tuple[int, int],
+        source_rect_px: tuple[int, int, int, int],
+    ) -> None:
+        """Begin a 'create new portal' cycle covering the given pixel rect."""
         self.source_portal_obj_id = self._next_new_id
         self._next_new_id -= 1
         self.source_portal_tile = source_tile
+        self.source_rect_px = source_rect_px
         self.is_creating = True
         self.original_target_map = None
         self.original_target_tile = None
@@ -160,6 +205,7 @@ class EditorState:
             original_target_tile=self.original_target_tile,
             new_target_map=self.dest_map,
             new_target_tile=dest_tile,
+            source_rect_px=self.source_rect_px,
             is_new=self.is_creating,
         )
         key = (edit.source_map_id, edit.portal_obj_id)
@@ -183,6 +229,39 @@ class EditorState:
         if message:
             self.last_message = message
 
+    def record_deletion(
+        self,
+        source_tmx: Path,
+        source_map_id: str,
+        portal_obj_id: int,
+        target_map: str,
+        source_tile: tuple[int, int],
+        target_tile: tuple[int, int],
+    ) -> PortalDeletion | None:
+        """Mark a portal for removal.
+
+        Replaces any pending retarget on the same portal. A portal that was
+        created during this session (negative sentinel id) was never written,
+        so it is simply dropped instead of being recorded for on-disk deletion.
+        """
+        key = (source_map_id, portal_obj_id)
+        self.pending.pop(key, None)
+        if portal_obj_id < 0:
+            self.last_message = f"Removed unsaved new portal on {source_map_id}"
+            return None
+        deletion = PortalDeletion(
+            source_tmx=source_tmx,
+            source_map_id=source_map_id,
+            portal_obj_id=portal_obj_id,
+            target_map=target_map,
+            source_tile=source_tile,
+            target_tile=target_tile,
+        )
+        self.pending_deletes[key] = deletion
+        self.last_message = "Marked for deletion: " + deletion.describe()
+        return deletion
+
     def discard_all(self) -> None:
         self.pending.clear()
+        self.pending_deletes.clear()
         self.last_message = "Pending edits cleared"

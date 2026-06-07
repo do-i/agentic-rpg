@@ -29,15 +29,34 @@ PORTAL_BORDER = (255, 210, 0)
 PORTAL_BORDER_HOVER = (255, 255, 120)
 PORTAL_FILL = (255, 74, 42, 80)
 PORTAL_FILL_HOVER = (255, 200, 80, 140)
+DRAG_RECT_FILL = (80, 200, 255, 90)
+DRAG_RECT_BORDER = (120, 220, 255)
 HINT_BG = (20, 20, 28, 230)
+
+# Below this pixel movement a drag is treated as a plain click.
+DRAG_CLICK_THRESHOLD_PX = 5
 
 
 @dataclass
 class PortalOption:
     portal_obj_id: int
     source_tile: tuple[int, int]
+    source_rect_px: tuple[int, int, int, int]   # (x, y, w, h) in map pixels
     target_map: str
     target_tile: tuple[int, int]
+
+
+@dataclass
+class PortalPick:
+    """Result of choosing a portal area on the source map.
+
+    `existing` is the portal being retargeted, or None to create a new one.
+    `source_rect_px` is the geometry to write (x, y, w, h in map pixels), or
+    None to keep an existing portal's current geometry (plain click retarget).
+    """
+    existing: PortalOption | None
+    source_tile: tuple[int, int]
+    source_rect_px: tuple[int, int, int, int] | None
 
 
 class TilePicker:
@@ -52,7 +71,7 @@ class TilePicker:
         small_font: pygame.font.Font,
         hint_text: str,
         mode: str,
-        on_pick: Callable[[tuple[int, int] | PortalOption | None], None],
+        on_pick: Callable[[tuple[int, int] | PortalPick | None], None],
         portals: list[PortalOption] | None = None,
     ) -> None:
         if mode not in ("free", "portals"):
@@ -67,6 +86,11 @@ class TilePicker:
         self._on_pick = on_pick
         self._portals = portals or []
         self._hover_tile: tuple[int, int] | None = None
+        # Drag-to-select-area state (portals mode), in map pixels.
+        self._drag_start_px: tuple[float, float] | None = None
+        self._drag_cur_px: tuple[float, float] | None = None
+        self._drag_start_screen: tuple[int, int] | None = None
+        self._drag_on_existing: PortalOption | None = None
         # Per-frame layout values, recomputed in render.
         self._map_rect: pygame.Rect | None = None
 
@@ -76,19 +100,20 @@ class TilePicker:
         """Returns True if the event was consumed by the overlay."""
         if event.type == pygame.MOUSEMOTION:
             self._hover_tile = self._tile_at(event.pos)
+            if self._drag_start_px is not None:
+                self._drag_cur_px = self._map_px_at(event.pos, clamp=True)
             return True
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            tile = self._tile_at(event.pos)
-            if tile is None:
-                return True
             if self._mode == "portals":
-                match = next(
-                    (p for p in self._portals if p.source_tile == tile), None
-                )
-                # Existing portal → retarget; empty tile → create new portal here.
-                self._on_pick(match if match is not None else tile)
+                self._begin_drag(event.pos)
             else:
-                self._on_pick(tile)
+                tile = self._tile_at(event.pos)
+                if tile is not None:
+                    self._on_pick(tile)
+            return True
+        if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            if self._mode == "portals" and self._drag_start_px is not None:
+                self._finish_drag(event.pos)
             return True
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self._on_pick(None)
@@ -98,6 +123,49 @@ class TilePicker:
             return True
         # Swallow all other events while modal so the underlying scene doesn't react.
         return True
+
+    def _begin_drag(self, pos: tuple[int, int]) -> None:
+        start = self._map_px_at(pos, clamp=False)
+        if start is None:
+            return
+        self._drag_start_px = start
+        self._drag_cur_px = start
+        self._drag_start_screen = pos
+        self._drag_on_existing = self._portal_at_px(start)
+
+    def _finish_drag(self, pos: tuple[int, int]) -> None:
+        start_screen = self._drag_start_screen
+        existing = self._drag_on_existing
+        start_px = self._drag_start_px
+        cur_px = self._map_px_at(pos, clamp=True) or self._drag_cur_px or start_px
+        self._reset_drag()
+        if start_px is None or start_screen is None:
+            return
+
+        moved = abs(pos[0] - start_screen[0]) + abs(pos[1] - start_screen[1])
+        if moved < DRAG_CLICK_THRESHOLD_PX:
+            # Plain click: retarget an existing portal (keep geometry) or add a
+            # new one-tile portal at the clicked tile.
+            if existing is not None:
+                self._on_pick(PortalPick(existing, existing.source_tile, None))
+                return
+            tile = self._tile_at(start_screen)
+            if tile is None:
+                return
+            self._on_pick(PortalPick(None, tile, self._tile_rect_px(tile)))
+            return
+
+        # Drag: build the selected rect in map pixels.
+        rect_px = self._normalized_rect_px(start_px, cur_px)
+        top_left_tile = self._tile_of_px(rect_px[0], rect_px[1])
+        # Existing portal under the drag start → resize + retarget; else new.
+        self._on_pick(PortalPick(existing, top_left_tile, rect_px))
+
+    def _reset_drag(self) -> None:
+        self._drag_start_px = None
+        self._drag_cur_px = None
+        self._drag_start_screen = None
+        self._drag_on_existing = None
 
     # ── render ───────────────────────────────────────────────────────────
 
@@ -135,10 +203,13 @@ class TilePicker:
         tw, th = self._tile_dims_screen()
 
         if self._mode == "portals":
-            self._draw_portal_options(screen, map_rect, tw, th, now_ms)
+            self._draw_portal_options(screen, map_rect, now_ms)
 
-        if self._hover_tile is not None:
+        if self._hover_tile is not None and self._drag_start_px is None:
             self._draw_hover(screen, map_rect, tw, th)
+
+        if self._drag_start_px is not None and self._drag_cur_px is not None:
+            self._draw_drag_rect(screen)
 
         self._draw_hint(screen, self._hint_text)
 
@@ -177,20 +248,15 @@ class TilePicker:
         self,
         screen: pygame.Surface,
         map_rect: pygame.Rect,
-        tw: float,
-        th: float,
         now_ms: int,
     ) -> None:
         pulse = 0.5 + 0.5 * math.sin(now_ms / 220.0)
+        mouse_pos = pygame.mouse.get_pos()
         for portal in self._portals:
-            col, row = portal.source_tile
-            rect = pygame.Rect(
-                int(map_rect.left + col * tw),
-                int(map_rect.top + row * th),
-                max(8, int(tw)),
-                max(8, int(th)),
-            )
-            is_hover = self._hover_tile == portal.source_tile
+            rect = self._screen_rect_from_px(portal.source_rect_px)
+            if rect is None:
+                continue
+            is_hover = rect.collidepoint(mouse_pos)
             fill = PORTAL_FILL_HOVER if is_hover else PORTAL_FILL
             border = PORTAL_BORDER_HOVER if is_hover else PORTAL_BORDER
             fill_surf = pygame.Surface((rect.w, rect.h), pygame.SRCALPHA)
@@ -208,6 +274,26 @@ class TilePicker:
             bg_pos = (rect.left, rect.top - bg.get_height() - 2)
             screen.blit(bg, bg_pos)
             screen.blit(label, (bg_pos[0] + 4, bg_pos[1] + 2))
+
+    def _draw_drag_rect(self, screen: pygame.Surface) -> None:
+        rect_px = self._normalized_rect_px(self._drag_start_px, self._drag_cur_px)
+        rect = self._screen_rect_from_px(rect_px)
+        if rect is None:
+            return
+        fill_surf = pygame.Surface((rect.w, rect.h), pygame.SRCALPHA)
+        fill_surf.fill(DRAG_RECT_FILL)
+        screen.blit(fill_surf, rect.topleft)
+        pygame.draw.rect(screen, DRAG_RECT_BORDER, rect, width=2)
+        x, y, w, h = rect_px
+        info = self._small_font.render(
+            f"{w}x{h}px  @{x},{y}", True, (255, 255, 255)
+        )
+        bg = pygame.Surface(
+            (info.get_width() + 8, info.get_height() + 4), pygame.SRCALPHA
+        )
+        bg.fill((20, 20, 28, 220))
+        screen.blit(bg, (rect.left, rect.bottom + 2))
+        screen.blit(info, (rect.left + 4, rect.bottom + 4))
 
     def _draw_hover(
         self, screen: pygame.Surface, map_rect: pygame.Rect, tw: float, th: float
@@ -272,3 +358,67 @@ class TilePicker:
         col = int((pos[0] - self._map_rect.left) // tw)
         row = int((pos[1] - self._map_rect.top) // th)
         return (col, row)
+
+    def _map_px_at(
+        self, pos: tuple[int, int], clamp: bool
+    ) -> tuple[float, float] | None:
+        """Convert a screen position to map-pixel coordinates.
+
+        With clamp=False, returns None for positions outside the map; with
+        clamp=True, clamps into the map bounds (so a drag can run to the edge).
+        """
+        map_w_px, map_h_px = self._node.map_size_px
+        if self._map_rect is None or map_w_px == 0 or map_h_px == 0:
+            return None
+        if not clamp and not self._map_rect.collidepoint(pos):
+            return None
+        fx = (pos[0] - self._map_rect.left) * map_w_px / self._map_rect.width
+        fy = (pos[1] - self._map_rect.top) * map_h_px / self._map_rect.height
+        fx = max(0.0, min(float(map_w_px), fx))
+        fy = max(0.0, min(float(map_h_px), fy))
+        return (fx, fy)
+
+    def _tile_of_px(self, x: float, y: float) -> tuple[int, int]:
+        tile_w_px, tile_h_px = self._node.tile_size_px
+        return (int(x // max(1, tile_w_px)), int(y // max(1, tile_h_px)))
+
+    def _tile_rect_px(self, tile: tuple[int, int]) -> tuple[int, int, int, int]:
+        tile_w_px, tile_h_px = self._node.tile_size_px
+        col, row = tile
+        return (col * tile_w_px, row * tile_h_px, tile_w_px, tile_h_px)
+
+    def _normalized_rect_px(
+        self, a: tuple[float, float], b: tuple[float, float]
+    ) -> tuple[int, int, int, int]:
+        x0, y0 = a
+        x1, y1 = b
+        x, y = int(min(x0, x1)), int(min(y0, y1))
+        w = max(1, int(abs(x1 - x0)))
+        h = max(1, int(abs(y1 - y0)))
+        return (x, y, w, h)
+
+    def _portal_at_px(
+        self, px: tuple[float, float]
+    ) -> PortalOption | None:
+        """The topmost existing portal whose geometry contains the point."""
+        for portal in reversed(self._portals):
+            x, y, w, h = portal.source_rect_px
+            if x <= px[0] <= x + w and y <= px[1] <= y + h:
+                return portal
+        return None
+
+    def _screen_rect_from_px(
+        self, rect_px: tuple[int, int, int, int]
+    ) -> pygame.Rect | None:
+        map_w_px, map_h_px = self._node.map_size_px
+        if self._map_rect is None or map_w_px == 0 or map_h_px == 0:
+            return None
+        sx = self._map_rect.width / map_w_px
+        sy = self._map_rect.height / map_h_px
+        x, y, w, h = rect_px
+        return pygame.Rect(
+            int(self._map_rect.left + x * sx),
+            int(self._map_rect.top + y * sy),
+            max(6, int(w * sx)),
+            max(6, int(h * sy)),
+        )

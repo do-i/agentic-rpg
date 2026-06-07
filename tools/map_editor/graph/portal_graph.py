@@ -19,6 +19,7 @@ import yaml
 class NpcMeta:
     npc_id: str
     name: str | None
+    npc_type: str | None
     dialogue: str | None
     position: tuple[int, int] | None
     sprite: str | None  # scenario-relative path to a .tsx (or .png) for the NPC
@@ -45,6 +46,7 @@ class GraphNode:
     npcs: tuple[NpcMeta, ...]
     item_boxes: tuple[ItemBoxMeta, ...]
     encounter: dict | None
+    transport: dict | str | None    # `transport` yaml field, if the map defines one
     map_size_px: tuple[int, int]    # full map pixel dimensions
     tile_size_px: tuple[int, int]   # individual tile pixel dimensions
 
@@ -56,6 +58,7 @@ class GraphEdge:
     source_tile: tuple[int, int]    # portal's top-left tile on the source map
     target_tile: tuple[int, int]    # destination tile on the target map
     portal_obj_id: int              # Tiled object id of the portal on the source map
+    source_rect_px: tuple[int, int, int, int]  # portal geometry (x, y, w, h) in map pixels
 
 
 @dataclass
@@ -91,6 +94,7 @@ def build_portal_graph(
                 npcs=meta["npcs"],
                 item_boxes=meta["item_boxes"],
                 encounter=meta["encounter"],
+                transport=meta["transport"],
                 map_size_px=(tmx_info["map_w_px"], tmx_info["map_h_px"]),
                 tile_size_px=(tmx_info["tile_w"], tmx_info["tile_h"]),
             )
@@ -105,6 +109,12 @@ def build_portal_graph(
                     source_tile=(record["source_x"] // tw, record["source_y"] // th),
                     target_tile=(record["target_x"], record["target_y"]),
                     portal_obj_id=record["obj_id"],
+                    source_rect_px=(
+                        record["source_x"],
+                        record["source_y"],
+                        record["source_w"],
+                        record["source_h"],
+                    ),
                 )
             )
 
@@ -123,6 +133,7 @@ def _empty_meta() -> dict:
         "npcs": (),
         "item_boxes": (),
         "encounter": None,
+        "transport": None,
     }
 
 
@@ -139,6 +150,7 @@ def _read_yaml_meta(yaml_path: Path) -> dict:
             NpcMeta(
                 npc_id=str(entry.get("id") or "?"),
                 name=entry.get("name"),
+                npc_type=entry.get("type"),
                 dialogue=entry.get("dialogue"),
                 position=(int(pos[0]), int(pos[1])) if pos else None,
                 sprite=entry.get("sprite"),
@@ -170,6 +182,7 @@ def _read_yaml_meta(yaml_path: Path) -> dict:
         "npcs": tuple(npcs),
         "item_boxes": tuple(boxes),
         "encounter": encounter if isinstance(encounter, dict) else None,
+        "transport": data.get("transport"),
     }
 
 
@@ -202,6 +215,8 @@ def _read_tmx_info(tmx_path: Path) -> dict:
                     "target_map": str(target),
                     "source_x": int(obj.x),
                     "source_y": int(obj.y),
+                    "source_w": max(1, int(round(obj.width))),
+                    "source_h": max(1, int(round(obj.height))),
                     "target_x": int(tx),
                     "target_y": int(ty),
                     "obj_id": int(getattr(obj, "id", 0)),
