@@ -23,6 +23,8 @@ drops:
           weight: 60
         - item: soft_fur
           weight: 40
+        - item: herb_red
+          weight: 35
 ai:
   pattern: random
   moves:

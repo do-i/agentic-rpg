@@ -57,6 +57,8 @@ drops:
           weight: 50
         - item: fire_crystal
           weight: 50
+        - item: fire_gland
+          weight: 30
 ai:
   pattern: random
   moves:

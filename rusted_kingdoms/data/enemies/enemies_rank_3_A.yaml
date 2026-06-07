@@ -128,6 +128,8 @@ drops:
           weight: 65
         - item: harpy_feather
           weight: 35
+        - item: wind_crystal
+          weight: 30
 ai:
   pattern: random
   moves:
@@ -163,6 +165,8 @@ drops:
           weight: 50
         - item: harpy_feather
           weight: 50
+        - item: gale_feather
+          weight: 30
 ai:
   pattern: random
   moves:
@@ -334,6 +338,8 @@ drops:
           weight: 60
         - item: lava_scale
           weight: 40
+        - item: ice_fang
+          weight: 30
 ai:
   pattern: random
   moves:

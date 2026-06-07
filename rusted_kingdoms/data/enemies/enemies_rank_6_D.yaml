@@ -131,6 +131,8 @@ drops:
           weight: 60
         - item: rare_herb
           weight: 40
+        - item: mana_droplet
+          weight: 35
 ai:
   pattern: random
   moves:
@@ -210,6 +212,8 @@ drops:
           weight: 60
         - item: dark_fluid
           weight: 40
+        - item: venom_sac
+          weight: 30
 ai:
   pattern: random
   moves:

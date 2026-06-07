@@ -21,6 +21,8 @@ drops:
           weight: 70
         - item: goblin_ear
           weight: 30
+        - item: herb_red
+          weight: 35
 ai:
   pattern: random
   moves:

@@ -198,6 +198,8 @@ drops:
           weight: 70
         - item: plague_sample
           weight: 30
+        - item: ectoplasm
+          weight: 30
 ai:
   pattern: random
   moves:

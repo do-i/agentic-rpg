@@ -138,6 +138,8 @@ drops:
           weight: 50
         - item: cursed_relic
           weight: 50
+        - item: phantom_veil
+          weight: 30
 ai:
   pattern: random
   moves:
@@ -174,6 +176,8 @@ drops:
           weight: 60
         - item: dark_crystal
           weight: 40
+        - item: soul_fragment
+          weight: 30
 ai:
   pattern: random
   moves:
