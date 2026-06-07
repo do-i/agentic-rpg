@@ -55,16 +55,28 @@ EDGE_COLOR_OUTGOING = (60, 230, 90)
 EDGE_COLOR_INCOMING = (255, 80, 80)
 ARROW_LEN = 13
 ARROW_HALF_WIDTH = 5
-# Quadratic-bezier sideways bow as a fraction of the edge length.
-EDGE_CURVE_RATIO = 0.16
+# Manhattan (orthogonal) edge routing.
+EDGE_RISER_OFFSET = 16  # sideways shift of the vertical riser; separates A→B from B→A
+JUMP_RADIUS = 6         # semicircle "hop" where a horizontal edge crosses a vertical one
 NODE_PADDING = 8
 LABEL_HEIGHT = 18
 CLICK_PIXEL_THRESHOLD = 4
 EDGE_PICK_THRESHOLD_PX = 8
 
+ZOOM_MIN = 0.08
+ZOOM_MAX = 2.5
+
 PANEL_WIDTH_DEFAULT = 360
-PANEL_WIDTH_MIN = 240
-PANEL_WIDTH_MAX_RESERVE = 200  # leave at least this much for the graph
+# The divider can be dragged all the way to either edge to fully collapse a
+# pane. Dragging within this many pixels of an edge snaps to fully collapsed,
+# and a small grab tab is shown at that edge to slide the pane back.
+PANEL_COLLAPSE_SNAP = 48
+DIVIDER_GRAB_W = 10
+TAB_W = 18
+TAB_H = 72
+TAB_BG = (40, 44, 58)
+TAB_BG_HOVER = (70, 80, 110)
+TAB_BORDER = (110, 120, 150)
 TOAST_MS = 1400
 
 # Header menu bar across the top of the graph area; the graph renders below it.
@@ -93,6 +105,7 @@ HELP_LINES = [
     ("E", "toggle edit mode"),
     ("Delete", "delete selected portal edge"),
     ("S", "save pending edits"),
+    ("drag divider", "collapse the graph or detail pane fully"),
     ("Esc", "deselect / cancel"),
 ]
 
@@ -274,9 +287,12 @@ class GraphScene(Scene):
         if self._resizing_panel:
             screen_w = pygame.display.get_surface().get_width()
             new_width = screen_w - event.pos[0]
-            self._panel_width = max(
-                PANEL_WIDTH_MIN, min(screen_w - PANEL_WIDTH_MAX_RESERVE, new_width)
-            )
+            # Snap to a fully-collapsed pane near either edge.
+            if new_width < PANEL_COLLAPSE_SNAP:
+                new_width = 0
+            elif new_width > screen_w - PANEL_COLLAPSE_SNAP:
+                new_width = screen_w
+            self._panel_width = max(0, min(screen_w, new_width))
             return
 
         self._handle_hovered = self._on_handle(event.pos)
@@ -314,7 +330,7 @@ class GraphScene(Scene):
         if self._in_header(pygame.mouse.get_pos()):
             return
         factor = 1.15 if event.y > 0 else 1.0 / 1.15
-        new_zoom = max(0.25, min(2.5, self._zoom * factor))
+        new_zoom = max(ZOOM_MIN, min(ZOOM_MAX, self._zoom * factor))
         # Keep the world point under the mouse pointer fixed on screen.
         mx, my = pygame.mouse.get_pos()
         self._cam_x += mx / self._zoom - mx / new_zoom
@@ -596,7 +612,11 @@ class GraphScene(Scene):
         for view in self._node_views.values():
             self._render_node(screen, view)
         screen.set_clip(None)
-        self._render_header(screen)
+        sw, _sh = screen.get_size()
+        # The header (with the hamburger menu) only exists while the graph pane
+        # has room; it is hidden when the graph is fully collapsed.
+        if self._panel_width < sw:
+            self._render_header(screen)
 
         # Reset scroll when the selection changes.
         sel_id = id(self._selection) if self._selection is not None else None
@@ -604,27 +624,32 @@ class GraphScene(Scene):
             self._panel_scroll_y = 0
             self._last_selection_id = sel_id
 
-        self._panel_layout = render_side_panel(
-            screen=screen,
-            selection=self._selection,
-            graph=self._graph,
-            thumbnails=self._thumbnails,
-            sprites=self._sprites,
-            font=self._font,
-            small_font=self._small_font,
-            header_font=self._header_font,
-            panel_width=self._panel_width,
-            handle_hovered=self._handle_hovered or self._resizing_panel,
-            hovered_copy_idx=self._hovered_copy_idx,
-            scroll_y=self._panel_scroll_y,
-            now_ms=pygame.time.get_ticks(),
-        )
-        # Clamp in case panel/content size shrank after a resize.
-        max_scroll = max(
-            0, self._panel_layout.content_height - self._panel_layout.viewable_height
-        )
-        if self._panel_scroll_y > max_scroll:
-            self._panel_scroll_y = max_scroll
+        if self._panel_width > 0:
+            self._panel_layout = render_side_panel(
+                screen=screen,
+                selection=self._selection,
+                graph=self._graph,
+                thumbnails=self._thumbnails,
+                sprites=self._sprites,
+                font=self._font,
+                small_font=self._small_font,
+                header_font=self._header_font,
+                panel_width=min(self._panel_width, sw),
+                handle_hovered=self._handle_hovered or self._resizing_panel,
+                hovered_copy_idx=self._hovered_copy_idx,
+                scroll_y=self._panel_scroll_y,
+                now_ms=pygame.time.get_ticks(),
+            )
+            # Clamp in case panel/content size shrank after a resize.
+            max_scroll = max(
+                0, self._panel_layout.content_height - self._panel_layout.viewable_height
+            )
+            if self._panel_scroll_y > max_scroll:
+                self._panel_scroll_y = max_scroll
+        else:
+            self._panel_layout = None
+
+        self._render_divider(screen)
         self._render_toast(screen)
 
         if self._editor.enabled or self._editor.has_pending():
@@ -645,15 +670,24 @@ class GraphScene(Scene):
             if isinstance(self._selection, GraphNode)
             else None
         )
-        decorated: list[tuple[int, GraphEdge, tuple[int, int], tuple[int, int], bool, bool]] = []
+        # Each edge is routed as an orthogonal (Manhattan) polyline. We collect
+        # every vertical segment up front so horizontal segments can "hop" over
+        # them with a small semicircle bump where they cross.
+        decorated: list[tuple[int, GraphEdge, list[tuple[float, float]], bool, bool]] = []
+        verticals: list[tuple[int, float, float, float]] = []
         for idx, edge in enumerate(self._graph.edges):
             endpoints = self._edge_endpoints(edge)
             if endpoints is None:
                 continue
             (sx, sy), (tx, ty) = endpoints
+            path = self._edge_path(sx, sy, tx, ty, edge)
             is_selected = self._selection is edge
             is_hover = self._hover_edge_idx == idx
-            decorated.append((idx, edge, (sx, sy), (tx, ty), is_selected, is_hover))
+            decorated.append((idx, edge, path, is_selected, is_hover))
+            for i in range(len(path) - 1):
+                (x1, y1), (x2, y2) = path[i], path[i + 1]
+                if abs(x1 - x2) <= 1 and abs(y1 - y2) > 1:
+                    verticals.append((idx, x1, min(y1, y2), max(y1, y2)))
 
         def _connection(edge: GraphEdge) -> tuple[tuple[int, int, int], int] | None:
             if selected_node_id is None:
@@ -664,89 +698,121 @@ class GraphScene(Scene):
                 return EDGE_COLOR_INCOMING, 4
             return None
 
-        for _, edge, (sx, sy), (tx, ty), is_selected, is_hover in decorated:
+        for idx, edge, path, is_selected, is_hover in decorated:
             if is_selected or is_hover or _connection(edge) is not None:
                 continue
-            self._draw_arrow(screen, sx, sy, tx, ty, EDGE_COLOR, 1)
+            self._draw_edge_path(screen, path, idx, verticals, EDGE_COLOR, 1)
 
-        for _, edge, (sx, sy), (tx, ty), is_selected, is_hover in decorated:
+        for idx, edge, path, is_selected, is_hover in decorated:
             conn = _connection(edge)
             if is_selected or is_hover or conn is None:
                 continue
             color, width = conn
-            self._draw_arrow(screen, sx, sy, tx, ty, color, width)
+            self._draw_edge_path(screen, path, idx, verticals, color, width)
 
-        for _, edge, (sx, sy), (tx, ty), is_selected, is_hover in decorated:
+        for idx, edge, path, is_selected, is_hover in decorated:
             if not (is_selected or is_hover):
                 continue
             if is_selected:
                 color, width = EDGE_COLOR_SELECTED, 3
             else:
                 color, width = EDGE_COLOR_HOVER, 2
-            self._draw_arrow(screen, sx, sy, tx, ty, color, width)
+            self._draw_edge_path(screen, path, idx, verticals, color, width)
             dest = self._graph.nodes_by_id.get(edge.target)
             if dest is not None:
-                self._draw_edge_label(screen, sx, sy, tx, ty, dest.display_name)
+                self._draw_edge_label(screen, path, dest.display_name)
 
-    def _edge_curve(
-        self, sx: int, sy: int, tx: int, ty: int
-    ) -> tuple[float, float]:
-        """Quadratic-bezier control point, bowed to one side of the segment.
-
-        The sideways offset has a consistent sign so opposite-direction edges
-        between the same two nodes bow apart instead of overlapping.
-        """
-        dx, dy = tx - sx, ty - sy
-        length = math.hypot(dx, dy)
-        if length < 1.0:
-            return (sx + dx / 2, sy + dy / 2)
-        nx, ny = -dy / length, dx / length
-        bow = length * EDGE_CURVE_RATIO
-        return (sx + dx / 2 + nx * bow, sy + dy / 2 + ny * bow)
-
-    def _bezier_points(
-        self, sx: int, sy: int, cx: float, cy: float, tx: int, ty: int, steps: int = 40
+    def _edge_path(
+        self, sx: int, sy: int, tx: int, ty: int, edge: GraphEdge
     ) -> list[tuple[float, float]]:
-        points = []
-        for i in range(steps + 1):
-            t = i / steps
-            mt = 1.0 - t
-            x = mt * mt * sx + 2 * mt * t * cx + t * t * tx
-            y = mt * mt * sy + 2 * mt * t * cy + t * t * ty
-            points.append((x, y))
-        return points
+        """Orthogonal route from source to destination (H-V-H elbow).
 
-    def _draw_arrow(
+        The vertical riser is offset sideways with a direction-stable sign so
+        an A→B edge and its B→A counterpart use separate risers instead of
+        overlapping.
+        """
+        if abs(sx - tx) <= 1 or abs(sy - ty) <= 1:
+            return [(float(sx), float(sy)), (float(tx), float(ty))]
+        offset = EDGE_RISER_OFFSET if edge.source <= edge.target else -EDGE_RISER_OFFSET
+        mid_x = (sx + tx) / 2 + offset
+        return [
+            (float(sx), float(sy)),
+            (mid_x, float(sy)),
+            (mid_x, float(ty)),
+            (float(tx), float(ty)),
+        ]
+
+    def _apply_jumps(
+        self,
+        p1: tuple[float, float],
+        p2: tuple[float, float],
+        verticals: list[tuple[int, float, float, float]],
+        self_idx: int,
+    ) -> list[tuple[float, float]]:
+        """Expand a horizontal segment into a polyline that hops over crossings."""
+        x1, y = p1
+        x2, _ = p2
+        lo, hi = (x1, x2) if x1 <= x2 else (x2, x1)
+        crossings = [
+            vx
+            for idx, vx, vy1, vy2 in verticals
+            if idx != self_idx
+            and lo + JUMP_RADIUS < vx < hi - JUMP_RADIUS
+            and vy1 + 1 < y < vy2 - 1
+        ]
+        if not crossings:
+            return [p1, p2]
+        going_right = x2 >= x1
+        crossings = sorted(set(crossings), reverse=not going_right)
+        sign = 1 if going_right else -1
+        r = JUMP_RADIUS
+        steps = 8
+        pts: list[tuple[float, float]] = [(x1, y)]
+        for cx in crossings:
+            pts.append((cx - sign * r, y))
+            for i in range(steps + 1):
+                theta = math.pi * (1 - i / steps) if going_right else math.pi * (i / steps)
+                pts.append((cx + r * math.cos(theta), y - r * math.sin(theta)))
+            pts.append((cx + sign * r, y))
+        pts.append((x2, y))
+        return pts
+
+    def _draw_edge_path(
         self,
         screen: pygame.Surface,
-        sx: int,
-        sy: int,
-        tx: int,
-        ty: int,
+        path: list[tuple[float, float]],
+        self_idx: int,
+        verticals: list[tuple[int, float, float, float]],
         color: tuple[int, int, int],
         width: int,
     ) -> None:
-        if math.hypot(tx - sx, ty - sy) < 1.0:
+        if len(path) < 2:
             return
-        cx, cy = self._edge_curve(sx, sy, tx, ty)
-        points = self._bezier_points(sx, sy, cx, cy, tx, ty)
-        # Tangent at the destination end gives the arrowhead direction.
-        px, py = points[-2]
-        angle = math.atan2(ty - py, tx - px)
-        base_x = tx - math.cos(angle) * ARROW_LEN
-        base_y = ty - math.sin(angle) * ARROW_LEN
-        path = [*points[:-1], (base_x, base_y)]
-        # Thick pass for body, anti-aliased pass on top to smooth the staircase.
+        # Build the full polyline, hopping horizontal segments over crossings.
+        full: list[tuple[float, float]] = [path[0]]
+        for i in range(len(path) - 1):
+            p1, p2 = path[i], path[i + 1]
+            if abs(p1[1] - p2[1]) <= 1 and abs(p1[0] - p2[0]) > 1:
+                full.extend(self._apply_jumps(p1, p2, verticals, self_idx)[1:])
+            else:
+                full.append(p2)
+        # Carve room for the arrowhead at the destination end.
+        tx, ty = path[-1]
+        ax, ay = path[-2]
+        angle = math.atan2(ty - ay, tx - ax)
+        base = (tx - math.cos(angle) * ARROW_LEN, ty - math.sin(angle) * ARROW_LEN)
+        full[-1] = base
+        # Thick pass for body, anti-aliased pass on top to smooth edges.
         if width > 1:
-            pygame.draw.lines(screen, color, False, path, width)
-        pygame.draw.aalines(screen, color, False, path)
+            pygame.draw.lines(screen, color, False, full, width)
+        pygame.draw.aalines(screen, color, False, full)
         left = (
-            base_x + math.cos(angle + math.pi / 2) * ARROW_HALF_WIDTH,
-            base_y + math.sin(angle + math.pi / 2) * ARROW_HALF_WIDTH,
+            base[0] + math.cos(angle + math.pi / 2) * ARROW_HALF_WIDTH,
+            base[1] + math.sin(angle + math.pi / 2) * ARROW_HALF_WIDTH,
         )
         right = (
-            base_x + math.cos(angle - math.pi / 2) * ARROW_HALF_WIDTH,
-            base_y + math.sin(angle - math.pi / 2) * ARROW_HALF_WIDTH,
+            base[0] + math.cos(angle - math.pi / 2) * ARROW_HALF_WIDTH,
+            base[1] + math.sin(angle - math.pi / 2) * ARROW_HALF_WIDTH,
         )
         head = [(tx, ty), left, right]
         pygame.draw.polygon(screen, color, head)
@@ -755,17 +821,11 @@ class GraphScene(Scene):
     def _draw_edge_label(
         self,
         screen: pygame.Surface,
-        sx: int,
-        sy: int,
-        tx: int,
-        ty: int,
+        path: list[tuple[float, float]],
         text: str,
     ) -> None:
-        # Place label two-thirds along the curve so it sits closer to the destination.
-        cx, cy = self._edge_curve(sx, sy, tx, ty)
-        t, mt = 0.66, 0.34
-        lx = int(mt * mt * sx + 2 * mt * t * cx + t * t * tx)
-        ly = int(mt * mt * sy + 2 * mt * t * cy + t * t * ty)
+        # Place the label at the midpoint of the routed path.
+        lx, ly = _point_along(path, 0.5)
         label = self._small_font.render(text, True, (240, 240, 240))
         pad_x, pad_y = 6, 2
         bg = pygame.Surface(
@@ -885,6 +945,7 @@ class GraphScene(Scene):
         ]
         if isinstance(self._selection, GraphEdge):
             entries.append(("delete_edge", "Delete Selected Portal"))
+        entries.append(("quit", "Quit"))
         return entries
 
     def _update_menu_hover(self, pos: tuple[int, int]) -> None:
@@ -912,6 +973,8 @@ class GraphScene(Scene):
             self._needs_fit = True
         elif item_id == "delete_edge":
             self._delete_selected_edge()
+        elif item_id == "quit":
+            pygame.event.post(pygame.event.Event(pygame.QUIT))
 
     def _render_menu(self, screen: pygame.Surface) -> None:
         entries = self._menu_entries()
@@ -1041,7 +1104,58 @@ class GraphScene(Scene):
         return pos[1] < HEADER_HEIGHT and not self._in_panel(pos)
 
     def _on_handle(self, pos: tuple[int, int]) -> bool:
-        return self._panel_layout is not None and self._panel_layout.handle_rect.collidepoint(pos)
+        surf = pygame.display.get_surface()
+        sw, sh = surf.get_size()
+        tab = self._tab_rect(sw, sh)
+        if tab is not None:
+            return tab.collidepoint(pos)
+        return (
+            self._panel_layout is not None
+            and self._panel_layout.handle_rect.collidepoint(pos)
+        )
+
+    def _collapsed_state(self, screen_w: int) -> str | None:
+        """Which pane (if any) is fully collapsed: 'panel' or 'graph'."""
+        if self._panel_width <= 0:
+            return "panel"
+        if self._panel_width >= screen_w:
+            return "graph"
+        return None
+
+    def _tab_rect(self, screen_w: int, screen_h: int) -> pygame.Rect | None:
+        """Grab tab shown at the window edge when a pane is fully collapsed."""
+        state = self._collapsed_state(screen_w)
+        if state == "panel":
+            return pygame.Rect(screen_w - TAB_W, (screen_h - TAB_H) // 2, TAB_W, TAB_H)
+        if state == "graph":
+            return pygame.Rect(0, (screen_h - TAB_H) // 2, TAB_W, TAB_H)
+        return None
+
+    def _render_divider(self, screen: pygame.Surface) -> None:
+        sw, sh = screen.get_size()
+        tab = self._tab_rect(sw, sh)
+        if tab is None:
+            return
+        mx, my = pygame.mouse.get_pos()
+        hovered = tab.collidepoint(mx, my) or self._resizing_panel
+        pygame.draw.rect(
+            screen, TAB_BG_HOVER if hovered else TAB_BG, tab, border_radius=5
+        )
+        pygame.draw.rect(screen, TAB_BORDER, tab, width=1, border_radius=5)
+        # Chevron points toward the hidden pane so it reads as "pull this out".
+        state = self._collapsed_state(sw)
+        self._draw_chevron(screen, tab, "left" if state == "panel" else "right")
+
+    def _draw_chevron(
+        self, screen: pygame.Surface, rect: pygame.Rect, direction: str
+    ) -> None:
+        cx, cy = rect.center
+        s = 5
+        if direction == "left":
+            pts = [(cx + s, cy - 2 * s), (cx - s, cy), (cx + s, cy + 2 * s)]
+        else:
+            pts = [(cx - s, cy - 2 * s), (cx + s, cy), (cx - s, cy + 2 * s)]
+        pygame.draw.lines(screen, (220, 225, 235), False, pts, 2)
 
     def _layout_to_screen(self, lx: float, ly: float) -> tuple[int, int]:
         return (
@@ -1069,11 +1183,10 @@ class GraphScene(Scene):
             (sx, sy), (tx, ty) = endpoints
             if (sx, sy) == (tx, ty):
                 continue
-            cx, cy = self._edge_curve(sx, sy, tx, ty)
-            points = self._bezier_points(sx, sy, cx, cy, tx, ty)
+            path = self._edge_path(sx, sy, tx, ty, edge)
             d = min(
-                _distance_point_to_segment(pos, points[i], points[i + 1])
-                for i in range(len(points) - 1)
+                _distance_point_to_segment(pos, path[i], path[i + 1])
+                for i in range(len(path) - 1)
             )
             if d < best_dist:
                 best_dist = d
@@ -1145,7 +1258,7 @@ class GraphScene(Scene):
         vx, vy, vw, vh = viewport
         zx = (vw - margin * 2) / span_x
         zy = (vh - margin * 2) / span_y
-        self._zoom = max(0.25, min(2.0, min(zx, zy)))
+        self._zoom = max(ZOOM_MIN, min(2.0, min(zx, zy)))
         center_x = (min_x + max_x) / 2
         center_y = (min_y + max_y) / 2
         self._cam_x = center_x - (vx + vw / 2) / self._zoom
@@ -1177,6 +1290,29 @@ def _exit_point(
     if t_exit <= 0:
         return None
     return (int(sx + t_exit * dx), int(sy + t_exit * dy))
+
+
+def _point_along(
+    path: list[tuple[float, float]], frac: float
+) -> tuple[int, int]:
+    """Point at `frac` of the total arc length along a polyline."""
+    seg_lens = [
+        math.hypot(path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1])
+        for i in range(len(path) - 1)
+    ]
+    total = sum(seg_lens)
+    if total <= 0:
+        return (int(path[0][0]), int(path[0][1]))
+    target = total * frac
+    acc = 0.0
+    for i, seg in enumerate(seg_lens):
+        if acc + seg >= target:
+            t = (target - acc) / seg if seg else 0.0
+            x = path[i][0] + (path[i + 1][0] - path[i][0]) * t
+            y = path[i][1] + (path[i + 1][1] - path[i][1]) * t
+            return (int(x), int(y))
+        acc += seg
+    return (int(path[-1][0]), int(path[-1][1]))
 
 
 def _distance_point_to_segment(
