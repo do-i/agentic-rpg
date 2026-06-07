@@ -56,7 +56,10 @@ EDGE_COLOR_INCOMING = (255, 80, 80)
 ARROW_LEN = 13
 ARROW_HALF_WIDTH = 5
 # Manhattan (orthogonal) edge routing.
-EDGE_RISER_OFFSET = 16  # sideways shift of the vertical riser; separates A→B from B→A
+# Edges between the same pair of maps each get their own vertical riser "lane",
+# spaced this far apart, so reciprocal/parallel edges fan out instead of
+# stacking on one line.
+RISER_LANE_STEP = 22
 JUMP_RADIUS = 6         # semicircle "hop" where a horizontal edge crosses a vertical one
 NODE_PADDING = 8
 LABEL_HEIGHT = 18
@@ -191,6 +194,8 @@ class GraphScene(Scene):
 
         self._editor = EditorState()
         self._tile_picker: TilePicker | None = None
+        # id(edge) -> sideways riser offset, recomputed each frame in _render_edges.
+        self._riser_offsets: dict[int, float] = {}
 
         # Header / modal menu state.
         self._hamburger_rect = pygame.Rect(0, 0, 0, 0)
@@ -670,6 +675,7 @@ class GraphScene(Scene):
             if isinstance(self._selection, GraphNode)
             else None
         )
+        self._riser_offsets = self._compute_riser_offsets()
         # Each edge is routed as an orthogonal (Manhattan) polyline. We collect
         # every vertical segment up front so horizontal segments can "hop" over
         # them with a small semicircle bump where they cross.
@@ -722,19 +728,38 @@ class GraphScene(Scene):
             if dest is not None:
                 self._draw_edge_label(screen, path, dest.display_name)
 
+    def _compute_riser_offsets(self) -> dict[int, float]:
+        """Assign each edge a vertical-riser lane offset.
+
+        Edges that connect the same pair of maps (in either direction, and any
+        number of parallel portals) are spread symmetrically around the centre
+        line so their risers don't stack on top of each other.
+        """
+        groups: dict[frozenset[str], list[GraphEdge]] = {}
+        for edge in self._graph.edges:
+            groups.setdefault(frozenset((edge.source, edge.target)), []).append(edge)
+        offsets: dict[int, float] = {}
+        for edges in groups.values():
+            ordered = sorted(
+                edges, key=lambda e: (e.source, e.target, e.portal_obj_id)
+            )
+            n = len(ordered)
+            for rank, edge in enumerate(ordered):
+                offsets[id(edge)] = RISER_LANE_STEP * (rank - (n - 1) / 2)
+        return offsets
+
     def _edge_path(
         self, sx: int, sy: int, tx: int, ty: int, edge: GraphEdge
     ) -> list[tuple[float, float]]:
         """Orthogonal route from source to destination (H-V-H elbow).
 
-        The vertical riser is offset sideways with a direction-stable sign so
-        an A→B edge and its B→A counterpart use separate risers instead of
-        overlapping.
+        The vertical riser sits in a per-edge lane (see _compute_riser_offsets)
+        so reciprocal and parallel edges between the same maps fan apart instead
+        of overlapping.
         """
         if abs(sx - tx) <= 1 or abs(sy - ty) <= 1:
             return [(float(sx), float(sy)), (float(tx), float(ty))]
-        offset = EDGE_RISER_OFFSET if edge.source <= edge.target else -EDGE_RISER_OFFSET
-        mid_x = (sx + tx) / 2 + offset
+        mid_x = (sx + tx) / 2 + self._riser_offsets.get(id(edge), 0.0)
         return [
             (float(sx), float(sy)),
             (mid_x, float(sy)),
