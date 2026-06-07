@@ -32,11 +32,6 @@ CACHE_GROUPS: tuple[CacheGroup, ...] = (
         patterns=("build/", "agentic_rpg_engine.egg-info/"),
     ),
     CacheGroup(
-        key="maps",
-        label="Map visualization generated files",
-        patterns=("maps_graph.html", "maps_graph.assets/"),
-    ),
-    CacheGroup(
         key="state",
         label="Game/editor local state",
         patterns=("rusted_kingdoms/assets/maps/*.tiled-session",),
