@@ -1,21 +1,21 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="50" height="40" tilewidth="32" tileheight="32" infinite="0" nextlayerid="8" nextobjectid="14">
- <tileset firstgid="1" source="../tilesets/ground/terrain-v7.tsx"/>
- <tileset firstgid="2049" source="../tilesets/grass_cave_walls_24x14.tsx"/>
- <tileset firstgid="2385" source="../tilesets/stone_tile_stares_16x16.tsx"/>
+ <tileset firstgid="1" source="../tilesets/ground/terrain-v7.tsx" />
+ <tileset firstgid="2049" source="../tilesets/grass_cave_walls_24x14.tsx" />
+ <tileset firstgid="2385" source="../tilesets/stone_tile_stares_16x16.tsx" />
  <objectgroup id="5" name="portals">
   <object id="11" name="zone_02_open_plains" x="826.5" y="-3" width="94.5" height="17.5">
    <properties>
-    <property name="target_map" value="zone_02_open_plains"/>
-    <property name="target_position_x" type="int" value="3"/>
-    <property name="target_position_y" type="int" value="18"/>
+    <property name="target_map" value="zone_02_open_plains" />
+    <property name="target_position_x" type="int" value="3" />
+    <property name="target_position_y" type="int" value="18" />
    </properties>
   </object>
-  <object id="12" name="zone_04_ancient_ruins_01_gate" x="0" y="992" width="96" height="32">
+  <object id="12" name="zone_04_ancient_ruins_01_gate" x="0" y="992" width="9.33333" height="94.6667">
    <properties>
-    <property name="target_map" value="zone_04_ancient_ruins_01_gate"/>
-    <property name="target_position_x" type="int" value="2"/>
-    <property name="target_position_y" type="int" value="14"/>
+    <property name="target_map" value="zone_04_ancient_ruins_01_gate" />
+    <property name="target_position_x" type="int" value="1" />
+    <property name="target_position_y" type="int" value="12" />
    </properties>
   </object>
  </objectgroup>
@@ -63,7 +63,7 @@
 393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393,393
 </data>
  </layer>
- <layer id="6" name="over_ground" width="50" height="40">
+ <layer id="6" name="terrain" width="50" height="40">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,103,40,73,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,135,9,40,72,73,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
