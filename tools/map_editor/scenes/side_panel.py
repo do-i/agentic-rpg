@@ -9,7 +9,7 @@ The panel:
   - scrolls vertically (mouse wheel) when content overflows, with a
     visible scrollbar,
   - exposes click-to-copy targets,
-  - pulses the portal markers (animation matches maps_graph.html).
+  - pulses the portal markers.
 """
 
 from __future__ import annotations
@@ -45,7 +45,7 @@ BADGE_PAD_X = 6
 BADGE_PAD_Y = 2
 SECTION_GAP = 8
 
-# Marker colors matching maps_graph.html.
+# Marker colors for portal source (outbound) and destination (inbound) tiles.
 OUTBOUND_FILL = (255, 74, 42)
 OUTBOUND_RING = (255, 210, 0)
 INBOUND_FILL = (58, 207, 255)
@@ -114,7 +114,7 @@ def render_side_panel(
         final_y = start_y + msg.get_height()
     elif isinstance(selection, GraphNode):
         final_y = _render_node(
-            screen, rect, selection, thumbnails, sprites,
+            screen, rect, selection, graph, thumbnails, sprites,
             font, small_font, header_font, layout, start_y,
         )
     else:
@@ -194,6 +194,7 @@ def _render_node(
     screen: pygame.Surface,
     rect: pygame.Rect,
     node: GraphNode,
+    graph: PortalGraph,
     thumbnails: ThumbnailCache,
     sprites: SpriteCache,
     font: pygame.font.Font,
@@ -248,9 +249,15 @@ def _render_node(
     else:
         for npc in node.npcs:
             label = f"{npc.name or npc.npc_id}"
+            if npc.npc_type:
+                label += f"  ({npc.npc_type})"
             if npc.position:
                 label += f"  @{npc.position[0]},{npc.position[1]}"
             y = _render_dim_line(screen, x, y, label, small_font, layout)
+            if npc.dialogue:
+                y = _render_dim_line(
+                    screen, x + 12, y, f"→ {npc.dialogue}", small_font, layout
+                )
 
     y += SECTION_GAP
     y = _render_section_title(screen, x, y, f"Item Boxes ({len(node.item_boxes)})", font)
@@ -261,6 +268,31 @@ def _render_node(
             label = f"{box.box_id}"
             if box.position:
                 label += f"  @{box.position[0]},{box.position[1]}"
+            y = _render_dim_line(screen, x, y, label, small_font, layout)
+
+    outgoing = [e for e in graph.edges if e.source == node.map_id]
+    incoming = [e for e in graph.edges if e.target == node.map_id]
+
+    y += SECTION_GAP
+    y = _render_section_title(screen, x, y, f"Outgoing Portals ({len(outgoing)})", font)
+    if not outgoing:
+        y = _render_dim_line(screen, x, y, "—", small_font, layout)
+    else:
+        for edge in outgoing:
+            target = graph.nodes_by_id.get(edge.target)
+            target_name = target.display_name if target else edge.target
+            label = f"→ {target_name}  @{edge.target_tile[0]},{edge.target_tile[1]}"
+            y = _render_dim_line(screen, x, y, label, small_font, layout)
+
+    y += SECTION_GAP
+    y = _render_section_title(screen, x, y, f"Incoming Portals ({len(incoming)})", font)
+    if not incoming:
+        y = _render_dim_line(screen, x, y, "—", small_font, layout)
+    else:
+        for edge in incoming:
+            source = graph.nodes_by_id.get(edge.source)
+            source_name = source.display_name if source else edge.source
+            label = f"← {source_name}  @{edge.source_tile[0]},{edge.source_tile[1]}"
             y = _render_dim_line(screen, x, y, label, small_font, layout)
 
     return y
@@ -515,6 +547,8 @@ def _build_badges(node: GraphNode) -> list[str]:
         badges.append("Apothecary")
     if node.has_magic_core_shop:
         badges.append("Magic Cores")
+    if node.transport:
+        badges.append("Transport")
     return badges
 
 
