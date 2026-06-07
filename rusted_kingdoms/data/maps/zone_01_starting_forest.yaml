@@ -50,3 +50,18 @@ item_boxes:
           qty: 3
         - size: s
           qty: 10
+  - id: forest_chest_02
+    position: [28, 11]
+    loot:
+      items:
+        - id: potion
+          qty: 2
+  - id: forest_chest_03
+    position: [5, 25]
+    loot:
+      items:
+        - id: antidote
+          qty: 1
+      magic_cores:
+        - size: s
+          qty: 2

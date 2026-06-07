@@ -5,3 +5,18 @@ enemy_spawn:
   init: 4
   max: 8
   interval: 22.0
+item_boxes:
+  - id: foothills_chest_01
+    position: [37, 6]
+    loot:
+      items:
+        - id: hi_potion
+          qty: 1
+        - id: potion
+          qty: 2
+  - id: foothills_chest_02
+    position: [49, 21]
+    loot:
+      magic_cores:
+        - size: m
+          qty: 2

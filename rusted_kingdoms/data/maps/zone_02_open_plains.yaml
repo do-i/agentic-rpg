@@ -5,3 +5,16 @@ enemy_spawn:
   init: 4
   max: 8
   interval: 20.0
+item_boxes:
+  - id: plains_chest_01
+    position: [10, 6]
+    loot:
+      items:
+        - id: potion
+          qty: 3
+  - id: plains_chest_02
+    position: [22, 15]
+    loot:
+      magic_cores:
+        - size: s
+          qty: 5
