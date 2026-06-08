@@ -71,6 +71,19 @@ PORT_INSET = 6  # keep attachment points this far from the node corners
 # overshoot small nodes when zoomed out, nor balloon when zoomed in.
 GEOM_SCALE_MIN = 0.5
 GEOM_SCALE_MAX = 1.3
+# A map is treated as a non-world (interior / sub-location) map if its id
+# contains any of these keywords — houses, shops, inns, caves, dungeons, etc.
+# Everything else (zones, town/port-town exteriors) is a world map.
+INTERIOR_KEYWORDS = (
+    "_house",
+    "_inn",
+    "_shop",
+    "_apothecary",
+    "_interior",
+    "_room",
+    "_cave",
+    "_dungeon",
+)
 # Outward unit normal for each node side.
 SIDE_NORMAL = {
     "left": (-1, 0),
@@ -126,6 +139,7 @@ HELP_LINES = [
     ("E", "toggle edit mode"),
     ("Delete", "delete selected portal edge"),
     ("S", "save pending edits"),
+    ("W", "show/hide non-world (interior) maps"),
     ("drag divider", "collapse the graph or detail pane fully"),
     ("Esc", "deselect / cancel"),
 ]
@@ -218,6 +232,7 @@ class GraphScene(Scene):
             int, tuple[tuple[int, int], tuple[int, int], str, str]
         ] = {}
         self._geom_scale = 1.0
+        self._hide_non_world = False
 
         # Header / modal menu state.
         self._hamburger_rect = pygame.Rect(0, 0, 0, 0)
@@ -383,6 +398,9 @@ class GraphScene(Scene):
             if self._editor.enabled or self._editor.has_pending():
                 self._save_pending_edits()
                 return
+        if event.key == pygame.K_w and not (event.mod & (pygame.KMOD_CTRL | pygame.KMOD_META)):
+            self._toggle_non_world()
+            return
         if event.key in (pygame.K_DELETE, pygame.K_BACKSPACE):
             if isinstance(self._selection, GraphEdge):
                 self._delete_selected_edge()
@@ -408,6 +426,33 @@ class GraphScene(Scene):
             self._editor.disable()
         else:
             self._editor.enable()
+
+    def _toggle_non_world(self) -> None:
+        self._hide_non_world = not self._hide_non_world
+        # Drop a selection/hover that just became hidden, and refit to the
+        # remaining visible nodes.
+        if isinstance(self._selection, GraphNode) and not self._node_visible(
+            self._selection.map_id
+        ):
+            self._selection = None
+        elif isinstance(self._selection, GraphEdge) and not self._edge_visible(
+            self._selection
+        ):
+            self._selection = None
+        self._hover_node = None
+        self._hover_edge_idx = None
+        self._needs_fit = True
+        state = "hidden" if self._hide_non_world else "shown"
+        self._show_toast(f"Non-world maps {state}.")
+
+    def _node_visible(self, map_id: str) -> bool:
+        if not self._hide_non_world:
+            return True
+        node = self._graph.nodes_by_id.get(map_id)
+        return node is None or _is_world_map(node)
+
+    def _edge_visible(self, edge: GraphEdge) -> bool:
+        return self._node_visible(edge.source) and self._node_visible(edge.target)
 
     def _on_editor_node_click(self, map_id: str) -> None:
         if self._editor.step == STEP_SOURCE_NODE:
@@ -706,6 +751,8 @@ class GraphScene(Scene):
         decorated: list[tuple[int, GraphEdge, list[tuple[float, float]], bool, bool]] = []
         verticals: list[tuple[int, float, float, float]] = []
         for idx, edge in enumerate(self._graph.edges):
+            if not self._edge_visible(edge):
+                continue
             endpoints = self._edge_ends.get(id(edge))
             if endpoints is None:
                 continue
@@ -761,6 +808,8 @@ class GraphScene(Scene):
         """
         groups: dict[frozenset[str], list[GraphEdge]] = {}
         for edge in self._graph.edges:
+            if not self._edge_visible(edge):
+                continue
             groups.setdefault(frozenset((edge.source, edge.target)), []).append(edge)
         offsets: dict[int, float] = {}
         for edges in groups.values():
@@ -909,6 +958,8 @@ class GraphScene(Scene):
         screen.blit(label, (bg_rect.left + pad_x, bg_rect.top + pad_y))
 
     def _render_node(self, screen: pygame.Surface, view: _NodeView) -> None:
+        if not self._node_visible(view.node.map_id):
+            return
         cx, cy = self._layout_to_screen(view.layout_x, view.layout_y)
         w = int(view.width * self._zoom)
         h = int(view.height * self._zoom)
@@ -975,9 +1026,19 @@ class GraphScene(Scene):
             HAMBURGER_SIZE,
         )
         self._render_hamburger(screen, self._hamburger_rect)
+        if self._hide_non_world:
+            n_nodes = sum(
+                1 for v in self._node_views.values() if self._node_visible(v.node.map_id)
+            )
+            n_edges = sum(1 for e in self._graph.edges if self._edge_visible(e))
+            counts = (
+                f"nodes={n_nodes}/{len(self._graph.nodes)}  "
+                f"edges={n_edges}/{len(self._graph.edges)}  [world only]"
+            )
+        else:
+            counts = f"nodes={len(self._graph.nodes)}  edges={len(self._graph.edges)}"
         title = self._font.render(
-            f"Map Graph   nodes={len(self._graph.nodes)}  edges={len(self._graph.edges)}   "
-            f"zoom={self._zoom:.2f}",
+            f"Map Graph   {counts}   zoom={self._zoom:.2f}",
             True,
             (220, 220, 220),
         )
@@ -1009,9 +1070,13 @@ class GraphScene(Scene):
     def _menu_entries(self) -> list[tuple[str, str]]:
         """Returns list of (id, label). Add new options here as features land."""
         edit_label = "Exit Edit Mode" if self._editor.enabled else "Enter Edit Mode"
+        world_label = (
+            "Show Non-World Maps" if self._hide_non_world else "Hide Non-World Maps"
+        )
         entries = [
             ("help", "Help"),
             ("edit", edit_label),
+            ("world", world_label),
             ("fit", "Refit Camera"),
         ]
         if isinstance(self._selection, GraphEdge):
@@ -1040,6 +1105,8 @@ class GraphScene(Scene):
             self._help_open = True
         elif item_id == "edit":
             self._toggle_edit_mode()
+        elif item_id == "world":
+            self._toggle_non_world()
         elif item_id == "fit":
             self._needs_fit = True
         elif item_id == "delete_edge":
@@ -1236,6 +1303,8 @@ class GraphScene(Scene):
 
     def _node_at_screen(self, pos: tuple[int, int]) -> str | None:
         for view in reversed(list(self._node_views.values())):
+            if not self._node_visible(view.node.map_id):
+                continue
             cx, cy = self._layout_to_screen(view.layout_x, view.layout_y)
             w = int(view.width * self._zoom)
             h = int(view.height * self._zoom)
@@ -1248,6 +1317,8 @@ class GraphScene(Scene):
         best_idx: int | None = None
         best_dist = EDGE_PICK_THRESHOLD_PX
         for idx, edge in enumerate(self._graph.edges):
+            if not self._edge_visible(edge):
+                continue
             endpoints = self._edge_endpoints(edge)
             if endpoints is None:
                 continue
@@ -1278,6 +1349,8 @@ class GraphScene(Scene):
         # (map_id, side) -> list of (id(edge), "src"|"dst")
         groups: dict[tuple[str, str], list[tuple[int, str]]] = {}
         for edge in self._graph.edges:
+            if not self._edge_visible(edge):
+                continue
             ends = self._raw_edge_endpoints(edge)
             if ends is None:
                 continue
@@ -1384,12 +1457,17 @@ class GraphScene(Scene):
         )
 
     def _fit_to_screen(self, viewport: tuple[int, int, int, int]) -> None:
-        if not self._node_views:
+        views = [
+            v
+            for v in self._node_views.values()
+            if self._node_visible(v.node.map_id)
+        ]
+        if not views:
             return
-        min_x = min(v.layout_x - v.width / 2 for v in self._node_views.values())
-        min_y = min(v.layout_y - v.height / 2 for v in self._node_views.values())
-        max_x = max(v.layout_x + v.width / 2 for v in self._node_views.values())
-        max_y = max(v.layout_y + v.height / 2 for v in self._node_views.values())
+        min_x = min(v.layout_x - v.width / 2 for v in views)
+        min_y = min(v.layout_y - v.height / 2 for v in views)
+        max_x = max(v.layout_x + v.width / 2 for v in views)
+        max_y = max(v.layout_y + v.height / 2 for v in views)
         span_x = max(1.0, max_x - min_x)
         span_y = max(1.0, max_y - min_y)
         margin = 60
@@ -1434,6 +1512,16 @@ def _exit_point(
     if best_t is None or best_t <= 0 or side is None:
         return None
     return (int(sx + best_t * dx), int(sy + best_t * dy)), side
+
+
+def _is_world_map(node: GraphNode) -> bool:
+    """Whether a node is a world (overworld) map rather than an interior.
+
+    Interiors are sub-locations entered through a door — houses, shops, inns,
+    apothecaries, caves, dungeons — identified by a keyword in the map id.
+    Everything else (zones, town/port-town exteriors) is a world map.
+    """
+    return not any(kw in node.map_id for kw in INTERIOR_KEYWORDS)
 
 
 def _side_of(point: tuple[int, int], rect: pygame.Rect) -> str:
