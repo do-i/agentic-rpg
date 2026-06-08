@@ -63,6 +63,14 @@ RISER_LANE_STEP = 22
 # Length of the perpendicular stub where an edge leaves/enters a node, so the
 # arrowhead meets the node side at a right angle.
 EDGE_STUB = 20
+# Edges that attach to the same side of the same node are spread along that side
+# so their arrowheads stay this far apart (px) instead of converging on one tile.
+MIN_PORT_GAP = 14
+PORT_INSET = 6  # keep attachment points this far from the node corners
+# The stub/lane/jump geometry scales with zoom (clamped) so risers don't
+# overshoot small nodes when zoomed out, nor balloon when zoomed in.
+GEOM_SCALE_MIN = 0.5
+GEOM_SCALE_MAX = 1.3
 # Outward unit normal for each node side.
 SIDE_NORMAL = {
     "left": (-1, 0),
@@ -204,8 +212,12 @@ class GraphScene(Scene):
 
         self._editor = EditorState()
         self._tile_picker: TilePicker | None = None
-        # id(edge) -> sideways riser offset, recomputed each frame in _render_edges.
+        # Per-frame edge geometry caches, rebuilt in _render_edges.
         self._riser_offsets: dict[int, float] = {}
+        self._edge_ends: dict[
+            int, tuple[tuple[int, int], tuple[int, int], str, str]
+        ] = {}
+        self._geom_scale = 1.0
 
         # Header / modal menu state.
         self._hamburger_rect = pygame.Rect(0, 0, 0, 0)
@@ -685,14 +697,16 @@ class GraphScene(Scene):
             if isinstance(self._selection, GraphNode)
             else None
         )
+        self._geom_scale = max(GEOM_SCALE_MIN, min(GEOM_SCALE_MAX, self._zoom))
         self._riser_offsets = self._compute_riser_offsets()
+        self._edge_ends = self._compute_edge_geometry()
         # Each edge is routed as an orthogonal (Manhattan) polyline. We collect
         # every vertical segment up front so horizontal segments can "hop" over
         # them with a small semicircle bump where they cross.
         decorated: list[tuple[int, GraphEdge, list[tuple[float, float]], bool, bool]] = []
         verticals: list[tuple[int, float, float, float]] = []
         for idx, edge in enumerate(self._graph.edges):
-            endpoints = self._edge_endpoints(edge)
+            endpoints = self._edge_ends.get(id(edge))
             if endpoints is None:
                 continue
             src, dst, src_side, dst_side = endpoints
@@ -776,9 +790,12 @@ class GraphScene(Scene):
         """
         ns = SIDE_NORMAL[src_side]
         nd = SIDE_NORMAL[dst_side]
-        a1 = (src[0] + ns[0] * EDGE_STUB, src[1] + ns[1] * EDGE_STUB)
-        a2 = (dst[0] + nd[0] * EDGE_STUB, dst[1] + nd[1] * EDGE_STUB)
-        offset = self._riser_offsets.get(id(edge), 0.0)
+        # Stub must clear the arrowhead, and scales with zoom so it doesn't
+        # overshoot small nodes when zoomed out.
+        stub = max(ARROW_LEN + 4, EDGE_STUB * self._geom_scale)
+        a1 = (src[0] + ns[0] * stub, src[1] + ns[1] * stub)
+        a2 = (dst[0] + nd[0] * stub, dst[1] + nd[1] * stub)
+        offset = self._riser_offsets.get(id(edge), 0.0) * self._geom_scale
         src_horiz = src_side in ("left", "right")
         dst_horiz = dst_side in ("left", "right")
 
@@ -806,12 +823,13 @@ class GraphScene(Scene):
         """Expand a horizontal segment into a polyline that hops over crossings."""
         x1, y = p1
         x2, _ = p2
+        r = max(3.0, JUMP_RADIUS * self._geom_scale)
         lo, hi = (x1, x2) if x1 <= x2 else (x2, x1)
         crossings = [
             vx
             for idx, vx, vy1, vy2 in verticals
             if idx != self_idx
-            and lo + JUMP_RADIUS < vx < hi - JUMP_RADIUS
+            and lo + r < vx < hi - r
             and vy1 + 1 < y < vy2 - 1
         ]
         if not crossings:
@@ -819,7 +837,6 @@ class GraphScene(Scene):
         going_right = x2 >= x1
         crossings = sorted(set(crossings), reverse=not going_right)
         sign = 1 if going_right else -1
-        r = JUMP_RADIUS
         steps = 8
         pts: list[tuple[float, float]] = [(x1, y)]
         for cx in crossings:
@@ -1247,7 +1264,72 @@ class GraphScene(Scene):
                 best_idx = idx
         return best_idx
 
+    def _compute_edge_geometry(
+        self,
+    ) -> dict[int, tuple[tuple[int, int], tuple[int, int], str, str]]:
+        """Resolve every edge's endpoints, spreading shared-side attachments.
+
+        Edges that attach to the same side of the same node have their
+        attachment points distributed along that side (min MIN_PORT_GAP apart,
+        or evenly across the whole side when space is tight) so their
+        arrowheads stay distinguishable instead of converging on one tile.
+        """
+        raw: dict[int, list] = {}
+        # (map_id, side) -> list of (id(edge), "src"|"dst")
+        groups: dict[tuple[str, str], list[tuple[int, str]]] = {}
+        for edge in self._graph.edges:
+            ends = self._raw_edge_endpoints(edge)
+            if ends is None:
+                continue
+            src, dst, ss, ds = ends
+            raw[id(edge)] = [list(src), list(dst), ss, ds]
+            groups.setdefault((edge.source, ss), []).append((id(edge), "src"))
+            groups.setdefault((edge.target, ds), []).append((id(edge), "dst"))
+
+        for (map_id, side), members in groups.items():
+            if len(members) <= 1:
+                continue
+            view = self._node_views.get(map_id)
+            if view is None:
+                continue
+            rect = self._node_rect(view)
+            # top/bottom sides vary along x; left/right vary along y.
+            axis = 0 if side in ("top", "bottom") else 1
+            lo = (rect.left if axis == 0 else rect.top) + PORT_INSET
+            hi = (rect.right if axis == 0 else rect.bottom) - PORT_INSET
+            if hi <= lo:
+                continue
+
+            def coord(member: tuple[int, str]) -> float:
+                eid, which = member
+                pt = raw[eid][0] if which == "src" else raw[eid][1]
+                return pt[axis]
+
+            members.sort(key=coord)
+            n = len(members)
+            gap = min(MIN_PORT_GAP, (hi - lo) / (n - 1))
+            span = gap * (n - 1)
+            center = sum(coord(m) for m in members) / n
+            start = max(lo, min(hi - span, center - span / 2))
+            for i, (eid, which) in enumerate(members):
+                pt = raw[eid][0] if which == "src" else raw[eid][1]
+                pt[axis] = int(start + i * gap)
+
+        return {
+            eid: ((v[0][0], v[0][1]), (v[1][0], v[1][1]), v[2], v[3])
+            for eid, v in raw.items()
+        }
+
     def _edge_endpoints(
+        self, edge: GraphEdge
+    ) -> tuple[tuple[int, int], tuple[int, int], str, str] | None:
+        """Cached (spread) endpoints, falling back to a raw resolve."""
+        cached = self._edge_ends.get(id(edge))
+        if cached is not None:
+            return cached
+        return self._raw_edge_endpoints(edge)
+
+    def _raw_edge_endpoints(
         self, edge: GraphEdge
     ) -> tuple[tuple[int, int], tuple[int, int], str, str] | None:
         """Return the line endpoints and the node side each one sits on.
