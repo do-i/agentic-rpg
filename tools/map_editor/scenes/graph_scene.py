@@ -140,6 +140,7 @@ HELP_LINES = [
     ("Delete", "delete selected portal edge"),
     ("S", "save pending edits"),
     ("W", "show/hide non-world (interior) maps"),
+    ("T", "show/hide text labels"),
     ("drag divider", "collapse the graph or detail pane fully"),
     ("Esc", "deselect / cancel"),
 ]
@@ -233,6 +234,7 @@ class GraphScene(Scene):
         ] = {}
         self._geom_scale = 1.0
         self._hide_non_world = False
+        self._show_labels = True
 
         # Header / modal menu state.
         self._hamburger_rect = pygame.Rect(0, 0, 0, 0)
@@ -400,6 +402,9 @@ class GraphScene(Scene):
                 return
         if event.key == pygame.K_w and not (event.mod & (pygame.KMOD_CTRL | pygame.KMOD_META)):
             self._toggle_non_world()
+            return
+        if event.key == pygame.K_t and not (event.mod & (pygame.KMOD_CTRL | pygame.KMOD_META)):
+            self._show_labels = not self._show_labels
             return
         if event.key in (pygame.K_DELETE, pygame.K_BACKSPACE):
             if isinstance(self._selection, GraphEdge):
@@ -796,7 +801,7 @@ class GraphScene(Scene):
                 color, width = EDGE_COLOR_HOVER, 2
             self._draw_edge_path(screen, path, idx, verticals, color, width)
             dest = self._graph.nodes_by_id.get(edge.target)
-            if dest is not None:
+            if dest is not None and self._show_labels:
                 self._draw_edge_label(screen, path, dest.display_name)
 
     def _compute_riser_offsets(self) -> dict[int, float]:
@@ -1006,11 +1011,14 @@ class GraphScene(Scene):
                 ),
             )
 
-        label = self._small_font.render(view.node.display_name, True, (230, 230, 230))
-        screen.blit(
-            label,
-            (rect.x + 6, rect.bottom - LABEL_HEIGHT * self._zoom - 2),
-        )
+        if self._show_labels:
+            label = self._small_font.render(
+                view.node.display_name, True, (230, 230, 230)
+            )
+            screen.blit(
+                label,
+                (rect.x + 6, rect.bottom - LABEL_HEIGHT * self._zoom - 2),
+            )
 
     def _render_header(self, screen: pygame.Surface) -> None:
         bar_w = max(1, screen.get_width() - self._panel_width)
@@ -1073,10 +1081,12 @@ class GraphScene(Scene):
         world_label = (
             "Show Non-World Maps" if self._hide_non_world else "Hide Non-World Maps"
         )
+        labels_label = "Hide Text Labels" if self._show_labels else "Show Text Labels"
         entries = [
             ("help", "Help"),
             ("edit", edit_label),
             ("world", world_label),
+            ("labels", labels_label),
             ("fit", "Refit Camera"),
         ]
         if isinstance(self._selection, GraphEdge):
@@ -1107,6 +1117,8 @@ class GraphScene(Scene):
             self._toggle_edit_mode()
         elif item_id == "world":
             self._toggle_non_world()
+        elif item_id == "labels":
+            self._show_labels = not self._show_labels
         elif item_id == "fit":
             self._needs_fit = True
         elif item_id == "delete_edge":
