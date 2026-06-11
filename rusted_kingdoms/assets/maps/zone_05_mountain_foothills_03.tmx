@@ -12,8 +12,8 @@
   <object id="2" name="exit_town_04_frostholm" x="1532" y="352" width="12" height="128">
    <properties>
     <property name="target_map" value="town_04_frostholm" />
-    <property name="target_position_x" type="int" value="3" />
-    <property name="target_position_y" type="int" value="6" />
+    <property name="target_position_x" type="int" value="19" />
+    <property name="target_position_y" type="int" value="29" />
    </properties>
   </object>
  </objectgroup>

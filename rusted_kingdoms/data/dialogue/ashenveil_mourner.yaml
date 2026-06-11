@@ -1,0 +1,14 @@
+# data/dialogue/ashenveil_mourner.yaml
+id: ashenveil_mourner
+type: npc
+
+entries:
+  - condition:
+      requires: [story_act4_started]
+    lines:
+      - "The oracle has not left her sanctum since you came. She says the veil is thinning."
+      - "We mourn the old capital under our feet. She mourns something older."
+
+  - lines:
+      - "Ashenveil was built on the bones of the first city. Every house here is a headstone."
+      - "If you seek the oracle, her sanctum is the tall hall north of the square."
