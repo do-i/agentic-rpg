@@ -40,16 +40,21 @@ Status legend: ✅ tmx + yaml · 🟡 yaml only (needs tmx) · ❌ missing entir
 without a matching encount file simply has no encounters, which is correct for
 towns and interiors).
 
+Updated 2026-06-11 after the build-out session: every town and field zone
+below now has a tmx and is wired into the world graph. ⚠️ = placeholder
+fidelity — functional map reusing an existing layout/tileset, awaiting its
+themed art pass (Q-ART).
+
 | Act / Sub-Epic | Story locale | Field-zone maps | Encounter zone(s) | Town & interior maps | Tileset |
 |---|---|---|---|---|---|
-| I / 1 | Ardel, Starting Forest | `zone_01_starting_forest` ✅ | `zone_01_starting_forest` | `town_01_ardel` ✅, `_house_01` ✅, `_inn_01` ✅, `_shop_01` ✅, `_shrine` ❌ | existing forest + interior |
-| I / 2 | Millhaven, Open Plains | `zone_02_open_plains` ✅, `_cave_01` ✅ | `zone_02_open_plains` | `town_02_millhaven` ✅ (tmx exists but **unreachable** — see drift list), `_inn` ✅ tmx (unwired), `_mill` ❌, `_shop` ❌ | existing town + interior |
-| II / 3 | Harborgate (port, quarantine) | `zone_03_marshland` ✅ | `zone_03_marshland` | `port_town_harborgate` 🟡, `_quarantine` ❌, `_harbormaster` ❌, `_inn` ❌, `_shop` ❌ | port/dock (needed) |
-| II / 4 | Ruinwatch (dead monastery) | `zone_04_ancient_ruins_01_gate` / `_02_courtyard` / `_03_sanctum` ✅ | one per map, same ids | `town_03_ruinwatch` 🟡, `_monastery_vaults` ❌, `_inn` ❌, `_shop` ❌ | cliffside monastery (needed) |
-| III / 5 | Frostholm (frozen kingdom) | `zone_05_mountain_foothills` / `_02` / `_03` ✅ | one per map, same ids | `town_04_frostholm` 🟡 (**live portals point here — crash risk**), `_palace` ❌, `_vault` ❌, `_inn` ❌, `_shop` ❌ | ice/marble (needed) |
-| III / 6 | Ashenveil (city of mourners) | `zone_06_mountain_pass` / `_02` / `_03` ✅ | one per map, same ids | `town_05_ashenveil` 🟡 (**live portal points here — crash risk**), `_oracle_sanctum` ❌, `_inn` ❌, `_shop` ❌ | ash/ruin (needed) |
-| IV / 7 | Marshal's approach (prose: "Rusted Wastes") | `zone_07_sunken_cave` ❌, `zone_08_corrupted_forest` ❌, `zone_09_volcanic_region` ❌, `zone_09_marshal_camp` ❌ | `zone_07_sunken_cave`, `zone_08_corrupted_forest`, `zone_09_volcanic_region` (all data ✅) | — | cave / corrupted forest / volcanic (needed) |
-| IV / 8 | The Hearth (prose: "Zone 10") | `zone_10_final_stronghold` ❌, `zone_10_hearth_descent_01..06` ❌, `zone_10_hearth_core` ❌ | `zone_10_final_stronghold` (data ✅); descent floors + core have none by design | `town_01_ardel_epilogue` ❌ | stronghold + reuse of earlier tilesets (by design) |
+| I / 1 | Ardel, Starting Forest | `zone_01_starting_forest` ✅ | `zone_01_starting_forest` | `town_01_ardel` ✅, `_house_01` ✅, `_inn_01` ✅, `_shop_01` ✅, `_shrine` ✅ (burnt hall behind the south fence gate) | existing forest + interior |
+| I / 2 | Millhaven, Open Plains | `zone_02_open_plains` ✅, `_cave_01` ✅ | `zone_02_open_plains` | `town_02_millhaven` ✅ (now reachable from the plains' west edge), `_inn` ✅, `_mill` ✅, `_shop` ✅ | existing town + interior |
+| II / 3 | Harborgate (port, quarantine) | `zone_03_marshland` ✅ | `zone_03_marshland` | `port_town_harborgate` ⚠️, `_quarantine` ✅, `_harbormaster` ✅, `_inn` ✅, `_shop` ✅ | port/dock pass needed |
+| II / 4 | Ruinwatch (dead monastery) | `zone_04_ancient_ruins_01_gate` / `_02_courtyard` / `_03_sanctum` ✅ | one per map, same ids | `town_03_ruinwatch` ⚠️ (cliff-stair portal from the ruins gate), `_monastery_vaults` ✅ (Jep lives here), `_inn` ✅, `_shop` ✅ | cliffside-monastery pass needed |
+| III / 5 | Frostholm (frozen kingdom) | `zone_05_mountain_foothills` / `_02` / `_03` ✅ | one per map, same ids | `town_04_frostholm` ⚠️, `_palace` ✅ (king's offer), `_vault` ✅ (behind palace stairs), `_inn` ✅, `_shop` ✅ | ice/marble pass needed |
+| III / 6 | Ashenveil (city of mourners) | `zone_06_mountain_pass` / `_02` / `_03` ✅ | one per map, same ids | `town_05_ashenveil` ⚠️, `_oracle_sanctum` ✅, `_inn` ✅, `_shop` ✅ | ash/ruin pass needed |
+| IV / 7 | Marshal's approach (prose: "Rusted Wastes") | `zone_07_sunken_cave` ⚠️, `zone_08_corrupted_forest` ⚠️, `zone_09_volcanic_region` ⚠️ (gate guard posted), `zone_09_marshal_camp` ❌ | `zone_07_sunken_cave`, `zone_08_corrupted_forest`, `zone_09_volcanic_region` (all live) | — | cave / corrupted forest / volcanic passes needed |
+| IV / 8 | The Hearth (prose: "Zone 10") | `zone_10_final_stronghold` ⚠️ (far exit returns to Ardel's shrine gate), `zone_10_hearth_descent_01..06` ❌, `zone_10_hearth_core` ❌ | `zone_10_final_stronghold` (live; `boss_zone10_defeated` reachable); descent floors + core have none by design | `town_01_ardel_epilogue` ❌ | stronghold + reuse of earlier tilesets (by design) |
 
 ## Geography / progression spine
 
@@ -67,26 +72,37 @@ town_01_ardel ↔ zone_01_starting_forest ↔ zone_02_open_plains (↔ cave_01, 
 
 `*` = link or map does not exist yet.
 
-## Drift found during reconciliation (state as of 2026-06-11)
+## Drift found during reconciliation (found 2026-06-11; statuses current)
 
-1. **Millhaven is unreachable.** `town_02_millhaven.tmx` exists and links to its
-   inn, but no zone map has a portal into the town. `zone_02_open_plains` needs
-   an entry portal. (Fixed in Phase A1.)
-2. **Broken live portals.** `zone_05_mountain_foothills_03` and
-   `zone_06_mountain_pass` portal to `town_04_frostholm`, and
-   `zone_06_mountain_pass_03` portals to `town_05_ashenveil` — neither town has
-   a `.tmx`, so traversal crashes. `tools/validate.py` does not check tmx portal
-   targets, which is why this never surfaced. (Towns are Phase B; consider a
-   validate.py portal-target check.)
-3. **Orphan encounter file.** `data/encount/zone_04_ancient_ruins.yaml` is
-   loaded by map id, and no map with id `zone_04_ancient_ruins` exists (the
-   ruins are split into `_01_gate/_02_courtyard/_03_sanctum`, each with its own
-   encount file). Deleted as part of N1.
+1. ~~**Millhaven is unreachable.**~~ Fixed: `zone_02_open_plains` west edge ↔
+   Millhaven's south road.
+2. ~~**Broken live portals** to tmx-less Frostholm/Ashenveil.~~ Fixed: both
+   towns built (placeholder fidelity). `tools/validate.py` still does not check
+   tmx portal targets — a portal-target check remains worth adding.
+3. ~~**Orphan encounter file** `zone_04_ancient_ruins.yaml`.~~ Deleted (N1).
 4. **Boss-name drift.** `stronghold_gate_guard.yaml` says nothing comes back
    "until the **Flame Dragon** is dead" while gating on `boss_zone09_defeated`,
    whose encounter boss is **Blackhorn Chief** (`wartotaur_warlord_blackhorn_chief`).
-   Resolve when zone_09 is built (rename one or the other).
-5. **Kael's location.** The story outline introduces Kael at Ruinwatch (Act II);
-   production dialogue (`frostholm_captain_hint`) places him in Frostholm and
-   `kael_join` gates on `boss_zone06_defeated`. Production wins; update the
-   prose when Ruinwatch content is authored.
+   Rename one or the other. Open.
+5. **Companion locations.** The story outline places Jep in Millhaven's mill,
+   Reiya in Harborgate, Kael in Ruinwatch. Production data places Jep in the
+   Ruinwatch monastery vaults, Reiya in Millhaven, Kael in Frostholm — and the
+   join dialogues are written for those placements. Production wins; the prose
+   in `high-level.md` should be revised to match.
+6. **Found during the build-out (all fixed):** `zone_02_open_plains` and
+   `zone_03_marshland` defined encounter bosses but had no `boss_enemy` spawn
+   object, so `boss_zone02_defeated` (Reiya join + Act III trigger) and
+   `boss_zone03_defeated` were unobtainable; `zone_02_open_plains_cave_01` had
+   no exit portal (softlock).
+
+## Remaining work (post build-out)
+
+- Themed tileset passes for the ⚠️ placeholder maps (Q-ART): port/dock,
+  cliffside monastery, ice/marble, ash/ruin, cave, corrupted forest, volcanic,
+  stronghold.
+- `zone_09_marshal_camp` set-piece (needs a Cinder-Marshal boss allocation and
+  a scripted-battle beat the engine does not yet express in data).
+- `zone_10_hearth_descent_01..06`, `zone_10_hearth_core`, and the three-variant
+  `town_01_ardel_epilogue` (need ending-path support).
+- A validate.py check for tmx portal targets + landing-tile collision (the
+  audit script that found items 1, 2, and 6 ran ad hoc this session).

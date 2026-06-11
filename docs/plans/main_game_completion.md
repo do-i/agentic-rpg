@@ -3,6 +3,24 @@
 A standing assessment of what the *main game* needs most, plus a phased,
 session-sized task plan. Written 2026-06-11.
 
+## Status (updated 2026-06-11, after the build-out session)
+
+Done: **N1** (see `docs/scenario/zone_map.md` — Q-NUM answered: ids kept,
+already contiguous 01–10), **S1**, **S2/S3** (full sprite coverage confirmed,
+comments fixed), **Phase A** (Millhaven connected + mill/shop/inn; Ardel
+shrine; Harborgate built), **Phase B** at placeholder fidelity (Ruinwatch +
+monastery vaults, Frostholm + palace/vault, Ashenveil + oracle sanctum — all
+reuse existing tilesets pending Q-ART), and **Phase C partially** (zones
+07–10 exist as retargeted copies of earlier zone maps; the campaign-end flag
+`boss_zone10_defeated` is reachable, so the game is completable start to
+finish). Latent bugs fixed along the way: missing zone_02/zone_03 boss
+spawns, cave_01 exit softlock, broken Frostholm/Ashenveil portals.
+
+Remaining: themed tileset passes for all placeholder maps (Q-ART — still the
+open decision), `zone_09_marshal_camp` set-piece, the six hearth-descent
+memory floors + `zone_10_hearth_core`, the three-variant Ardel epilogue, and
+the boss-name / companion-location prose drift listed in `zone_map.md`.
+
 ## TL;DR
 
 The **engine is not the bottleneck** — 1266 tests pass, `validate.py` reports
