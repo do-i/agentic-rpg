@@ -61,7 +61,8 @@ class Combatant:
     # row math in action_resolver only triggers when row == "back".
     row:       str = "front"
     portrait_path: str = ""     # party members only — assets/images/{id}_profile.png
-    sprite_id: str = ""         # enemies — placeholder label for now
+    sprite_id: str = ""         # enemies — battler sheet override; empty falls back to
+                                # enemy id (assets/sprites/enemies/<id>.tsx)
     sprite_scale: int = 100     # enemies — enlarge sprite by this %, 100 = no change
 
     # battle-only state

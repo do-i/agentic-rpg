@@ -30,6 +30,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from engine.world.collision import CollisionMap
 
+# Defensive fallback only — every enemy id referenced by data/encount/ has a
+# matching assets/sprites/enemies/<id>.tsx, so these rects appear only if a
+# sheet fails to load at runtime.
 ENEMY_COLOR           = (200, 60, 60)   # red placeholder rect
 ENEMY_BOSS_COLOR      = (160, 0, 200)   # purple for bosses
 
