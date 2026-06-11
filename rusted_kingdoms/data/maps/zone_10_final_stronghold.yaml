@@ -1,0 +1,7 @@
+name: Final Stronghold
+bgm: zone.dark
+
+enemy_spawn:
+  init: 5
+  max: 10
+  interval: 20.0

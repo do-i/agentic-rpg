@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="12" height="12" tilewidth="32" tileheight="32" infinite="0" nextlayerid="5" nextobjectid="1">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="12" height="12" tilewidth="32" tileheight="32" infinite="0" nextlayerid="5" nextobjectid="2">
  <tileset firstgid="1" source="../tilesets/schwarnhild/tiles-all-32x32.tsx"/>
+ <objectgroup id="5" name="portals">
+  <object id="1" name="zone_02_open_plains" x="224" y="64" width="64" height="8">
+   <properties>
+    <property name="target_map" value="zone_02_open_plains"/>
+    <property name="target_position_x" type="int" value="25"/>
+    <property name="target_position_y" type="int" value="3"/>
+   </properties>
+  </object>
+ </objectgroup>
  <layer id="2" name="ground" width="12" height="12">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,
