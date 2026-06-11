@@ -2,9 +2,8 @@
 #
 # Pause / field menu — opened from the world map (M key).
 # Lists party-wide actions: Items, Status, Equipment, Spells, Save.
-# Equipment and Spells are shown as disabled placeholders until those
-# systems ship; the entry list is the single source of truth so new
-# entries (Recipe Book, Transport) only need appending.
+# The entry list is the single source of truth so new entries
+# (Recipe Book, Transport) only need appending.
 
 from __future__ import annotations
 
