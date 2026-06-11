@@ -14,6 +14,13 @@ shop:
       unlock_flag: story_quest_started
 
 npcs:
-  - id: port_master
-    dialogue: port_master_intro
-    position: [5, 3]
+  - id: harborgate_dockhand
+    name: "Dockhand"
+    dialogue: harborgate_dockhand
+    position: [21, 14]
+    sprite: assets/sprites/npc/village_male_person_market_runner.tsx
+    default_facing: down
+    animation:
+      mode: wander
+      speed: 1.6
+      range: 4
