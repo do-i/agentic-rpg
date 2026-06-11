@@ -1,0 +1,29 @@
+# data/dialogue/ardel_shrine_keeper.yaml
+#
+# Caretaker of the burnt shrine in Ardel. The shrine burned the night the
+# forest rusted (intro flare); the high-level outline calls for the camera to
+# rest here in the epilogue, so the keeper's lines track the whole journey.
+id: ardel_shrine_keeper
+type: npc
+
+entries:
+  # Endgame — the epilogue beat
+  - condition:
+      requires: [boss_zone10_defeated]
+    lines:
+      - "Warm, isn't it? First warmth these stones have held since the night they burned."
+      - "Whatever you did out there — the children come to sit here again."
+      - "That's all a shrine ever was, you know. A place to warm your hands."
+
+  # After the elder's revelation (Act II onward)
+  - condition:
+      requires: [story_act2_started]
+    lines:
+      - "So the elder finally told you. Sixteen years she carried that."
+      - "This is where they found you, swaddled in ash, right where the altar stood."
+      - "The fire that took this roof wasn't your fault, {protagonist}. Fires only ever do what we feed them."
+
+  # Default — post-flare grief
+  - lines:
+      - "Mind the beams. Nothing here has been sound since the night the forest rusted."
+      - "Folk say the shrine died that night. I say it's only holding its breath."

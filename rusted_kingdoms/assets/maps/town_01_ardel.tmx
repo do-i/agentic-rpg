@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="11">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="12">
  <tileset firstgid="1" source="../tilesets/grass_cave_walls_24x14.tsx"/>
  <tileset firstgid="337" source="../tilesets/stone_tile_stares_16x16.tsx"/>
  <tileset firstgid="593" source="../tilesets/icon_table_stage_14x9.tsx"/>
@@ -40,6 +40,13 @@
     <property name="target_map" value="zone_01_starting_forest"/>
     <property name="target_position_x" type="int" value="29"/>
     <property name="target_position_y" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="11" name="shrine" x="608" y="580" width="128" height="20">
+   <properties>
+    <property name="target_map" value="town_01_ardel_shrine"/>
+    <property name="target_position_x" type="int" value="5"/>
+    <property name="target_position_y" type="int" value="9"/>
    </properties>
   </object>
  </objectgroup>
@@ -86,7 +93,7 @@
 0,201,0,0,25,26,0,0,0,0,0,122,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,201,126,
 0,201,0,0,49,50,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,27,28,0,201,125,
 0,201,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,51,52,0,201,0,
-0,201,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,203,225,225,225,225,204,0,0,0,0,201,0,
+0,201,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,203,225,0,0,225,204,0,0,0,0,201,0,
 0,227,225,225,225,225,225,225,225,225,225,225,225,225,225,225,225,225,228,0,0,0,0,227,225,225,225,225,228,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
