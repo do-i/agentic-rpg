@@ -1,0 +1,46 @@
+id: town_02_millhaven_shop
+name: Millhaven
+bgm: town.bamboo
+
+shop:
+  items:
+    - id: potion
+      qty: 5
+      buy_price: 100
+      unlock_flag: story_quest_started
+    - id: antidote
+      qty: 5
+      buy_price: 80
+      unlock_flag: story_quest_started
+    - id: echo_herb
+      qty: 5
+      buy_price: 80
+      unlock_flag: story_quest_started
+    - id: tent
+      qty: 3
+      buy_price: 500
+      unlock_flag: story_quest_started
+    - id: hi_potion
+      qty: 3
+      buy_price: 500
+      unlock_flag: story_act2_started
+
+npcs:
+  - id: item_shop_keeper
+    dialogue: item_shop_millhaven
+    position: [6, 3]
+    sprite: assets/sprites/npc/teen_halfmessy_01.tsx
+    default_facing: down
+    interaction_range: 2.5
+    animation:
+      mode: step
+      speed: 0.7
+  - id: mc_shop_keeper
+    dialogue: mc_shop_intro
+    position: [10, 3]
+    sprite: assets/sprites/npc/male_blond_01.tsx
+    default_facing: down
+    interaction_range: 2.5
+    animation:
+      mode: step
+      speed: 0.8

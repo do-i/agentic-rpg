@@ -8,11 +8,11 @@
  <tileset firstgid="936" source="../tilesets/ground/terrain-v7.tsx"/>
  <objectgroup id="8" name="portals">
   <object id="11" name="to_x2" x="130" y="20"/>
-  <object id="12" name="weapon_shop" x="656.75" y="179.875"/>
-  <object id="13" name="item_shop" x="1167.75" y="178.75"/>
+  <object id="12" name="mill" x="656.75" y="179.875"><properties><property name="target_map" value="town_02_millhaven_mill"/><property name="target_position_x" type="int" value="10"/><property name="target_position_y" type="int" value="11"/></properties></object>
+  <object id="13" name="item_shop" x="1167.75" y="178.75"><properties><property name="target_map" value="town_02_millhaven_shop"/><property name="target_position_x" type="int" value="7"/><property name="target_position_y" type="int" value="10"/></properties></object>
   <object id="14" name="inn" x="303" y="789.75"><properties><property name="target_map" value="town_02_millhaven_inn"/><property name="target_position_x" type="int" value="5"/><property name="target_position_y" type="int" value="9"/></properties></object>
   <object id="15" name="magic_shop" x="1135.75" y="820"/>
-  <object id="16" name="to_x1" x="616" y="974" width="50" height="6"/>
+  <object id="16" name="zone_02_open_plains" x="616" y="974" width="50" height="6"><properties><property name="target_map" value="zone_02_open_plains"/><property name="target_position_x" type="int" value="2"/><property name="target_position_y" type="int" value="8"/></properties></object>
  </objectgroup>
  <layer id="1" name="ground" width="41" height="31">
   <data encoding="csv">
