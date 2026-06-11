@@ -1,9 +1,6 @@
-id: town_03_ruinwatch
+id: town_03_ruinwatch_shop
 name: Ruinwatch
 bgm: town.default
-inn:
-  cost: 250
-  position: [8, 5]
 
 shop:
   items:
@@ -33,8 +30,21 @@ shop:
       unlock_flag: story_act2_started
 
 npcs:
-  - id: ruinwatch_scholar
-    dialogue: ruinwatch_scholar_hint
-    position: [18, 27]
-    sprite: assets/sprites/npc/wizard_blue_robed_mage.tsx
+  - id: item_shop_keeper
+    dialogue: item_shop_ruinwatch
+    position: [6, 3]
+    sprite: assets/sprites/npc/village_male_person_festival_local.tsx
     default_facing: down
+    interaction_range: 2.5
+    animation:
+      mode: step
+      speed: 0.7
+  - id: mc_shop_keeper
+    dialogue: mc_shop_intro
+    position: [10, 3]
+    sprite: assets/sprites/npc/merchant_base.tsx
+    default_facing: down
+    interaction_range: 2.5
+    animation:
+      mode: step
+      speed: 0.8
