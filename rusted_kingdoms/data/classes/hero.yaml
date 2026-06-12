@@ -79,3 +79,20 @@ abilities:
     mp_cost: 0
     damage_coeff: 2.0
     target: single_enemy
+
+  - id: teleport
+    name: Teleport
+    unlock_level: 1
+    # Story-gated: Aric only learns Teleport once `aric_teleport_unlocked` is
+    # set (a mid-game cutscene). For debugging/testing the flag is currently
+    # listed in manifest.yaml `bootstrap_flags`, so the skill is available from
+    # the start — remove it there to restore the mid-game unlock.
+    unlock_flag: aric_teleport_unlocked
+    type: utility
+    description: "Warp to any town or area you have already visited."
+    mp_cost: 8
+    target: self
+    # `warp: select` marks this utility spell as a field teleport. The field
+    # Spells screen (spell_scene) intercepts it and opens a destination picker
+    # listing the visited overworld locations (see engine/world/warp_logic.py).
+    warp: select

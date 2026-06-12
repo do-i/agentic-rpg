@@ -13,6 +13,9 @@ import pygame
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
+from engine.io.save_manager import GameStateManager
+from engine.world.warp_logic import warp_destinations, WarpDestination
+from engine.common.warp_select_overlay import WarpSelectOverlay
 from engine.common.font_provider import get_fonts
 from engine.common.color_constants import (
     C_BG, C_TEXT, C_TEXT_MUT, C_TEXT_DIM, C_HEAD,
@@ -51,12 +54,15 @@ class SpellScene(WizardScene):
         scenario_path: str,
         return_scene_name: str,
         sfx_manager,
+        game_state_manager: GameStateManager,
     ) -> None:
         super().__init__(scene_manager, registry, return_scene_name, sfx_manager)
         self._holder = holder
         self._scenario_path = scenario_path
+        self._game_state_manager = game_state_manager
         self._spells: list[dict] = []
         self._target_overlay: TargetSelectOverlay | None = None
+        self._warp_overlay: WarpSelectOverlay | None = None
         self._popup_text: str = ""
         self._popup_active: bool = False
         self._fonts_ready = False
@@ -112,9 +118,16 @@ class SpellScene(WizardScene):
     # ── Modal-overlay routing ────────────────────────────────
 
     def _is_input_blocked(self) -> bool:
-        return self._target_overlay is not None or self._popup_active
+        return (
+            self._target_overlay is not None
+            or self._warp_overlay is not None
+            or self._popup_active
+        )
 
     def _handle_blocked_input(self, events: list[pygame.event.Event]) -> None:
+        if self._warp_overlay:
+            self._warp_overlay.handle_events(events)
+            return
         if self._target_overlay:
             self._target_overlay.handle_events(events)
             return
@@ -151,6 +164,8 @@ class SpellScene(WizardScene):
             self._popup_active = True
             self._play("cancel")
             return None
+        if spell.get("warp"):
+            return self._open_warp(spell, caster)
         target_type = spell.get("target")
         if target_type in ("all_allies", "party"):
             self._play("confirm")
@@ -174,6 +189,42 @@ class SpellScene(WizardScene):
             sfx_manager=self._sfx_manager,
         )
         return None
+
+    def _open_warp(self, spell: dict, caster: MemberState) -> str | None:
+        """Open the teleport destination picker for a `warp` utility spell.
+
+        MP is only spent once a destination is confirmed (in _on_warp_confirm),
+        so cancelling out costs nothing.
+        """
+        state = self._holder.get()
+        destinations = warp_destinations(state.map, Path(self._scenario_path))
+        if not destinations:
+            self._popup_text = "Nowhere to teleport to yet."
+            self._popup_active = True
+            self._play("cancel")
+            return None
+        self._play("confirm")
+        self._warp_overlay = WarpSelectOverlay(
+            destinations=destinations,
+            on_confirm=lambda dest, s=spell, c=caster: self._on_warp_confirm(s, c, dest),
+            on_cancel=self._on_warp_cancel,
+            sfx_manager=self._sfx_manager,
+        )
+        return None
+
+    def _on_warp_confirm(self, spell: dict, caster: MemberState, dest: WarpDestination) -> None:
+        """Spend MP, move the party to the chosen destination, and return to
+        the world map. The persistent WorldMapScene reloads when it notices
+        state.map.current changed (see WorldMapScene._ensure_init)."""
+        caster.mp = max(0, caster.mp - spell["mp_cost"])
+        state = self._holder.get()
+        state.map.move_to(dest.map_id, dest.position)
+        self._game_state_manager.save(state, slot_index=0)
+        self._warp_overlay = None
+        self._scene_manager.switch(self._registry.get(self._return_scene_name))
+
+    def _on_warp_cancel(self) -> None:
+        self._warp_overlay = None
 
     def _on_target_confirm(self, spell: dict, caster: MemberState, target: MemberState) -> None:
         msg = apply_spell(spell, caster, target)
@@ -202,6 +253,8 @@ class SpellScene(WizardScene):
 
         if self._target_overlay:
             self._target_overlay.render(screen)
+        if self._warp_overlay:
+            self._warp_overlay.render(screen)
         if self._popup_active:
             render_popup(
                 screen, self._font_row, self._font_meta, self._popup_text,

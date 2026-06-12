@@ -14,6 +14,7 @@ from engine.common.font_provider import init_fonts
 from engine.party.member_state import MemberState
 from engine.spell.spell_scene import SpellScene, PAGE_MEMBER, PAGE_SPELL
 from engine.audio.sfx_manager import SfxManager
+from engine.world.position_data import Position
 
 
 CLERIC_YAML = """\
@@ -88,6 +89,7 @@ def make_scene(tmp_path, members=None, flags=None):
         scenario_path=str(tmp_path),
         return_scene_name="world_map",
         sfx_manager=SfxManager.null(),
+        game_state_manager=MagicMock(),
     )
     return scene, state, scene_manager, registry
 
@@ -129,6 +131,7 @@ class TestMemberPage:
             scenario_path=str(tmp_path),
             return_scene_name="world_map",
             sfx_manager=SfxManager.null(),
+            game_state_manager=MagicMock(),
         )
         scene.handle_events(_key(pygame.K_RETURN))
         assert scene._popup_active
@@ -188,6 +191,173 @@ class TestSpellPage:
         assert scene._popup_active
         assert "MP" in scene._popup_text
         assert scene._target_overlay is None
+
+
+HERO_YAML = """\
+abilities:
+  - id: teleport
+    name: Teleport
+    type: utility
+    unlock_level: 1
+    unlock_flag: aric_teleport_unlocked
+    mp_cost: 8
+    target: self
+    warp: select
+"""
+
+
+def _tmx_with_portals(portals) -> str:
+    """Minimal TMX holding only a 'portals' object layer (target_map + tile)."""
+    objs = ""
+    for i, (target_map, (tx, ty)) in enumerate(portals):
+        objs += (
+            f'<object id="{i + 1}" x="0" y="0" width="8" height="8">'
+            f'<properties>'
+            f'<property name="target_map" value="{target_map}"/>'
+            f'<property name="target_position_x" type="int" value="{tx}"/>'
+            f'<property name="target_position_y" type="int" value="{ty}"/>'
+            f'</properties></object>'
+        )
+    return f'<?xml version="1.0"?><map><objectgroup name="portals">{objs}</objectgroup></map>'
+
+
+def _write_warp_scenario(tmp_path):
+    """A tiny world: zone_forest <-> town_ardel, plus an interior shop.
+
+    Landing for town_ardel is the zone entrance (27, 12), not the shop exit.
+    """
+    maps_assets = tmp_path / "assets" / "maps"
+    maps_data = tmp_path / "data" / "maps"
+    maps_assets.mkdir(parents=True)
+    maps_data.mkdir(parents=True)
+
+    (maps_assets / "zone_forest.tmx").write_text(
+        _tmx_with_portals([("town_ardel", (27, 12))]))
+    (maps_assets / "town_ardel.tmx").write_text(
+        _tmx_with_portals([("zone_forest", (5, 5)), ("town_ardel_shop", (3, 3))]))
+    (maps_assets / "town_ardel_shop.tmx").write_text(
+        _tmx_with_portals([("town_ardel", (9, 9))]))
+
+    (maps_data / "zone_forest.yaml").write_text("name: Greenwood Forest\n")
+    (maps_data / "town_ardel.yaml").write_text("name: Ardel Village\n")
+    (maps_data / "town_ardel_shop.yaml").write_text("name: Ardel Shop\n")
+
+
+def make_warp_scene(tmp_path):
+    classes_dir = tmp_path / "data" / "classes"
+    classes_dir.mkdir(parents=True)
+    (classes_dir / "hero.yaml").write_text(HERO_YAML)
+    _write_warp_scenario(tmp_path)
+
+    state = GameState()
+    state.party.add_member(make_member(name="Aric", class_name="hero"))
+    state.flags.add_flag("aric_teleport_unlocked")
+    # Standing in the forest, having visited the town (and its shop interior).
+    state.map.move_to("town_ardel", Position(1, 1))
+    state.map.move_to("town_ardel_shop", Position(1, 1))
+    state.map.move_to("zone_forest", Position(1, 1))
+    holder = GameStateHolder()
+    holder.set(state)
+
+    gsm = MagicMock()
+    scene = SpellScene(
+        holder=holder,
+        scene_manager=MagicMock(spec=SceneManager),
+        registry=MagicMock(spec=SceneRegistry),
+        scenario_path=str(tmp_path),
+        return_scene_name="world_map",
+        sfx_manager=SfxManager.null(),
+        game_state_manager=gsm,
+    )
+    return scene, state, gsm
+
+
+def _open_teleport(scene):
+    scene.handle_events(_key(pygame.K_RETURN))   # open spell page
+    scene._page(PAGE_SPELL).selection = 0        # teleport (only spell)
+    scene.handle_events(_key(pygame.K_RETURN))   # cast → opens picker
+
+
+class TestWarp:
+    def test_teleport_unavailable_without_flag(self, tmp_path):
+        # Same hero class, but the unlock flag is absent → spell not learned.
+        classes_dir = tmp_path / "data" / "classes"
+        classes_dir.mkdir(parents=True)
+        (classes_dir / "hero.yaml").write_text(HERO_YAML)
+        state = GameState()
+        state.party.add_member(make_member(name="Aric", class_name="hero"))
+        holder = GameStateHolder()
+        holder.set(state)
+        scene = SpellScene(
+            holder=holder,
+            scene_manager=MagicMock(spec=SceneManager),
+            registry=MagicMock(spec=SceneRegistry),
+            scenario_path=str(tmp_path),
+            return_scene_name="world_map",
+            sfx_manager=SfxManager.null(),
+            game_state_manager=MagicMock(),
+        )
+        scene.handle_events(_key(pygame.K_RETURN))  # try open spell page
+        assert scene.page_id == PAGE_MEMBER          # stayed: no learned spells
+        assert scene._popup_active
+
+    def test_teleport_opens_destination_picker(self, tmp_path):
+        scene, state, gsm = make_warp_scene(tmp_path)
+        _open_teleport(scene)
+        assert scene._warp_overlay is not None
+        # Only the top-level town is offered — current map and the shop
+        # interior are excluded.
+        dests = scene._warp_overlay._destinations
+        assert [d.map_id for d in dests] == ["town_ardel"]
+        gsm.save.assert_not_called()   # nothing committed until a pick
+
+    def test_selecting_destination_warps_to_incoming_portal(self, tmp_path):
+        scene, state, gsm = make_warp_scene(tmp_path)
+        before_mp = scene._members()[0].mp
+        _open_teleport(scene)
+        scene.handle_events(_key(pygame.K_RETURN))   # confirm destination
+
+        assert state.map.current == "town_ardel"
+        assert (state.map.position.x, state.map.position.y) == (27, 12)
+        assert scene._members()[0].mp == before_mp - 8
+        assert scene._warp_overlay is None
+        gsm.save.assert_called_once()
+        scene._scene_manager.switch.assert_called_once()
+
+    def test_cancel_picker_costs_nothing(self, tmp_path):
+        scene, state, gsm = make_warp_scene(tmp_path)
+        before_mp = scene._members()[0].mp
+        _open_teleport(scene)
+        scene.handle_events(_key(pygame.K_ESCAPE))   # back out of picker
+
+        assert scene._warp_overlay is None
+        assert state.map.current == "zone_forest"
+        assert scene._members()[0].mp == before_mp
+        gsm.save.assert_not_called()
+
+    def test_teleport_blocked_without_mp(self, tmp_path):
+        scene, state, gsm = make_warp_scene(tmp_path)
+        scene._members()[0].mp = 0
+        scene.handle_events(_key(pygame.K_RETURN))   # open spell page
+        scene._page(PAGE_SPELL).selection = 0        # teleport
+        scene.handle_events(_key(pygame.K_RETURN))   # try cast
+
+        assert scene._warp_overlay is None
+        assert state.map.current == "zone_forest"
+        assert scene._popup_active
+        gsm.save.assert_not_called()
+
+    def test_no_visited_destinations_shows_popup(self, tmp_path):
+        scene, state, gsm = make_warp_scene(tmp_path)
+        # Wipe visited history: nowhere to go.
+        state.map = state.map.__class__(current="zone_forest", position=Position(1, 1))
+        scene.handle_events(_key(pygame.K_RETURN))   # open spell page
+        scene._page(PAGE_SPELL).selection = 0
+        scene.handle_events(_key(pygame.K_RETURN))   # cast
+
+        assert scene._warp_overlay is None
+        assert scene._popup_active
+        gsm.save.assert_not_called()
 
 
 class TestRender:

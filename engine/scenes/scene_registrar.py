@@ -172,4 +172,5 @@ def register_scenes(registry: SceneRegistry, deps: SceneDeps) -> None:
             scenario_path=str(loader.scenario_path),
             return_scene_name="world_map",
             sfx_manager=sfx_manager,
+            game_state_manager=game_state_manager,
         ))

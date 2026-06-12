@@ -133,6 +133,7 @@ class WorldMapScene(Scene):
 
     def _reset_state(self) -> None:
         self._tile_map = None
+        self._loaded_map_id: str | None = None
         self._camera = None
         self._player = None
         self._npcs = []
@@ -174,6 +175,12 @@ class WorldMapScene(Scene):
         """
         if self._tile_map is None:
             self._init()
+        elif self._loaded_map_id != self._holder.get().map.current:
+            # A teleport/warp cast from another scene (e.g. the field Spells
+            # screen) changed the current map while this singleton scene kept
+            # its old TileMap. Drop it so _init() reloads at the new location.
+            self._reset_state()
+            self._init()
 
     def _init(self) -> None:
         result = init_world_map(
@@ -203,6 +210,7 @@ class WorldMapScene(Scene):
         self._npcs = result.npcs
         self._item_boxes = result.item_boxes
         self._enemy_spawner = result.enemy_spawner
+        self._loaded_map_id = self._holder.get().map.current
         self._fade.reset()
 
     # ── Events ────────────────────────────────────────────────
