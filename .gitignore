@@ -16,3 +16,6 @@ maps_graph.assets/
 
 # Map-editor TMX backups
 *.bak
+
+# Claude Code worktrees
+.claude/worktrees/
