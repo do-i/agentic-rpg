@@ -4,13 +4,18 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pygame
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
+from engine.io.save_manager import GameStateManager
 from engine.party.member_state import MemberState
 from engine.common.target_select_overlay_renderer import TargetSelectOverlay
+from engine.common.warp_select_overlay import WarpSelectOverlay
+from engine.world.warp_logic import warp_destinations, WarpDestination
 from engine.status.status_logic import (
     field_spells, valid_targets, apply_spell, apply_spell_all,
 )
@@ -35,6 +40,7 @@ class StatusScene(Scene):
         return_scene_name: str = "world_map",
         *,
         sfx_manager,
+        game_state_manager: GameStateManager,
     ) -> None:
         self._holder = holder
         self._scene_manager = scene_manager
@@ -42,6 +48,7 @@ class StatusScene(Scene):
         self._return_scene_name = return_scene_name
         self._scenario_path = scenario_path
         self._sfx_manager = sfx_manager
+        self._game_state_manager = game_state_manager
         self._selected = 0
         self._renderer = StatusRenderer(scenario_path)
 
@@ -50,6 +57,7 @@ class StatusScene(Scene):
         self._spell_sel: int = 0
         self._spell_caster: MemberState | None = None
         self._target_overlay: TargetSelectOverlay | None = None
+        self._warp_overlay: WarpSelectOverlay | None = None
         self._popup_text: str = ""
         self._popup_active: bool = False
 
@@ -63,6 +71,10 @@ class StatusScene(Scene):
     # ── Events ────────────────────────────────────────────────
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
+        if self._warp_overlay:
+            self._warp_overlay.handle_events(events)
+            return
+
         if self._target_overlay:
             self._target_overlay.handle_events(events)
             return
@@ -126,7 +138,8 @@ class StatusScene(Scene):
         if not members:
             return
         member = members[self._selected]
-        spells = field_spells(member, self._scenario_path)
+        flags = set(self._holder.get().flags.to_list())
+        spells = field_spells(member, self._scenario_path, flags)
         if not spells:
             self._popup_text = f"{member.name} has no field spells."
             self._popup_active = True
@@ -157,6 +170,9 @@ class StatusScene(Scene):
             spell = spells[self._spell_sel]
             cost = spell["mp_cost"]
             if cost > self._spell_caster.mp:
+                return
+            if spell.get("warp"):
+                self._open_warp(spell, self._spell_caster)
                 return
             target_type = spell.get("target", "single_ally")
             if target_type in ("all_allies", "party"):
@@ -194,6 +210,40 @@ class StatusScene(Scene):
     def _on_target_cancel(self) -> None:
         self._target_overlay = None
 
+    # ── Teleport / warp ──────────────────────────────────────
+
+    def _open_warp(self, spell: dict, caster: MemberState) -> None:
+        """Open the teleport destination picker. MP is spent only on confirm,
+        so cancelling costs nothing."""
+        state = self._holder.get()
+        destinations = warp_destinations(state.map, Path(self._scenario_path))
+        if not destinations:
+            self._popup_text = "Nowhere to teleport to yet."
+            self._popup_active = True
+            self._spell_list = None
+            self._sfx_manager.play("cancel")
+            return
+        self._sfx_manager.play("confirm")
+        self._warp_overlay = WarpSelectOverlay(
+            destinations=destinations,
+            on_confirm=lambda dest, s=spell, c=caster: self._on_warp_confirm(s, c, dest),
+            on_cancel=self._on_warp_cancel,
+            sfx_manager=self._sfx_manager,
+        )
+
+    def _on_warp_confirm(self, spell: dict, caster: MemberState, dest: WarpDestination) -> None:
+        caster.mp = max(0, caster.mp - spell["mp_cost"])
+        state = self._holder.get()
+        state.map.move_to(dest.map_id, dest.position)
+        self._game_state_manager.save(state, slot_index=0)
+        self._warp_overlay = None
+        self._spell_list = None
+        self._spell_caster = None
+        self._scene_manager.switch(self._registry.get(self._return_scene_name))
+
+    def _on_warp_cancel(self) -> None:
+        self._warp_overlay = None
+
     # ── Update ────────────────────────────────────────────────
 
     def update(self, delta: float) -> None:
@@ -216,3 +266,6 @@ class StatusScene(Scene):
             popup_text=self._popup_text,
             popup_active=self._popup_active,
         )
+
+        if self._warp_overlay:
+            self._warp_overlay.render(screen)

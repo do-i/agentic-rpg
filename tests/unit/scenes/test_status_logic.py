@@ -60,7 +60,7 @@ abilities:
     unlock_level: 1
 """)
         member = make_member(class_name="cleric", level=5)
-        result = field_spells(member, str(tmp_path))
+        result = field_spells(member, str(tmp_path), set())
 
         names = [s["name"] for s in result]
         assert "Heal" in names
@@ -81,17 +81,35 @@ abilities:
     unlock_level: 20
 """)
         member = make_member(class_name="cleric", level=5)
-        result = field_spells(member, str(tmp_path))
+        result = field_spells(member, str(tmp_path), set())
 
         names = [s["name"] for s in result]
         assert "Heal" in names
         assert "Mega Heal" not in names
 
+    def test_respects_unlock_flag(self, tmp_path):
+        classes_dir = tmp_path / "data" / "classes"
+        classes_dir.mkdir(parents=True)
+        (classes_dir / "hero.yaml").write_text("""
+abilities:
+  - name: Teleport
+    type: utility
+    unlock_level: 1
+    unlock_flag: aric_teleport_unlocked
+    warp: select
+""")
+        member = make_member(class_name="hero", level=5)
+        # Flag absent → hidden.
+        assert field_spells(member, str(tmp_path), set()) == []
+        # Flag present → shown.
+        names = [s["name"] for s in field_spells(member, str(tmp_path), {"aric_teleport_unlocked"})]
+        assert names == ["Teleport"]
+
     def test_missing_class_file_returns_empty(self, tmp_path):
         classes_dir = tmp_path / "data" / "classes"
         classes_dir.mkdir(parents=True)
         member = make_member(class_name="nonexistent", level=5)
-        result = field_spells(member, str(tmp_path))
+        result = field_spells(member, str(tmp_path), set())
         assert result == []
 
 

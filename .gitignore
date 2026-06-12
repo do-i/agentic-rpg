@@ -19,3 +19,6 @@ maps_graph.assets/
 
 # Claude Code worktrees
 .claude/worktrees/
+
+# Claude Code local session settings
+.claude/settings.json

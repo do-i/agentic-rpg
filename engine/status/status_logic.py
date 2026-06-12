@@ -22,8 +22,14 @@ def load_class_data(classes_dir: Path, class_name: str) -> dict:
         return yaml.safe_load(f)
 
 
-def field_spells(member: MemberState, scenario_path: str) -> list[dict]:
-    """Load available field-usable spells for this member."""
+def field_spells(member: MemberState, scenario_path: str, flags: set[str]) -> list[dict]:
+    """Load available field-usable spells for this member.
+
+    Filtered by field-usable type, unlock_level <= member.level, and — if the
+    ability declares an `unlock_flag` — that flag being present in `flags`.
+    Mirrors the field-menu filter in engine.spell.spell_logic.learned_spells so
+    both casting paths agree on what's unlocked.
+    """
     classes_dir = Path(scenario_path) / "data" / "classes"
     class_data = load_class_data(classes_dir, member.class_name)
     abilities = class_data.get("abilities", [])
@@ -32,6 +38,9 @@ def field_spells(member: MemberState, scenario_path: str) -> list[dict]:
         if ab.get("type") not in FIELD_SPELL_TYPES:
             continue
         if ab["unlock_level"] > member.level:
+            continue
+        unlock_flag = ab.get("unlock_flag")
+        if unlock_flag and unlock_flag not in flags:
             continue
         result.append(ab)
     return result
