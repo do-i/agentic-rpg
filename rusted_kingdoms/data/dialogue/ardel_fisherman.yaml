@@ -1,0 +1,18 @@
+# data/dialogue/ardel_fisherman.yaml
+#
+# Flavor NPC: an old fisherman by Ardel's stream. Lines shift with the story.
+id: ardel_fisherman
+type: npc
+
+entries:
+  - condition:
+      requires: [boss_zone01_defeated]
+    lines:
+      - "Fish came back to the stream the day the beast fell. Coincidence, they tell me."
+      - "I've fished forty years. There's no such thing as coincidence in this water."
+
+  - condition:
+      requires: [story_quest_started]
+    lines:
+      - "The fish swim belly-up some mornings now. The rot's in the water, not just the trees."
+      - "Whatever you're planning, lad, plan it quick."

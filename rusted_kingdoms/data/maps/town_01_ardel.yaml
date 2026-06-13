@@ -64,3 +64,42 @@ npcs:
       mode: wander
       speed: 1.8
       range: 5
+
+  - id: ardel_smith
+    name: "Bram"
+    dialogue: ardel_smith
+    position: [20, 6]
+    sprite: assets/sprites/npc/male_sword_fighter_axe_fighter.tsx
+    default_facing: down
+    animation:
+      mode: step
+      speed: 0.5
+
+  - id: ardel_apprentice
+    name: "Tomas"
+    dialogue: ardel_apprentice
+    position: [24, 10]
+    sprite: assets/sprites/npc/teen_halfmessy_01.tsx
+    default_facing: left
+    animation:
+      mode: wander
+      speed: 1.5
+      range: 3
+
+  - id: ardel_fisherman
+    name: "Old Fisher"
+    dialogue: ardel_fisherman
+    position: [3, 8]
+    sprite: assets/sprites/npc/male_old_02.tsx
+    default_facing: right
+
+  - id: ardel_child
+    name: "Village Child"
+    dialogue: ardel_child
+    position: [15, 8]
+    sprite: assets/sprites/npc/village_female_person_basket_carrier.tsx
+    default_facing: down
+    animation:
+      mode: wander
+      speed: 2.2
+      range: 4
