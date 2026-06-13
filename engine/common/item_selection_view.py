@@ -11,6 +11,7 @@ from dataclasses import dataclass
 import pygame
 
 from engine.common.font_provider import get_fonts
+from engine.common.field_menu_theme import GOLD, INK, MUTED, DIM, render_row_frame
 
 
 @dataclass
@@ -26,18 +27,20 @@ class ItemRow:
 
 @dataclass
 class ItemSelectionTheme:
-    sel_bg:      tuple[int, int, int] = (50, 50, 85)
-    sel_bdr:     tuple[int, int, int] = (212, 200, 138)
-    norm_bdr:    tuple[int, int, int] = (45, 45, 68)
-    row_bg:      tuple[int, int, int] = (30, 30, 50)
-    cursor:      tuple[int, int, int] = (212, 200, 138)
-    title_sel:   tuple[int, int, int] = (238, 238, 238)
-    title_norm:  tuple[int, int, int] = (170, 170, 170)
-    title_lock:  tuple[int, int, int] = (90, 90, 100)
-    subtitle:    tuple[int, int, int] = (130, 130, 140)
-    subtitle_lk: tuple[int, int, int] = (90, 90, 100)
-    right:       tuple[int, int, int] = (200, 185, 100)
-    right_lock:  tuple[int, int, int] = (80, 80, 90)
+    # Row background/border now come from the shared field-menu row frame;
+    # these palette fields control text/accent colors only.
+    sel_bg:      tuple[int, int, int] = (50, 50, 85)   # unused (kept for callers)
+    sel_bdr:     tuple[int, int, int] = GOLD           # unused
+    norm_bdr:    tuple[int, int, int] = (45, 45, 68)   # unused
+    row_bg:      tuple[int, int, int] = (30, 30, 50)   # unused
+    cursor:      tuple[int, int, int] = GOLD
+    title_sel:   tuple[int, int, int] = INK
+    title_norm:  tuple[int, int, int] = MUTED
+    title_lock:  tuple[int, int, int] = DIM
+    subtitle:    tuple[int, int, int] = MUTED
+    subtitle_lk: tuple[int, int, int] = DIM
+    right:       tuple[int, int, int] = GOLD
+    right_lock:  tuple[int, int, int] = DIM
 
 
 class ItemSelectionView:
@@ -169,14 +172,7 @@ class ItemSelectionView:
         selected: bool,
     ) -> None:
         t = self._theme
-        bg  = t.sel_bg  if selected else t.row_bg
-        bdr = t.sel_bdr if selected else t.norm_bdr
-        pygame.draw.rect(screen, bg,  (rx, ry, rw, rh), border_radius=4)
-        pygame.draw.rect(screen, bdr, (rx, ry, rw, rh), 1, border_radius=4)
-
-        if selected:
-            cur = self._font_cursor.render(" ", True, t.cursor)
-            screen.blit(cur, (rx + self.CURSOR_X, ry + (rh - cur.get_height()) // 2))
+        render_row_frame(screen, pygame.Rect(rx, ry, rw, rh), focused=selected)
 
         content_x = rx + self.CONTENT_X
 

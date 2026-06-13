@@ -10,47 +10,44 @@ from engine.common.font_provider import get_fonts
 from engine.common.item_selection_view import (
     ItemRow, ItemSelectionTheme, ItemSelectionView,
 )
+from engine.common.field_menu_theme import (
+    BORDER,
+    BORDER_ACTIVE,
+    DIM,
+    EMBER,
+    GOLD,
+    INK,
+    MUTED as THEME_MUTED,
+    ROW,
+    ROW_ACTIVE,
+    draw_divider,
+    render_backdrop,
+    render_header,
+    render_hint,
+    render_modal,
+    render_panel,
+    render_row_frame,
+)
 from engine.item.item_entry_state import ItemEntry
 from engine.item.item_logic import TABS, actions_for, display_name
 from engine.item.magic_core_catalog_state import MagicCoreCatalogState
 from engine.item.item_effect_handler import ItemEffectHandler
 
-# ── Colors ────────────────────────────────────────────────────
-BG_COLOR        = (26, 26, 46)
-HEADER_COLOR    = (212, 200, 138)
-MUTED           = (100, 100, 110)
-TEXT_PRIMARY    = (238, 238, 238)
-TEXT_SECONDARY  = (170, 170, 170)
-TEXT_DIM        = (80, 80, 90)
+# ── Colors (field-menu theme) ─────────────────────────────────
+HEADER_COLOR    = GOLD
+MUTED           = THEME_MUTED
+TEXT_PRIMARY    = INK
+TEXT_SECONDARY  = THEME_MUTED
+TEXT_DIM        = DIM
 
-TAB_BG_ACT      = (55, 55, 90)
-TAB_BG_NORM     = (35, 35, 55)
-TAB_BORDER_ACT  = (212, 200, 138)
-TAB_BORDER_NORM = (60, 60, 85)
+TAB_BORDER_ACT  = BORDER_ACTIVE
 
-LIST_BG         = (30, 30, 50)
-LIST_SEL_BG     = (50, 50, 85)
-LIST_SEL_BDR    = (212, 200, 138)
-LIST_NORM_BDR   = (45, 45, 68)
-LIST_PRE_BG     = (38, 38, 62)
-LIST_PRE_BDR    = (100, 95, 130)
+BTN_TEXT        = INK
+BTN_TEXT_DIS    = DIM
 
-DETAIL_BG       = (32, 32, 54)
-DETAIL_BDR      = (55, 55, 80)
+C_CONFIRM_TXT   = GOLD
 
-BTN_BG          = (55, 45, 80)
-BTN_BG_HOV      = (75, 60, 110)
-BTN_BG_DIS      = (38, 38, 55)
-BTN_BDR         = (130, 100, 180)
-BTN_BDR_DIS     = (55, 55, 70)
-BTN_TEXT        = (220, 200, 255)
-BTN_TEXT_DIS    = (80, 80, 95)
-
-C_CONFIRM_BG    = (28, 22, 10)
-C_CONFIRM_BDR   = (180, 150, 60)
-C_CONFIRM_TXT   = (230, 200, 120)
-
-DIVIDER         = (55, 55, 78)
+DIVIDER         = BORDER
 
 # ── Layout ────────────────────────────────────────────────────
 PAD             = 16
@@ -79,16 +76,8 @@ class ItemRenderer:
         self._effect_handler = effect_handler
         self._mc_catalog = mc_catalog
         self._fonts_ready = False
-        theme = ItemSelectionTheme(
-            sel_bg=LIST_SEL_BG, sel_bdr=LIST_SEL_BDR,
-            norm_bdr=LIST_NORM_BDR, row_bg=LIST_BG,
-            cursor=HEADER_COLOR,
-            title_sel=TEXT_PRIMARY, title_norm=TEXT_SECONDARY, title_lock=TEXT_DIM,
-            subtitle=MUTED, subtitle_lk=TEXT_DIM,
-            right=HEADER_COLOR, right_lock=MUTED,
-        )
         self._view = ItemSelectionView(
-            theme,
+            ItemSelectionTheme(),
             row_h=ITEM_ROW_H,
             row_gap=ITEM_ROW_GAP,
             font_size=14,
@@ -133,7 +122,7 @@ class ItemRenderer:
         if not self._fonts_ready:
             self._init_fonts()
 
-        screen.fill(BG_COLOR)
+        render_backdrop(screen)
         self._draw_header(screen, gp)
         self._draw_tabs(screen, tab_index, in_tab)
 
@@ -176,16 +165,14 @@ class ItemRenderer:
     # ── Header ────────────────────────────────────────────────
 
     def _draw_header(self, screen: pygame.Surface, gp: int) -> None:
-        title = self._font_title.render("ITEMS", True, HEADER_COLOR)
-        screen.blit(title, (PAD, PAD + 6))
+        render_header(screen, self._font_title, self._font_hint,
+                      "ITEMS", "use, sort, and inspect supplies", PAD, PAD - 8)
         gp_val   = self._font_gp.render(f"{gp}", True, TEXT_PRIMARY)
         gp_label = self._font_gp.render("GP", True, HEADER_COLOR)
         gx = screen.get_width() - PAD - gp_val.get_width()
         screen.blit(gp_val,   (gx, PAD + 6))
         screen.blit(gp_label, (gx - gp_label.get_width() - 6, PAD + 6))
-        pygame.draw.line(screen, DIVIDER,
-                         (PAD, PAD + HEADER_H - 2),
-                         (screen.get_width() - PAD, PAD + HEADER_H - 2))
+        draw_divider(screen, PAD, PAD + HEADER_H - 2, screen.get_width() - PAD * 2)
 
     # ── Tabs ──────────────────────────────────────────────────
 
@@ -197,10 +184,8 @@ class ItemRenderer:
         for i, label in enumerate(TABS):
             x      = PAD + i * (tw + TAB_GAP)
             active = (i == tab_index)
-            bg     = TAB_BG_ACT  if active else TAB_BG_NORM
-            bdr    = (TAB_BORDER_ACT if in_tab else TAB_BORDER_NORM) if active else TAB_BORDER_NORM
-            pygame.draw.rect(screen, bg,  (x, tab_y, tw, TAB_H), border_radius=4)
-            pygame.draw.rect(screen, bdr, (x, tab_y, tw, TAB_H), 1, border_radius=4)
+            render_row_frame(screen, pygame.Rect(x, tab_y, tw, TAB_H),
+                             focused=active and in_tab, dimmed_sel=active)
             col = HEADER_COLOR if active else TEXT_SECONDARY
             txt = self._font_tab.render(label, True, col)
             screen.blit(txt, (x + (tw - txt.get_width()) // 2,
@@ -212,9 +197,7 @@ class ItemRenderer:
                            x: int, y: int, w: int, h: int,
                            items: list[ItemEntry], sel: int, scroll: int,
                            in_filter: bool, hidden_ids: set[str]) -> None:
-        pygame.draw.rect(screen, LIST_BG, (x, y, w, h), border_radius=6)
-        bdr = LIST_SEL_BDR if in_filter else DIVIDER
-        pygame.draw.rect(screen, bdr, (x, y, w, h), 1, border_radius=6)
+        render_panel(screen, pygame.Rect(x, y, w, h), active=in_filter)
 
         if not items:
             empty = self._font_hint.render("No items.", True, TEXT_DIM)
@@ -243,9 +226,7 @@ class ItemRenderer:
                          x: int, y: int, w: int, h: int,
                          items: list[ItemEntry], list_sel: int, scroll: int,
                          active: bool) -> None:
-        pygame.draw.rect(screen, LIST_BG, (x, y, w, h), border_radius=6)
-        bdr = LIST_SEL_BDR if active else DIVIDER
-        pygame.draw.rect(screen, bdr, (x, y, w, h), 1, border_radius=6)
+        render_panel(screen, pygame.Rect(x, y, w, h), active=active)
 
         if not items:
             empty = self._font_detail.render("No items.", True, TEXT_DIM)
@@ -274,8 +255,7 @@ class ItemRenderer:
                            x: int, y: int, w: int, h: int,
                            entry: ItemEntry | None,
                            in_action: bool, action_sel: int) -> None:
-        pygame.draw.rect(screen, DETAIL_BG, (x, y, w, h), border_radius=6)
-        pygame.draw.rect(screen, DETAIL_BDR, (x, y, w, h), 1, border_radius=6)
+        render_panel(screen, pygame.Rect(x, y, w, h))
 
         if not entry:
             return
@@ -310,12 +290,10 @@ class ItemRenderer:
         for i, label in enumerate(item_actions):
             is_sel   = in_action and (i == action_sel)
             disabled = (label == "Discard" and entry.locked)
-            bg  = BTN_BG_DIS  if disabled else (BTN_BG_HOV if is_sel else BTN_BG)
-            bdr = BTN_BDR_DIS if disabled else (TAB_BORDER_ACT if is_sel else BTN_BDR)
-            col = BTN_TEXT_DIS if disabled else BTN_TEXT
+            col = BTN_TEXT_DIS if disabled else (INK if is_sel else BTN_TEXT)
 
-            pygame.draw.rect(screen, bg,  (cx, cy, BTN_W, BTN_H), border_radius=4)
-            pygame.draw.rect(screen, bdr, (cx, cy, BTN_W, BTN_H), 1, border_radius=4)
+            render_row_frame(screen, pygame.Rect(cx, cy, BTN_W, BTN_H),
+                             focused=is_sel, dimmed_sel=not is_sel)
             lbl_surf = self._font_btn.render(label, True, col)
             screen.blit(lbl_surf, (cx + BTN_W // 2 - lbl_surf.get_width() // 2,
                                    cy + BTN_H // 2 - lbl_surf.get_height() // 2))
@@ -345,44 +323,38 @@ class ItemRenderer:
         name  = entry.id.replace("_", " ").title() if entry else "item"
         total = entry.qty if entry else 1
         ow, oh = 440, 150
-        ox = (screen.get_width()  - ow) // 2
-        oy = (screen.get_height() - oh) // 2
-        pygame.draw.rect(screen, (30, 15, 20), (ox, oy, ow, oh), border_radius=6)
-        pygame.draw.rect(screen, (180, 70, 70), (ox, oy, ow, oh), 2, border_radius=6)
+        modal = render_modal(screen, ow, oh)
+        ox, oy = modal.x, modal.y
 
-        msg = self._font_detail.render(f"Discard {name}?", True, (220, 180, 180))
+        msg = self._font_detail.render(f"Discard {name}?", True, EMBER)
         screen.blit(msg, (ox + 20, oy + 16))
 
-        # Quantity stepper:  ◀  qty / total  ▶
+        # Quantity stepper:  <  qty / total  >
         at_min = qty <= 1
         at_max = qty >= total
-        left_col  = (110, 90, 90) if at_min else (220, 180, 180)
-        right_col = (110, 90, 90) if at_max else (220, 180, 180)
+        left_col  = DIM if at_min else INK
+        right_col = DIM if at_max else INK
         cy = oy + 54
         screen.blit(self._font_title.render("<", True, left_col), (ox + 24, cy))
-        amount = self._font_title.render(f"{qty} / {total}", True, (240, 220, 220))
+        amount = self._font_title.render(f"{qty} / {total}", True, INK)
         screen.blit(amount, (ox + ow // 2 - amount.get_width() // 2, cy))
         rx = ox + ow - 24 - self._font_title.size(">")[0]
         screen.blit(self._font_title.render(">", True, right_col), (rx, cy))
 
-        hint = self._font_hint.render(
-            "←/→ qty    ENTER / Y - Confirm    ESC / N - Cancel",
-            True, (160, 120, 120))
-        screen.blit(hint, (ox + 20, oy + oh - 30))
+        render_hint(screen, self._font_hint,
+                    "←/→ qty    ENTER / Y - Confirm    ESC / N - Cancel",
+                    ox + 20, oy + oh - 30)
 
     def _draw_aoe_confirm_overlay(self, screen: pygame.Surface, entry: ItemEntry | None) -> None:
         name  = entry.id.replace("_", " ").title() if entry else "item"
         ow, oh = 460, 110
-        ox = (screen.get_width()  - ow) // 2
-        oy = (screen.get_height() - oh) // 2
-        pygame.draw.rect(screen, C_CONFIRM_BG,  (ox, oy, ow, oh), border_radius=6)
-        pygame.draw.rect(screen, C_CONFIRM_BDR, (ox, oy, ow, oh), 2, border_radius=6)
+        modal = render_modal(screen, ow, oh)
+        ox, oy = modal.x, modal.y
         msg  = self._font_detail.render(
             f"Use {name} on the whole party?", True, C_CONFIRM_TXT)
-        hint = self._font_hint.render(
-            "ENTER / Y - Confirm    ESC / N - Cancel", True, MUTED)
         screen.blit(msg,  (ox + 20, oy + 18))
-        screen.blit(hint, (ox + 20, oy + 58))
+        render_hint(screen, self._font_hint,
+                    "ENTER / Y - Confirm    ESC / N - Cancel", ox + 20, oy + 58)
 
     # ── Footer ────────────────────────────────────────────────
 
@@ -395,15 +367,8 @@ class ItemRenderer:
         if not entry:
             return
         ow, oh = 420, 360
-        ox = (screen.get_width()  - ow) // 2
-        oy = (screen.get_height() - oh) // 2
-
-        scrim = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
-        scrim.fill((0, 0, 0, 140))
-        screen.blit(scrim, (0, 0))
-
-        pygame.draw.rect(screen, DETAIL_BG,      (ox, oy, ow, oh), border_radius=6)
-        pygame.draw.rect(screen, TAB_BORDER_ACT, (ox, oy, ow, oh), 2, border_radius=6)
+        modal = render_modal(screen, ow, oh)
+        ox, oy = modal.x, modal.y
 
         cx, cy = ox + 16, oy + 14
         title_text = f"Edit Tags: {entry.name or entry.id}"
@@ -411,7 +376,7 @@ class ItemRenderer:
             self._font_title.render(title_text, True, HEADER_COLOR), (cx, cy),
         )
         cy += self._font_title.get_height() + 8
-        pygame.draw.line(screen, DIVIDER, (cx, cy), (ox + ow - 16, cy))
+        draw_divider(screen, cx, cy, ow - 32)
         cy += 10
 
         last_section: str | None = None
@@ -431,16 +396,9 @@ class ItemRenderer:
 
             row_h = 24
             if i == sel:
-                pygame.draw.rect(
-                    screen, LIST_SEL_BG,
-                    (cx - 4, cy - 2, ow - 28, row_h),
-                    border_radius=3,
-                )
-                pygame.draw.rect(
-                    screen, LIST_SEL_BDR,
-                    (cx - 4, cy - 2, ow - 28, row_h),
-                    1, border_radius=3,
-                )
+                render_row_frame(screen,
+                                 pygame.Rect(cx - 4, cy - 2, ow - 28, row_h),
+                                 focused=True)
 
             if kind == "new":
                 label = "[+] New Tag..."
@@ -454,12 +412,12 @@ class ItemRenderer:
             cy += row_h
 
         cy = oy + oh - 56
-        pygame.draw.line(screen, DIVIDER, (cx, cy), (ox + ow - 16, cy))
+        draw_divider(screen, cx, cy, ow - 32)
         cy += 6
         count_str = f"Tags: {len(entry.tags)}/5"
         screen.blit(self._font_hint.render(count_str, True, TEXT_SECONDARY), (cx, cy))
         if warning:
-            warn = self._font_hint.render(warning, True, (220, 130, 130))
+            warn = self._font_hint.render(warning, True, EMBER)
             screen.blit(warn, (ox + ow - 16 - warn.get_width(), cy))
         cy += 18
         screen.blit(
@@ -471,35 +429,26 @@ class ItemRenderer:
 
     def _draw_new_tag_overlay(self, screen: pygame.Surface, text: str) -> None:
         ow, oh = 360, 110
-        ox = (screen.get_width()  - ow) // 2
-        oy = (screen.get_height() - oh) // 2
-        pygame.draw.rect(screen, (20, 20, 36),   (ox, oy, ow, oh), border_radius=6)
-        pygame.draw.rect(screen, HEADER_COLOR,   (ox, oy, ow, oh), 2, border_radius=6)
+        modal = render_modal(screen, ow, oh)
+        ox, oy = modal.x, modal.y
         cx, cy = ox + 16, oy + 14
         screen.blit(self._font_title.render("New Tag", True, HEADER_COLOR), (cx, cy))
         cy += self._font_title.get_height() + 6
         box_w, box_h = ow - 32, 28
-        pygame.draw.rect(screen, (40, 40, 70),    (cx, cy, box_w, box_h))
-        pygame.draw.rect(screen, TAB_BORDER_ACT,  (cx, cy, box_w, box_h), 1)
+        pygame.draw.rect(screen, (12, 12, 16), (cx, cy, box_w, box_h), border_radius=4)
+        pygame.draw.rect(screen, BORDER_ACTIVE, (cx, cy, box_w, box_h), 1, border_radius=4)
         screen.blit(
             self._font_detail.render(text + "|", True, TEXT_PRIMARY),
             (cx + 6, cy + (box_h - self._font_detail.get_height()) // 2),
         )
         cy += box_h + 6
-        screen.blit(
-            self._font_hint.render(
-                "ENTER confirm \u00b7 ESC cancel", True, MUTED,
-            ),
-            (cx, cy),
-        )
+        render_hint(screen, self._font_hint, "ENTER confirm \u00b7 ESC cancel", cx, cy)
 
     # \u2500\u2500 Footer \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
     def _draw_footer(self, screen: pygame.Surface) -> None:
         fy = screen.get_height() - FOOTER_H
-        pygame.draw.line(screen, DIVIDER, (PAD, fy), (screen.get_width() - PAD, fy))
-        hint = self._font_hint.render(
-            "navigate \u00b7 \u2190 filter \u00b7 ENTER toggle/act \u00b7 T edit tags \u00b7 I close",
-            True, MUTED,
-        )
-        screen.blit(hint, (PAD, fy + 8))
+        draw_divider(screen, PAD, fy, screen.get_width() - PAD * 2)
+        render_hint(screen, self._font_hint,
+                    "navigate \u00b7 \u2190 filter \u00b7 ENTER toggle/act \u00b7 T edit tags \u00b7 I close",
+                    PAD, fy + 8)
