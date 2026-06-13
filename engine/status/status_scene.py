@@ -1,35 +1,92 @@
-# engine/scenes/status_scene.py
+# engine/status/status_scene.py
 #
-# Thin orchestrator: delegates logic to status_logic, rendering to status_renderer.
+# Field Status screen: party → member detail → action. Built on
+# engine.common.wizard_scene so navigation, hover SFX, and the scene-close
+# path are shared with EquipScene / SpellScene.
+#
+# Pages:
+#   MEMBER   (col 1) — party roster cards, same style as the equipment screen.
+#   CATEGORY (col 2) — selected member's detailed stats, plus a small action
+#                      menu (Spells / Position).
+#   DETAIL   (col 3) — content of the chosen action:
+#                        Spells   → learned spells; field-castable ones cast
+#                                   (heal/buff via target overlay, teleport via
+#                                   warp picker), battle-only are inspect-only.
+#                        Position → set the member's battle row (front/back).
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import pygame
-from engine.common.scene.scene import Scene
+
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
-from engine.io.save_manager import GameStateManager
-from engine.party.member_state import MemberState
+from engine.common.font_provider import get_fonts
+from engine.common.color_constants import C_TEXT_DIM, HP_LOW_THRESHOLD
+from engine.common.field_menu_theme import (
+    DIM,
+    GOLD,
+    INK,
+    MUTED,
+    TEAL,
+    VIOLET,
+    draw_divider,
+    fit_text,
+    icon_surface,
+    member_icon_path,
+    render_backdrop,
+    render_header,
+    render_icon_row,
+    render_panel,
+    render_row_frame,
+    wrap_text,
+)
+from engine.common.menu_popup import render_popup
 from engine.common.target_select_overlay_renderer import TargetSelectOverlay
 from engine.common.warp_select_overlay import WarpSelectOverlay
+from engine.common.wizard_scene import WizardPage, WizardScene
+from engine.io.save_manager import GameStateManager
+from engine.party.member_state import MemberState
+from engine.party.party_state import exp_pct
+from engine.spell.spell_logic import learned_spells, is_field_castable
+from engine.status.status_logic import apply_spell, apply_spell_all, valid_targets
 from engine.world.warp_logic import warp_destinations, WarpDestination
-from engine.status.status_logic import (
-    field_spells, valid_targets, apply_spell, apply_spell_all,
+
+
+PAGE_MEMBER   = "member"
+PAGE_CATEGORY = "category"
+PAGE_DETAIL   = "detail"
+
+CAT_SPELLS   = "spells"
+CAT_POSITION = "position"
+CATEGORIES: tuple[tuple[str, str], ...] = (
+    (CAT_SPELLS,   "Spells"),
+    (CAT_POSITION, "Position"),
 )
-from engine.status.status_renderer import StatusRenderer
 
-POPUP_W = 360
+ROWS: tuple[tuple[str, str], ...] = (("front", "Front"), ("back", "Back"))
+
+STAT_ORDER = (("str", "STR"), ("dex", "DEX"), ("con", "CON"), ("int", "INT"))
+GEAR_ORDER = (
+    ("weapon", "Wpn"), ("shield", "Shld"), ("helmet", "Helm"),
+    ("body", "Body"), ("accessory", "Acc"),
+)
+
+PAD_X = 40
+PAD_Y = 30
+GAP = 18
+ROW_H = 54
+BAR_H = 10
+
+HP_BAR_OK  = (132, 196, 111)
+HP_BAR_LOW = (203, 82, 47)
+BAR_TRACK  = (17, 17, 22)
 
 
-class StatusScene(Scene):
-    """
-    Full-screen party status overview.
-    Reads directly from GameState.party — no hardcoded data.
-    S / ESC to close.  ENTER to open spell list for selected member.
-    """
+class StatusScene(WizardScene):
+    """Field party inspector. Pages: MEMBER → CATEGORY → DETAIL."""
 
     def __init__(
         self,
@@ -42,194 +99,211 @@ class StatusScene(Scene):
         sfx_manager,
         game_state_manager: GameStateManager,
     ) -> None:
+        super().__init__(scene_manager, registry, return_scene_name, sfx_manager)
         self._holder = holder
-        self._scene_manager = scene_manager
-        self._registry = registry
-        self._return_scene_name = return_scene_name
         self._scenario_path = scenario_path
-        self._sfx_manager = sfx_manager
         self._game_state_manager = game_state_manager
-        self._selected = 0
-        self._renderer = StatusRenderer(scenario_path)
 
-        # spell sub-menu state
-        self._spell_list: list[dict] | None = None
-        self._spell_sel: int = 0
-        self._spell_caster: MemberState | None = None
+        self._spells: list[dict] = []
+        self._detail_mode: str = CAT_SPELLS
         self._target_overlay: TargetSelectOverlay | None = None
         self._warp_overlay: WarpSelectOverlay | None = None
         self._popup_text: str = ""
         self._popup_active: bool = False
+        self._fonts_ready = False
 
-    @property
-    def _fonts_ready(self) -> bool:
-        return self._renderer.fonts_ready
+        self._register_page(WizardPage(
+            name=PAGE_MEMBER,
+            count_fn=lambda: len(self._members()),
+            on_confirm=self._confirm_member,
+            on_back=lambda: None,            # close scene
+        ))
+        self._register_page(WizardPage(
+            name=PAGE_CATEGORY,
+            count_fn=lambda: len(CATEGORIES),
+            on_confirm=self._confirm_category,
+            on_back=lambda: PAGE_MEMBER,
+        ))
+        self._register_page(WizardPage(
+            name=PAGE_DETAIL,
+            count_fn=self._detail_count,
+            on_confirm=self._confirm_detail,
+            on_back=lambda: PAGE_CATEGORY,
+        ))
 
-    def set_return_scene(self, name: str) -> None:
-        self._return_scene_name = name
+    # ── Fonts ─────────────────────────────────────────────────
 
-    # ── Events ────────────────────────────────────────────────
+    def _init_fonts(self) -> None:
+        f = get_fonts()
+        self._font_title = f.get(24, bold=True)
+        self._font_head  = f.get(18, bold=True)
+        self._font_row   = f.get(18)
+        self._font_stat  = f.get(16)
+        self._font_meta  = f.get(14)
+        self._font_hint  = f.get(14)
+        self._font_small = f.get(13)
+        self._fonts_ready = True
 
-    def handle_events(self, events: list[pygame.event.Event]) -> None:
+    # ── Helpers ───────────────────────────────────────────────
+
+    def _members(self) -> list[MemberState]:
+        return list(self._holder.get().party.members)
+
+    def _current_member(self) -> MemberState | None:
+        members = self._members()
+        if not members:
+            return None
+        sel = self._page(PAGE_MEMBER).selection
+        return members[min(sel, len(members) - 1)]
+
+    def _classes_dir(self) -> Path:
+        return Path(self._scenario_path) / "data" / "classes"
+
+    def _flags_set(self) -> set[str]:
+        return set(self._holder.get().flags.to_list())
+
+    def _load_spells(self) -> list[dict]:
+        member = self._current_member()
+        if member is None:
+            return []
+        return learned_spells(member, self._classes_dir(), self._flags_set())
+
+    def _selected_category(self) -> str:
+        return CATEGORIES[self._page(PAGE_CATEGORY).selection][0]
+
+    def _display_name(self, item_id: str) -> str:
+        catalog = self._holder.get().repository.catalog
+        if catalog is not None:
+            defn = catalog.get(item_id)
+            if defn is not None:
+                return defn.name
+        return item_id.replace("_", " ").title()
+
+    def _detail_count(self) -> int:
+        if self._detail_mode == CAT_SPELLS:
+            return len(self._spells)
+        return len(ROWS)
+
+    # ── Modal-overlay routing ────────────────────────────────
+
+    def _is_input_blocked(self) -> bool:
+        return (
+            self._target_overlay is not None
+            or self._warp_overlay is not None
+            or self._popup_active
+        )
+
+    def _handle_blocked_input(self, events: list[pygame.event.Event]) -> None:
         if self._warp_overlay:
             self._warp_overlay.handle_events(events)
             return
-
         if self._target_overlay:
             self._target_overlay.handle_events(events)
             return
-
-        if self._popup_active:
-            for event in events:
-                if event.type == pygame.KEYDOWN and event.key in (
-                    pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER,
-                ):
-                    self._popup_active = False
-            return
-
-        members = self._holder.get().party.members
         for event in events:
-            if event.type != pygame.KEYDOWN:
-                continue
+            if event.type == pygame.KEYDOWN and event.key in (
+                pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER,
+            ):
+                self._popup_active = False
 
-            if self._spell_list is not None:
-                self._handle_spell_key(event.key)
-                return
+    # ── Page confirm callbacks ───────────────────────────────
 
-            if event.key in (pygame.K_s, pygame.K_ESCAPE):
-                self._sfx_manager.play("cancel")
-                self._scene_manager.switch(self._registry.get(self._return_scene_name))
-            elif event.key == pygame.K_UP:
-                new = max(0, self._selected - 1)
-                if new != self._selected:
-                    self._sfx_manager.play("hover")
-                self._selected = new
-            elif event.key == pygame.K_DOWN:
-                new = min(len(members) - 1, self._selected + 1)
-                if new != self._selected:
-                    self._sfx_manager.play("hover")
-                self._selected = new
-            elif event.key == pygame.K_RETURN:
-                self._sfx_manager.play("confirm")
-                self._open_spell_menu()
-            elif event.key == pygame.K_r:
-                self._toggle_row(members)
+    def _confirm_member(self) -> str | None:
+        if self._current_member() is None:
+            return None
+        self._play("confirm")
+        return PAGE_CATEGORY
 
-    def _toggle_row(self, members: list[MemberState]) -> None:
-        """Toggle the selected member's row (front <-> back).
-
-        Only Rogue is swappable; other classes are fixed by design (see
-        docs/design/party.md). Plays cancel SFX on a non-rogue press so
-        the user gets feedback that the key was received.
-        """
-        if not members:
-            return
-        member = members[self._selected]
-        if member.class_name.lower() != "rogue":
-            self._sfx_manager.play("cancel")
-            self._popup_text = "Only Rogue can change row."
-            self._popup_active = True
-            return
-        member.row = "front" if member.row == "back" else "back"
-        self._sfx_manager.play("confirm")
-
-    def _open_spell_menu(self) -> None:
-        members = self._holder.get().party.members
-        if not members:
-            return
-        member = members[self._selected]
-        flags = set(self._holder.get().flags.to_list())
-        spells = field_spells(member, self._scenario_path, flags)
-        if not spells:
-            self._popup_text = f"{member.name} has no field spells."
-            self._popup_active = True
-            return
-        self._spell_caster = member
-        self._spell_list = spells
-        self._spell_sel = 0
-
-    def _handle_spell_key(self, key: int) -> None:
-        if key == pygame.K_ESCAPE:
-            self._sfx_manager.play("cancel")
-            self._spell_list = None
-            self._spell_caster = None
-            return
-
-        spells = self._spell_list
-        if key == pygame.K_UP:
-            new = max(0, self._spell_sel - 1)
-            if new != self._spell_sel:
-                self._sfx_manager.play("hover")
-            self._spell_sel = new
-        elif key == pygame.K_DOWN:
-            new = min(len(spells) - 1, self._spell_sel + 1)
-            if new != self._spell_sel:
-                self._sfx_manager.play("hover")
-            self._spell_sel = new
-        elif key == pygame.K_RETURN:
-            spell = spells[self._spell_sel]
-            cost = spell["mp_cost"]
-            if cost > self._spell_caster.mp:
-                return
-            if spell.get("warp"):
-                self._open_warp(spell, self._spell_caster)
-                return
-            target_type = spell.get("target", "single_ally")
-            if target_type in ("all_allies", "party"):
-                members = self._holder.get().party.members
-                msg = apply_spell_all(spell, self._spell_caster, members)
-                self._spell_list = None
-                self._popup_text = msg
+    def _confirm_category(self) -> str | None:
+        cat = self._selected_category()
+        if cat == CAT_SPELLS:
+            self._spells = self._load_spells()
+            if not self._spells:
+                member = self._current_member()
+                self._popup_text = f"{member.name} knows no spells."
                 self._popup_active = True
-            else:
-                members = self._holder.get().party.members
-                targets = valid_targets(spell, members)
-                if not targets:
-                    self._popup_text = "No valid targets."
-                    self._popup_active = True
-                    self._spell_list = None
-                    return
-                pending_spell = spell
-                caster = self._spell_caster
-                self._target_overlay = TargetSelectOverlay(
-                    targets=targets,
-                    item_label=spell["name"],
-                    on_confirm=lambda t, s=pending_spell, c=caster: self._on_target_confirm(s, c, t),
-                    on_cancel=self._on_target_cancel,
-                    sfx_manager=self._sfx_manager,
-                )
+                self._play("cancel")
+                return None
+            self._detail_mode = CAT_SPELLS
+        else:
+            self._detail_mode = CAT_POSITION
+        self._play("confirm")
+        return PAGE_DETAIL
 
-    def _on_target_confirm(self, spell: dict, caster: MemberState, target: MemberState) -> None:
-        msg = apply_spell(spell, caster, target)
-        self._target_overlay = None
-        self._spell_list = None
-        self._spell_caster = None
-        self._popup_text = msg
-        self._popup_active = True
+    def _confirm_detail(self) -> str | None:
+        if self._detail_mode == CAT_POSITION:
+            return self._confirm_position()
+        return self._confirm_spell()
 
-    def _on_target_cancel(self) -> None:
-        self._target_overlay = None
+    def _confirm_position(self) -> str | None:
+        member = self._current_member()
+        if member is None:
+            return None
+        new_row = ROWS[self._page(PAGE_DETAIL).selection][0]
+        if member.row == new_row:
+            self._play("cancel")
+            return None
+        member.row = new_row
+        self._play("confirm")
+        return None
 
-    # ── Teleport / warp ──────────────────────────────────────
+    def _confirm_spell(self) -> str | None:
+        member = self._current_member()
+        if member is None or not self._spells:
+            return None
+        spell = self._spells[self._page(PAGE_DETAIL).selection]
+        if not is_field_castable(spell):
+            self._play("cancel")
+            return None
+        if member.mp < spell["mp_cost"]:
+            self._popup_text = f"{member.name} has not enough MP."
+            self._popup_active = True
+            self._play("cancel")
+            return None
+        if spell.get("warp"):
+            return self._open_warp(spell, member)
+        target_type = spell.get("target")
+        if target_type in ("all_allies", "party"):
+            self._play("confirm")
+            msg = apply_spell_all(spell, member, self._holder.get().party.members)
+            self._popup_text = msg
+            self._popup_active = True
+            return None
+        targets = valid_targets(spell, self._holder.get().party.members)
+        if not targets:
+            self._popup_text = "No valid targets."
+            self._popup_active = True
+            self._play("cancel")
+            return None
+        self._play("confirm")
+        pending = spell
+        self._target_overlay = TargetSelectOverlay(
+            targets=targets,
+            item_label=spell["name"],
+            on_confirm=lambda t, s=pending, c=member: self._on_target_confirm(s, c, t),
+            on_cancel=self._on_target_cancel,
+            sfx_manager=self._sfx_manager,
+        )
+        return None
 
-    def _open_warp(self, spell: dict, caster: MemberState) -> None:
-        """Open the teleport destination picker. MP is spent only on confirm,
-        so cancelling costs nothing."""
+    # ── Teleport / target callbacks ──────────────────────────
+
+    def _open_warp(self, spell: dict, caster: MemberState) -> str | None:
         state = self._holder.get()
         destinations = warp_destinations(state.map, Path(self._scenario_path))
         if not destinations:
             self._popup_text = "Nowhere to teleport to yet."
             self._popup_active = True
-            self._spell_list = None
-            self._sfx_manager.play("cancel")
-            return
-        self._sfx_manager.play("confirm")
+            self._play("cancel")
+            return None
+        self._play("confirm")
         self._warp_overlay = WarpSelectOverlay(
             destinations=destinations,
             on_confirm=lambda dest, s=spell, c=caster: self._on_warp_confirm(s, c, dest),
             on_cancel=self._on_warp_cancel,
             sfx_manager=self._sfx_manager,
         )
+        return None
 
     def _on_warp_confirm(self, spell: dict, caster: MemberState, dest: WarpDestination) -> None:
         caster.mp = max(0, caster.mp - spell["mp_cost"])
@@ -237,35 +311,296 @@ class StatusScene(Scene):
         state.map.move_to(dest.map_id, dest.position)
         self._game_state_manager.save(state, slot_index=0)
         self._warp_overlay = None
-        self._spell_list = None
-        self._spell_caster = None
         self._scene_manager.switch(self._registry.get(self._return_scene_name))
 
     def _on_warp_cancel(self) -> None:
         self._warp_overlay = None
 
-    # ── Update ────────────────────────────────────────────────
+    def _on_target_confirm(self, spell: dict, caster: MemberState, target: MemberState) -> None:
+        msg = apply_spell(spell, caster, target)
+        self._target_overlay = None
+        self._popup_text = msg
+        self._popup_active = True
 
-    def update(self, delta: float) -> None:
-        pass
+    def _on_target_cancel(self) -> None:
+        self._target_overlay = None
 
-    # ── Render (delegates to StatusRenderer) ──────────────────
+    # ── Render ────────────────────────────────────────────────
 
     def render(self, screen: pygame.Surface) -> None:
-        state   = self._holder.get()
-        members = state.party.members
+        if not self._fonts_ready:
+            self._init_fonts()
 
-        self._renderer.render(
-            screen, members,
-            gp=state.repository.gp,
-            selected=self._selected,
-            spell_list=self._spell_list,
-            spell_sel=self._spell_sel,
-            spell_caster=self._spell_caster,
-            target_overlay=self._target_overlay,
-            popup_text=self._popup_text,
-            popup_active=self._popup_active,
-        )
+        render_backdrop(screen)
+        render_header(screen, self._font_title, self._font_hint,
+                      "STATUS", "party roster and growth", PAD_X, PAD_Y)
 
+        member_rect, detail_rect, action_rect = self._layout(screen)
+        render_panel(screen, member_rect, active=self.page_id == PAGE_MEMBER,
+                     title="Party", title_font=self._font_head)
+        self._render_members(screen, member_rect)
+
+        member = self._current_member()
+        if self.page_id in (PAGE_CATEGORY, PAGE_DETAIL) and member is not None:
+            render_panel(screen, detail_rect, active=self.page_id == PAGE_CATEGORY,
+                         title=member.name, title_font=self._font_head)
+            self._render_detail_panel(screen, detail_rect, member)
+        if self.page_id == PAGE_DETAIL and member is not None:
+            title = "Spells" if self._detail_mode == CAT_SPELLS else "Position"
+            render_panel(screen, action_rect, active=True,
+                         title=title, title_font=self._font_head)
+            if self._detail_mode == CAT_SPELLS:
+                self._render_spells(screen, action_rect, member)
+            else:
+                self._render_position(screen, action_rect, member)
+
+        self._render_hint(screen)
+
+        if self._target_overlay:
+            self._target_overlay.render(screen)
         if self._warp_overlay:
             self._warp_overlay.render(screen)
+        if self._popup_active:
+            render_popup(screen, self._font_row, self._font_meta, self._popup_text)
+
+    def _layout(self, screen: pygame.Surface) -> tuple[pygame.Rect, pygame.Rect, pygame.Rect]:
+        sw, sh = screen.get_size()
+        top = PAD_Y + 92
+        panel_h = max(360, sh - top - 62)
+        available = sw - PAD_X * 2 - GAP * 2
+        member_w = min(300, max(260, int(sw * 0.24)))
+        remaining = available - member_w
+        detail_w = remaining // 2
+        action_w = remaining - detail_w
+        member_rect = pygame.Rect(PAD_X, top, member_w, panel_h)
+        detail_rect = pygame.Rect(member_rect.right + GAP, top, detail_w, panel_h)
+        action_rect = pygame.Rect(detail_rect.right + GAP, top, action_w, panel_h)
+        return member_rect, detail_rect, action_rect
+
+    # ── Col 1: party cards (matches the equipment party panel) ─
+
+    def _render_members(self, screen: pygame.Surface, panel: pygame.Rect) -> None:
+        members = self._members()
+        x = panel.x + 16
+        top = panel.y + 52
+        w = panel.w - 32
+        if not members:
+            msg = self._font_row.render("No members.", True, C_TEXT_DIM)
+            screen.blit(msg, (x, top))
+            return
+        sel = self._page(PAGE_MEMBER).selection
+        active_page = self.page_id == PAGE_MEMBER
+
+        n = len(members)
+        gap = 14
+        avail = (panel.bottom - 16) - top
+        row_h = min(118, (avail - gap * (n - 1)) // n)
+        portrait = min(row_h - 16, 92)
+
+        for i, m in enumerate(members):
+            selected = (i == sel)
+            row = pygame.Rect(x, top + i * (row_h + gap), w, row_h)
+            self._render_member_card(
+                screen, row, m, portrait,
+                focused=selected and active_page,
+                dimmed=selected and not active_page,
+            )
+
+    def _render_member_card(
+        self, screen: pygame.Surface, rect: pygame.Rect, m: MemberState,
+        portrait: int, *, focused: bool, dimmed: bool,
+    ) -> None:
+        render_row_frame(screen, rect, focused=focused, dimmed_sel=dimmed)
+        icon = icon_surface(f"member_{m.id}", portrait, image_path=member_icon_path(m.id))
+        screen.blit(icon, (rect.x + 12, rect.y + (rect.h - portrait) // 2))
+
+        tx = rect.x + 24 + portrait
+        max_w = rect.right - tx - 14
+        name = fit_text(self._font_head, f"{m.name}  Lv{m.level}", INK, max_w)
+        cls = fit_text(self._font_row, m.class_name.title(), GOLD, max_w)
+        hp = self._font_meta.render(f"HP {m.hp}/{m.hp_max}", True, MUTED)
+        mp = self._font_meta.render(f"MP {m.mp}/{m.mp_max}", True, MUTED)
+
+        line_gap = 6
+        block_h = (name.get_height() + line_gap + cls.get_height()
+                   + line_gap + max(hp.get_height(), mp.get_height()))
+        ty = rect.y + (rect.h - block_h) // 2
+        screen.blit(name, (tx, ty))
+        ty += name.get_height() + line_gap
+        screen.blit(cls, (tx, ty))
+        ty += cls.get_height() + line_gap
+        screen.blit(hp, (tx, ty))
+        screen.blit(mp, (tx + max(hp.get_width() + 18, 96), ty))
+
+    # ── Col 2: member detail + action menu ────────────────────
+
+    def _render_detail_panel(self, screen: pygame.Surface, panel: pygame.Rect, m: MemberState) -> None:
+        x = panel.x + 18
+        w = panel.w - 36
+        y = panel.y + 52
+
+        # Level + EXP
+        screen.blit(self._font_stat.render(f"Lv {m.level}", True, INK), (x, y))
+        exp_txt = self._font_meta.render(f"EXP {m.exp}/{m.exp_next}", True, MUTED)
+        screen.blit(exp_txt, (panel.right - 18 - exp_txt.get_width(), y + 2))
+        y += self._font_stat.get_height() + 6
+        self._bar(screen, x, y, w, exp_pct(m), VIOLET)
+        y += BAR_H + 14
+
+        # HP / MP bars
+        hp_pct = m.hp / m.hp_max if m.hp_max > 0 else 0
+        hp_col = HP_BAR_LOW if hp_pct < HP_LOW_THRESHOLD else HP_BAR_OK
+        y = self._stat_bar_row(screen, x, y, w, "HP", f"{m.hp}/{m.hp_max}", hp_pct, hp_col)
+        if m.mp_max > 0:
+            y = self._stat_bar_row(screen, x, y, w, "MP", f"{m.mp}/{m.mp_max}", m.mp / m.mp_max, TEAL)
+        else:
+            screen.blit(self._font_meta.render("MP  -", True, DIM), (x, y))
+            y += self._font_meta.get_height() + BAR_H + 6
+        y += 6
+
+        # Stats grid (2 columns)
+        col2_x = x + w // 2
+        line_h = self._font_stat.get_height() + 8
+        stat_vals = {"str": m.str_, "dex": m.dex, "con": m.con, "int": m.int_}
+        for i, (key, label) in enumerate(STAT_ORDER):
+            cx = x if i % 2 == 0 else col2_x
+            cy = y + (i // 2) * line_h
+            screen.blit(self._font_meta.render(label, True, MUTED), (cx, cy))
+            screen.blit(self._font_stat.render(str(stat_vals[key]), True, INK), (cx + 42, cy - 1))
+        y += 2 * line_h + 6
+
+        # Gear
+        for slot, label in GEAR_ORDER:
+            item_id = m.equipped.get(slot)
+            val = self._display_name(item_id) if item_id else "-"
+            screen.blit(self._font_meta.render(label, True, MUTED), (x, y))
+            screen.blit(fit_text(self._font_meta, val,
+                                 INK if item_id else DIM, w - 48), (x + 48, y))
+            y += self._font_meta.get_height() + 4
+
+        # Action menu, anchored to the bottom of the panel
+        self._render_category_menu(screen, panel, m)
+
+    def _render_category_menu(self, screen: pygame.Surface, panel: pygame.Rect, m: MemberState) -> None:
+        x = panel.x + 16
+        w = panel.w - 32
+        menu_h = len(CATEGORIES) * (ROW_H + 8)
+        y = panel.bottom - 18 - menu_h
+        draw_divider(screen, x, y - 12, w)
+
+        sel = self._page(PAGE_CATEGORY).selection
+        on_category = self.page_id == PAGE_CATEGORY
+        for i, (key, label) in enumerate(CATEGORIES):
+            selected = (i == sel)
+            right = m.row.title() if key == CAT_POSITION else ""
+            rect = pygame.Rect(x, y + i * (ROW_H + 8), w, ROW_H)
+            render_icon_row(
+                screen, self._font_row, rect, label,
+                icon_key=f"cat_{key}",
+                focused=selected and on_category,
+                dimmed_sel=selected and self.page_id == PAGE_DETAIL,
+                color=INK,
+                right_text=right,
+                right_font=self._font_meta,
+            )
+
+    # ── Col 3: spells or position ─────────────────────────────
+
+    def _render_spells(self, screen: pygame.Surface, panel: pygame.Rect, m: MemberState) -> None:
+        x = panel.x + 16
+        y = panel.y + 52
+        w = panel.w - 32
+        if not self._spells:
+            screen.blit(self._font_row.render("No spells learned.", True, DIM), (x, y))
+            return
+        sel = self._page(PAGE_DETAIL).selection
+        for i, spell in enumerate(self._spells):
+            selected = (i == sel)
+            castable = is_field_castable(spell)
+            can_afford = m.mp >= spell["mp_cost"]
+            if castable and can_afford:
+                color = INK
+            elif castable:
+                color = MUTED
+            else:
+                color = DIM
+            badge = "field cast" if castable else "battle only"
+            rect = pygame.Rect(x, y + i * (ROW_H + 8), w, ROW_H)
+            render_icon_row(
+                screen, self._font_row, rect, spell["name"],
+                icon_key=_spell_icon_key(spell),
+                focused=selected,
+                dimmed_sel=False,
+                color=color,
+                right_text=f"MP {spell['mp_cost']}",
+                right_font=self._font_meta,
+                subtext=f"{badge} / {spell.get('target', 'self')}",
+                sub_font=self._font_small,
+            )
+
+        spell = self._spells[sel]
+        desc = spell.get("description", "")
+        if desc:
+            dy = panel.bottom - 70
+            draw_divider(screen, x, dy - 10, w)
+            for line in wrap_text(self._font_meta, desc, w, limit=3):
+                screen.blit(self._font_meta.render(line, True, MUTED), (x, dy))
+                dy += self._font_meta.get_height() + 3
+
+    def _render_position(self, screen: pygame.Surface, panel: pygame.Rect, m: MemberState) -> None:
+        x = panel.x + 16
+        y = panel.y + 52
+        w = panel.w - 32
+        sel = self._page(PAGE_DETAIL).selection
+        for i, (key, label) in enumerate(ROWS):
+            selected = (i == sel)
+            current = (m.row == key)
+            rect = pygame.Rect(x, y + i * (ROW_H + 8), w, ROW_H)
+            render_icon_row(
+                screen, self._font_row, rect, label,
+                icon_key=f"row_{key}",
+                focused=selected,
+                dimmed_sel=False,
+                color=INK,
+                right_text="current" if current else "",
+                right_font=self._font_meta,
+            )
+
+    # ── Shared bar helpers ────────────────────────────────────
+
+    def _bar(self, screen, x, y, w, pct, color) -> None:
+        pygame.draw.rect(screen, BAR_TRACK, (x, y, w, BAR_H), border_radius=3)
+        pygame.draw.rect(screen, color, (x, y, int(w * max(0.0, min(1.0, pct))), BAR_H), border_radius=3)
+
+    def _stat_bar_row(self, screen, x, y, w, label, value, pct, color) -> int:
+        lbl = self._font_meta.render(label, True, color)
+        val = self._font_meta.render(value, True, MUTED)
+        screen.blit(lbl, (x, y))
+        screen.blit(val, (x + w - val.get_width(), y))
+        bar_y = y + lbl.get_height() + 2
+        self._bar(screen, x, bar_y, w, pct, color)
+        return bar_y + BAR_H + 8
+
+    # ── Hint ──────────────────────────────────────────────────
+
+    def _render_hint(self, screen: pygame.Surface) -> None:
+        sw, sh = screen.get_size()
+        if self.page_id == PAGE_MEMBER:
+            text = "UP/DOWN select member    ENTER inspect    ESC close"
+        elif self.page_id == PAGE_CATEGORY:
+            text = "UP/DOWN select    ENTER open    ESC back"
+        elif self._detail_mode == CAT_SPELLS:
+            text = "UP/DOWN select spell    ENTER cast    ESC back"
+        else:
+            text = "UP/DOWN select row    ENTER set    ESC back"
+        hint = self._font_hint.render(text, True, C_TEXT_DIM)
+        screen.blit(hint, ((sw - hint.get_width()) // 2, sh - 30))
+
+
+def _spell_icon_key(spell: dict) -> str:
+    if spell.get("warp"):
+        return "spell_warp"
+    element = spell.get("element")
+    if element:
+        return f"spell_{element}"
+    return f"spell_{spell.get('type', 'utility')}"
