@@ -39,3 +39,41 @@ npcs:
       mode: wander
       speed: 1.0
       range: 3
+
+  - id: ashenveil_widow
+    name: "Widow"
+    dialogue: ashenveil_widow
+    position: [12, 7]
+    sprite: assets/sprites/npc/village_female_person_practical_pants.tsx
+    default_facing: down
+    animation:
+      mode: step
+      speed: 0.5
+
+  - id: ashenveil_keeper
+    name: "Sanctum Keeper"
+    dialogue: ashenveil_keeper
+    position: [26, 7]
+    sprite: assets/sprites/npc/wizard_wand_caster.tsx
+    default_facing: left
+
+  - id: ashenveil_ashgatherer
+    name: "Ash Gatherer"
+    dialogue: ashenveil_ashgatherer
+    position: [33, 15]
+    sprite: assets/sprites/npc/village_male_person_plain_dark_hair.tsx
+    default_facing: down
+    animation:
+      mode: wander
+      speed: 1.5
+      range: 4
+
+  - id: ashenveil_acolyte
+    name: "Acolyte"
+    dialogue: ashenveil_acolyte
+    position: [5, 16]
+    sprite: assets/sprites/npc/female_wiz_01.tsx
+    default_facing: right
+    animation:
+      mode: step
+      speed: 0.7

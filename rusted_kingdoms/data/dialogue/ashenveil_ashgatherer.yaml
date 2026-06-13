@@ -1,0 +1,16 @@
+# data/dialogue/ashenveil_ashgatherer.yaml
+#
+# Flavor NPC: a worker who sweeps the falling ash from Ashenveil's streets.
+id: ashenveil_ashgatherer
+type: npc
+
+entries:
+  - condition:
+      requires: [boss_zone10_defeated]
+    lines:
+      - "The ash stopped falling three days ago. First clear sky I've swept under in years."
+      - "Strange work, having nothing to gather. I think I'll learn to like it."
+
+  - lines:
+      - "Sweep at dawn, sweep at dusk, and still the ash comes. It falls from the volcano, they say."
+      - "I don't mind. Ash keeps no secrets. People do."
