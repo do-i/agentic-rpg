@@ -24,11 +24,14 @@ from engine.common.field_menu_theme import (
     INK,
     MUTED,
     draw_divider,
+    fit_text,
+    icon_surface,
     member_icon_path,
     render_backdrop,
     render_header,
     render_icon_row,
     render_panel,
+    render_row_frame,
     wrap_text,
 )
 from engine.common.wizard_scene import WizardPage, WizardScene
@@ -219,31 +222,69 @@ class EquipScene(WizardScene):
     def _render_members(self, screen: pygame.Surface, panel: pygame.Rect) -> None:
         members = self._members()
         x = panel.x + 16
-        y = panel.y + 52
+        top = panel.y + 52
+        w = panel.w - 32
         if not members:
             msg = self._font_row.render("No members.", True, C_TEXT_DIM)
-            screen.blit(msg, (x, y))
+            screen.blit(msg, (x, top))
             return
         sel = self._page(PAGE_MEMBER).selection
         active_page = self.page_id == PAGE_MEMBER
+
+        # Distribute member cards down the full panel height so portraits can
+        # grow into the vertical space the shared 36px icon row leaves empty.
+        n = len(members)
+        gap = 14
+        avail = (panel.bottom - 16) - top
+        row_h = min(118, (avail - gap * (n - 1)) // n)
+        portrait = min(row_h - 16, 92)
+
         for i, m in enumerate(members):
             selected = (i == sel)
-            row = pygame.Rect(x, y + i * (ROW_H + 8), panel.w - 32, ROW_H)
-            render_icon_row(
-                screen,
-                self._font_row,
-                row,
-                f"{m.name}  Lv{m.level}",
-                icon_key=f"member_{m.id}",
-                image_path=member_icon_path(m.id),
+            row = pygame.Rect(x, top + i * (row_h + gap), w, row_h)
+            self._render_member_card(
+                screen, row, m, portrait,
                 focused=selected and active_page,
-                dimmed_sel=selected and not active_page,
-                color=INK,
-                right_text=m.class_name.title(),
-                right_font=self._font_meta,
-                subtext=f"HP {m.hp}/{m.hp_max}  MP {m.mp}/{m.mp_max}",
-                sub_font=self._font_meta,
+                dimmed=selected and not active_page,
             )
+
+    def _render_member_card(
+        self,
+        screen: pygame.Surface,
+        rect: pygame.Rect,
+        m: MemberState,
+        portrait: int,
+        *,
+        focused: bool,
+        dimmed: bool,
+    ) -> None:
+        render_row_frame(screen, rect, focused=focused, dimmed_sel=dimmed)
+
+        icon = icon_surface(
+            f"member_{m.id}", portrait, image_path=member_icon_path(m.id),
+        )
+        screen.blit(icon, (rect.x + 12, rect.y + (rect.h - portrait) // 2))
+
+        tx = rect.x + 24 + portrait
+        max_w = rect.right - tx - 14
+        name = fit_text(self._font_head, f"{m.name}  Lv{m.level}", INK, max_w)
+        cls = fit_text(self._font_row, m.class_name.title(), GOLD, max_w)
+        hp = self._font_meta.render(f"HP {m.hp}/{m.hp_max}", True, MUTED)
+        mp = self._font_meta.render(f"MP {m.mp}/{m.mp_max}", True, MUTED)
+
+        line_gap = 6
+        block_h = (
+            name.get_height() + line_gap
+            + cls.get_height() + line_gap
+            + max(hp.get_height(), mp.get_height())
+        )
+        ty = rect.y + (rect.h - block_h) // 2
+        screen.blit(name, (tx, ty))
+        ty += name.get_height() + line_gap
+        screen.blit(cls, (tx, ty))
+        ty += cls.get_height() + line_gap
+        screen.blit(hp, (tx, ty))
+        screen.blit(mp, (tx + max(hp.get_width() + 18, 96), ty))
 
     def _render_slots(self, screen: pygame.Surface, panel: pygame.Rect) -> None:
         member = self._current_member()
