@@ -1,0 +1,16 @@
+# data/dialogue/frostholm_beggar.yaml
+#
+# Flavor NPC: a cold-bitten beggar in the lower ward of Frostholm.
+id: frostholm_beggar
+type: npc
+
+entries:
+  - condition:
+      requires: [sq_watch_done]
+    lines:
+      - "The stores opened today. First hot broth I've had since the snows came."
+      - "Whoever shook the quartermaster loose — that was you, wasn't it? Bless your boots."
+
+  - lines:
+      - "Spare a thought for the lower ward, traveler. The palace eats; we wait on its leavings."
+      - "Winter here doesn't kill quick. It just keeps subtracting."

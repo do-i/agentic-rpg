@@ -1,0 +1,16 @@
+# data/dialogue/frostholm_courtier.yaml
+#
+# Flavor NPC: a palace courtier in Frostholm.
+id: frostholm_courtier
+type: npc
+
+entries:
+  - condition:
+      requires: [story_act4_started]
+    lines:
+      - "The king sent his own guard south with you. The court hasn't stopped whispering since."
+      - "A throne that gambles its protectors is a throne that's afraid. And it should be."
+
+  - lines:
+      - "Mind your manners near the palace. The king grieves loudly and forgives slowly."
+      - "His daughter was lost to the rot, you know. Don't mention the south wing."
