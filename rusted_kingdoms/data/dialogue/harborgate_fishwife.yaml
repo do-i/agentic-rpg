@@ -1,0 +1,10 @@
+# data/dialogue/harborgate_fishwife.yaml
+#
+# Flavor NPC: a fishwife working the Harborgate market.
+id: harborgate_fishwife
+type: npc
+
+entries:
+  - lines:
+      - "Fresh catch! Well — fresh as the quarantine lets it be. Nothing leaves this port, fish included."
+      - "The priestess says the sickness came off a ship. So now every ship's a leper. Bad for trade."

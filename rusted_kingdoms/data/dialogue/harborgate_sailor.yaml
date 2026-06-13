@@ -1,0 +1,16 @@
+# data/dialogue/harborgate_sailor.yaml
+#
+# Flavor NPC: a sailor stranded at Harborgate by the quarantine.
+id: harborgate_sailor
+type: npc
+
+entries:
+  - condition:
+      requires: [transport_sail_unlocked]
+    lines:
+      - "So the port master cleared YOU to sail? Lucky. The rest of us rot at anchor."
+      - "Mind the eastern swells. The sea's been wrong since the rot reached the coast."
+
+  - lines:
+      - "Three weeks stuck in port. Quarantine flag won't come down till the sickness does."
+      - "I've counted every plank on this pier. Twice. Ask me anything about planks."
