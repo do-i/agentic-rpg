@@ -1,0 +1,28 @@
+# data/dialogue/ruinwatch_mason.yaml
+#
+# Stonemason for the ruinwatch_archivist errand. Gruff, but relents.
+id: ruinwatch_mason
+type: npc
+
+entries:
+  # After relaying
+  - condition:
+      requires: [sq_glyph_relayed]
+    lines:
+      - "The old reader can have her rubbing. Just don't let her smudge it."
+
+  # Quest active — relents and agrees
+  - condition:
+      requires: [sq_glyph_started]
+      excludes: [sq_glyph_relayed]
+    lines:
+      - "The archivist sent you? Hmph. She thinks I scratch these for fun."
+      - "...Fine. Tell her she can have the rubbing. The glyph's been itching at me too."
+    on_complete:
+      set_flag: sq_glyph_relayed
+
+  # Before the errand
+  - condition:
+      excludes: [sq_glyph_started]
+    lines:
+      - "Every stone in this town was cut from the ruins. We build with the dead's leavings."

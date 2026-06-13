@@ -1,0 +1,10 @@
+# data/dialogue/ruinwatch_digger.yaml
+#
+# Flavor NPC: a relic-hunter who sells ruin scraps in Ruinwatch.
+id: ruinwatch_digger
+type: npc
+
+entries:
+  - lines:
+      - "Want a genuine relic? Dug it myself. Cursed, probably. Most of them are."
+      - "Careful in the ruins — half my dig crew came back wrong. The other half didn't come back."
