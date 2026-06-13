@@ -9,21 +9,21 @@
  <tileset firstgid="936" source="../tilesets/ground/terrain-v7.tsx"/>
  <objectgroup id="8" name="portals">
   <object id="11" name="to_x2" x="130" y="20"/>
-  <object id="12" name="mill" x="656.75" y="179.875">
+  <object id="12" name="mill" x="624" y="192" width="64" height="24">
    <properties>
     <property name="target_map" value="town_02_millhaven_mill"/>
     <property name="target_position_x" type="int" value="10"/>
     <property name="target_position_y" type="int" value="11"/>
    </properties>
   </object>
-  <object id="13" name="item_shop" x="1167.75" y="178.75">
+  <object id="13" name="item_shop" x="1136" y="192" width="64" height="24">
    <properties>
     <property name="target_map" value="town_02_millhaven_shop"/>
     <property name="target_position_x" type="int" value="7"/>
     <property name="target_position_y" type="int" value="10"/>
    </properties>
   </object>
-  <object id="14" name="inn" x="303" y="789.75">
+  <object id="14" name="inn" x="272" y="800" width="64" height="24">
    <properties>
     <property name="target_map" value="town_02_millhaven_inn"/>
     <property name="target_position_x" type="int" value="5"/>
