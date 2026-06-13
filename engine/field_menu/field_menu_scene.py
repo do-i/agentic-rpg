@@ -17,7 +17,21 @@ from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.font_provider import get_fonts
-from engine.common.color_constants import C_BG, C_TEXT, C_TEXT_MUT, C_TEXT_DIM
+from engine.common.color_constants import C_TEXT_DIM
+from engine.common.field_menu_theme import (
+    DIM,
+    GOLD,
+    INK,
+    MUTED,
+    TEAL,
+    draw_divider,
+    draw_stat_bar,
+    member_icon_path,
+    render_backdrop,
+    render_header,
+    render_icon_row,
+    render_panel,
+)
 from engine.common.menu_sfx_mixin import MenuSfxMixin
 from engine.io.save_manager import GameStateManager
 from engine.title.save_modal_scene import SaveModalScene
@@ -33,15 +47,13 @@ class MenuEntry:
     label: str
     kind: str
     target: str | None   # registry key for scene_switch, or overlay id for overlay
+    icon_key: str = "menu"
+    description: str = ""
 
 
-ROW_H            = 44
-ROW_PAD_X        = 16
-TITLE_OFFSET_Y   = 50
-HINT_MARGIN_Y    = 40
-C_ROW_SEL_BG     = (42, 42, 74)
-C_ROW_SEL_BDR    = (74, 74, 122)
-C_ROW_SEL_TEXT   = (255, 220, 100)
+ROW_H = 58
+HINT_MARGIN_Y = 32
+MENU_SUBTITLE = "party command deck"
 
 
 class FieldMenuScene(MenuSfxMixin, Scene):
@@ -68,11 +80,11 @@ class FieldMenuScene(MenuSfxMixin, Scene):
         self._sfx_manager = sfx_manager
 
         self._entries: list[MenuEntry] = [
-            MenuEntry("Items",     KIND_SCENE_SWITCH, "items"),
-            MenuEntry("Status",    KIND_SCENE_SWITCH, "status"),
-            MenuEntry("Equipment", KIND_SCENE_SWITCH, "equip"),
-            MenuEntry("Spells",    KIND_SCENE_SWITCH, "spells"),
-            MenuEntry("Save",      KIND_OVERLAY,      "save"),
+            MenuEntry("Items",     KIND_SCENE_SWITCH, "items",  "satchel", "use, sort, and inspect supplies"),
+            MenuEntry("Status",    KIND_SCENE_SWITCH, "status", "pulse",   "review health, rows, and growth"),
+            MenuEntry("Equipment", KIND_SCENE_SWITCH, "equip",  "blade",   "tune gear and compare stats"),
+            MenuEntry("Spells",    KIND_SCENE_SWITCH, "spells", "sigil",   "cast field magic and utilities"),
+            MenuEntry("Save",      KIND_OVERLAY,      "save",   "seal",    "record the current journey"),
         ]
         self._selected = 0
         self._save_modal: SaveModalScene | None = None
@@ -83,8 +95,11 @@ class FieldMenuScene(MenuSfxMixin, Scene):
     def _init_fonts(self) -> None:
         f = get_fonts()
         self._font_title = f.get(32, bold=True)
-        self._font_entry = f.get(24)
-        self._font_hint  = f.get(16)
+        self._font_entry = f.get(22, bold=True)
+        self._font_meta  = f.get(14)
+        self._font_hint  = f.get(15)
+        self._font_panel = f.get(18, bold=True)
+        self._font_small = f.get(13)
         self._fonts_ready = True
 
     # ── Events ────────────────────────────────────────────────
@@ -152,18 +167,21 @@ class FieldMenuScene(MenuSfxMixin, Scene):
         if not self._fonts_ready:
             self._init_fonts()
 
-        screen.fill(C_BG)
         sw, sh = screen.get_size()
+        render_backdrop(screen)
+        render_header(screen, self._font_title, self._font_hint, "FIELD MENU", MENU_SUBTITLE, 52, 34)
 
-        title = self._font_title.render("MENU", True, C_TEXT)
-        screen.blit(title, ((sw - title.get_width()) // 2, TITLE_OFFSET_Y))
+        menu_w = min(460, max(340, int(sw * 0.38)))
+        menu_rect = pygame.Rect(48, 122, menu_w, min(430, sh - 190))
+        party_rect = pygame.Rect(menu_rect.right + 28, 122, sw - menu_rect.right - 76, menu_rect.h)
+        if party_rect.w < 360:
+            party_rect = pygame.Rect(48, menu_rect.bottom + 18, sw - 96, max(150, sh - menu_rect.bottom - 76))
 
-        total_h = ROW_H * len(self._entries)
-        top = (sh - total_h) // 2
-        for i, entry in enumerate(self._entries):
-            y = top + i * ROW_H
-            selected = (i == self._selected)
-            self._render_row(screen, entry, y, sw, selected)
+        render_panel(screen, menu_rect, active=True, title="Commands", title_font=self._font_panel)
+        self._render_commands(screen, menu_rect)
+
+        render_panel(screen, party_rect, title="Party Readout", title_font=self._font_panel)
+        self._render_party_readout(screen, party_rect)
 
         hint = self._font_hint.render(
             "UP/DOWN select    ENTER confirm    M/ESC close",
@@ -174,27 +192,65 @@ class FieldMenuScene(MenuSfxMixin, Scene):
         if self._save_modal:
             self._save_modal.render(screen)
 
-    def _render_row(
-        self,
-        screen: pygame.Surface,
-        entry: MenuEntry,
-        y: int,
-        sw: int,
-        selected: bool,
-    ) -> None:
-        if entry.kind == KIND_DISABLED:
-            color = C_TEXT_DIM
-        elif selected:
-            color = C_ROW_SEL_TEXT
-        else:
-            color = C_TEXT_MUT
+    def _render_commands(self, screen: pygame.Surface, panel: pygame.Rect) -> None:
+        x = panel.x + 18
+        y = panel.y + 54
+        w = panel.w - 36
+        for i, entry in enumerate(self._entries):
+            selected = (i == self._selected)
+            if entry.kind == KIND_DISABLED:
+                color = DIM
+            elif selected:
+                color = INK
+            else:
+                color = MUTED
+            rect = pygame.Rect(x, y + i * (ROW_H + 8), w, ROW_H)
+            render_icon_row(
+                screen,
+                self._font_entry,
+                rect,
+                entry.label,
+                icon_key=entry.icon_key,
+                focused=selected and entry.kind != KIND_DISABLED,
+                dimmed_sel=False,
+                color=color,
+                subtext=entry.description,
+                sub_font=self._font_meta,
+            )
 
-        text = self._font_entry.render(entry.label, True, color)
-        x = (sw - text.get_width()) // 2
+    def _render_party_readout(self, screen: pygame.Surface, panel: pygame.Rect) -> None:
+        members = list(self._holder.get().party.members)
+        x = panel.x + 20
+        y = panel.y + 54
+        w = panel.w - 40
+        if not members:
+            msg = self._font_entry.render("No party members.", True, DIM)
+            screen.blit(msg, (x, y))
+            return
 
-        if selected and entry.kind != KIND_DISABLED:
-            rect = (x - ROW_PAD_X, y - 4, text.get_width() + ROW_PAD_X * 2, ROW_H - 4)
-            pygame.draw.rect(screen, C_ROW_SEL_BG, rect)
-            pygame.draw.rect(screen, C_ROW_SEL_BDR, rect, 2)
+        row_h = min(62, max(50, (panel.bottom - y - 22) // max(1, len(members))))
+        for i, member in enumerate(members[:5]):
+            row = pygame.Rect(x, y + i * row_h, w, row_h - 8)
+            render_icon_row(
+                screen,
+                self._font_entry,
+                row,
+                f"{member.name}  Lv{member.level}",
+                icon_key=f"member_{member.id}",
+                image_path=member_icon_path(member.id),
+                focused=i == 0,
+                dimmed_sel=False,
+                color=INK,
+                right_text=member.class_name.title(),
+                right_font=self._font_meta,
+                subtext=f"HP {member.hp}/{member.hp_max}    MP {member.mp}/{member.mp_max}",
+                sub_font=self._font_small,
+            )
+            bar_y = row.bottom - 9
+            draw_stat_bar(screen, pygame.Rect(row.x + 56, bar_y, max(60, row.w // 4), 5), member.hp, member.hp_max, (132, 196, 111))
+            draw_stat_bar(screen, pygame.Rect(row.x + 64 + max(60, row.w // 4), bar_y, max(60, row.w // 4), 5), member.mp, member.mp_max, TEAL)
 
-        screen.blit(text, (x, y))
+        draw_divider(screen, x, panel.bottom - 50, w)
+        playtime = self._holder.get().playtime.display
+        footer = self._font_small.render(f"Playtime {playtime}", True, GOLD)
+        screen.blit(footer, (x, panel.bottom - 38))
