@@ -8,9 +8,9 @@
  <tileset firstgid="936" source="../tilesets/ground/terrain-v7.tsx"/>
  <objectgroup id="8" name="portals">
   <object id="11" name="zone_07_sunken_cave" x="130" y="20"><properties><property name="target_map" value="zone_07_sunken_cave"/><property name="target_position_x" type="int" value="27"/><property name="target_position_y" type="int" value="1"/></properties></object>
-  <object id="12" name="oracle_sanctum" x="624" y="192" width="64" height="24"><properties><property name="target_map" value="town_05_ashenveil_oracle_sanctum"/><property name="target_position_x" type="int" value="5"/><property name="target_position_y" type="int" value="9"/></properties></object>
-  <object id="13" name="item_shop" x="1136" y="192" width="64" height="24"><properties><property name="target_map" value="town_05_ashenveil_shop"/><property name="target_position_x" type="int" value="7"/><property name="target_position_y" type="int" value="10"/></properties></object>
-  <object id="14" name="inn" x="272" y="800" width="64" height="24"><properties><property name="target_map" value="town_05_ashenveil_inn"/><property name="target_position_x" type="int" value="5"/><property name="target_position_y" type="int" value="9"/></properties></object>
+  <object id="12" name="oracle_sanctum" x="624" y="192" width="64" height="5"><properties><property name="target_map" value="town_05_ashenveil_oracle_sanctum"/><property name="target_position_x" type="int" value="5"/><property name="target_position_y" type="int" value="9"/></properties></object>
+  <object id="13" name="item_shop" x="1136" y="192" width="64" height="5"><properties><property name="target_map" value="town_05_ashenveil_shop"/><property name="target_position_x" type="int" value="7"/><property name="target_position_y" type="int" value="10"/></properties></object>
+  <object id="14" name="inn" x="272" y="800" width="64" height="5"><properties><property name="target_map" value="town_05_ashenveil_inn"/><property name="target_position_x" type="int" value="5"/><property name="target_position_y" type="int" value="9"/></properties></object>
   <object id="15" name="magic_shop" x="1135.75" y="820"/>
   <object id="16" name="zone_06_mountain_pass_03" x="616" y="974" width="50" height="6"><properties><property name="target_map" value="zone_06_mountain_pass_03"/><property name="target_position_x" type="int" value="47"/><property name="target_position_y" type="int" value="17"/></properties></object>
  </objectgroup>
