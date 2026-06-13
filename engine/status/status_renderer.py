@@ -5,13 +5,8 @@
 
 from __future__ import annotations
 
-import logging
-from pathlib import Path
-
 import pygame
 from engine.common.font_provider import get_fonts
-
-_log = logging.getLogger(__name__)
 
 from engine.party.member_state import MemberState
 from engine.party.party_state import exp_pct
@@ -24,6 +19,8 @@ from engine.common.field_menu_theme import (
     TEAL,
     VIOLET,
     draw_divider,
+    icon_surface,
+    member_icon_path,
     render_backdrop,
     render_header,
     render_hint,
@@ -50,13 +47,13 @@ C_TOAST         = (132, 196, 111)
 
 PAD_X    = 20
 PAD_Y    = 16
-ROW_H    = 120
-ROW_GAP  = 4
+ROW_GAP  = 14          # matches the field-menu / equipment card spacing
+ROW_H_MAX = 118        # cap so a small party keeps reasonable card height
 HEADER_H = 40
 FOOTER_H = 28
 
-PORTRAIT_SIZE = 100
-BAR_H         = 10
+PORTRAIT_MAX = 92      # matches the equipment party portrait size
+BAR_H        = 10
 
 COL_GUTTER  = 22
 COL_NAME_W  = 155
@@ -71,26 +68,10 @@ class StatusRenderer:
     def __init__(self, scenario_path: str) -> None:
         self._scenario_path = scenario_path
         self._fonts_ready = False
-        self._portraits: dict[str, pygame.Surface] = {}
 
     @property
     def fonts_ready(self) -> bool:
         return self._fonts_ready
-
-    def _load_portrait(self, member_id: str) -> pygame.Surface | None:
-        if member_id in self._portraits:
-            return self._portraits[member_id]
-        path = Path(self._scenario_path) / "assets" / "images" / f"{member_id}_profile.png"
-        if not path.exists():
-            return None
-        try:
-            img = pygame.image.load(str(path)).convert_alpha()
-            img = pygame.transform.scale(img, (PORTRAIT_SIZE, PORTRAIT_SIZE))
-            self._portraits[member_id] = img
-            return img
-        except (pygame.error, OSError) as e:
-            _log.warning("Portrait load failed: %s — %s", path, e)
-            return None
 
     def _init_fonts(self) -> None:
         f = get_fonts()
@@ -125,10 +106,20 @@ class StatusRenderer:
             self._draw_footer(screen)
             return
 
-        row_y = PAD_Y + HEADER_H
+        # Distribute member cards down the full height between the header
+        # divider and the footer, so portraits fill the vertical space the
+        # same way the equipment party panel does.
+        top = PAD_Y + HEADER_H
+        bottom = screen.get_height() - FOOTER_H - 10
+        n = len(members)
+        row_h = min(ROW_H_MAX, (bottom - top - ROW_GAP * (n - 1)) // n)
+        portrait = min(row_h - 16, PORTRAIT_MAX)
+
+        row_y = top
         for i, member in enumerate(members):
-            self._draw_row(screen, member, i, row_y, selected=(i == selected))
-            row_y += ROW_H + ROW_GAP
+            self._draw_row(screen, member, i, row_y, row_h, portrait,
+                           selected=(i == selected))
+            row_y += row_h + ROW_GAP
 
         self._draw_footer(screen)
 
@@ -150,44 +141,37 @@ class StatusRenderer:
         draw_divider(screen, PAD_X, PAD_Y + HEADER_H - 4,
                      screen.get_width() - PAD_X * 2)
 
-    def _draw_row(self, screen, m: MemberState, index: int, y: int, selected: bool) -> None:
+    def _draw_row(self, screen, m: MemberState, index: int, y: int,
+                  row_h: int, portrait: int, selected: bool) -> None:
         row_w = screen.get_width() - PAD_X * 2
-        render_row_frame(screen, pygame.Rect(PAD_X, y, row_w, ROW_H), focused=selected)
+        render_row_frame(screen, pygame.Rect(PAD_X, y, row_w, row_h), focused=selected)
 
         x = PAD_X + COL_GUTTER
-        x = self._draw_portrait_name(screen, m, x, y)
-        x = self._draw_exp(screen, m, x, y)
-        x = self._draw_hpmp(screen, m, x, y)
-        x = self._draw_stats(screen, m, x, y)
-        self._draw_gear(screen, m, x, y)
+        x = self._draw_portrait_name(screen, m, x, y, row_h, portrait)
+        x = self._draw_exp(screen, m, x, y, row_h)
+        x = self._draw_hpmp(screen, m, x, y, row_h)
+        x = self._draw_stats(screen, m, x, y, row_h)
+        self._draw_gear(screen, m, x, y, row_h)
 
-    def _draw_portrait_name(self, screen, m: MemberState, x: int, y: int) -> int:
-        port_y    = y + (ROW_H - PORTRAIT_SIZE) // 2
-        port_rect = (x, port_y, PORTRAIT_SIZE, PORTRAIT_SIZE)
-        img = self._load_portrait(m.id)
-        if img:
-            screen.blit(img, (x, port_y))
-        else:
-            pygame.draw.rect(screen, (40, 40, 50), port_rect, border_radius=4)
-            pygame.draw.rect(screen, (82, 70, 50), port_rect, 1, border_radius=4)
-            initials = "".join(w[0].upper() for w in m.name.split()[:2])
-            s = self._font_stat.render(initials, True, TEXT_SECONDARY)
-            screen.blit(s, (x + PORTRAIT_SIZE // 2 - s.get_width() // 2,
-                             port_y + PORTRAIT_SIZE // 2 - s.get_height() // 2))
+    def _draw_portrait_name(self, screen, m: MemberState, x: int, y: int,
+                            row_h: int, portrait: int) -> int:
+        port_y = y + (row_h - portrait) // 2
+        icon = icon_surface(f"member_{m.id}", portrait, image_path=member_icon_path(m.id))
+        screen.blit(icon, (x, port_y))
 
-        tx = x + PORTRAIT_SIZE + 10
+        tx = x + portrait + 12
         content_h = self._font_name.get_height() + 6 + self._font_class.get_height()
-        ty = y + (ROW_H - content_h) // 2
+        ty = y + (row_h - content_h) // 2
         screen.blit(self._font_name.render(m.name, True, TEXT_PRIMARY), (tx, ty))
         class_label = f"{m.class_name}  ·  {m.row.upper()}"
-        screen.blit(self._font_class.render(class_label, True, TEXT_SECONDARY),
+        screen.blit(self._font_class.render(class_label, True, HEADER_COLOR),
                     (tx, ty + self._font_name.get_height() + 4))
         return x + COL_NAME_W + 50
 
-    def _draw_exp(self, screen, m: MemberState, x: int, y: int) -> int:
+    def _draw_exp(self, screen, m: MemberState, x: int, y: int, row_h: int) -> int:
         bar_w  = COL_EXP_W
         line_h = self._font_stat.get_height()
-        cy     = y + (ROW_H - (line_h * 2 + BAR_H + 20)) // 2
+        cy     = y + (row_h - (line_h * 2 + BAR_H + 20)) // 2
 
         screen.blit(self._font_level.render(f"Lv {m.level}", True, TEXT_PRIMARY), (x, cy))
         bar_y = cy + line_h + 10
@@ -198,12 +182,12 @@ class StatusRenderer:
                     (x, cy + line_h + 25))
         return x + COL_EXP_W + 12
 
-    def _draw_hpmp(self, screen, m: MemberState, x: int, y: int) -> int:
+    def _draw_hpmp(self, screen, m: MemberState, x: int, y: int, row_h: int) -> int:
         bar_w  = 100
         lbl_w  = 28
         line_h = self._font_stat.get_height()
         block_h = line_h + 4 + BAR_H
-        cy = y + (ROW_H - block_h * 2 - 10) // 2
+        cy = y + (row_h - block_h * 2 - 10) // 2
 
         hp_pct  = m.hp / m.hp_max if m.hp_max > 0 else 0
         low_hp  = hp_pct < HP_LOW_THRESHOLD
@@ -232,11 +216,11 @@ class StatusRenderer:
 
         return x + COL_HPMP_W + 25
 
-    def _draw_stats(self, screen, m: MemberState, x: int, y: int) -> int:
+    def _draw_stats(self, screen, m: MemberState, x: int, y: int, row_h: int) -> int:
         lines  = [("STR", str(m.str_)), ("DEX", str(m.dex)),
                   ("CON", str(m.con)),  ("INT", str(m.int_))]
         line_h = self._font_stat.get_height() + 6
-        cy     = y + (ROW_H - len(lines) * line_h) // 2
+        cy     = y + (row_h - len(lines) * line_h) // 2
         col2_x = x + 38
         for i, (label, val) in enumerate(lines):
             ry = cy + i * line_h
@@ -244,14 +228,14 @@ class StatusRenderer:
             screen.blit(self._font_stat.render(val,   True, TEXT_PRIMARY),   (col2_x, ry))
         return x + COL_STATS_W + 12
 
-    def _draw_gear(self, screen, m: MemberState, x: int, y: int) -> None:
+    def _draw_gear(self, screen, m: MemberState, x: int, y: int, row_h: int) -> None:
         slots  = [("Helm",  m.equipped.get("helmet",    "")),
                   ("Body",  m.equipped.get("body",      "")),
                   ("Wpn",   m.equipped.get("weapon",    "")),
                   ("Shld",  m.equipped.get("shield",    "")),
                   ("Acc",   m.equipped.get("accessory", ""))]
         line_h = self._font_stat.get_height() + 5
-        cy     = y + (ROW_H - len(slots) * line_h) // 2
+        cy     = y + (row_h - len(slots) * line_h) // 2
         for i, (lbl, val) in enumerate(slots):
             ry = cy + i * line_h
             screen.blit(self._font_stat.render(lbl, True, MUTED), (x, ry))
