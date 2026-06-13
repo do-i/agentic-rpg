@@ -95,6 +95,47 @@ def _build_backdrop(sw: int, sh: int, bg_path: Path) -> pygame.Surface:
     return bg
 
 
+def dim_screen(screen: pygame.Surface, alpha: int = 176) -> None:
+    """Darken whatever is already drawn — backdrop for a centered modal."""
+    veil = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+    veil.fill((4, 5, 9, alpha))
+    screen.blit(veil, (0, 0))
+
+
+def render_modal(
+    screen: pygame.Surface,
+    width: int,
+    height: int,
+    *,
+    title: str | None = None,
+    title_font: pygame.font.Font | None = None,
+    dim: bool = True,
+) -> pygame.Rect:
+    """Dim the screen and draw a centered themed panel. Returns its rect."""
+    if dim:
+        dim_screen(screen)
+    rect = pygame.Rect(
+        (screen.get_width() - width) // 2,
+        (screen.get_height() - height) // 2,
+        width,
+        height,
+    )
+    render_panel(screen, rect, active=True, title=title, title_font=title_font)
+    return rect
+
+
+def render_hint(
+    screen: pygame.Surface,
+    font: pygame.font.Font,
+    text: str,
+    x: int,
+    y: int,
+    *,
+    color: tuple[int, int, int] = DIM,
+) -> None:
+    screen.blit(font.render(text, True, color), (x, y))
+
+
 def render_header(
     screen: pygame.Surface,
     title_font: pygame.font.Font,
