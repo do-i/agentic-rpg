@@ -20,13 +20,8 @@ from engine.common.font_provider import get_fonts
 from engine.common.color_constants import C_TEXT_DIM
 from engine.common.field_menu_theme import (
     DIM,
-    GOLD,
     INK,
     MUTED,
-    TEAL,
-    draw_divider,
-    draw_stat_bar,
-    member_icon_path,
     render_backdrop,
     render_header,
     render_icon_row,
@@ -99,7 +94,6 @@ class FieldMenuScene(MenuSfxMixin, Scene):
         self._font_meta  = f.get(14)
         self._font_hint  = f.get(15)
         self._font_panel = f.get(18, bold=True)
-        self._font_small = f.get(13)
         self._fonts_ready = True
 
     # ── Events ────────────────────────────────────────────────
@@ -171,17 +165,12 @@ class FieldMenuScene(MenuSfxMixin, Scene):
         render_backdrop(screen)
         render_header(screen, self._font_title, self._font_hint, "FIELD MENU", MENU_SUBTITLE, 52, 34)
 
-        menu_w = min(460, max(340, int(sw * 0.38)))
-        menu_rect = pygame.Rect(48, 122, menu_w, min(430, sh - 190))
-        party_rect = pygame.Rect(menu_rect.right + 28, 122, sw - menu_rect.right - 76, menu_rect.h)
-        if party_rect.w < 360:
-            party_rect = pygame.Rect(48, menu_rect.bottom + 18, sw - 96, max(150, sh - menu_rect.bottom - 76))
+        menu_w = min(460, max(340, int(sw * 0.42)))
+        menu_h = min(54 + len(self._entries) * (ROW_H + 8) + 18, sh - 190)
+        menu_rect = pygame.Rect((sw - menu_w) // 2, 122, menu_w, menu_h)
 
         render_panel(screen, menu_rect, active=True, title="Commands", title_font=self._font_panel)
         self._render_commands(screen, menu_rect)
-
-        render_panel(screen, party_rect, title="Party Readout", title_font=self._font_panel)
-        self._render_party_readout(screen, party_rect)
 
         hint = self._font_hint.render(
             "UP/DOWN select    ENTER confirm    M/ESC close",
@@ -217,40 +206,3 @@ class FieldMenuScene(MenuSfxMixin, Scene):
                 subtext=entry.description,
                 sub_font=self._font_meta,
             )
-
-    def _render_party_readout(self, screen: pygame.Surface, panel: pygame.Rect) -> None:
-        members = list(self._holder.get().party.members)
-        x = panel.x + 20
-        y = panel.y + 54
-        w = panel.w - 40
-        if not members:
-            msg = self._font_entry.render("No party members.", True, DIM)
-            screen.blit(msg, (x, y))
-            return
-
-        row_h = min(62, max(50, (panel.bottom - y - 22) // max(1, len(members))))
-        for i, member in enumerate(members[:5]):
-            row = pygame.Rect(x, y + i * row_h, w, row_h - 8)
-            render_icon_row(
-                screen,
-                self._font_entry,
-                row,
-                f"{member.name}  Lv{member.level}",
-                icon_key=f"member_{member.id}",
-                image_path=member_icon_path(member.id),
-                focused=i == 0,
-                dimmed_sel=False,
-                color=INK,
-                right_text=member.class_name.title(),
-                right_font=self._font_meta,
-                subtext=f"HP {member.hp}/{member.hp_max}    MP {member.mp}/{member.mp_max}",
-                sub_font=self._font_small,
-            )
-            bar_y = row.bottom - 9
-            draw_stat_bar(screen, pygame.Rect(row.x + 56, bar_y, max(60, row.w // 4), 5), member.hp, member.hp_max, (132, 196, 111))
-            draw_stat_bar(screen, pygame.Rect(row.x + 64 + max(60, row.w // 4), bar_y, max(60, row.w // 4), 5), member.mp, member.mp_max, TEAL)
-
-        draw_divider(screen, x, panel.bottom - 50, w)
-        playtime = self._holder.get().playtime.display
-        footer = self._font_small.render(f"Playtime {playtime}", True, GOLD)
-        screen.blit(footer, (x, panel.bottom - 38))
