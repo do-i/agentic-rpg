@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 
 import pygame
 
+from engine.common.field_menu_theme import dim_screen
 from engine.title.save_modal_scene import SaveModalScene
 
 
@@ -16,29 +17,21 @@ def _scene() -> SaveModalScene:
     )
 
 
-def test_dim_overlay_is_reused_for_same_screen_size():
+def test_scene_constructs():
+    # The modal now leans on the shared field-menu theme for its chrome;
+    # this guards that construction (slot loading) still works.
+    assert _scene() is not None
+
+
+def test_dim_screen_darkens_background():
     pygame.init()
     try:
-        scene = _scene()
         screen = pygame.Surface((640, 480))
-
-        first = scene._get_dim_overlay(screen)
-        second = scene._get_dim_overlay(screen)
-
-        assert first is second
-    finally:
-        pygame.quit()
-
-
-def test_dim_overlay_is_rebuilt_when_screen_size_changes():
-    pygame.init()
-    try:
-        scene = _scene()
-
-        first = scene._get_dim_overlay(pygame.Surface((640, 480)))
-        second = scene._get_dim_overlay(pygame.Surface((800, 600)))
-
-        assert first is not second
-        assert second.get_size() == (800, 600)
+        screen.fill((255, 255, 255))
+        dim_screen(screen)
+        # Top-left pixel should be darkened toward the veil color.
+        r, g, b = screen.get_at((0, 0))[:3]
+        assert (r, g, b) != (255, 255, 255)
+        assert max(r, g, b) < 255
     finally:
         pygame.quit()

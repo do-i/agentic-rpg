@@ -8,6 +8,10 @@ from engine.common.font_provider import get_fonts
 from engine.io.save_manager import GameStateManager
 from engine.common.game_state import GameState
 from engine.common.save_slot_data import SaveSlot
+from engine.common.field_menu_theme import (
+    DIM, GOLD, INK, MUTED,
+    dim_screen, draw_divider, render_modal, render_panel, render_row_frame,
+)
 
 MODAL_W       = 700
 MODAL_H       = 560
@@ -50,7 +54,6 @@ class SaveModalScene(Scene):
         self._popup_text: str = ""
         self._popup_active: bool = False
         self._fonts_ready = False
-        self._dim_overlay: pygame.Surface | None = None
 
     def _init_fonts(self) -> None:
         f = get_fonts()
@@ -141,22 +144,20 @@ class SaveModalScene(Scene):
         if not self._fonts_ready:
             self._init_fonts()
 
-        screen.blit(self._get_dim_overlay(screen), (0, 0))
+        dim_screen(screen)
 
         mx = (screen.get_width()  - MODAL_W) // 2
         my = (screen.get_height() - MODAL_H) // 2
-        pygame.draw.rect(screen, (20, 20, 45),    (mx, my, MODAL_W, MODAL_H))
-        pygame.draw.rect(screen, (160, 160, 100), (mx, my, MODAL_W, MODAL_H), 2)
+        render_panel(screen, pygame.Rect(mx, my, MODAL_W, MODAL_H), active=True)
 
-        title = self._font_title.render("SAVE GAME", True, (220, 220, 180))
+        title = self._font_title.render("SAVE GAME", True, GOLD)
         screen.blit(title, (mx + 20, my + 14))
 
         # Pinned autosave row
         self._render_slot_row(screen, self._slots[0], mx, my + AUTOSAVE_ROW_Y,
                               selected=False, pinned=True)
 
-        pygame.draw.line(screen, (80, 80, 60),
-                         (mx + 10, my + DIVIDER_Y), (mx + MODAL_W - 10, my + DIVIDER_Y))
+        draw_divider(screen, mx + 10, my + DIVIDER_Y, MODAL_W - 20)
 
         # Player slots
         for i in range(VISIBLE_SLOTS):
@@ -176,7 +177,7 @@ class SaveModalScene(Scene):
             dn = self._font_hint.render(" ", True, (140, 140, 100))
             screen.blit(dn, (mx + MODAL_W - 30, my + MODAL_H - 40))
 
-        hint = self._font_hint.render("ENTER - Save    ESC - Cancel", True, (120, 120, 90))
+        hint = self._font_hint.render("ENTER - Save    ESC - Cancel", True, DIM)
         screen.blit(hint, (mx + 20, my + MODAL_H - 28))
 
         if self._confirm_pending:
@@ -197,62 +198,46 @@ class SaveModalScene(Scene):
         row1_y = y + 8
         row2_y = y + 34
 
-        bg = (38, 38, 68) if selected else (24, 24, 44)
-        pygame.draw.rect(screen, bg, (mx + 10, y, MODAL_W - 20, SLOT_HEIGHT - 4))
+        render_row_frame(screen, pygame.Rect(mx + 10, y, MODAL_W - 20, SLOT_HEIGHT - 4),
+                         focused=selected, dimmed_sel=pinned)
 
-        if selected:
-            pygame.draw.rect(screen, (240, 200, 60),
-                             (mx + 10, y, MODAL_W - 20, SLOT_HEIGHT - 4), 2)
-
-        label_col = (140, 140, 110) if pinned else (200, 200, 160) if not slot.is_empty else (80, 80, 70)
+        label_col = MUTED if pinned else INK if not slot.is_empty else DIM
         label = self._font_slot.render(slot.label, True, label_col)
         screen.blit(label, (mx + 12, row1_y))
 
         if slot.is_empty:
-            empty = self._font_slot.render("--- Empty ---", True, (70, 70, 60))
+            empty = self._font_slot.render("--- Empty ---", True, DIM)
             screen.blit(empty, (mx + 110, row1_y))
             return
 
-        lv = self._font_small.render(f"Lv {slot.level}", True, (160, 160, 130))
+        lv = self._font_small.render(f"Lv {slot.level}", True, MUTED)
         screen.blit(lv, (mx + 12, row2_y))
 
         # Row 1: Location  (Name)
-        loc = self._font_slot.render(slot.location, True, (240, 240, 200))
+        loc = self._font_slot.render(slot.location, True, INK)
         screen.blit(loc, (mx + 110, row1_y))
-        name = self._font_small.render(f"({slot.protagonist_name})", True, (140, 140, 110))
+        name = self._font_small.render(f"({slot.protagonist_name})", True, MUTED)
         screen.blit(name, (mx + 110 + loc.get_width() + 10, row1_y + 4))
 
         # Row 2: Timestamp  Playtime
-        ts = self._font_small.render(slot.timestamp, True, (140, 140, 110))
+        ts = self._font_small.render(slot.timestamp, True, MUTED)
         screen.blit(ts, (mx + 110, row2_y))
-        pt = self._font_small.render(slot.playtime_display, True, (140, 140, 110))
+        pt = self._font_small.render(slot.playtime_display, True, MUTED)
         screen.blit(pt, (mx + 310, row2_y))
 
     def _render_confirm(self, screen: pygame.Surface, mx: int, my: int) -> None:
         bw, bh = 420, 110
-        bx = mx + (MODAL_W - bw) // 2
-        by = my + (MODAL_H - bh) // 2
-        pygame.draw.rect(screen, (30, 15, 15), (bx, by, bw, bh))
-        pygame.draw.rect(screen, (200, 80, 80), (bx, by, bw, bh), 2)
-        msg = self._font_slot.render("Overwrite this save?", True, (220, 180, 180))
+        modal = render_modal(screen, bw, bh)
+        bx, by = modal.x, modal.y
+        msg = self._font_slot.render("Overwrite this save?", True, GOLD)
         screen.blit(msg, (bx + 20, by + 18))
-        hint = self._font_hint.render("ENTER / Y - Confirm    ESC / N - Cancel", True, (160, 120, 120))
+        hint = self._font_hint.render("ENTER / Y - Confirm    ESC / N - Cancel", True, DIM)
         screen.blit(hint, (bx + 20, by + 60))
 
     def _render_popup(self, screen: pygame.Surface) -> None:
-        ph = 80
-        px = (screen.get_width()  - POPUP_W) // 2
-        py = (screen.get_height() - ph) // 2
-        pygame.draw.rect(screen, (20, 20, 45),    (px, py, POPUP_W, ph), border_radius=6)
-        pygame.draw.rect(screen, (160, 160, 100), (px, py, POPUP_W, ph), 2, border_radius=6)
-        msg = self._font_toast.render(self._popup_text, True, (100, 220, 100))
-        screen.blit(msg, (px + (POPUP_W - msg.get_width()) // 2, py + 14))
-        hint = self._font_hint.render("ENTER / ESC  close", True, (120, 120, 90))
-        screen.blit(hint, (px + (POPUP_W - hint.get_width()) // 2, py + ph - 28))
-
-    def _get_dim_overlay(self, screen: pygame.Surface) -> pygame.Surface:
-        size = (screen.get_width(), screen.get_height())
-        if self._dim_overlay is None or self._dim_overlay.get_size() != size:
-            self._dim_overlay = pygame.Surface(size, pygame.SRCALPHA)
-            self._dim_overlay.fill((0, 0, 0, 160))
-        return self._dim_overlay
+        ph = 88
+        modal = render_modal(screen, POPUP_W, ph)
+        msg = self._font_toast.render(self._popup_text, True, (132, 196, 111))
+        screen.blit(msg, (modal.x + (POPUP_W - msg.get_width()) // 2, modal.y + 18))
+        hint = self._font_hint.render("ENTER / ESC  close", True, DIM)
+        screen.blit(hint, (modal.x + (POPUP_W - hint.get_width()) // 2, modal.bottom - 28))
