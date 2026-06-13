@@ -19,14 +19,15 @@ from engine.shop.shop_constants import (
 from engine.shop.shop_renderer import (
     draw_dim_overlay, draw_footer, draw_modal_box, draw_popup, draw_shop_header,
 )
+from engine.common.field_menu_theme import EMBER, GOLD, render_panel
 
-# ── Colors (apothecary-specific) ─────────────────────────────
-C_BORDER  = (120, 160, 120)
-C_HEADER  = (180, 220, 180)
-C_SEL_BG  = (35, 50, 42)
-C_SEL_BDR = (130, 200, 140)
-C_READY   = (100, 200, 120)
-C_MISSING = (200, 130, 100)
+# ── Colors (apothecary-specific — field-menu theme) ─────────
+C_BORDER  = GOLD
+C_HEADER  = GOLD
+C_SEL_BG  = (35, 50, 42)   # unused (row frame is themed)
+C_SEL_BDR = GOLD
+C_READY   = (132, 196, 111)
+C_MISSING = EMBER
 
 # ── Layout (apothecary-specific) ─────────────────────────────
 PAD          = 24
@@ -230,8 +231,7 @@ class ApothecaryRenderer:
         ox = mx + 20
         oy = my + mh // 2 - oh // 2
 
-        pygame.draw.rect(screen, (22, 22, 44), (ox, oy, ow, oh), border_radius=6)
-        pygame.draw.rect(screen, C_SEL_BDR,    (ox, oy, ow, oh), 2, border_radius=6)
+        render_panel(screen, pygame.Rect(ox, oy, ow, oh), active=True)
 
         cy = oy + 14
 

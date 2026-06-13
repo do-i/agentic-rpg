@@ -11,21 +11,20 @@ from engine.common.item_selection_view import (
 )
 
 from engine.shop.shop_constants import (
-    C_BG, C_DIM, C_GP, C_HINT, C_MUTED, C_TEXT,
+    C_DIM, C_GP, C_HINT, C_MUTED, C_TEXT,
     HEADER_H, MODAL_W,
 )
 from engine.shop.shop_renderer import (
     draw_dim_overlay, draw_footer, draw_modal_box, draw_shop_header,
 )
+from engine.common.field_menu_theme import EMBER, GOLD, render_modal, render_panel
 
-# ── Colors (magic-core-shop-specific) ────────────────────────
-C_HEADER      = (212, 200, 138)
-C_SEL_BG      = (45, 42, 75)
-C_SEL_BDR     = (180, 160, 255)
-C_GP_GAIN     = (100, 220, 100)
-C_CONFIRM_BG  = (28, 14, 14)
-C_CONFIRM_BDR = (180, 70, 70)
-C_CONFIRM_TXT = (220, 180, 180)
+# ── Colors (magic-core-shop-specific — field-menu theme) ─────
+C_HEADER      = GOLD
+C_SEL_BG      = (45, 42, 75)   # unused (row frame is themed)
+C_SEL_BDR     = GOLD
+C_GP_GAIN     = (132, 196, 111)
+C_CONFIRM_TXT = EMBER
 
 # ── Layout (magic-core-shop-specific) ────────────────────────
 PAD          = 28
@@ -154,8 +153,7 @@ class MagicCoreShopRenderer:
         ox = mx + 20
         oy = my + mh // 2 - oh // 2
 
-        pygame.draw.rect(screen, (22, 22, 44), (ox, oy, ow, oh), border_radius=6)
-        pygame.draw.rect(screen, C_SEL_BDR,    (ox, oy, ow, oh), 2, border_radius=6)
+        render_panel(screen, pygame.Rect(ox, oy, ow, oh), active=True)
 
         lbl = self._font_row.render(label, True, C_HEADER)
         screen.blit(lbl, (ox + 20, oy + 14))
@@ -194,11 +192,8 @@ class MagicCoreShopRenderer:
         total = qty * rate
 
         ow, oh = 480, 110
-        ox = (screen.get_width()  - ow) // 2
-        oy = (screen.get_height() - oh) // 2
-
-        pygame.draw.rect(screen, C_CONFIRM_BG,  (ox, oy, ow, oh), border_radius=6)
-        pygame.draw.rect(screen, C_CONFIRM_BDR, (ox, oy, ow, oh), 2, border_radius=6)
+        modal = render_modal(screen, ow, oh)
+        ox, oy = modal.x, modal.y
 
         msg = self._font_confirm.render(
             f"Exchange {qty} x {label} for {total:,} GP?",
@@ -212,12 +207,9 @@ class MagicCoreShopRenderer:
     # ── Popup ────────────────────────────────────────────────
 
     def _draw_popup(self, screen: pygame.Surface, popup_text: str) -> None:
-        pw, ph = 460, 80
-        px = (screen.get_width()  - pw) // 2
-        py = (screen.get_height() - ph) // 2
-        pygame.draw.rect(screen, C_BG,      (px, py, pw, ph), border_radius=6)
-        pygame.draw.rect(screen, C_SEL_BDR, (px, py, pw, ph), 2, border_radius=6)
+        pw, ph = 460, 88
+        modal = render_modal(screen, pw, ph)
         msg = self._font_toast.render(popup_text, True, C_GP_GAIN)
-        screen.blit(msg, (px + (pw - msg.get_width()) // 2, py + 14))
+        screen.blit(msg, (modal.x + (pw - msg.get_width()) // 2, modal.y + 18))
         hint = self._font_hint.render("ENTER / ESC  close", True, C_HINT)
-        screen.blit(hint, (px + (pw - hint.get_width()) // 2, py + ph - 28))
+        screen.blit(hint, (modal.x + (pw - hint.get_width()) // 2, modal.bottom - 28))

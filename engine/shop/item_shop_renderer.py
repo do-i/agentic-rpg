@@ -19,14 +19,13 @@ from engine.shop.shop_constants import (
 from engine.shop.shop_renderer import (
     draw_dim_overlay, draw_footer, draw_modal_box, draw_popup, draw_shop_header,
 )
+from engine.common.field_menu_theme import GOLD, render_panel
 
-# ── Colors (item-shop-specific) ──────────────────────────────
-C_BORDER   = (160, 160, 100)
-C_HEADER   = (220, 220, 180)
-C_SEL_BG   = (45, 42, 75)
-C_SEL_BDR  = (180, 160, 255)
-C_DESC_BG  = (32, 32, 54)
-C_DESC_BDR = (55, 55, 80)
+# ── Colors (item-shop-specific — field-menu theme) ──────────
+C_BORDER   = GOLD
+C_HEADER   = GOLD
+C_SEL_BG   = (45, 42, 75)   # unused (row frame is themed)
+C_SEL_BDR  = GOLD
 
 # ── Layout (item-shop-specific) ──────────────────────────────
 PAD          = 24
@@ -204,8 +203,7 @@ class ItemShopRenderer:
         self, screen: pygame.Surface, x: int, y: int,
         panel_w: int, panel_h: int, text: str,
     ) -> None:
-        pygame.draw.rect(screen, C_DESC_BG,  (x, y, panel_w, panel_h), border_radius=6)
-        pygame.draw.rect(screen, C_DESC_BDR, (x, y, panel_w, panel_h), 1, border_radius=6)
+        render_panel(screen, pygame.Rect(x, y, panel_w, panel_h))
 
         if not text:
             text = "—"
@@ -252,8 +250,7 @@ class ItemShopRenderer:
         ox = mx + 20
         oy = my + mh // 2 - oh // 2
 
-        pygame.draw.rect(screen, (22, 22, 44), (ox, oy, ow, oh), border_radius=6)
-        pygame.draw.rect(screen, C_SEL_BDR,    (ox, oy, ow, oh), 2, border_radius=6)
+        render_panel(screen, pygame.Rect(ox, oy, ow, oh), active=True)
 
         name = display_name(sel)
         lbl  = self._font_row.render(name, True, C_HEADER)

@@ -12,22 +12,22 @@ from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.menu_sfx_mixin import MenuSfxMixin
+from engine.common.field_menu_theme import (
+    DIM, EMBER, GOLD, INK, MUTED, TEAL,
+    dim_screen, draw_divider, draw_stat_bar, render_modal, render_panel,
+)
 from engine.world.sprite_sheet import SpriteSheet
 
-# ── Colors ────────────────────────────────────────────────────
-C_BG        = (18, 18, 35)
-C_BORDER    = (160, 160, 100)
-C_HEADER    = (220, 220, 180)
-C_TEXT      = (238, 238, 238)
-C_MUTED     = (130, 130, 140)
-C_GP        = (200, 185, 100)
-C_HP        = (80, 200, 100)
-C_MP        = (80, 140, 220)
-C_BAR_BG    = (40, 40, 60)
-C_DIVIDER   = (50, 50, 70)
-C_HINT      = (100, 100, 115)
-C_WARN      = (220, 100, 80)
-C_TOAST     = (100, 220, 130)
+# ── Colors (field-menu theme) ─────────────────────────────────
+C_HEADER    = GOLD
+C_TEXT      = INK
+C_MUTED     = MUTED
+C_GP        = GOLD
+C_HP        = (132, 196, 111)
+C_MP        = TEAL
+C_HINT      = DIM
+C_WARN      = EMBER
+C_TOAST     = (132, 196, 111)
 
 # ── Layout ────────────────────────────────────────────────────
 MODAL_W     = 520
@@ -135,16 +135,8 @@ class InnScene(MenuSfxMixin, Scene):
         mx = (screen.get_width()  - MODAL_W) // 2
         my = (screen.get_height() - mh) // 2
 
-        # dim background
-        overlay = pygame.Surface(
-            (screen.get_width(), screen.get_height()), pygame.SRCALPHA
-        )
-        overlay.fill((0, 0, 0, 170))
-        screen.blit(overlay, (0, 0))
-
-        # modal box
-        pygame.draw.rect(screen, C_BG,     (mx, my, MODAL_W, mh), border_radius=8)
-        pygame.draw.rect(screen, C_BORDER, (mx, my, MODAL_W, mh), 2, border_radius=8)
+        dim_screen(screen)
+        render_panel(screen, pygame.Rect(mx, my, MODAL_W, mh), active=True)
 
         self._draw_header(screen, mx, my, state.repository.gp)
         self._draw_body(screen, mx, my + HEADER_H, members)
@@ -161,9 +153,7 @@ class InnScene(MenuSfxMixin, Scene):
         screen.blit(gp_s, (mx + MODAL_W - gp_s.get_width() - PAD,
                             my + (HEADER_H - gp_s.get_height()) // 2))
 
-        pygame.draw.line(screen, C_DIVIDER,
-                         (mx + 10, my + HEADER_H),
-                         (mx + MODAL_W - 10, my + HEADER_H))
+        draw_divider(screen, mx + 10, my + HEADER_H, MODAL_W - 20)
 
     def _draw_body(self, screen: pygame.Surface, mx: int, my: int, members) -> None:
         body_y = my + PAD
@@ -196,27 +186,21 @@ class InnScene(MenuSfxMixin, Scene):
         hp_label = self._font_hint.render("HP", True, C_MUTED)
         screen.blit(hp_label, (bar_x, bar_y))
         bx = bar_x + 22
-        pygame.draw.rect(screen, C_BAR_BG, (bx, bar_y, bar_w, BAR_H), border_radius=3)
-        hp_ratio = member.hp / member.hp_max if member.hp_max else 0
-        pygame.draw.rect(screen, C_HP,
-                         (bx, bar_y, int(bar_w * hp_ratio), BAR_H), border_radius=3)
+        draw_stat_bar(screen, pygame.Rect(bx, bar_y, bar_w, BAR_H),
+                      member.hp, member.hp_max, C_HP)
         hp_s = self._font_hint.render(f"{member.hp}/{member.hp_max}", True, C_MUTED)
         screen.blit(hp_s, (bx + bar_w + 4, bar_y))
 
         # MP bar
         mp_label = self._font_hint.render("MP", True, C_MUTED)
         screen.blit(mp_label, (bar_x, bar_y2))
-        pygame.draw.rect(screen, C_BAR_BG, (bx, bar_y2, bar_w, BAR_H), border_radius=3)
-        mp_ratio = member.mp / member.mp_max if member.mp_max else 0
-        pygame.draw.rect(screen, C_MP,
-                         (bx, bar_y2, int(bar_w * mp_ratio), BAR_H), border_radius=3)
+        draw_stat_bar(screen, pygame.Rect(bx, bar_y2, bar_w, BAR_H),
+                      member.mp, member.mp_max, C_MP)
         mp_s = self._font_hint.render(f"{member.mp}/{member.mp_max}", True, C_MUTED)
         screen.blit(mp_s, (bx + bar_w + 4, bar_y2))
 
     def _draw_footer(self, screen: pygame.Surface, mx: int, y: int, gp: int) -> None:
-        pygame.draw.line(screen, C_DIVIDER,
-                         (mx + 10, y),
-                         (mx + MODAL_W - 10, y))
+        draw_divider(screen, mx + 10, y, MODAL_W - 20)
 
         if self._state == "no_gp":
             msg = self._font_hint.render("Not enough GP.", True, C_WARN)
@@ -227,12 +211,9 @@ class InnScene(MenuSfxMixin, Scene):
             screen.blit(hint, (mx + PAD, y + (FOOTER_H - hint.get_height()) // 2))
 
     def _draw_popup(self, screen: pygame.Surface) -> None:
-        ph = 80
-        px = (screen.get_width()  - POPUP_W) // 2
-        py = (screen.get_height() - ph) // 2
-        pygame.draw.rect(screen, C_BG,     (px, py, POPUP_W, ph), border_radius=6)
-        pygame.draw.rect(screen, C_BORDER, (px, py, POPUP_W, ph), 2, border_radius=6)
+        ph = 88
+        modal = render_modal(screen, POPUP_W, ph)
         msg = self._font_toast.render("The party rested and recovered!", True, C_TOAST)
-        screen.blit(msg, (px + (POPUP_W - msg.get_width()) // 2, py + 14))
+        screen.blit(msg, (modal.x + (POPUP_W - msg.get_width()) // 2, modal.y + 18))
         hint = self._font_hint.render("ENTER / ESC  close", True, C_HINT)
-        screen.blit(hint, (px + (POPUP_W - hint.get_width()) // 2, py + ph - 28))
+        screen.blit(hint, (modal.x + (POPUP_W - hint.get_width()) // 2, modal.bottom - 28))

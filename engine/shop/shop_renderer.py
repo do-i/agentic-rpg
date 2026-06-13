@@ -6,20 +6,21 @@ from __future__ import annotations
 
 import pygame
 
+from engine.common.field_menu_theme import (
+    DIM,
+    dim_screen,
+    draw_divider,
+    render_modal,
+    render_panel,
+)
 from engine.shop.shop_constants import (
-    C_BG,
-    C_DIVIDER,
     C_HINT,
     HEADER_H,
 )
 
 
 def draw_dim_overlay(screen: pygame.Surface) -> None:
-    overlay = pygame.Surface(
-        (screen.get_width(), screen.get_height()), pygame.SRCALPHA
-    )
-    overlay.fill((0, 0, 0, 180))
-    screen.blit(overlay, (0, 0))
+    dim_screen(screen)
 
 
 def draw_modal_box(
@@ -31,10 +32,9 @@ def draw_modal_box(
     border_color: tuple[int, int, int],
     border_width: int = 2,
 ) -> None:
-    pygame.draw.rect(screen, C_BG, (mx, my, mw, mh), border_radius=8)
-    pygame.draw.rect(
-        screen, border_color, (mx, my, mw, mh), border_width, border_radius=8
-    )
+    # border_color / border_width retained for call-site compatibility; the
+    # themed panel supplies its own border.
+    render_panel(screen, pygame.Rect(mx, my, mw, mh), active=True)
 
 
 def draw_shop_header(
@@ -65,9 +65,7 @@ def draw_shop_header(
         gp_s, (mx + mw - gp_s.get_width() - pad, my + (HEADER_H - gp_s.get_height()) // 2)
     )
 
-    pygame.draw.line(
-        screen, C_DIVIDER, (mx + 10, my + HEADER_H), (mx + mw - 10, my + HEADER_H)
-    )
+    draw_divider(screen, mx + 10, my + HEADER_H, mw - 20)
 
 
 def draw_footer(
@@ -79,7 +77,7 @@ def draw_footer(
     hint_text: str,
     font_hint: pygame.font.Font,
 ) -> None:
-    pygame.draw.line(screen, C_DIVIDER, (mx + 10, y), (mx + mw - 10, y))
+    draw_divider(screen, mx + 10, y, mw - 20)
     hint = font_hint.render(hint_text, True, C_HINT)
     screen.blit(hint, (mx + pad, y + 8))
 
@@ -93,14 +91,11 @@ def draw_popup(
     font_toast: pygame.font.Font,
     font_hint: pygame.font.Font,
 ) -> None:
-    ph = 80
-    px = (screen.get_width() - popup_w) // 2
-    py = (screen.get_height() - ph) // 2
-    pygame.draw.rect(screen, C_BG, (px, py, popup_w, ph), border_radius=6)
-    pygame.draw.rect(screen, border_color, (px, py, popup_w, ph), 2, border_radius=6)
+    ph = 88
+    modal = render_modal(screen, popup_w, ph)
     msg = font_toast.render(message, True, msg_color)
-    screen.blit(msg, (px + (popup_w - msg.get_width()) // 2, py + 14))
-    hint = font_hint.render("ENTER / ESC  close", True, C_HINT)
-    screen.blit(hint, (px + (popup_w - hint.get_width()) // 2, py + ph - 28))
+    screen.blit(msg, (modal.x + (popup_w - msg.get_width()) // 2, modal.y + 18))
+    hint = font_hint.render("ENTER / ESC  close", True, DIM)
+    screen.blit(hint, (modal.x + (popup_w - hint.get_width()) // 2, modal.bottom - 28))
 
 

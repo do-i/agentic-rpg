@@ -4,19 +4,28 @@
 
 from __future__ import annotations
 
-# ── Colors (shared across shops) ─────────────────────────────
-C_BG       = (18, 18, 35)
-C_TEXT     = (238, 238, 238)
-C_MUTED    = (130, 130, 140)
-C_DIM      = (80, 80, 90)
-C_GP       = (200, 185, 100)
-C_NORM_BDR = (55, 55, 78)
-C_ROW_BG   = (28, 28, 50)
-C_DIVIDER  = (50, 50, 70)
-C_HINT     = (100, 100, 115)
-C_WARN     = (220, 100, 80)
-C_TOAST    = (100, 220, 130)
-C_LOCKED   = (90, 90, 100)
+from engine.common.field_menu_theme import (
+    BORDER,
+    DIM,
+    EMBER,
+    GOLD,
+    INK,
+    MUTED,
+)
+
+# ── Colors (shared across shops — field-menu theme) ──────────
+C_BG       = (16, 16, 20)
+C_TEXT     = INK
+C_MUTED    = MUTED
+C_DIM      = DIM
+C_GP       = GOLD
+C_NORM_BDR = BORDER
+C_ROW_BG   = (30, 30, 38)
+C_DIVIDER  = BORDER
+C_HINT     = DIM
+C_WARN     = EMBER
+C_TOAST    = (132, 196, 111)
+C_LOCKED   = DIM
 
 # ── Layout (shared across shops) ─────────────────────────────
 MODAL_W  = 560
