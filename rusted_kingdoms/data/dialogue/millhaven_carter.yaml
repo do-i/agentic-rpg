@@ -1,0 +1,16 @@
+# data/dialogue/millhaven_carter.yaml
+#
+# Flavor NPC: a cart driver who hauls flour to the other towns.
+id: millhaven_carter
+type: npc
+
+entries:
+  - condition:
+      requires: [story_act3_started]
+    lines:
+      - "Half my routes are cancelled. Nobody wants 'fragment flour' now the truth's out."
+      - "Honest river-milled bread, I tell them. They still won't load the cart."
+
+  - lines:
+      - "I run flour east to Ruinwatch and back. Heavy work, light pay."
+      - "Roads have been twitchy lately. Keep your blade loose past the plains."
