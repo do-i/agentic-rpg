@@ -180,6 +180,24 @@ def render_panel(
         screen.blit(label, (rect.x + 18, rect.y + 14))
 
 
+def render_row_frame(
+    screen: pygame.Surface,
+    rect: pygame.Rect,
+    *,
+    focused: bool,
+    dimmed_sel: bool = False,
+) -> None:
+    """Draw the themed row background (fill + border + focus highlight)."""
+    fill = ROW_ACTIVE if focused else ROW_DIMMED if dimmed_sel else ROW
+    border = BORDER_ACTIVE if focused else BORDER if dimmed_sel else (82, 70, 50)
+    row_surf = pygame.Surface(rect.size, pygame.SRCALPHA)
+    pygame.draw.rect(row_surf, fill, row_surf.get_rect(), border_radius=5)
+    pygame.draw.rect(row_surf, border, row_surf.get_rect().inflate(-1, -1), 1, border_radius=5)
+    if focused:
+        pygame.draw.rect(row_surf, (255, 217, 117, 36), (3, 3, rect.w - 6, rect.h - 6), border_radius=4)
+    screen.blit(row_surf, rect.topleft)
+
+
 def render_icon_row(
     screen: pygame.Surface,
     font: pygame.font.Font,
@@ -197,14 +215,7 @@ def render_icon_row(
     sub_font: pygame.font.Font | None = None,
     badge: str = "",
 ) -> None:
-    fill = ROW_ACTIVE if focused else ROW_DIMMED if dimmed_sel else ROW
-    border = BORDER_ACTIVE if focused else BORDER if dimmed_sel else (82, 70, 50)
-    row_surf = pygame.Surface(rect.size, pygame.SRCALPHA)
-    pygame.draw.rect(row_surf, fill, row_surf.get_rect(), border_radius=5)
-    pygame.draw.rect(row_surf, border, row_surf.get_rect().inflate(-1, -1), 1, border_radius=5)
-    if focused:
-        pygame.draw.rect(row_surf, (255, 217, 117, 36), (3, 3, rect.w - 6, rect.h - 6), border_radius=4)
-    screen.blit(row_surf, rect.topleft)
+    render_row_frame(screen, rect, focused=focused, dimmed_sel=dimmed_sel)
 
     icon_size = min(36, rect.h - 10)
     icon = icon_surface(icon_key, icon_size, dimmed=not focused and color == DIM, image_path=image_path)
