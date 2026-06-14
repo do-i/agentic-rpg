@@ -2,8 +2,8 @@
 #
 # Draws the upper third of the battle screen: the floor strip, every active
 # enemy sprite + HP bar, and the targeting reticle when SELECT_TARGET is
-# active. Owns the KO-ghost cache (a 80-alpha copy of each enemy's idle
-# sprite) and shares a HitFlash helper with the party panel renderer.
+# active. Defeated enemies are hidden entirely. Shares a HitFlash helper
+# with the party panel renderer.
 
 from __future__ import annotations
 
@@ -54,9 +54,6 @@ class EnemyAreaRenderer:
         self._assets = assets
         self._screen_w = screen_w
         self._hit_flash = hit_flash
-        # Pre-baked KO ghost per enemy, invalidated when the source sprite
-        # identity changes.
-        self._ko_cache: dict[str, tuple[pygame.Surface, pygame.Surface]] = {}
 
     def draw(
         self,
@@ -80,6 +77,9 @@ class EnemyAreaRenderer:
         cy = ENEMY_AREA_H // 2 + 10
 
         for i, enemy in enumerate(enemies):
+            if enemy.is_ko:
+                # Defeated enemies are hidden entirely (sprite, HP bar, name).
+                continue
             ox, oy = offsets[i]
             self._draw_enemy(screen, enemy, cx + ox, cy + oy, i,
                              state, target_pool, target_sel, fx=fx)
@@ -95,9 +95,9 @@ class EnemyAreaRenderer:
         rx, ry = cx - w // 2, cy - h // 2
 
         shake_dx = fx.shake_offset(enemy) if fx else 0
-        attack = fx.attack_progress(enemy) if fx and not enemy.is_ko else None
+        attack = fx.attack_progress(enemy) if fx else None
         squash = 0
-        if not enemy.is_ko and attack is None:
+        if attack is None:
             phase = time.monotonic() * (2 * math.pi / SQUASH_PERIOD_SEC) + index * SQUASH_PHASE_OFFSET
             squash = round(SQUASH_MAX_PX * (0.5 - 0.5 * math.cos(phase)))
         sx, sy = rx + shake_dx, ry + squash
@@ -111,7 +111,7 @@ class EnemyAreaRenderer:
                                       anim_frame.get_width(), anim_frame.get_height(),
                                       fx, sprite=anim_frame)
             else:
-                img = self._ko_ghost(enemy.id, sprite) if enemy.is_ko else sprite
+                img = sprite
                 if squash > 0:
                     # Squash only the top portion of the sprite so the
                     # legs/feet stay pixel-exact; pygame.transform.scale on
@@ -131,8 +131,8 @@ class EnemyAreaRenderer:
                     self._hit_flash.apply(screen, enemy, sx, sy,
                                           img.get_width(), img.get_height(), fx, sprite=img)
         else:
-            base_col = (30, 30, 40) if enemy.is_ko else (42, 58, 90)
-            bdr_col  = (50, 50, 60) if enemy.is_ko else (74, 106, 154)
+            base_col = (42, 58, 90)
+            bdr_col  = (74, 106, 154)
             pygame.draw.rect(screen, base_col, (sx, sy, w, h), border_radius=4)
             pygame.draw.rect(screen, bdr_col,  (sx, sy, w, h), 1, border_radius=4)
             self._hit_flash.apply(screen, enemy, sx, sy, w, h, fx)
@@ -146,7 +146,7 @@ class EnemyAreaRenderer:
         pygame.draw.rect(screen, (42, 42, 42), (bar_x, bar_y, bar_w, bar_h), border_radius=3)
         hp_fill = int(bar_w * enemy.hp_pct)
         hp_col  = C_HP_OK if enemy.hp_pct > HP_LOW_THRESHOLD else C_HP_LOW
-        if hp_fill > 0 and not enemy.is_ko:
+        if hp_fill > 0:
             pygame.draw.rect(screen, hp_col, (bar_x, bar_y, hp_fill, bar_h), border_radius=3)
 
         name_surf = self._assets.font_enemy.render(enemy.name, True, (255, 255, 255))
@@ -177,13 +177,3 @@ class EnemyAreaRenderer:
             return None
         idx = min(len(frames) - 1, int(progress * len(frames)))
         return frames[idx]
-
-    def _ko_ghost(self, enemy_id: str, sprite: pygame.Surface) -> pygame.Surface:
-        """Return a 80-alpha copy of the sprite, baked once per (enemy, sprite)."""
-        cached = self._ko_cache.get(enemy_id)
-        if cached is not None and cached[0] is sprite:
-            return cached[1]
-        ghost = sprite.copy()
-        ghost.set_alpha(80)
-        self._ko_cache[enemy_id] = (sprite, ghost)
-        return ghost
