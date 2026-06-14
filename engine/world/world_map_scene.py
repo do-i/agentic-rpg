@@ -30,7 +30,6 @@ from engine.item.magic_core_catalog_state import MagicCoreCatalogState
 from engine.shop.apothecary_scene import ApothecaryScene
 from engine.shop.item_shop_scene import ItemShopScene
 from engine.shop.magic_core_shop_scene import MagicCoreShopScene
-from engine.title.save_modal_scene import SaveModalScene
 from engine.world.fade_controller import FadeController
 from engine.world.item_box import ItemBox
 from engine.world.item_box_loader import ItemBoxLoader
@@ -151,7 +150,6 @@ class WorldMapScene(Scene):
         self._visible_box_collision_rects: list = []
 
         self._overlays = WorldMapOverlays()
-        self._quit_confirm: bool = False
         self._fade = FadeController()
 
     def _refresh_visibility(self) -> None:
@@ -224,22 +222,9 @@ class WorldMapScene(Scene):
             active_overlay.handle_events(events)
             return
 
-        if self._quit_confirm:
-            for event in events:
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN:
-                        pygame.event.post(pygame.event.Event(pygame.QUIT))
-                    elif event.key == pygame.K_ESCAPE:
-                        self._quit_confirm = False
-            return
-
         for event in events:
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    self._quit_confirm = True
-                elif event.key == pygame.K_F2:
-                    self._open_save_modal()
-                elif event.key == pygame.K_s:
+                if event.key == pygame.K_s:
                     self._scene_manager.switch(self._registry.get("status"))
                 elif event.key == pygame.K_RETURN:
                     self._try_interact()
@@ -252,19 +237,6 @@ class WorldMapScene(Scene):
         state = self._holder.get()
         state.map.set_position(self._player.tile_position)
         self._scene_manager.switch(self._registry.get("field_menu"))
-
-    def _open_save_modal(self) -> None:
-        state = self._holder.get()
-        state.map.set_position(self._player.tile_position)
-        self._overlays.save_modal = SaveModalScene(
-            game_state_manager=self._game_state_manager,
-            state=self._holder.get(),
-            on_close=self._close_save_modal,
-            sfx_manager=self._sfx_manager,
-        )
-
-    def _close_save_modal(self) -> None:
-        self._overlays.save_modal = None
 
     def _try_interact(self) -> None:
         state = self._holder.get()
@@ -484,8 +456,6 @@ class WorldMapScene(Scene):
         if active_overlay is not None:
             active_overlay.update(delta)
             return
-        if self._quit_confirm:
-            return
 
         # Deactivate the enemy that triggered the last battle (first tick after returning).
         if self._engaged_enemy is not None:
@@ -571,7 +541,6 @@ class WorldMapScene(Scene):
             self._overlays.render_list(),
             self._overlays.dialogue,
             self._fade.alpha,
-            self._quit_confirm,
             item_boxes=visible_boxes,
             box_opened=box_opened,
             debug_collision=self._debug_collision,

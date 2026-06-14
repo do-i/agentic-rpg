@@ -1,32 +1,53 @@
-# engine/scenes/post_battle_scene.py
+# engine/battle/post_battle_scene.py
 #
-# Phase 4 — Battle system
+# Victory / spoils screen shown after a won battle. Restyled to match the
+# field-menu screens (Status / Equip / Spell): themed backdrop, accent header,
+# bordered panels, and the shared INK/GOLD/MUTED palette via field_menu_theme.
+#
+# Layout:
+#   Header              — "VICTORY" + total EXP earned subtitle.
+#   Party panel (left)  — one growth card per member: portrait, name/level,
+#                         EXP share, and a LEVEL UP badge with HP/MP gains.
+#   Spoils panel (right)— GP, magic cores, and item drops.
+#
+# The EXP "tally" animates on entry; pressing confirm skips it, then a second
+# press continues to the world map (behaviour unchanged from before).
 
 from __future__ import annotations
 
 import pygame
+
 from engine.common.scene.scene import Scene
 from engine.common.font_provider import get_fonts
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
-from engine.battle.battle_rewards import BattleRewards, LevelUpResult
-from engine.common.color_constants import C_BG, C_TEXT, C_TEXT_DIM as C_DIM, C_TEXT_MUT as C_MUTED
+from engine.battle.battle_rewards import BattleRewards
+from engine.common.color_constants import C_TEXT_DIM
+from engine.common.field_menu_theme import (
+    DIM,
+    GOLD,
+    INK,
+    MUTED,
+    TEAL,
+    VIOLET,
+    draw_divider,
+    fit_text,
+    icon_surface,
+    member_icon_path,
+    render_backdrop,
+    render_header,
+    render_icon_row,
+    render_panel,
+    render_row_frame,
+)
 
-# ── Colors ────────────────────────────────────────────────────
-C_HEADER      = (212, 200, 138)
-C_EXP         = (106, 138, 238)
-C_LEVELUP     = (255, 220,  80)
-C_HP_GAIN     = (100, 220, 100)
-C_MP_GAIN     = (100, 160, 255)
-C_MC          = (180, 160, 100)
-C_ITEM        = (160, 220, 160)
-C_DIVIDER     = (51,  51,  68)
-C_ROW_BG      = (26,  26,  46)
-C_ROW_LVUP_BG = (40,  36,  10)
-C_HINT        = (102, 102, 120)
+PAD_X = 40
+PAD_Y = 30
+GAP = 18
+LOOT_ROW_H = 54
 
-PAD   = 32
-ROW_H = 52
+HP_GAIN = (132, 196, 111)
+MP_GAIN = TEAL
 
 
 class PostBattleScene(Scene):
@@ -50,7 +71,7 @@ class PostBattleScene(Scene):
         self._sfx_manager = sfx_manager
         self._fonts_ready = False
 
-        # animate EXP bar filling
+        # animate the EXP tally on entry
         self._exp_fill: float = 0.0      # 0.0 → 1.0
         self._exp_done: bool = False
         self._ready_to_exit: bool = False
@@ -59,12 +80,13 @@ class PostBattleScene(Scene):
 
     def _init_fonts(self) -> None:
         f = get_fonts()
-        self._font_title  = f.get(22, bold=True)
-        self._font_name   = f.get(16, bold=True)
-        self._font_stat   = f.get(14)
-        self._font_lvup   = f.get(15, bold=True)
-        self._font_loot   = f.get(14)
-        self._font_hint   = f.get(14)
+        self._font_title = f.get(24, bold=True)
+        self._font_head  = f.get(18, bold=True)
+        self._font_row   = f.get(18)
+        self._font_stat  = f.get(16)
+        self._font_meta  = f.get(14)
+        self._font_hint  = f.get(14)
+        self._font_small = f.get(13)
         self._fonts_ready = True
 
     # ── Events ────────────────────────────────────────────────
@@ -99,93 +121,177 @@ class PostBattleScene(Scene):
         if not self._fonts_ready:
             self._init_fonts()
 
-        screen.fill(C_BG)
-        cx = screen.get_width() // 2
-        y = PAD
+        render_backdrop(screen)
+        total = int(round(self._rewards.total_exp * self._exp_fill))
+        render_header(
+            screen, self._font_title, self._font_hint,
+            "VICTORY", f"{total} EXP earned", PAD_X, PAD_Y,
+        )
 
-        # ── Header ───────────────────────────────────────────
-        title = self._font_title.render("Victory!", True, C_LEVELUP)
-        screen.blit(title, (cx - title.get_width() // 2, y))
-        y += title.get_height() + 8
+        party_rect, spoils_rect = self._layout(screen)
+        render_panel(screen, party_rect, active=True,
+                     title="Party", title_font=self._font_head)
+        self._render_party(screen, party_rect)
 
-        exp_s = self._font_stat.render(
-            f"EXP gained:  {self._rewards.total_exp}", True, C_EXP)
-        screen.blit(exp_s, (cx - exp_s.get_width() // 2, y))
-        y += exp_s.get_height() + 16
+        render_panel(screen, spoils_rect, active=False,
+                     title="Spoils", title_font=self._font_head)
+        self._render_spoils(screen, spoils_rect)
 
-        pygame.draw.line(screen, C_DIVIDER, (PAD, y), (screen.get_width() - PAD, y))
-        y += 12
+        self._render_hint(screen)
 
-        # ── Member rows ───────────────────────────────────────
-        for result in self._rewards.member_results:
-            has_lvup = bool(result.level_ups)
-            row_bg = C_ROW_LVUP_BG if has_lvup else C_ROW_BG
-            pygame.draw.rect(screen, row_bg,
-                             (PAD, y, screen.get_width() - PAD * 2, ROW_H),
-                             border_radius=4)
+    def _layout(self, screen: pygame.Surface) -> tuple[pygame.Rect, pygame.Rect]:
+        sw, sh = screen.get_size()
+        top = PAD_Y + 92
+        panel_h = max(360, sh - top - 62)
+        available = sw - PAD_X * 2 - GAP
+        spoils_w = min(360, max(300, int(sw * 0.30)))
+        party_w = available - spoils_w
+        party_rect = pygame.Rect(PAD_X, top, party_w, panel_h)
+        spoils_rect = pygame.Rect(party_rect.right + GAP, top, spoils_w, panel_h)
+        return party_rect, spoils_rect
 
-            # name
-            ko_tag = "  [KO]" if result.exp_gained == 0 else ""
-            name_col = C_DIM if result.exp_gained == 0 else C_TEXT
-            ns = self._font_name.render(result.member_name + ko_tag, True, name_col)
-            screen.blit(ns, (PAD + 12, y + 8))
+    # ── Party growth cards ────────────────────────────────────
 
-            # EXP share
-            exp_col = C_DIM if result.exp_gained == 0 else C_EXP
-            es = self._font_stat.render(
-                f"+{result.exp_gained} EXP" if result.exp_gained else "-",
-                True, exp_col)
-            screen.blit(es, (PAD + 220, y + 10))
+    def _render_party(self, screen: pygame.Surface, panel: pygame.Rect) -> None:
+        results = self._rewards.member_results
+        x = panel.x + 16
+        top = panel.y + 52
+        w = panel.w - 32
+        if not results:
+            screen.blit(self._font_row.render("No survivors.", True, DIM), (x, top))
+            return
 
-            # level-up badge
-            if has_lvup:
-                lu = result.level_ups[-1]
-                lv_s = self._font_lvup.render(
-                    f"LEVEL UP!  {lu.old_level}  {lu.new_level}", True, C_LEVELUP)
-                screen.blit(lv_s, (PAD + 360, y + 6))
+        n = len(results)
+        gap = 14
+        avail = (panel.bottom - 16) - top
+        row_h = min(118, (avail - gap * (n - 1)) // n)
+        portrait = min(row_h - 16, 92)
 
-                gain_s = self._font_stat.render(
-                    f"HP +{lu.hp_gained}   MP +{lu.mp_gained}", True, C_HP_GAIN)
-                screen.blit(gain_s, (PAD + 360, y + 28))
+        for i, result in enumerate(results):
+            row = pygame.Rect(x, top + i * (row_h + gap), w, row_h)
+            self._render_growth_card(screen, row, result, portrait)
 
-            y += ROW_H + 4
+    def _render_growth_card(
+        self, screen: pygame.Surface, rect: pygame.Rect, result, portrait: int,
+    ) -> None:
+        leveled = bool(result.level_ups)
+        ko = result.exp_gained == 0
+        render_row_frame(screen, rect, focused=leveled, dimmed_sel=False)
 
-        y += 8
-        pygame.draw.line(screen, C_DIVIDER, (PAD, y), (screen.get_width() - PAD, y))
-        y += 14
+        icon = icon_surface(
+            f"member_{result.member_id}", portrait,
+            dimmed=ko, image_path=member_icon_path(result.member_id),
+        )
+        screen.blit(icon, (rect.x + 12, rect.y + (rect.h - portrait) // 2))
 
-        # ── Loot ─────────────────────────────────────────────
+        tx = rect.x + 24 + portrait
+        max_w = rect.right - tx - 14
+        name_col = DIM if ko else INK
+        name = fit_text(
+            self._font_head,
+            result.member_name + ("  [KO]" if ko else ""),
+            name_col, max_w,
+        )
+
+        # animated EXP share
+        shown = int(round(result.exp_gained * self._exp_fill))
+        exp_txt = f"+{shown} EXP" if result.exp_gained else "-"
+        exp = self._font_meta.render(exp_txt, True, DIM if ko else MUTED)
+
+        if leveled:
+            lu = result.level_ups[-1]
+            lvl = fit_text(
+                self._font_row, f"LEVEL UP   {lu.old_level} → {lu.new_level}",
+                GOLD, max_w,
+            )
+            gains = self._render_gains(lu)
+            line_gap = 6
+            block_h = (name.get_height() + line_gap + lvl.get_height()
+                       + line_gap + gains.get_height() + line_gap + exp.get_height())
+            ty = rect.y + (rect.h - block_h) // 2
+            screen.blit(name, (tx, ty)); ty += name.get_height() + line_gap
+            screen.blit(lvl, (tx, ty)); ty += lvl.get_height() + line_gap
+            screen.blit(gains, (tx, ty)); ty += gains.get_height() + line_gap
+            screen.blit(exp, (tx, ty))
+        else:
+            line_gap = 8
+            block_h = name.get_height() + line_gap + exp.get_height()
+            ty = rect.y + (rect.h - block_h) // 2
+            screen.blit(name, (tx, ty)); ty += name.get_height() + line_gap
+            screen.blit(exp, (tx, ty))
+
+    def _render_gains(self, lu) -> pygame.Surface:
+        """Render the HP/MP/stat gains for a level-up onto one surface."""
+        parts = [
+            (f"HP +{lu.hp_gained}", HP_GAIN),
+            (f"MP +{lu.mp_gained}", MP_GAIN),
+        ]
+        for label, val in (
+            ("STR", lu.str_gained), ("DEX", lu.dex_gained),
+            ("CON", lu.con_gained), ("INT", lu.int_gained),
+        ):
+            if val:
+                parts.append((f"{label} +{val}", VIOLET))
+
+        gap = 16
+        surfs = [(self._font_meta.render(t, True, c), c) for t, c in parts]
+        width = sum(s.get_width() for s, _ in surfs) + gap * (len(surfs) - 1)
+        height = max(s.get_height() for s, _ in surfs)
+        out = pygame.Surface((max(1, width), height), pygame.SRCALPHA)
+        cx = 0
+        for s, _ in surfs:
+            out.blit(s, (cx, 0))
+            cx += s.get_width() + gap
+        return out
+
+    # ── Spoils ────────────────────────────────────────────────
+
+    def _render_spoils(self, screen: pygame.Surface, panel: pygame.Rect) -> None:
         loot = self._rewards.loot
-        loot_title = self._font_name.render("Loot", True, C_HEADER)
-        screen.blit(loot_title, (PAD + 12, y))
-        y += loot_title.get_height() + 8
+        x = panel.x + 16
+        y = panel.y + 52
+        w = panel.w - 32
 
-        if loot.mc_drops:
-            for mc in loot.mc_drops:
-                mc_s = self._font_loot.render(
-                    f"  Magic Core ({mc['size']})  x{mc['qty']}", True, C_MC)
-                screen.blit(mc_s, (PAD + 12, y))
-                y += mc_s.get_height() + 4
+        if loot.gp_gained:
+            screen.blit(self._font_stat.render("GP", True, MUTED), (x, y))
+            gp = self._font_stat.render(f"+{loot.gp_gained}", True, GOLD)
+            screen.blit(gp, (panel.right - 16 - gp.get_width(), y))
+            y += self._font_stat.get_height() + 8
+            draw_divider(screen, x, y, w)
+            y += 12
 
-        if loot.item_drops:
-            for item in loot.item_drops:
-                it_s = self._font_loot.render(
-                    f"  {item['name']}  x{item.get('qty', 1)}", True, C_ITEM)
-                screen.blit(it_s, (PAD + 12, y))
-                y += it_s.get_height() + 4
+        rows: list[tuple[str, str, str]] = []
+        for mc in loot.mc_drops:
+            rows.append((f"mc_{mc['size']}", f"Magic Core ({mc['size']})", f"x{mc['qty']}"))
+        for item in loot.item_drops:
+            rows.append((f"item_{item.get('id', item['name'])}",
+                         item["name"], f"x{item.get('qty', 1)}"))
 
-        if not loot.mc_drops and not loot.item_drops:
-            none_s = self._font_loot.render("  -", True, C_DIM)
-            screen.blit(none_s, (PAD + 12, y))
+        if not rows:
+            screen.blit(self._font_row.render("No loot.", True, DIM), (x, y))
+            return
 
-        # ── Continue hint ─────────────────────────────────────
-        if self._ready_to_exit:
-            hint = self._font_hint.render(
-                "SPACE / ENTER  to continue", True, C_HINT)
-            hx = cx - hint.get_width() // 2
-            hy = screen.get_height() - PAD - hint.get_height()
-            # subtle pulse using tick
-            alpha = 128 + int(127 * abs(
-                (pygame.time.get_ticks() % 1000) / 500.0 - 1.0))
-            hint.set_alpha(alpha)
-            screen.blit(hint, (hx, hy))
+        for icon_key, label, qty in rows:
+            rect = pygame.Rect(x, y, w, LOOT_ROW_H)
+            render_icon_row(
+                screen, self._font_row, rect, label,
+                icon_key=icon_key,
+                focused=False,
+                dimmed_sel=False,
+                color=INK,
+                right_text=qty,
+                right_font=self._font_meta,
+            )
+            y += LOOT_ROW_H + 8
+
+    # ── Hint ──────────────────────────────────────────────────
+
+    def _render_hint(self, screen: pygame.Surface) -> None:
+        sw, sh = screen.get_size()
+        if not self._ready_to_exit:
+            return
+        text = "SPACE / ENTER  continue"
+        hint = self._font_hint.render(text, True, C_TEXT_DIM)
+        alpha = 128 + int(127 * abs((pygame.time.get_ticks() % 1000) / 500.0 - 1.0))
+        hint.set_alpha(alpha)
+        screen.blit(hint, ((sw - hint.get_width()) // 2, sh - 30))

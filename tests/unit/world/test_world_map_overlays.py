@@ -21,19 +21,18 @@ class TestActive:
 
     def test_dialogue_takes_priority_over_other_overlays(self):
         o = WorldMapOverlays()
-        o.save_modal = _StubOverlay("save")
         o.inn = _StubOverlay("inn")
         o.dialogue = _StubOverlay("dialogue")
         assert o.active is o.dialogue
 
-    def test_save_modal_picked_when_no_dialogue(self):
+    def test_mc_shop_picked_when_no_dialogue(self):
         o = WorldMapOverlays()
-        o.save_modal = _StubOverlay("save")
         o.mc_shop = _StubOverlay("mc")
-        assert o.active is o.save_modal
+        o.inn = _StubOverlay("inn")
+        assert o.active is o.mc_shop
 
     def test_priority_chain_after_dialogue(self):
-        order = ["save_modal", "mc_shop", "inn", "item_shop", "apothecary", "item_box_modal"]
+        order = ["mc_shop", "inn", "item_shop", "apothecary", "item_box_modal"]
         for keep in order:
             o = WorldMapOverlays()
             for name in order:
@@ -67,7 +66,6 @@ class TestRenderList:
 
     def test_render_order_preserves_back_to_front(self):
         o = WorldMapOverlays()
-        o.save_modal = _StubOverlay("save")
         o.dialogue = _StubOverlay("dialogue")
         o.mc_shop = _StubOverlay("mc")
         o.inn = _StubOverlay("inn")
@@ -76,7 +74,6 @@ class TestRenderList:
         o.item_box_modal = _StubOverlay("box")
         rendered = o.render_list()
         assert rendered == [
-            o.save_modal,
             o.dialogue,
             o.mc_shop,
             o.inn,
@@ -89,7 +86,6 @@ class TestRenderList:
 class TestReset:
     def test_clears_every_slot(self):
         o = WorldMapOverlays()
-        o.save_modal = _StubOverlay("save")
         o.dialogue = _StubOverlay("dialogue")
         o.mc_shop = _StubOverlay("mc")
         o.inn = _StubOverlay("inn")

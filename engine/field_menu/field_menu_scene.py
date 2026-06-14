@@ -1,7 +1,7 @@
 # engine/field_menu/field_menu_scene.py
 #
 # Pause / field menu — opened from the world map (M key).
-# Lists party-wide actions: Items, Status, Equipment, Spells, Save.
+# Lists party-wide actions: Items, Status, Equipment, Spells, Save, Quit.
 # The entry list is the single source of truth so new entries
 # (Recipe Book, Transport) only need appending.
 
@@ -80,9 +80,11 @@ class FieldMenuScene(MenuSfxMixin, Scene):
             MenuEntry("Equipment", KIND_SCENE_SWITCH, "equip",  "blade",   "tune gear and compare stats"),
             MenuEntry("Spells",    KIND_SCENE_SWITCH, "spells", "sigil",   "cast field magic and utilities"),
             MenuEntry("Save",      KIND_OVERLAY,      "save",   "seal",    "record the current journey"),
+            MenuEntry("Quit",      KIND_OVERLAY,      "quit",   "quit",    "exit the game to desktop"),
         ]
         self._selected = 0
         self._save_modal: SaveModalScene | None = None
+        self._quit_confirm: bool = False
         self._fonts_ready = False
 
     # ── Fonts ─────────────────────────────────────────────────
@@ -101,6 +103,18 @@ class FieldMenuScene(MenuSfxMixin, Scene):
     def handle_events(self, events: list[pygame.event.Event]) -> None:
         if self._save_modal:
             self._save_modal.handle_events(events)
+            return
+
+        if self._quit_confirm:
+            for event in events:
+                if event.type != pygame.KEYDOWN:
+                    continue
+                if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    self._play("confirm")
+                    pygame.event.post(pygame.event.Event(pygame.QUIT))
+                elif event.key == pygame.K_ESCAPE:
+                    self._play("cancel")
+                    self._quit_confirm = False
             return
 
         for event in events:
@@ -133,6 +147,8 @@ class FieldMenuScene(MenuSfxMixin, Scene):
             self._scene_manager.switch(scene)
         elif entry.kind == KIND_OVERLAY and entry.target == "save":
             self._open_save_modal()
+        elif entry.kind == KIND_OVERLAY and entry.target == "quit":
+            self._quit_confirm = True
 
     def _open_save_modal(self) -> None:
         self._save_modal = SaveModalScene(
@@ -180,6 +196,27 @@ class FieldMenuScene(MenuSfxMixin, Scene):
 
         if self._save_modal:
             self._save_modal.render(screen)
+
+        if self._quit_confirm:
+            self._render_quit_confirm(screen)
+
+    def _render_quit_confirm(self, screen: pygame.Surface) -> None:
+        sw, sh = screen.get_size()
+        dim = pygame.Surface((sw, sh), pygame.SRCALPHA)
+        dim.fill((0, 0, 0, 160))
+        screen.blit(dim, (0, 0))
+
+        w, h = 320, 110
+        x = (sw - w) // 2
+        y = (sh - h) // 2
+        pygame.draw.rect(screen, (20, 20, 45), (x, y, w, h))
+        pygame.draw.rect(screen, (160, 160, 100), (x, y, w, h), 2)
+
+        title = self._font_entry.render("Quit Game?", True, (220, 220, 180))
+        screen.blit(title, (x + w // 2 - title.get_width() // 2, y + 18))
+
+        hint = self._font_hint.render("ENTER  confirm       ESC  cancel", True, (160, 160, 120))
+        screen.blit(hint, (x + w // 2 - hint.get_width() // 2, y + 68))
 
     def _render_commands(self, screen: pygame.Surface, panel: pygame.Rect) -> None:
         x = panel.x + 18

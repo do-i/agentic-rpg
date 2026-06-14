@@ -55,7 +55,7 @@ class TestEntries:
     def test_entry_list_has_expected_order(self):
         scene, *_ = make_scene()
         labels = [e.label for e in scene._entries]
-        assert labels == ["Items", "Status", "Equipment", "Spells", "Save"]
+        assert labels == ["Items", "Status", "Equipment", "Spells", "Save", "Quit"]
 
     def test_items_status_equipment_spells_dispatch_by_scene_switch(self):
         scene, *_ = make_scene()
@@ -69,6 +69,11 @@ class TestEntries:
         scene, *_ = make_scene()
         kinds = {e.label: e.kind for e in scene._entries}
         assert kinds["Save"] == KIND_OVERLAY
+
+    def test_quit_is_overlay(self):
+        scene, *_ = make_scene()
+        kinds = {e.label: e.kind for e in scene._entries}
+        assert kinds["Quit"] == KIND_OVERLAY
 
 
 class TestNavigation:
@@ -172,6 +177,36 @@ class TestSelect:
         assert scene._save_modal is not None
         scene._close_save_modal()
         assert scene._save_modal is None
+
+
+class TestQuit:
+    def test_quit_opens_confirm(self):
+        scene, *_ = make_scene()
+        scene._selected = 5   # Quit
+        scene.handle_events(_key(pygame.K_RETURN))
+        assert scene._quit_confirm is True
+
+    def test_confirm_escape_cancels(self):
+        scene, *_ = make_scene()
+        scene._selected = 5
+        scene.handle_events(_key(pygame.K_RETURN))
+        scene.handle_events(_key(pygame.K_ESCAPE))
+        assert scene._quit_confirm is False
+
+    def test_confirm_enter_posts_quit_event(self):
+        scene, *_ = make_scene()
+        scene._selected = 5
+        scene.handle_events(_key(pygame.K_RETURN))
+        pygame.event.clear()
+        scene.handle_events(_key(pygame.K_RETURN))
+        assert any(e.type == pygame.QUIT for e in pygame.event.get())
+
+    def test_confirm_render_does_not_crash(self):
+        scene, *_ = make_scene()
+        scene._selected = 5
+        scene.handle_events(_key(pygame.K_RETURN))
+        screen = pygame.Surface((1280, 720))
+        scene.render(screen)   # must not raise
 
 
 class TestRender:
