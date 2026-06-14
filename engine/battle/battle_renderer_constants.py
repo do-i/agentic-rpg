@@ -12,6 +12,20 @@ PORTRAIT_SIZE = 36
 ROW_PAD       = 8
 BAR_H         = 6
 
+# Bottom-panel party cards (restyled to match the field-menu UI). Portraits
+# render at the same 100px the equipment/menu screens use and are never shrunk;
+# members lay out left-to-right, one card per column.
+CARD_PORTRAIT = 100
+CARD_GAP      = 10   # horizontal gap between member cards
+INNER_PAD     = 16   # panel content inset
+PANEL_MARGIN  = 8    # gap from screen edge to the bottom panels
+PANEL_GAP     = 8    # gap between party / command / message panels
+
+# HP/MP bar fills for the party cards (themed to match the menu palette).
+C_HP_BAR     = (132, 196, 111)
+C_HP_BAR_LOW = (204,  84,  84)
+C_MP_BAR     = (67,  166, 160)
+
 # ── Status effect badge colors ────────────────────────────────
 STATUS_COLORS = {
     StatusEffect.POISON:    ((51, 102, 51),  (170, 255, 170), "PSN"),

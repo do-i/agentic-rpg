@@ -1,154 +1,153 @@
 # engine/battle/battle_party_panel_renderer.py
 #
-# Draws the bottom-left party roster: one row per party member with portrait,
-# name, HP/MP bars, status badge, and KO scrim. Uses the same HitFlash helper
-# as the enemy-area renderer.
+# Draws the bottom-left party roster. Each member is a vertical card laid out
+# left-to-right: a 100x100 framed portrait (identical to the field-menu /
+# equipment screens) over the name and HP/MP bars. Styling comes from
+# field_menu_theme so the bottom of the battle screen matches the menu UI.
 
 from __future__ import annotations
 
 import pygame
 
-from engine.battle.battle_asset_cache import BattleAssetCache
 from engine.battle.battle_fx import BattleFx
 from engine.battle.battle_hit_flash import HitFlash
 from engine.battle.battle_state import BattleState, BattlePhase
 from engine.battle.combatant import Combatant
-from engine.battle.constants import ENEMY_AREA_H, ROW_H
 from engine.battle.battle_renderer_constants import (
-    BAR_H, PORTRAIT_SIZE, ROW_PAD, STATUS_COLORS,
-    C_BORDER_ACT, C_BORDER_NORM,
-    C_HP_LABEL_LOW, C_HP_LABEL_OK, C_HP_LOW, C_HP_OK,
-    C_MP, C_MP_LABEL,
-    C_ROW_ACTIVE, C_ROW_NORMAL,
+    CARD_GAP, CARD_PORTRAIT, INNER_PAD, STATUS_COLORS,
+    C_HP_BAR, C_HP_BAR_LOW, C_MP_BAR,
 )
-from engine.common.color_constants import C_TEXT, C_TEXT_MUT, C_TEXT_DIM, HP_LOW_THRESHOLD
+from engine.common.color_constants import HP_LOW_THRESHOLD
+from engine.common.font_provider import get_fonts
+from engine.common.field_menu_theme import (
+    DIM, INK,
+    draw_stat_bar, fit_text, icon_surface, member_icon_path, render_row_frame,
+)
+
+C_TARGET = (204, 170, 255)
+CARD_PAD = 4   # horizontal breathing room either side of the 100px portrait
+BAR_H    = 18
 
 
 class PartyPanelRenderer:
-    def __init__(
-        self,
-        assets: BattleAssetCache,
-        party_w: int,
-        hit_flash: HitFlash,
-    ) -> None:
-        self._assets = assets
-        self._party_w = party_w
+    """Bottom-left party roster as left-to-right portrait cards."""
+
+    def __init__(self, hit_flash: HitFlash) -> None:
         self._hit_flash = hit_flash
+        self._fonts_ready = False
+
+    def _init_fonts(self) -> None:
+        f = get_fonts()
+        self._font_name  = f.get(18, bold=True)
+        self._font_bar   = f.get(14)
+        self._font_badge = f.get(11, bold=True)
+        self._fonts_ready = True
 
     def draw(
         self,
         screen: pygame.Surface,
+        panel: pygame.Rect,
         state: BattleState,
         target_pool: list[Combatant],
         target_sel: int,
         fx: BattleFx | None,
     ) -> None:
-        panel_y = ENEMY_AREA_H + 8
-        for i, member in enumerate(state.party):
-            self._draw_row(screen, member, panel_y + i * (ROW_H + 2),
-                           state, target_pool, target_sel, fx=fx)
+        if not self._fonts_ready:
+            self._init_fonts()
+        members = state.party
+        if not members:
+            return
 
-    def _draw_row(
-        self, screen: pygame.Surface,
-        member: Combatant, y: int,
-        state: BattleState,
+        content_x = panel.x + INNER_PAD
+        content_top = panel.y + 44
+        avail_h = (panel.bottom - 14) - content_top
+        card_w = CARD_PORTRAIT + CARD_PAD * 2
+        card_h = min(avail_h, 196)
+        card_y = content_top + (avail_h - card_h) // 2
+
+        for i, member in enumerate(members):
+            card = pygame.Rect(
+                content_x + i * (card_w + CARD_GAP), card_y, card_w, card_h,
+            )
+            self._draw_card(screen, card, member, state,
+                            target_pool, target_sel, fx)
+
+    def _draw_card(
+        self, screen: pygame.Surface, card: pygame.Rect,
+        member: Combatant, state: BattleState,
         target_pool: list[Combatant], target_sel: int,
         fx: BattleFx | None,
     ) -> None:
-        active    = state.active
+        active = state.active
         is_active = active is not None and active is member and not member.is_enemy
         is_target = (state.phase == BattlePhase.SELECT_TARGET
                      and target_pool
                      and target_sel < len(target_pool)
                      and target_pool[target_sel] is member)
-        bg  = C_ROW_ACTIVE if is_active else C_ROW_NORMAL
-        bdr = C_BORDER_ACT if is_active else C_BORDER_NORM
 
-        rx, rw = ROW_PAD, self._party_w - ROW_PAD * 2
-        pygame.draw.rect(screen, bg,  (rx, y, rw, ROW_H - 2), border_radius=4)
-        bdr_w = 2 if is_active else 1
-        pygame.draw.rect(screen, bdr, (rx, y, rw, ROW_H - 2), bdr_w, border_radius=4)
+        render_row_frame(screen, card, focused=is_active, dimmed_sel=False)
         if is_target:
-            pygame.draw.rect(screen, (204, 170, 255),
-                             (rx - 2, y - 2, rw + 4, ROW_H + 2), 2, border_radius=5)
+            pygame.draw.rect(screen, C_TARGET, card.inflate(4, 4), 2, border_radius=6)
 
-        px = rx + 6
-        py = y + (ROW_H - 2 - PORTRAIT_SIZE) // 2
+        # ── Portrait (100x100, framed exactly like the menu) ──────────
+        px = card.x + CARD_PAD
+        py = card.y + CARD_PAD + 2
         shake_dx = fx.shake_offset(member) if fx else 0
         ppx = px + shake_dx
-        img = self._assets.load_portrait(member.id)
-        if img:
-            screen.blit(img, (ppx, py))
-        else:
-            col = (58, 42, 42) if is_active else (42, 42, 58)
-            pygame.draw.rect(screen, col, (ppx, py, PORTRAIT_SIZE, PORTRAIT_SIZE), border_radius=3)
-            init = "".join(w[0].upper() for w in member.name.split()[:2])
-            s = self._assets.font_badge.render(init, True, C_TEXT_MUT)
-            screen.blit(s, (ppx + PORTRAIT_SIZE // 2 - s.get_width() // 2,
-                             py + PORTRAIT_SIZE // 2 - s.get_height() // 2))
+        portrait = icon_surface(
+            f"member_{member.id}", CARD_PORTRAIT,
+            dimmed=member.is_ko, image_path=member_icon_path(member.id),
+        )
+        screen.blit(portrait, (ppx, py))
         self._hit_flash.apply(screen, member, ppx, py,
-                              PORTRAIT_SIZE, PORTRAIT_SIZE, fx, sprite=img)
-
-        if member.status_effects:
-            effect = member.status_effects[0].effect
-            if effect in STATUS_COLORS:
-                bg_col, text_col, label = STATUS_COLORS[effect]
-                bs = self._assets.font_badge.render(label, True, text_col)
-                bx = px + PORTRAIT_SIZE - bs.get_width() - 2
-                pygame.draw.rect(screen, bg_col,
-                                 (bx - 3, py - 7, bs.get_width() + 6, bs.get_height() + 2),
-                                 border_radius=2)
-                screen.blit(bs, (bx, py - 6))
-
+                              CARD_PORTRAIT, CARD_PORTRAIT, fx, sprite=portrait)
         if member.is_ko:
-            ko_surf = pygame.Surface((PORTRAIT_SIZE, PORTRAIT_SIZE), pygame.SRCALPHA)
-            ko_surf.fill((0, 0, 0, 160))
-            screen.blit(ko_surf, (px, py))
+            ko = pygame.Surface((CARD_PORTRAIT, CARD_PORTRAIT), pygame.SRCALPHA)
+            ko.fill((0, 0, 0, 150))
+            screen.blit(ko, (px, py))
 
-        sx = px + PORTRAIT_SIZE + 8
-        sw = rw - PORTRAIT_SIZE - 20
-        bar_h = BAR_H * 2 + 4
-        bar_gap = 6
-        bar_y = y + 22
+        self._draw_status_badge(screen, member, px, py)
 
-        name_col = C_TEXT if not member.is_ko else C_TEXT_DIM
-        screen.blit(self._assets.font_name.render(member.name, True, name_col), (sx, y + 4))
+        # ── Name ──────────────────────────────────────────────────────
+        name_col = DIM if member.is_ko else INK
+        name = fit_text(self._font_name, member.name, name_col, CARD_PORTRAIT)
+        ny = py + CARD_PORTRAIT + 6
+        screen.blit(name, (px + (CARD_PORTRAIT - name.get_width()) // 2, ny))
 
-        hp_pct  = member.hp_pct
-        hp_col  = C_HP_LOW  if hp_pct <= HP_LOW_THRESHOLD else C_HP_OK
-        hp_lcol = C_HP_LABEL_LOW if hp_pct <= HP_LOW_THRESHOLD else C_HP_LABEL_OK
-
-        hp_label = self._assets.font_stat.render("HP", True, hp_lcol)
-        hp_lw = hp_label.get_width()
-
+        # ── HP / MP bars ───────────────────────────────────────────────
+        bar_y = ny + name.get_height() + 6
+        hp_col = C_HP_BAR_LOW if member.hp_pct <= HP_LOW_THRESHOLD else C_HP_BAR
+        self._draw_bar(screen, px, bar_y, "HP",
+                       member.hp, member.hp_max, hp_col, member.is_ko)
         if member.mp_max > 0:
-            mp_label = self._assets.font_stat.render("MP", True, C_MP_LABEL)
-            mp_lw = mp_label.get_width()
-            avail = sw - hp_lw - mp_lw - bar_gap * 3
-            hp_bw = avail // 2
-            mp_bw = avail - hp_bw
-            hp_bx = sx + hp_lw + bar_gap
-            mp_lx = hp_bx + hp_bw + bar_gap
-            mp_bx = mp_lx + mp_lw + bar_gap
-        else:
-            hp_bw = sw - hp_lw - bar_gap
-            hp_bx = sx + hp_lw + bar_gap
-            mp_bw = 0
-            mp_bx = 0
+            self._draw_bar(screen, px, bar_y + BAR_H + 4, "MP",
+                           member.mp, member.mp_max, C_MP_BAR, member.is_ko)
 
-        screen.blit(hp_label, (sx, bar_y + bar_h // 2 - hp_label.get_height() // 2))
-        pygame.draw.rect(screen, (42, 42, 42), (hp_bx, bar_y, hp_bw, bar_h), border_radius=3)
-        if not member.is_ko:
-            pygame.draw.rect(screen, hp_col, (hp_bx, bar_y, int(hp_bw * hp_pct), bar_h), border_radius=3)
-        hp_txt = self._assets.font_stat.render(f"{member.hp}/{member.hp_max}", True, (255, 255, 255))
-        screen.blit(hp_txt, (hp_bx + hp_bw // 2 - hp_txt.get_width() // 2,
-                             bar_y + bar_h // 2 - hp_txt.get_height() // 2))
+    def _draw_bar(
+        self, screen: pygame.Surface, x: int, y: int, label: str,
+        value: int, maximum: int, color: tuple[int, int, int], ko: bool,
+    ) -> None:
+        rect = pygame.Rect(x, y, CARD_PORTRAIT, BAR_H)
+        draw_stat_bar(screen, rect, 0 if ko else value, maximum, color)
+        lbl = self._font_bar.render(label, True, INK)
+        screen.blit(lbl, (x + 5, y + (BAR_H - lbl.get_height()) // 2))
+        val = self._font_bar.render(f"{value}/{maximum}", True, INK)
+        screen.blit(val, (x + CARD_PORTRAIT - 5 - val.get_width(),
+                          y + (BAR_H - val.get_height()) // 2))
 
-        if member.mp_max > 0:
-            mp_pct = member.mp / member.mp_max
-            screen.blit(mp_label, (mp_lx, bar_y + bar_h // 2 - mp_label.get_height() // 2))
-            pygame.draw.rect(screen, (42, 42, 42), (mp_bx, bar_y, mp_bw, bar_h), border_radius=3)
-            pygame.draw.rect(screen, C_MP, (mp_bx, bar_y, int(mp_bw * mp_pct), bar_h), border_radius=3)
-            mp_txt = self._assets.font_stat.render(f"{member.mp}/{member.mp_max}", True, (255, 255, 255))
-            screen.blit(mp_txt, (mp_bx + mp_bw // 2 - mp_txt.get_width() // 2,
-                                 bar_y + bar_h // 2 - mp_txt.get_height() // 2))
+    def _draw_status_badge(
+        self, screen: pygame.Surface, member: Combatant, px: int, py: int,
+    ) -> None:
+        if not member.status_effects:
+            return
+        effect = member.status_effects[0].effect
+        if effect not in STATUS_COLORS:
+            return
+        bg_col, text_col, label = STATUS_COLORS[effect]
+        bs = self._font_badge.render(label, True, text_col)
+        bx = px + CARD_PORTRAIT - bs.get_width() - 6
+        by = py + 6
+        pygame.draw.rect(screen, bg_col,
+                         (bx - 4, by - 2, bs.get_width() + 8, bs.get_height() + 4),
+                         border_radius=3)
+        screen.blit(bs, (bx, by))

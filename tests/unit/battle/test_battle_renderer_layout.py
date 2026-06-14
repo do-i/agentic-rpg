@@ -13,7 +13,10 @@ from unittest.mock import patch, MagicMock
 from engine.battle.battle_floats import enemy_rect_size, float_pos
 from engine.battle.battle_state import BattleState
 from engine.battle.combatant import Combatant
-from engine.battle.constants import ENEMY_AREA_H, ENEMY_SIZES, ROW_H
+from engine.battle.constants import ENEMY_AREA_H, ENEMY_SIZES
+from engine.battle.battle_renderer_constants import (
+    CARD_GAP, CARD_PORTRAIT, PANEL_GAP, PANEL_MARGIN,
+)
 from engine.common.color_constants import HP_LOW_THRESHOLD
 
 
@@ -37,30 +40,42 @@ def _make_renderer(screen_w=1280, screen_h=766):
 
 
 class TestBattleRendererLayout:
-    def test_bottom_h_is_screen_height_minus_enemy_area(self):
+    def test_panels_span_bottom_section(self):
         r = _make_renderer(screen_h=800)
-        assert r.bottom_h == 800 - ENEMY_AREA_H
+        party, cmd, msg = r._layout(member_count=4)
+        # All three panels start below the (untouched) enemy area and share
+        # the same top / height.
+        assert party.y == ENEMY_AREA_H + PANEL_MARGIN
+        assert party.height == 800 - ENEMY_AREA_H - PANEL_MARGIN * 2
+        assert cmd.y == party.y == msg.y
+        assert cmd.height == party.height == msg.height
 
-    def test_party_w_is_quarter_of_screen(self):
-        assert _make_renderer(screen_w=1280).party_w == 320
-        assert _make_renderer(screen_w=800).party_w == 200
-
-    def test_cmd_w_is_30_percent_of_screen(self):
-        assert _make_renderer(screen_w=1000).cmd_w == 300
-        assert _make_renderer(screen_w=1280).cmd_w == 384
-
-    def test_msg_x_is_party_plus_cmd(self):
+    def test_party_widens_with_member_count(self):
         r = _make_renderer(screen_w=1280)
-        assert r.msg_x == r.party_w + r.cmd_w
+        one = r._layout(member_count=1)[0]
+        five = r._layout(member_count=5)[0]
+        # One 100px portrait column per member → more members, wider party.
+        assert five.width > one.width
 
-    def test_msg_w_fills_remaining_width(self):
+    def test_party_column_pitch_matches_card_size(self):
+        # The party width grows by exactly one card pitch per extra member
+        # until it hits the reserved-width cap.
+        r = _make_renderer(screen_w=1600)
+        w3 = r._layout(member_count=3)[0].width
+        w4 = r._layout(member_count=4)[0].width
+        assert w4 - w3 == (CARD_PORTRAIT + 8) + CARD_GAP
+
+    def test_panels_are_left_to_right_without_overlap(self):
         r = _make_renderer(screen_w=1280)
-        assert r.msg_w == 1280 - r.msg_x
+        party, cmd, msg = r._layout(member_count=5)
+        assert cmd.x == party.right + PANEL_GAP
+        assert msg.x == cmd.right + PANEL_GAP
+        assert msg.right == 1280 - PANEL_MARGIN
 
-    def test_msg_w_zero_for_minimum_width(self):
-        # 0.25 + 0.30 = 0.55 of screen → some width remains.
-        r = _make_renderer(screen_w=400)
-        assert r.msg_w > 0
+    def test_all_panels_have_positive_width(self):
+        r = _make_renderer(screen_w=1280)
+        for rect in r._layout(member_count=5):
+            assert rect.width > 0
 
 
 # ── enemy_rect_size ──────────────────────────────────────────
@@ -86,15 +101,15 @@ class TestEnemyRectSize:
 # ── float_pos ────────────────────────────────────────────────
 
 class TestFloatPos:
-    def test_party_float_above_party_panel(self):
+    def test_party_float_over_member_column(self):
         a = make_combatant("A")
         b = make_combatant("B")
         state = BattleState(party=[a, b], enemies=[])
         ax, ay = float_pos(state, a, screen_width=1280)
         bx, by = float_pos(state, b, screen_width=1280)
-        # Both floats anchored to party_w left side; b is one ROW_H below a.
-        assert ax == bx
-        assert by - ay == (ROW_H + 2)
+        # Members lay out left-to-right: same y, b one card pitch right of a.
+        assert ay == by
+        assert bx - ax == (CARD_PORTRAIT + 8) + CARD_GAP
 
     def test_enemy_float_uses_layout_offset(self):
         e1 = make_combatant("E1", is_enemy=True)
@@ -119,8 +134,8 @@ class TestFloatPos:
 # ── HP_LOW_THRESHOLD selection logic ─────────────────────────
 
 class TestHpThresholdLogic:
-    """The party-panel renderer picks HP color via:
-        C_HP_LOW if hp_pct <= HP_LOW_THRESHOLD else C_HP_OK
+    """The party-panel renderer picks HP bar color via:
+        C_HP_BAR_LOW if hp_pct <= HP_LOW_THRESHOLD else C_HP_BAR
     The threshold itself is defined in color_constants. Lock in the value
     and exercise the surrounding inequality so a future tweak (e.g. flipping
     < to <=) is caught."""
@@ -131,23 +146,23 @@ class TestHpThresholdLogic:
 
     def test_at_threshold_counts_as_low(self):
         # The renderer uses `<=` so exactly-at-threshold triggers low color.
-        from engine.battle.battle_renderer_constants import C_HP_LOW, C_HP_OK
+        from engine.battle.battle_renderer_constants import C_HP_BAR, C_HP_BAR_LOW
         hp_pct = HP_LOW_THRESHOLD
-        chosen = C_HP_LOW if hp_pct <= HP_LOW_THRESHOLD else C_HP_OK
-        assert chosen == C_HP_LOW
+        chosen = C_HP_BAR_LOW if hp_pct <= HP_LOW_THRESHOLD else C_HP_BAR
+        assert chosen == C_HP_BAR_LOW
 
     def test_just_above_threshold_counts_as_ok(self):
-        from engine.battle.battle_renderer_constants import C_HP_LOW, C_HP_OK
+        from engine.battle.battle_renderer_constants import C_HP_BAR, C_HP_BAR_LOW
         hp_pct = HP_LOW_THRESHOLD + 0.01
-        chosen = C_HP_LOW if hp_pct <= HP_LOW_THRESHOLD else C_HP_OK
-        assert chosen == C_HP_OK
+        chosen = C_HP_BAR_LOW if hp_pct <= HP_LOW_THRESHOLD else C_HP_BAR
+        assert chosen == C_HP_BAR
 
     def test_zero_hp_is_low(self):
-        from engine.battle.battle_renderer_constants import C_HP_LOW, C_HP_OK
-        chosen = C_HP_LOW if 0.0 <= HP_LOW_THRESHOLD else C_HP_OK
-        assert chosen == C_HP_LOW
+        from engine.battle.battle_renderer_constants import C_HP_BAR, C_HP_BAR_LOW
+        chosen = C_HP_BAR_LOW if 0.0 <= HP_LOW_THRESHOLD else C_HP_BAR
+        assert chosen == C_HP_BAR_LOW
 
     def test_full_hp_is_ok(self):
-        from engine.battle.battle_renderer_constants import C_HP_LOW, C_HP_OK
-        chosen = C_HP_LOW if 1.0 <= HP_LOW_THRESHOLD else C_HP_OK
-        assert chosen == C_HP_OK
+        from engine.battle.battle_renderer_constants import C_HP_BAR, C_HP_BAR_LOW
+        chosen = C_HP_BAR_LOW if 1.0 <= HP_LOW_THRESHOLD else C_HP_BAR
+        assert chosen == C_HP_BAR

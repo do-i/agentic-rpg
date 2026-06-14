@@ -8,7 +8,10 @@ from __future__ import annotations
 
 from engine.battle.battle_state import BattleState
 from engine.battle.combatant import Combatant
-from engine.battle.constants import ENEMY_AREA_H, ENEMY_LAYOUTS, ENEMY_SIZES, ROW_H
+from engine.battle.constants import ENEMY_AREA_H, ENEMY_LAYOUTS, ENEMY_SIZES
+from engine.battle.battle_renderer_constants import (
+    CARD_GAP, CARD_PORTRAIT, INNER_PAD, PANEL_MARGIN,
+)
 
 
 # ── Float colors ──────────────────────────────────────────────
@@ -37,6 +40,9 @@ def float_pos(state: BattleState, combatant: Combatant,
         _, h = enemy_rect_size(combatant)
         return cx - 15, cy - h // 2 - 30
     else:
+        # Party members lay out left-to-right as 100px portrait cards; anchor
+        # the float over the centre-top of the member's own column.
         idx = state.party.index(combatant)
-        party_w = screen_width // 2
-        return party_w - 60, ENEMY_AREA_H + 8 + idx * (ROW_H + 2) + 5
+        card_w = CARD_PORTRAIT + 8
+        card_x = PANEL_MARGIN + INNER_PAD + idx * (card_w + CARD_GAP)
+        return card_x + card_w // 2 - 15, ENEMY_AREA_H + 60
