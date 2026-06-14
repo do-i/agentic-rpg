@@ -181,7 +181,8 @@ class TestRender:
 
     def test_render_detail_and_position_columns(self):
         scene, _ = make_scene()
-        scene.handle_events(_key(pygame.K_RETURN))      # category (renders col 2)
+        scene.render(pygame.Surface((1280, 766)))       # member portrait (renders col 2)
+        scene.handle_events(_key(pygame.K_RETURN))      # category stats/actions
         scene.render(pygame.Surface((1280, 766)))
         scene.handle_events(_key(pygame.K_DOWN))        # Position
         scene.handle_events(_key(pygame.K_RETURN))      # detail (renders col 3)

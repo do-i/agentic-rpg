@@ -5,9 +5,10 @@
 # path are shared with EquipScene / SpellScene.
 #
 # Pages:
-#   MEMBER   (col 1) — party roster cards, same style as the equipment screen.
+#   MEMBER   (col 1) — party roster cards; col 2 shows the selected portrait,
+#                      col 3 shows backstory/persona.
 #   CATEGORY (col 2) — selected member's detailed stats, plus a small action
-#                      menu (Spells / Position).
+#                      menu (Spells / Position), shown after ENTER.
 #   DETAIL   (col 3) — content of the chosen action:
 #                        Spells   → learned spells; field-castable ones cast
 #                                   (heal/buff via target overlay, teleport via
@@ -26,6 +27,7 @@ from engine.common.game_state_holder import GameStateHolder
 from engine.common.font_provider import get_fonts
 from engine.common.color_constants import C_TEXT_DIM, HP_LOW_THRESHOLD
 from engine.common.field_menu_theme import (
+    ASSET_ROOT,
     DIM,
     GOLD,
     INK,
@@ -35,6 +37,7 @@ from engine.common.field_menu_theme import (
     draw_divider,
     fit_text,
     icon_surface,
+    load_image,
     member_icon_path,
     render_backdrop,
     render_header,
@@ -73,6 +76,38 @@ GEAR_ORDER = (
     ("weapon", "Wpn"), ("shield", "Shld"), ("helmet", "Helm"),
     ("body", "Body"), ("accessory", "Acc"),
 )
+MEMBER_LORE: dict[str, dict[str, str]] = {
+    "aric": {
+        "meta": "17 / Male / Hero",
+        "persona": "Earnest, burdened, and stubbornly humane. Aric doubts the role forced onto him, but not the people walking beside him.",
+        "backstory": "Found as an infant at Ardel's shrine, swaddled in ash, Aric grew up as a village smith's apprentice. When the forest rusted and Ardel was attacked, the ember he had hidden since childhood became a true flame.",
+        "argument": "Restoration tested by conscience.",
+    },
+    "elise": {
+        "meta": "16 / Female / Cleric",
+        "persona": "Skeptical, precise, and compassionate in ways she rarely announces. Elise trusts evidence first, but she keeps asking questions because she still cares about the answers.",
+        "backstory": "A traveling scholar chasing forbidden records of the old Flame, Elise reaches Ardel already one step ahead of the official story. Her research turns Aric's private mystery into a road north.",
+        "argument": "Knowing, even when knowledge wounds.",
+    },
+    "reiya": {
+        "meta": "18 / Female / Sorcerer",
+        "persona": "Quietly intense, devout without obedience, and unwilling to look away from suffering. Reiya does not serve Aric; she bears witness.",
+        "backstory": "A priestess-in-exile tending the quarantined sick against guild orders, Reiya is the first to name Aric's power as a Vessel-flame. Her order was destroyed for teaching the same doctrine.",
+        "argument": "Witnessing what others bury.",
+    },
+    "jep": {
+        "meta": "15 / Male Halfling / Rogue",
+        "persona": "A wary halfling survivor with quick eyes, quick hands, and little patience for noble speeches. Jep endures by reading danger before anyone else admits it is there.",
+        "backstory": "Once hired to silence anyone prying into Millhaven's stolen Flame fragment, Jep turns on his employers after recognizing Aric's fire from a battlefield massacre he survived and never speaks of plainly.",
+        "argument": "Enduring without surrendering.",
+    },
+    "kael": {
+        "meta": "20 / Male / Warrior",
+        "persona": "Stern, oathbound, and protective. Kael carries faith like armor: dented, heavy, and still deliberately worn.",
+        "backstory": "The last sworn sword of a disbanded order, Kael hunts the Cinder Marshal through Ruinwatch's dead monastery. After saving Aric from the Marshal, the oath shifts from a dead saint to the road ahead.",
+        "argument": "Keeping faith after institutions fail.",
+    },
+}
 
 PAD_X = 40
 PAD_Y = 30
@@ -83,6 +118,7 @@ BAR_H = 10
 HP_BAR_OK  = (132, 196, 111)
 HP_BAR_LOW = (203, 82, 47)
 BAR_TRACK  = (17, 17, 22)
+STATUS_PORTRAIT_DIR = ASSET_ROOT / "images" / "party_portraits_large"
 
 
 class StatusScene(WizardScene):
@@ -341,10 +377,18 @@ class StatusScene(WizardScene):
         self._render_members(screen, member_rect)
 
         member = self._current_member()
-        if self.page_id in (PAGE_CATEGORY, PAGE_DETAIL) and member is not None:
+        if self.page_id == PAGE_MEMBER and member is not None:
+            render_panel(screen, detail_rect)
+            self._render_portrait_panel(screen, detail_rect, member)
+            render_panel(screen, action_rect, title="Persona", title_font=self._font_head)
+            self._render_lore_panel(screen, action_rect, member)
+        elif self.page_id in (PAGE_CATEGORY, PAGE_DETAIL) and member is not None:
             render_panel(screen, detail_rect, active=self.page_id == PAGE_CATEGORY,
                          title=member.name, title_font=self._font_head)
             self._render_detail_panel(screen, detail_rect, member)
+            if self.page_id == PAGE_CATEGORY:
+                render_panel(screen, action_rect, title="Persona", title_font=self._font_head)
+                self._render_lore_panel(screen, action_rect, member)
         if self.page_id == PAGE_DETAIL and member is not None:
             title = "Spells" if self._detail_mode == CAT_SPELLS else "Position"
             render_panel(screen, action_rect, active=True,
@@ -433,6 +477,71 @@ class StatusScene(WizardScene):
         screen.blit(mp, (tx + max(hp.get_width() + 18, 96), ty))
 
     # ── Col 2: member detail + action menu ────────────────────
+
+    def _render_portrait_panel(self, screen: pygame.Surface, panel: pygame.Rect, m: MemberState) -> None:
+        image_path = _status_portrait_path(m.id)
+        image = load_image(image_path) if image_path is not None else None
+        if image is None:
+            msg = self._font_row.render("No portrait.", True, C_TEXT_DIM)
+            screen.blit(msg, (panel.centerx - msg.get_width() // 2, panel.centery))
+            return
+
+        portrait = image.copy()
+        if portrait.get_width() > panel.w - 14 or portrait.get_height() > panel.h - 12:
+            max_w = panel.w - 14
+            max_h = panel.h - 12
+            scale = min(max_w / portrait.get_width(), max_h / portrait.get_height())
+            size = (
+                max(1, int(portrait.get_width() * scale)),
+                max(1, int(portrait.get_height() * scale)),
+            )
+            portrait = pygame.transform.smoothscale(portrait, size)
+
+        frame = portrait.get_rect(center=panel.center).inflate(10, 10)
+        pygame.draw.rect(screen, (8, 8, 12, 190), frame, border_radius=5)
+        pygame.draw.rect(screen, GOLD, frame, width=1, border_radius=5)
+        screen.blit(portrait, portrait.get_rect(center=frame.center))
+
+    def _render_lore_panel(self, screen: pygame.Surface, panel: pygame.Rect, m: MemberState) -> None:
+        lore = MEMBER_LORE.get(m.id, {})
+        x = panel.x + 18
+        y = panel.y + 52
+        w = panel.w - 36
+
+        meta = lore.get("meta", m.class_name.title())
+        screen.blit(self._font_meta.render(meta, True, MUTED), (x, y))
+        y += self._font_meta.get_height() + 18
+
+        y = self._render_lore_section(screen, x, y, w, "Persona", lore.get("persona", ""))
+        y += 12
+        y = self._render_lore_section(screen, x, y, w, "Backstory", lore.get("backstory", ""))
+        argument = lore.get("argument", "")
+        if argument and y < panel.bottom - 72:
+            draw_divider(screen, x, y + 4, w)
+            y += 18
+            screen.blit(self._font_meta.render("Throughline", True, GOLD), (x, y))
+            y += self._font_meta.get_height() + 5
+            for line in wrap_text(self._font_small, argument, w, limit=3):
+                screen.blit(self._font_small.render(line, True, MUTED), (x, y))
+                y += self._font_small.get_height() + 3
+
+    def _render_lore_section(
+        self,
+        screen: pygame.Surface,
+        x: int,
+        y: int,
+        w: int,
+        label: str,
+        text: str,
+    ) -> int:
+        screen.blit(self._font_meta.render(label, True, GOLD), (x, y))
+        y += self._font_meta.get_height() + 5
+        if not text:
+            text = "No record."
+        for line in wrap_text(self._font_small, text, w, limit=7):
+            screen.blit(self._font_small.render(line, True, INK), (x, y))
+            y += self._font_small.get_height() + 3
+        return y
 
     def _render_detail_panel(self, screen: pygame.Surface, panel: pygame.Rect, m: MemberState) -> None:
         x = panel.x + 18
@@ -586,7 +695,7 @@ class StatusScene(WizardScene):
     def _render_hint(self, screen: pygame.Surface) -> None:
         sw, sh = screen.get_size()
         if self.page_id == PAGE_MEMBER:
-            text = "UP/DOWN select member    ENTER inspect    ESC close"
+            text = "UP/DOWN select member    ENTER stats    ESC close"
         elif self.page_id == PAGE_CATEGORY:
             text = "UP/DOWN select    ENTER open    ESC back"
         elif self._detail_mode == CAT_SPELLS:
@@ -604,3 +713,10 @@ def _spell_icon_key(spell: dict) -> str:
     if element:
         return f"spell_{element}"
     return f"spell_{spell.get('type', 'utility')}"
+
+
+def _status_portrait_path(member_id: str) -> Path | None:
+    path = STATUS_PORTRAIT_DIR / f"{member_id}_status_portrait.webp"
+    if path.exists():
+        return path
+    return member_icon_path(member_id)

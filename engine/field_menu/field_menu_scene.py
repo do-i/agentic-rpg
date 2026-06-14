@@ -25,6 +25,7 @@ from engine.common.field_menu_theme import (
     render_backdrop,
     render_header,
     render_icon_row,
+    render_modal,
     render_panel,
 )
 from engine.common.menu_sfx_mixin import MenuSfxMixin
@@ -201,22 +202,19 @@ class FieldMenuScene(MenuSfxMixin, Scene):
             self._render_quit_confirm(screen)
 
     def _render_quit_confirm(self, screen: pygame.Surface) -> None:
-        sw, sh = screen.get_size()
-        dim = pygame.Surface((sw, sh), pygame.SRCALPHA)
-        dim.fill((0, 0, 0, 160))
-        screen.blit(dim, (0, 0))
+        rect = render_modal(
+            screen,
+            360,
+            150,
+            title="Quit Game?",
+            title_font=self._font_panel,
+        )
 
-        w, h = 320, 110
-        x = (sw - w) // 2
-        y = (sh - h) // 2
-        pygame.draw.rect(screen, (20, 20, 45), (x, y, w, h))
-        pygame.draw.rect(screen, (160, 160, 100), (x, y, w, h), 2)
+        prompt = self._font_meta.render("Exit to desktop?", True, MUTED)
+        screen.blit(prompt, (rect.centerx - prompt.get_width() // 2, rect.y + 58))
 
-        title = self._font_entry.render("Quit Game?", True, (220, 220, 180))
-        screen.blit(title, (x + w // 2 - title.get_width() // 2, y + 18))
-
-        hint = self._font_hint.render("ENTER  confirm       ESC  cancel", True, (160, 160, 120))
-        screen.blit(hint, (x + w // 2 - hint.get_width() // 2, y + 68))
+        hint = self._font_hint.render("ENTER  confirm        ESC  cancel", True, DIM)
+        screen.blit(hint, (rect.centerx - hint.get_width() // 2, rect.bottom - 36))
 
     def _render_commands(self, screen: pygame.Surface, panel: pygame.Rect) -> None:
         x = panel.x + 18
