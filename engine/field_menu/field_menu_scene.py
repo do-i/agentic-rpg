@@ -18,6 +18,7 @@ from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.font_provider import get_fonts
 from engine.common.color_constants import C_TEXT_DIM
+from engine.common.font_roles import CAPTION
 from engine.common.field_menu_theme import (
     DIM,
     INK,
@@ -94,7 +95,7 @@ class FieldMenuScene(MenuSfxMixin, Scene):
         f = get_fonts()
         self._font_title = f.get(32, bold=True)
         self._font_entry = f.get(22, bold=True)
-        self._font_meta  = f.get(14)
+        self._font_meta  = f.get(CAPTION)
         self._font_hint  = f.get(15)
         self._font_panel = f.get(18, bold=True)
         self._fonts_ready = True

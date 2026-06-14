@@ -17,6 +17,7 @@ from engine.io.save_manager import GameStateManager
 from engine.world.warp_logic import warp_destinations, WarpDestination
 from engine.common.warp_select_overlay import WarpSelectOverlay
 from engine.common.font_provider import get_fonts
+from engine.common.font_roles import CAPTION
 from engine.common.color_constants import (
     C_TEXT_DIM,
 )
@@ -103,9 +104,9 @@ class SpellScene(WizardScene):
         self._font_title = f.get(24, bold=True)
         self._font_head  = f.get(18, bold=True)
         self._font_row   = f.get(18)
-        self._font_meta  = f.get(14)
+        self._font_meta  = f.get(CAPTION)
         self._font_hint  = f.get(14)
-        self._font_small = f.get(13)
+        self._font_small = f.get(CAPTION)
         self._fonts_ready = True
 
     # ── Helpers ───────────────────────────────────────────────

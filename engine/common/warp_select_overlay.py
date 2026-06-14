@@ -9,6 +9,7 @@ from __future__ import annotations
 import pygame
 
 from engine.common.font_provider import get_fonts
+from engine.common.font_roles import CAPTION
 from engine.common.field_menu_theme import (
     DIM,
     INK,
@@ -63,7 +64,7 @@ class WarpSelectOverlay:
         f = get_fonts()
         self._font_title = f.get(20, bold=True)
         self._font_name  = f.get(18, bold=True)
-        self._font_meta  = f.get(13)
+        self._font_meta  = f.get(CAPTION)
         self._font_hint  = f.get(14)
         self._fonts_ready = True
 

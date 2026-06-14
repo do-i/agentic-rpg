@@ -19,6 +19,7 @@ import pygame
 
 from engine.common.scene.scene import Scene
 from engine.common.font_provider import get_fonts
+from engine.common.font_roles import CAPTION
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.battle.battle_rewards import BattleRewards
@@ -84,9 +85,9 @@ class PostBattleScene(Scene):
         self._font_head  = f.get(18, bold=True)
         self._font_row   = f.get(18)
         self._font_stat  = f.get(16)
-        self._font_meta  = f.get(14)
+        self._font_meta  = f.get(CAPTION)
         self._font_hint  = f.get(14)
-        self._font_small = f.get(13)
+        self._font_small = f.get(CAPTION)
         self._fonts_ready = True
 
     # ── Events ────────────────────────────────────────────────

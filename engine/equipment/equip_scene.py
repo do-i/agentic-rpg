@@ -15,6 +15,7 @@ from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.font_provider import get_fonts
+from engine.common.font_roles import CAPTION
 from engine.common.color_constants import (
     C_TEXT_MUT, C_TEXT_DIM, C_HEAD,
 )
@@ -120,7 +121,7 @@ class EquipScene(WizardScene):
         self._font_row   = f.get(18)
         self._font_stat  = f.get(16)
         self._font_hint  = f.get(14)
-        self._font_meta  = f.get(13)
+        self._font_meta  = f.get(CAPTION)
         self._fonts_ready = True
 
     # ── Helpers ───────────────────────────────────────────────

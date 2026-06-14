@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import pygame
 from engine.common.font_provider import get_fonts
+from engine.common.font_roles import CAPTION
 from engine.common.item_selection_view import (
     ItemRow, ItemSelectionTheme, ItemSelectionView,
 )
@@ -92,7 +93,7 @@ class ItemRenderer:
         self._font_tab    = f.get(14, bold=True)
         self._font_item   = f.get(14)
         self._font_qty    = f.get(13)
-        self._font_detail = f.get(14)
+        self._font_detail = f.get(CAPTION)
         self._font_btn    = f.get(14, bold=True)
         self._font_hint   = f.get(13)
         self._font_gp     = f.get(16)
