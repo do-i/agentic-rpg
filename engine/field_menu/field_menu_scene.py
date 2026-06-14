@@ -1,7 +1,7 @@
 # engine/field_menu/field_menu_scene.py
 #
 # Pause / field menu — opened from the world map (M key).
-# Lists party-wide actions: Items, Status, Equipment, Spells, Save, Quit.
+# Lists party-wide actions: Status, Spells, Items, Equipment, Save, Quit.
 # The entry list is the single source of truth so new entries
 # (Recipe Book, Transport) only need appending.
 
@@ -77,10 +77,10 @@ class FieldMenuScene(MenuSfxMixin, Scene):
         self._sfx_manager = sfx_manager
 
         self._entries: list[MenuEntry] = [
-            MenuEntry("Items",     KIND_SCENE_SWITCH, "items",  "satchel", "use, sort, and inspect supplies"),
             MenuEntry("Status",    KIND_SCENE_SWITCH, "status", "pulse",   "review health, rows, and growth"),
-            MenuEntry("Equipment", KIND_SCENE_SWITCH, "equip",  "blade",   "tune gear and compare stats"),
             MenuEntry("Spells",    KIND_SCENE_SWITCH, "spells", "sigil",   "cast field magic and utilities"),
+            MenuEntry("Items",     KIND_SCENE_SWITCH, "items",  "satchel", "use, sort, and inspect supplies"),
+            MenuEntry("Equipment", KIND_SCENE_SWITCH, "equip",  "blade",   "tune gear and compare stats"),
             MenuEntry("Save",      KIND_OVERLAY,      "save",   "seal",    "record the current journey"),
             MenuEntry("Quit",      KIND_OVERLAY,      "quit",   "quit",    "exit the game to desktop"),
         ]

@@ -55,7 +55,7 @@ class TestEntries:
     def test_entry_list_has_expected_order(self):
         scene, *_ = make_scene()
         labels = [e.label for e in scene._entries]
-        assert labels == ["Items", "Status", "Equipment", "Spells", "Save", "Quit"]
+        assert labels == ["Status", "Spells", "Items", "Equipment", "Save", "Quit"]
 
     def test_items_status_equipment_spells_dispatch_by_scene_switch(self):
         scene, *_ = make_scene()
@@ -114,7 +114,7 @@ class TestSelect:
         scene, _, scene_manager, registry, _ = make_scene()
         items_scene = MagicMock()
         registry.get.return_value = items_scene
-        # Selected defaults to 0 (Items)
+        scene._selected = 2   # Items
         scene.handle_events(_key(pygame.K_RETURN))
         registry.get.assert_called_once_with("items")
         items_scene.set_return_scene.assert_called_once_with("field_menu")
@@ -124,7 +124,7 @@ class TestSelect:
         scene, _, scene_manager, registry, _ = make_scene()
         status_scene = MagicMock()
         registry.get.return_value = status_scene
-        scene._selected = 1   # Status
+        scene._selected = 0   # Status
         scene.handle_events(_key(pygame.K_RETURN))
         registry.get.assert_called_once_with("status")
         status_scene.set_return_scene.assert_called_once_with("field_menu")
@@ -141,7 +141,7 @@ class TestSelect:
         scene, _, scene_manager, registry, _ = make_scene()
         spell_scene = MagicMock()
         registry.get.return_value = spell_scene
-        scene._selected = 3   # Spells
+        scene._selected = 1   # Spells
         scene.handle_events(_key(pygame.K_RETURN))
         registry.get.assert_called_once_with("spells")
         spell_scene.set_return_scene.assert_called_once_with("field_menu")
@@ -150,7 +150,7 @@ class TestSelect:
         scene, _, scene_manager, registry, _ = make_scene()
         equip_scene = MagicMock()
         registry.get.return_value = equip_scene
-        scene._selected = 2   # Equipment
+        scene._selected = 3   # Equipment
         scene.handle_events(_key(pygame.K_RETURN))
         registry.get.assert_called_once_with("equip")
         equip_scene.set_return_scene.assert_called_once_with("field_menu")
