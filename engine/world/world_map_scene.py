@@ -51,6 +51,7 @@ from engine.world.world_map_logic import (
     load_shop_items,
     try_interact,
     try_interact_item_box,
+    try_interact_sign,
 )
 from engine.world.world_map_overlays import WorldMapOverlays
 from engine.world.world_map_renderer import WorldMapRenderer
@@ -137,6 +138,7 @@ class WorldMapScene(Scene):
         self._player = None
         self._npcs = []
         self._item_boxes = []
+        self._signs = []
         self._enemy_spawner = None
         self._engaged_enemy: EnemySprite | None = None
 
@@ -207,6 +209,7 @@ class WorldMapScene(Scene):
         self._player = result.player
         self._npcs = result.npcs
         self._item_boxes = result.item_boxes
+        self._signs = result.signs
         self._enemy_spawner = result.enemy_spawner
         self._loaded_map_id = self._holder.get().map.current
         self._fade.reset()
@@ -258,6 +261,18 @@ class WorldMapScene(Scene):
                 on_complete=self._on_dialogue_complete,
                 text_speed=self._text_speed,
                 portrait=npc.portrait if npc else None,
+            )
+            return
+
+        sign_result = try_interact_sign(
+            self._player, self._signs, state.flags, self._dialogue_engine,
+        )
+        if sign_result:
+            self._overlays.dialogue = DialogueScene(
+                result=sign_result,
+                on_complete=self._on_dialogue_complete,
+                text_speed=self._text_speed,
+                portrait=None,
             )
 
     def _open_item_box(self, box: ItemBox) -> None:
@@ -543,5 +558,6 @@ class WorldMapScene(Scene):
             self._fade.alpha,
             item_boxes=visible_boxes,
             box_opened=box_opened,
+            signs=self._signs,
             debug_collision=self._debug_collision,
         )

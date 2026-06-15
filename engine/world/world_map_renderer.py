@@ -32,10 +32,12 @@ class WorldMapRenderer:
         fade_alpha: int,
         item_boxes: list | None = None,
         box_opened: dict | None = None,
+        signs: list | None = None,
         debug_collision: bool = False,
     ) -> None:
         item_boxes = item_boxes or []
         box_opened = box_opened or {}
+        signs = signs or []
 
         screen.fill((0, 0, 0))
         tile_map.render(screen, camera.offset_x, camera.offset_y)
@@ -73,12 +75,19 @@ class WorldMapRenderer:
                 near=near,
             )
 
+        def render_sign(sign):
+            near = (sign.is_near(player_pos)
+                    and _is_player_facing(player, sign.pixel_position)
+                    and dialogue is None)
+            sign.render(screen, camera.offset_x, camera.offset_y, near=near)
+
         # Sort by bottom-of-sprite so tall (64px) entities and short (32px)
         # chests interleave correctly.
         drawables = [(player.sort_y, render_player)]
         drawables += [(npc.sort_y, lambda n=npc: render_npc(n)) for npc in npcs]
         drawables += [(e.sort_y, lambda s=e: render_enemy(s)) for e in enemy_sprites]
         drawables += [(b.sort_y, lambda bx=b: render_box(bx)) for b in item_boxes]
+        drawables += [(s.sort_y, lambda sg=s: render_sign(sg)) for s in signs]
 
         for _, draw in sorted(drawables, key=lambda d: d[0]):
             draw()

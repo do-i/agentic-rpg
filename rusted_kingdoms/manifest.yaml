@@ -29,6 +29,13 @@ item_shop:
 item_box:
   sprite: assets/sprites/objects/item_box.tsx
 
+# Message boards: map tiles the player can read. Any cell painted with one of
+# these local tile ids from the named tileset becomes a readable sign that
+# plays the per-map dialogue file `data/dialogue/sign_<map_id>.yaml`.
+signs:
+  tileset: stone_tile_stares_16x16
+  tile_ids: [18, 19, 20, 21]
+
 protagonist:
   id: aric
   name: "Aric"

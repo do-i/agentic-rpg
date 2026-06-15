@@ -21,6 +21,8 @@ from engine.world.item_box_loader import ItemBoxLoader
 from engine.world.npc import Npc
 from engine.world.npc_loader import NpcLoader
 from engine.world.player import Player
+from engine.world.sign import Sign
+from engine.world.sign_locator import find_sign_tiles
 from engine.world.sprite_sheet import SpriteSheet
 from engine.world.sprite_sheet_cache import SpriteSheetCache
 from engine.world.tile_map import TileMap
@@ -34,6 +36,7 @@ class WorldMapInitResult:
     player: Player
     npcs: list[Npc]
     item_boxes: list[ItemBox]
+    signs: list[Sign]
     enemy_spawner: EnemySpawner | None
 
 
@@ -94,6 +97,7 @@ def init_world_map(
 
     npcs = npc_loader.parse_from_map_data(map_data)
     item_boxes = item_box_loader.parse_from_map_data(map_data)
+    signs = _build_signs(manifest, tmx_path, map_id, tile_size)
 
     if map_data:
         state.map.display_name = map_data.get("name", map_id)
@@ -124,8 +128,37 @@ def init_world_map(
         player=player,
         npcs=npcs,
         item_boxes=item_boxes,
+        signs=signs,
         enemy_spawner=enemy_spawner,
     )
+
+
+def _build_signs(
+    manifest: dict, tmx_path: Path, map_id: str, tile_size: int,
+) -> list[Sign]:
+    """Locate sign tiles painted on this map and bind each to the map's board
+    dialogue (``sign_<map_id>``). Returns an empty list when the scenario does
+    not configure signs."""
+    cfg = manifest.get("signs")
+    if not cfg:
+        return []
+    if "tileset" not in cfg or "tile_ids" not in cfg:
+        raise ValueError(
+            f"manifest.yaml: 'signs' requires 'tileset' and 'tile_ids'. "
+            f"Example:\nsigns:\n  tileset: stone_tile_stares_16x16\n  tile_ids: [18, 19, 20, 21]"
+        )
+    tiles = find_sign_tiles(tmx_path, cfg["tileset"], set(cfg["tile_ids"]))
+    dialogue_id = f"sign_{map_id}"
+    return [
+        Sign(
+            sign_id=f"sign_{map_id}_{i}",
+            dialogue_id=dialogue_id,
+            tile_x=x,
+            tile_y=y,
+            tile_size=tile_size,
+        )
+        for i, (x, y) in enumerate(tiles)
+    ]
 
 
 def _build_spawner(

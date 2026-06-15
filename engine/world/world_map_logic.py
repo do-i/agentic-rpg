@@ -17,6 +17,7 @@ from engine.party.party_data import build_member, load_party_entry
 from engine.party.party_state import calc_exp_next
 from engine.world.item_box import ItemBox
 from engine.world.npc import Npc
+from engine.world.sign import Sign
 from engine.world.player import Player, COLLISION_W, COLLISION_H
 from engine.world.sprite_sheet import Direction
 from engine.world.tile_map import TileMap
@@ -68,6 +69,37 @@ def try_interact(player: Player, npcs: list[Npc], flags, dialogue_engine: Dialog
         if result:
             return result, npc
     return None, None
+
+
+def try_interact_sign(player: Player, signs: list[Sign], flags, dialogue_engine: DialogueEngine):
+    """Read the nearest sign the player is facing. Returns a DialogueResult or None.
+
+    Mirrors item-box interaction: only the sign directly in front of the player
+    is read, and the closest one wins when several are in range.
+    """
+    if player is None:
+        return None
+    player_pos = player.pixel_position
+
+    candidates: list[Sign] = []
+    for sign in signs:
+        if sign.is_near(player_pos) and _is_player_facing(player, sign.pixel_position):
+            candidates.append(sign)
+
+    if not candidates:
+        return None
+
+    def _dist_sq(s: Sign) -> int:
+        sp = s.pixel_position
+        return (sp.x - player_pos.x) ** 2 + (sp.y - player_pos.y) ** 2
+
+    candidates.sort(key=_dist_sq)
+
+    for sign in candidates:
+        result = dialogue_engine.resolve(sign.dialogue_id, flags)
+        if result:
+            return result
+    return None
 
 
 def apply_item_box_loot(box: ItemBox, repository, opened_boxes, map_id: str) -> None:
