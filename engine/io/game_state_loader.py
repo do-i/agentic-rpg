@@ -43,6 +43,7 @@ def from_new_game(
     class_data = _load_class_data(classes_dir, entry["class"])
     member     = build_member(entry, class_data, name_override=protagonist_name)
     state.party.add_member(member)
+    state.controlled_member_id = member.id
 
     start = manifest["start"]
     state.map.move_to(
@@ -125,4 +126,11 @@ def from_save(
                 entry.tags.add("magic_core")
 
     state.repository.sync_loot_batch_seq()
+
+    state.controlled_member_id = save.get("controlled_member_id", "")
+    if not state.controlled_member_id and state.party.protagonist:
+        state.controlled_member_id = state.party.protagonist.id
+    elif not state.controlled_member_id and state.party.members:
+        state.controlled_member_id = state.party.members[0].id
+
     return state

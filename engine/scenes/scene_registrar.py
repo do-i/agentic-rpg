@@ -155,6 +155,8 @@ def register_scenes(registry: SceneRegistry, deps: SceneDeps) -> None:
             game_state_manager=game_state_manager,
             return_scene_name="world_map",
             sfx_manager=sfx_manager,
+            sprite_cache=deps.sprite_cache,
+            scenario_path=loader.scenario_path,
         ))
     registry.register_factory("equip",
         lambda: EquipScene(

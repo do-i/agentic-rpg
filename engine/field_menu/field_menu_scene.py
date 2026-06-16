@@ -32,6 +32,7 @@ from engine.common.field_menu_theme import (
 from engine.common.menu_sfx_mixin import MenuSfxMixin
 from engine.io.save_manager import GameStateManager
 from engine.title.save_modal_scene import SaveModalScene
+from engine.world.switch_character_scene import SwitchCharacterScene
 
 
 KIND_SCENE_SWITCH = "scene_switch"   # switch to a registered scene (sets return to field_menu)
@@ -68,6 +69,8 @@ class FieldMenuScene(MenuSfxMixin, Scene):
         game_state_manager: GameStateManager,
         return_scene_name: str,
         sfx_manager,
+        sprite_cache=None,
+        scenario_path=None,
     ) -> None:
         self._holder = holder
         self._scene_manager = scene_manager
@@ -75,17 +78,21 @@ class FieldMenuScene(MenuSfxMixin, Scene):
         self._game_state_manager = game_state_manager
         self._return_scene_name = return_scene_name
         self._sfx_manager = sfx_manager
+        self._sprite_cache = sprite_cache
+        self._scenario_path = scenario_path
 
         self._entries: list[MenuEntry] = [
             MenuEntry("Status",    KIND_SCENE_SWITCH, "status", "pulse",   "review health, rows, and growth"),
             MenuEntry("Spells",    KIND_SCENE_SWITCH, "spells", "sigil",   "cast field magic and utilities"),
             MenuEntry("Items",     KIND_SCENE_SWITCH, "items",  "satchel", "use, sort, and inspect supplies"),
             MenuEntry("Equipment", KIND_SCENE_SWITCH, "equip",  "blade",   "tune gear and compare stats"),
+            MenuEntry("Character", KIND_OVERLAY,      "switch", "person",  "control a different party member"),
             MenuEntry("Save",      KIND_OVERLAY,      "save",   "seal",    "record the current journey"),
             MenuEntry("Quit",      KIND_OVERLAY,      "quit",   "quit",    "exit the game to desktop"),
         ]
         self._selected = 0
         self._save_modal: SaveModalScene | None = None
+        self._switch_modal: SwitchCharacterScene | None = None
         self._quit_confirm: bool = False
         self._fonts_ready = False
 
@@ -103,6 +110,10 @@ class FieldMenuScene(MenuSfxMixin, Scene):
     # ── Events ────────────────────────────────────────────────
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
+        if self._switch_modal:
+            self._switch_modal.handle_events(events)
+            return
+
         if self._save_modal:
             self._save_modal.handle_events(events)
             return
@@ -147,10 +158,25 @@ class FieldMenuScene(MenuSfxMixin, Scene):
             if setter is not None:
                 setter("field_menu")
             self._scene_manager.switch(scene)
+        elif entry.kind == KIND_OVERLAY and entry.target == "switch":
+            self._open_switch_modal()
         elif entry.kind == KIND_OVERLAY and entry.target == "save":
             self._open_save_modal()
         elif entry.kind == KIND_OVERLAY and entry.target == "quit":
             self._quit_confirm = True
+
+    def _open_switch_modal(self) -> None:
+        if self._sprite_cache and self._scenario_path:
+            self._switch_modal = SwitchCharacterScene(
+                holder=self._holder,
+                sprite_cache=self._sprite_cache,
+                scenario_path=self._scenario_path,
+                on_close=self._close_switch_modal,
+                sfx_manager=self._sfx_manager,
+            )
+
+    def _close_switch_modal(self) -> None:
+        self._switch_modal = None
 
     def _open_save_modal(self) -> None:
         self._save_modal = SaveModalScene(
@@ -170,6 +196,8 @@ class FieldMenuScene(MenuSfxMixin, Scene):
     # ── Update ────────────────────────────────────────────────
 
     def update(self, delta: float) -> None:
+        if self._switch_modal:
+            self._switch_modal.update(delta)
         if self._save_modal:
             self._save_modal.update(delta)
 
@@ -195,6 +223,9 @@ class FieldMenuScene(MenuSfxMixin, Scene):
             True, C_TEXT_DIM,
         )
         screen.blit(hint, ((sw - hint.get_width()) // 2, sh - HINT_MARGIN_Y))
+
+        if self._switch_modal:
+            self._switch_modal.render(screen)
 
         if self._save_modal:
             self._save_modal.render(screen)

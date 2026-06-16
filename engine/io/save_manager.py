@@ -209,6 +209,7 @@ class GameStateManager:
                 "is_autosave":      is_autosave,
             },
             "party": party_data,
+            "controlled_member_id": state.controlled_member_id,
             "party_repository": {
                 "gp":    state.repository.gp,
                 "items": items_data,

@@ -38,7 +38,7 @@ from engine.world.npc_loader import NpcLoader
 from engine.world.player import COLLISION_W, COLLISION_H
 from engine.world.tile_map_factory import TileMapFactory
 from engine.world.world_map_battle_launcher import launch_battle_from_enemy
-from engine.world.world_map_init import init_world_map
+from engine.world.world_map_init import init_world_map, load_party_member_sprite
 from engine.world.world_map_logic import (
     _is_player_facing,
     apply_item_box_loot,
@@ -141,6 +141,7 @@ class WorldMapScene(Scene):
         self._signs = []
         self._enemy_spawner = None
         self._engaged_enemy: EnemySprite | None = None
+        self._last_controlled_member_id: str = ""
 
         # Per-frame visibility cache. _refresh_visibility() rebuilds these from
         # current FlagState; both update() and render() consume the cached
@@ -448,6 +449,17 @@ class WorldMapScene(Scene):
         if transition:
             self._fade.start_fade_out(transition)
 
+    def _update_player_sprite_if_changed(self) -> None:
+        state = self._holder.get()
+        current_member_id = state.controlled_member_id
+        if current_member_id and current_member_id != self._last_controlled_member_id:
+            sprite_sheet = load_party_member_sprite(
+                current_member_id, self._loader.scenario_path, self._sprite_cache
+            )
+            if self._player:
+                self._player.change_sprite(sprite_sheet)
+            self._last_controlled_member_id = current_member_id
+
     def _apply_transition(self, transition: dict) -> None:
         apply_transition(
             self._holder, self._game_state_manager,
@@ -456,11 +468,14 @@ class WorldMapScene(Scene):
         self._tile_map = None
         self._player = None
         self._enemy_spawner = None
+        self._last_controlled_member_id = ""
 
     # ── Update ────────────────────────────────────────────────
 
     def update(self, delta: float) -> None:
         self._ensure_init()
+
+        self._update_player_sprite_if_changed()
 
         completed_transition = self._fade.update(delta)
         if completed_transition is not None:

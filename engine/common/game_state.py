@@ -23,6 +23,7 @@ class GameState:
         self.party        = PartyState()
         self.repository   = RepositoryState()
         self.opened_boxes = OpenedBoxesState()
+        self.controlled_member_id: str = ""
 
     def __repr__(self) -> str:
         return (

@@ -108,6 +108,11 @@ class Player:
             AnimationController(sprite_sheet) if sprite_sheet else None
         )
 
+    def change_sprite(self, sprite_sheet: SpriteSheet | None) -> None:
+        self._animation = (
+            AnimationController(sprite_sheet) if sprite_sheet else None
+        )
+
     # ── Properties ────────────────────────────────────────────
 
     @property

@@ -213,3 +213,26 @@ def _load_protagonist_sprite(
     if not sprite_path:
         return None
     return sprite_cache.get(scenario_path / sprite_path)
+
+
+def load_party_member_sprite(
+    member_id: str, scenario_path: Path, sprite_cache: SpriteSheetCache,
+) -> SpriteSheet | None:
+    """Load sprite for a party member by ID. Expects sprite at:
+    assets/sprites/party/{NN}_{member_id}_walk.tsx where NN is the zero-padded party index.
+    Falls back to {member_id}_walk.tsx if the numbered version doesn't exist."""
+    party_path = scenario_path / "data" / "party.yaml"
+    party_data = load_yaml_optional(party_path)
+    if party_data:
+        members = party_data.get("party", [])
+        for i, member in enumerate(members):
+            if member.get("id") == member_id:
+                # Found the member, use their index
+                sprite_path = scenario_path / "assets" / "sprites" / "party" / f"{i+1:02d}_{member_id}_walk.tsx"
+                result = sprite_cache.get(sprite_path)
+                if result:
+                    return result
+
+    # Fallback: try without numbering
+    sprite_path = scenario_path / "assets" / "sprites" / "party" / f"{member_id}_walk.tsx"
+    return sprite_cache.get(sprite_path)
