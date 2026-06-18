@@ -43,6 +43,12 @@ class DialogueScene(Scene):
         self._on_complete_data = result.on_complete
         self._speed = TEXT_SPEEDS.get(text_speed, TEXT_SPEEDS["fast"])
         self._portrait = portrait
+        # Scale once here rather than every render frame — the portrait only
+        # changes when a new dialogue starts.
+        self._scaled_portrait = (
+            pygame.transform.scale(portrait, (PORTRAIT_SIZE, PORTRAIT_SIZE))
+            if portrait is not None else None
+        )
         self._instant = (self._speed == 0)
 
         self._line_index = 0
@@ -131,9 +137,8 @@ class DialogueScene(Scene):
         px = BOX_MARGIN + BOX_PAD
         py = box_y + BOX_PAD
         pygame.draw.rect(screen, (50, 50, 80), (px, py, PORTRAIT_SIZE, PORTRAIT_SIZE))
-        if self._portrait is not None:
-            scaled = pygame.transform.scale(self._portrait, (PORTRAIT_SIZE, PORTRAIT_SIZE))
-            screen.blit(scaled, (px, py))
+        if self._scaled_portrait is not None:
+            screen.blit(self._scaled_portrait, (px, py))
         pygame.draw.rect(screen, (120, 120, 90), (px, py, PORTRAIT_SIZE, PORTRAIT_SIZE), 1)
 
         # dialogue text — word-wrapped

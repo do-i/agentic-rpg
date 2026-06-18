@@ -148,6 +148,10 @@ class StatusScene(WizardScene):
         self._popup_text: str = ""
         self._popup_active: bool = False
         self._fonts_ready = False
+        # Cache of portraits already scaled to a panel size, keyed by
+        # (member id, panel width, panel height) — avoids a per-frame copy
+        # + smoothscale in the render loop.
+        self._portrait_cache: dict[tuple[str, int, int], pygame.Surface] = {}
 
         self._register_page(WizardPage(
             name=PAGE_MEMBER,
@@ -480,23 +484,26 @@ class StatusScene(WizardScene):
     # ── Col 2: member detail + action menu ────────────────────
 
     def _render_portrait_panel(self, screen: pygame.Surface, panel: pygame.Rect, m: MemberState) -> None:
-        image_path = _status_portrait_path(m.id)
-        image = load_image(image_path) if image_path is not None else None
-        if image is None:
-            msg = self._font_row.render("No portrait.", True, C_TEXT_DIM)
-            screen.blit(msg, (panel.centerx - msg.get_width() // 2, panel.centery))
-            return
-
-        portrait = image.copy()
-        if portrait.get_width() > panel.w - 14 or portrait.get_height() > panel.h - 12:
-            max_w = panel.w - 14
-            max_h = panel.h - 12
-            scale = min(max_w / portrait.get_width(), max_h / portrait.get_height())
-            size = (
-                max(1, int(portrait.get_width() * scale)),
-                max(1, int(portrait.get_height() * scale)),
-            )
-            portrait = pygame.transform.smoothscale(portrait, size)
+        cache_key = (m.id, panel.w, panel.h)
+        portrait = self._portrait_cache.get(cache_key)
+        if portrait is None:
+            image_path = _status_portrait_path(m.id)
+            image = load_image(image_path) if image_path is not None else None
+            if image is None:
+                msg = self._font_row.render("No portrait.", True, C_TEXT_DIM)
+                screen.blit(msg, (panel.centerx - msg.get_width() // 2, panel.centery))
+                return
+            portrait = image
+            if portrait.get_width() > panel.w - 14 or portrait.get_height() > panel.h - 12:
+                max_w = panel.w - 14
+                max_h = panel.h - 12
+                scale = min(max_w / portrait.get_width(), max_h / portrait.get_height())
+                size = (
+                    max(1, int(portrait.get_width() * scale)),
+                    max(1, int(portrait.get_height() * scale)),
+                )
+                portrait = pygame.transform.smoothscale(portrait, size)
+            self._portrait_cache[cache_key] = portrait
 
         frame = portrait.get_rect(center=panel.center).inflate(10, 10)
         pygame.draw.rect(screen, (8, 8, 12, 190), frame, border_radius=5)
