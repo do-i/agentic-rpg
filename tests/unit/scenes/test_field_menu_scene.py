@@ -51,11 +51,15 @@ def make_scene():
     return scene, holder, scene_manager, registry, game_state_manager
 
 
+def _index_of(scene, label: str) -> int:
+    return next(i for i, e in enumerate(scene._entries) if e.label == label)
+
+
 class TestEntries:
     def test_entry_list_has_expected_order(self):
         scene, *_ = make_scene()
         labels = [e.label for e in scene._entries]
-        assert labels == ["Status", "Spells", "Items", "Equipment", "Save", "Quit"]
+        assert labels == ["Status", "Spells", "Items", "Equipment", "Character", "Save", "Quit"]
 
     def test_items_status_equipment_spells_dispatch_by_scene_switch(self):
         scene, *_ = make_scene()
@@ -114,7 +118,7 @@ class TestSelect:
         scene, _, scene_manager, registry, _ = make_scene()
         items_scene = MagicMock()
         registry.get.return_value = items_scene
-        scene._selected = 2   # Items
+        scene._selected = _index_of(scene, "Items")
         scene.handle_events(_key(pygame.K_RETURN))
         registry.get.assert_called_once_with("items")
         items_scene.set_return_scene.assert_called_once_with("field_menu")
@@ -124,7 +128,7 @@ class TestSelect:
         scene, _, scene_manager, registry, _ = make_scene()
         status_scene = MagicMock()
         registry.get.return_value = status_scene
-        scene._selected = 0   # Status
+        scene._selected = _index_of(scene, "Status")
         scene.handle_events(_key(pygame.K_RETURN))
         registry.get.assert_called_once_with("status")
         status_scene.set_return_scene.assert_called_once_with("field_menu")
@@ -141,7 +145,7 @@ class TestSelect:
         scene, _, scene_manager, registry, _ = make_scene()
         spell_scene = MagicMock()
         registry.get.return_value = spell_scene
-        scene._selected = 1   # Spells
+        scene._selected = _index_of(scene, "Spells")
         scene.handle_events(_key(pygame.K_RETURN))
         registry.get.assert_called_once_with("spells")
         spell_scene.set_return_scene.assert_called_once_with("field_menu")
@@ -150,20 +154,20 @@ class TestSelect:
         scene, _, scene_manager, registry, _ = make_scene()
         equip_scene = MagicMock()
         registry.get.return_value = equip_scene
-        scene._selected = 3   # Equipment
+        scene._selected = _index_of(scene, "Equipment")
         scene.handle_events(_key(pygame.K_RETURN))
         registry.get.assert_called_once_with("equip")
         equip_scene.set_return_scene.assert_called_once_with("field_menu")
 
     def test_save_opens_overlay(self):
         scene, *_ = make_scene()
-        scene._selected = 4   # Save
+        scene._selected = _index_of(scene, "Save")
         scene.handle_events(_key(pygame.K_RETURN))
         assert scene._save_modal is not None
 
     def test_save_overlay_captures_events(self):
         scene, *_ = make_scene()
-        scene._selected = 4
+        scene._selected = _index_of(scene, "Save")
         scene.handle_events(_key(pygame.K_RETURN))
         modal = scene._save_modal
         modal.handle_events = MagicMock()
@@ -172,7 +176,7 @@ class TestSelect:
 
     def test_save_overlay_close_clears_modal(self):
         scene, *_ = make_scene()
-        scene._selected = 4
+        scene._selected = _index_of(scene, "Save")
         scene.handle_events(_key(pygame.K_RETURN))
         assert scene._save_modal is not None
         scene._close_save_modal()
@@ -182,20 +186,20 @@ class TestSelect:
 class TestQuit:
     def test_quit_opens_confirm(self):
         scene, *_ = make_scene()
-        scene._selected = 5   # Quit
+        scene._selected = _index_of(scene, "Quit")
         scene.handle_events(_key(pygame.K_RETURN))
         assert scene._quit_confirm is True
 
     def test_confirm_escape_cancels(self):
         scene, *_ = make_scene()
-        scene._selected = 5
+        scene._selected = _index_of(scene, "Quit")
         scene.handle_events(_key(pygame.K_RETURN))
         scene.handle_events(_key(pygame.K_ESCAPE))
         assert scene._quit_confirm is False
 
     def test_confirm_enter_posts_quit_event(self):
         scene, *_ = make_scene()
-        scene._selected = 5
+        scene._selected = _index_of(scene, "Quit")
         scene.handle_events(_key(pygame.K_RETURN))
         pygame.event.clear()
         scene.handle_events(_key(pygame.K_RETURN))
@@ -203,7 +207,7 @@ class TestQuit:
 
     def test_confirm_render_does_not_crash(self):
         scene, *_ = make_scene()
-        scene._selected = 5
+        scene._selected = _index_of(scene, "Quit")
         scene.handle_events(_key(pygame.K_RETURN))
         screen = pygame.Surface((1280, 720))
         scene.render(screen)   # must not raise
