@@ -1,15 +1,15 @@
 # tests/unit/core/state/test_menu_popup.py
 #
-# Smoke tests for the shared MenuPopup helper.
+# Smoke tests for the shared MenuPopup helper. The popup now uses the shared
+# themed modal, so we assert structural behaviour (a panel is drawn and the
+# message renders) rather than exact flat-fill colors.
 
 from __future__ import annotations
 
 import pytest
 import pygame
 
-from engine.common.menu_popup import (
-    render_popup, POPUP_W, POPUP_H, C_POPUP_BG, C_POPUP_BORDER,
-)
+from engine.common.menu_popup import render_popup, POPUP_W, POPUP_H
 
 
 @pytest.fixture
@@ -26,32 +26,27 @@ def font():
     return pygame.font.SysFont(None, 16)
 
 
-def test_popup_centered_with_background_and_border(screen, font):
+def test_popup_draws_themed_panel(screen, font):
     screen.fill((0, 0, 0))
     render_popup(screen, font, font, "hello")
     sw, sh = screen.get_size()
-    # Centered upper-left corner of the popup rect.
-    x = (sw - POPUP_W) // 2
-    y = (sh - POPUP_H) // 2
-    # Border pixel
-    assert screen.get_at((x, y))[:3] == C_POPUP_BORDER
-    # Interior pixel — well inside the rect, away from text
-    assert screen.get_at((x + 5, y + POPUP_H - 5))[:3] == C_POPUP_BG
+    # Center of the popup rect should be painted by the themed panel,
+    # i.e. no longer pure black.
+    cx, cy = sw // 2, sh // 2
+    assert screen.get_at((cx, cy))[:3] != (0, 0, 0)
 
 
 def test_popup_renders_message_text(screen, font):
     screen.fill((0, 0, 0))
     render_popup(screen, font, font, "test message")
-    # If text rendered, *some* pixel in the row centered ~y+20 must be
-    # neither background nor border (i.e. the text glyph).
     sw, sh = screen.get_size()
     x = (sw - POPUP_W) // 2
     y = (sh - POPUP_H) // 2
+    # A glyph from the message must appear on the upper text row.
     text_row_y = y + 28
-    found_glyph = False
-    for px in range(x + 10, x + POPUP_W - 10):
-        c = screen.get_at((px, text_row_y))[:3]
-        if c not in (C_POPUP_BG, C_POPUP_BORDER, (0, 0, 0)):
-            found_glyph = True
-            break
+    panel_bg = screen.get_at((x + 5, y + POPUP_H - 5))[:3]
+    found_glyph = any(
+        screen.get_at((px, text_row_y))[:3] not in (panel_bg, (0, 0, 0))
+        for px in range(x + 10, x + POPUP_W - 10)
+    )
     assert found_glyph
