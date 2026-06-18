@@ -19,7 +19,7 @@ from engine.shop.shop_constants import (
 from engine.shop.shop_renderer import (
     draw_dim_overlay, draw_footer, draw_modal_box, draw_popup, draw_shop_header,
 )
-from engine.common.field_menu_theme import GOLD, render_panel
+from engine.common.field_menu_theme import GOLD, render_panel, wrap_text
 
 # ── Colors (item-shop-specific — field-menu theme) ──────────
 C_BORDER   = GOLD
@@ -210,20 +210,7 @@ class ItemShopRenderer:
         font = self._font_desc
         lh = font.get_height() + 4
         inner_w = panel_w - DESC_PAD * 2
-        words = text.split()
-        lines: list[str] = []
-        line = ""
-        for word in words:
-            test = (line + " " + word).strip()
-            if font.size(test)[0] > inner_w and line:
-                lines.append(line)
-                if len(lines) >= DESC_LINES:
-                    break
-                line = word
-            else:
-                line = test
-        if line and len(lines) < DESC_LINES:
-            lines.append(line)
+        lines = wrap_text(font, text, inner_w, limit=DESC_LINES)
         tx, ty = x + DESC_PAD, y + DESC_PAD
         for i, ln in enumerate(lines):
             screen.blit(font.render(ln, True, C_TEXT), (tx, ty + i * lh))

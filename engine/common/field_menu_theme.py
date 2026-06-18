@@ -358,7 +358,14 @@ def fit_text(
     return font.render((trimmed or text[:1]) + ellipsis, True, color)
 
 
-def wrap_text(font: pygame.font.Font, text: str, max_w: int, limit: int = 3) -> list[str]:
+def wrap_text(
+    font: pygame.font.Font, text: str, max_w: int, limit: int | None = None
+) -> list[str]:
+    """Greedy word-wrap into lines that fit `max_w`.
+
+    `limit` caps the number of lines (excess words are dropped); `None` keeps
+    every line.
+    """
     words = text.split()
     lines: list[str] = []
     line = ""
@@ -367,11 +374,11 @@ def wrap_text(font: pygame.font.Font, text: str, max_w: int, limit: int = 3) -> 
         if line and font.size(candidate)[0] > max_w:
             lines.append(line)
             line = word
-            if len(lines) >= limit:
+            if limit is not None and len(lines) >= limit:
                 break
         else:
             line = candidate
-    if line and len(lines) < limit:
+    if line and (limit is None or len(lines) < limit):
         lines.append(line)
     return lines
 

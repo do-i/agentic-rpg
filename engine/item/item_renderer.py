@@ -28,6 +28,7 @@ from engine.common.field_menu_theme import (
     render_modal,
     render_panel,
     render_row_frame,
+    wrap_text,
 )
 from engine.item.item_entry_state import ItemEntry
 from engine.item.item_logic import TABS, actions_for, display_name
@@ -302,17 +303,9 @@ class ItemRenderer:
 
     def _draw_wrapped(self, screen: pygame.Surface, text: str,
                       x: int, y: int, max_w: int, color: tuple) -> int:
-        words  = text.split()
-        line, line_y = "", y
-        lh     = self._font_detail.get_height() + 3
-        for word in words:
-            test = (line + " " + word).strip()
-            if self._font_detail.size(test)[0] > max_w and line:
-                screen.blit(self._font_detail.render(line, True, color), (x, line_y))
-                line, line_y = word, line_y + lh
-            else:
-                line = test
-        if line:
+        lh = self._font_detail.get_height() + 3
+        line_y = y
+        for line in wrap_text(self._font_detail, text, max_w):
             screen.blit(self._font_detail.render(line, True, color), (x, line_y))
             line_y += lh
         return line_y
