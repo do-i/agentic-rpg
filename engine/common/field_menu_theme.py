@@ -311,7 +311,12 @@ def draw_stat_bar(
     if maximum > 0:
         fill = rect.copy()
         fill.w = max(3, int(rect.w * max(0.0, min(1.0, value / maximum))))
-        pygame.draw.rect(screen, color, fill.inflate(-2, -2), border_radius=3)
+        fill = fill.inflate(-2, -2)
+        pygame.draw.rect(screen, color, fill, border_radius=3)
+        # Sleek top sheen: a very faint gloss over the upper third of the fill.
+        gloss = pygame.Surface((fill.w, max(2, fill.h // 3)), pygame.SRCALPHA)
+        pygame.draw.rect(gloss, (255, 255, 255, 22), gloss.get_rect(), border_radius=3)
+        screen.blit(gloss, fill.topleft)
 
 
 def fit_text(

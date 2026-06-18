@@ -123,16 +123,20 @@ class PostBattleScene(Scene):
             self._init_fonts()
 
         render_backdrop(screen)
-        total = int(round(self._rewards.total_exp * self._exp_fill))
+
+        # The EXP pool is paid out to each member below; the running per-member
+        # shares drive that animation. The total is intentionally not surfaced
+        # in the header.
+        shown_map = self._exp_shown()
         render_header(
             screen, self._font_title, self._font_hint,
-            "VICTORY", f"{total} EXP earned", PAD_X, PAD_Y,
+            "VICTORY", "", PAD_X, PAD_Y,
         )
 
         party_rect, spoils_rect = self._layout(screen)
         render_panel(screen, party_rect, active=True,
                      title="Party", title_font=self._font_head)
-        self._render_party(screen, party_rect)
+        self._render_party(screen, party_rect, shown_map)
 
         render_panel(screen, spoils_rect, active=False,
                      title="Spoils", title_font=self._font_head)
@@ -151,9 +155,31 @@ class PostBattleScene(Scene):
         spoils_rect = pygame.Rect(party_rect.right + GAP, top, spoils_w, panel_h)
         return party_rect, spoils_rect
 
+    # ── EXP tally ─────────────────────────────────────────────
+
+    def _exp_shown(self) -> dict[str, int]:
+        """How much EXP each member has visibly received so far.
+
+        Members are paid out sequentially as `_exp_fill` advances 0 → 1, so the
+        pool drains one member at a time. The header subtracts these from the
+        total, decrementing to zero exactly when the last member is paid.
+        """
+        results = self._rewards.member_results
+        total = sum(r.exp_gained for r in results)
+        target = self._exp_fill * total      # EXP awarded across the party so far
+        running = 0.0
+        out: dict[str, int] = {}
+        for r in results:
+            take = min(float(r.exp_gained), max(0.0, target - running))
+            out[r.member_id] = int(round(take))
+            running += r.exp_gained
+        return out
+
     # ── Party growth cards ────────────────────────────────────
 
-    def _render_party(self, screen: pygame.Surface, panel: pygame.Rect) -> None:
+    def _render_party(
+        self, screen: pygame.Surface, panel: pygame.Rect, shown_map: dict[str, int],
+    ) -> None:
         results = self._rewards.member_results
         x = panel.x + 16
         top = panel.y + 52
@@ -170,10 +196,12 @@ class PostBattleScene(Scene):
 
         for i, result in enumerate(results):
             row = pygame.Rect(x, top + i * (row_h + gap), w, row_h)
-            self._render_growth_card(screen, row, result, portrait)
+            shown = shown_map.get(result.member_id, 0)
+            self._render_growth_card(screen, row, result, portrait, shown)
 
     def _render_growth_card(
         self, screen: pygame.Surface, rect: pygame.Rect, result, portrait: int,
+        shown: int,
     ) -> None:
         leveled = bool(result.level_ups)
         ko = result.exp_gained == 0
@@ -194,8 +222,7 @@ class PostBattleScene(Scene):
             name_col, max_w,
         )
 
-        # animated EXP share
-        shown = int(round(result.exp_gained * self._exp_fill))
+        # animated EXP share (driven by the sequential pay-out tally)
         exp_txt = f"+{shown} EXP" if result.exp_gained else "-"
         exp = self._font_meta.render(exp_txt, True, DIM if ko else MUTED)
 

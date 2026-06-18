@@ -94,6 +94,33 @@ class TestRewardCalculatorBasic:
         assert rewards.member_results[0].exp_gained == 0
         assert rewards.member_results[1].exp_gained == 100
 
+    def test_remainder_distributed_so_full_total_is_awarded(self):
+        # 100 EXP across 3 living members → 33 each, remainder 1.
+        calc = RewardCalculator(_rng)
+        enemies = [_make_enemy(100)]
+        members = [_make_member("A"), _make_member("B"), _make_member("C")]
+        party = _party_with(members)
+        rewards = calc.calculate(enemies, party)
+        awarded = [r.exp_gained for r in rewards.member_results]
+        # nothing is dropped: shares sum back to the total
+        assert sum(awarded) == 100
+        # each member gets the base share, exactly one gets the +1 remainder
+        assert sorted(awarded) == [33, 33, 34]
+
+    def test_remainder_only_goes_to_living_members(self):
+        # 10 EXP, 1 KO + 2 living → 5 each, remainder 0; KO stays at 0.
+        calc = RewardCalculator(_rng)
+        enemies = [_make_enemy(11)]  # 11 // 2 = 5, remainder 1
+        ko = _make_member("Dead", hp=0)
+        a = _make_member("A")
+        b = _make_member("B")
+        party = _party_with([ko, a, b])
+        rewards = calc.calculate(enemies, party)
+        assert rewards.member_results[0].exp_gained == 0  # KO never benefits
+        living = [r.exp_gained for r in rewards.member_results[1:]]
+        assert sum(living) == 11
+        assert sorted(living) == [5, 6]
+
     def test_boss_flag_forwarded(self):
         calc = RewardCalculator(_rng)
         enemies = [_make_enemy(10)]

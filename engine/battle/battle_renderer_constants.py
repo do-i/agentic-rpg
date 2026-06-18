@@ -21,10 +21,12 @@ INNER_PAD     = 16   # panel content inset
 PANEL_MARGIN  = 8    # gap from screen edge to the bottom panels
 PANEL_GAP     = 8    # gap between party / command / message panels
 
-# HP/MP bar fills for the party cards (themed to match the menu palette).
-C_HP_BAR     = (132, 196, 111)
-C_HP_BAR_LOW = (204,  84,  84)
-C_MP_BAR     = (67,  166, 160)
+# HP/MP bar fills for the party cards. Deep, low-luminance jewel tones so the
+# cream label/value text reads cleanly on top, chosen to complement the warm
+# gold/ember theme rather than the old bright green/blue.
+C_HP_BAR     = (52, 104,  82)   # deep jade
+C_HP_BAR_LOW = (158,  60,  44)  # ember-garnet (danger)
+C_MP_BAR     = (88,  72, 138)   # deep amethyst
 
 # ── Status effect badge colors ────────────────────────────────
 STATUS_COLORS = {

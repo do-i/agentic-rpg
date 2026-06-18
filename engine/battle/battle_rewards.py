@@ -67,6 +67,18 @@ class RewardCalculator:
         living    = [m for m in party.members if not self._is_ko(m)]
         share     = total_exp // max(len(living), 1)
 
+        # Whatever doesn't divide evenly among the living is the remainder.
+        # Hand it out one point at a time to randomly chosen living members so
+        # the full total_exp is actually awarded (nothing is silently dropped).
+        remainder   = total_exp - share * len(living)
+        bonus_ids: set[str] = set()
+        if living and remainder:
+            pool = list(living)
+            for _ in range(remainder):
+                pick = self._rng.choice(pool)
+                pool.remove(pick)
+                bonus_ids.add(pick.id)
+
         member_results = []
         for member in party.members:
             if self._is_ko(member):
@@ -76,11 +88,12 @@ class RewardCalculator:
                     exp_gained=0,
                 ))
                 continue
-            level_ups = self._apply_exp(member, share)
+            award     = share + (1 if member.id in bonus_ids else 0)
+            level_ups = self._apply_exp(member, award)
             member_results.append(MemberExpResult(
                 member_id=member.id,
                 member_name=member.name,
-                exp_gained=share,
+                exp_gained=award,
                 level_ups=level_ups,
             ))
 
