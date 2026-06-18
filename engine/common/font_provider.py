@@ -24,7 +24,12 @@ class FontProvider:
         key = (size, bold)
         if key not in self._cache:
             if self._font_path:
-                self._cache[key] = pygame.font.Font(self._font_path, size)
+                font = pygame.font.Font(self._font_path, size)
+                # The bundled TTF ships in a single weight; honor bold requests
+                # with synthetic bold so titles render with the intended
+                # emphasis instead of silently dropping the flag.
+                font.set_bold(bold)
+                self._cache[key] = font
             else:
                 self._cache[key] = pygame.font.SysFont(_FALLBACK, size, bold=bold)
         return self._cache[key]
