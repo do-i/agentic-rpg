@@ -6,6 +6,7 @@ import pygame
 from engine.common.scene.scene import Scene
 from engine.dialogue.dialogue_engine import DialogueResult
 from engine.common.font_provider import get_fonts
+from engine.common.field_menu_theme import wrap_text
 
 # Typewriter speeds — characters revealed per second
 TEXT_SPEEDS = {
@@ -161,22 +162,7 @@ class DialogueScene(Scene):
         max_width: int,
     ) -> None:
         """Simple word-wrap renderer."""
-        words = text.split(" ")
-        line = ""
-        line_y = y
         line_height = self._font_text.get_height() + 4
-
-        for word in words:
-            test = (line + " " + word).strip()
-            w, _ = self._font_text.size(test)
-            if w > max_width and line:
-                surf = self._font_text.render(line, True, (220, 220, 180))
-                screen.blit(surf, (x, line_y))
-                line = word
-                line_y += line_height
-            else:
-                line = test
-
-        if line:
+        for i, line in enumerate(wrap_text(self._font_text, text, max_width)):
             surf = self._font_text.render(line, True, (220, 220, 180))
-            screen.blit(surf, (x, line_y))
+            screen.blit(surf, (x, y + i * line_height))
