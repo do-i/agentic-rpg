@@ -343,7 +343,7 @@ class ItemRenderer:
         screen.blit(self._font_title.render(">", True, right_col), (rx, cy))
 
         render_hint(screen, self._font_hint,
-                    "←/→ qty    ENTER / Y - Confirm    ESC / N - Cancel",
+                    "LEFT/RIGHT qty    ENTER / Y - Confirm    ESC / N - Cancel",
                     ox + 20, oy + oh - 30)
 
     def _draw_aoe_confirm_overlay(self, screen: pygame.Surface, entry: ItemEntry | None) -> None:

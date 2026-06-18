@@ -103,11 +103,11 @@ class SwitchCharacterScene(Scene):
         for i, member in enumerate(self._members):
             is_selected = i == self._selected
             color = C_TEXT if is_selected else C_TEXT_DIM
-            prefix = "→ " if is_selected else "  "
+            prefix = "> " if is_selected else "  "
             label = f"{prefix}{member.name}"
             text = self._font_row.render(label, True, color)
             screen.blit(text, (modal_x + PAD, row_y + i * ROW_H))
 
         hint_y = modal_y + TITLE_H + len(self._members) * ROW_H + PAD * 2
-        hint = self._font_hint.render("↑↓ Select  Enter Confirm  ESC Cancel", True, C_TEXT_DIM)
+        hint = self._font_hint.render("UP/DOWN Select  Enter Confirm  ESC Cancel", True, C_TEXT_DIM)
         screen.blit(hint, (modal_x + PAD, hint_y))

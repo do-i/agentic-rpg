@@ -7,11 +7,17 @@
 # Layout:
 #   Header              — "VICTORY" + total EXP earned subtitle.
 #   Party panel (left)  — one growth card per member: portrait, name/level,
-#                         EXP share, and a LEVEL UP badge with HP/MP gains.
+#                         EXP share, and a compact LEVEL UP! tag.
 #   Spoils panel (right)— GP, magic cores, and item drops.
 #
-# The EXP "tally" animates on entry; pressing confirm skips it, then a second
-# press continues to the world map (behaviour unchanged from before).
+# Flow:
+#   1. The EXP "tally" animates on entry; pressing confirm skips it.
+#   2. If anyone levelled up, a centered modal then steps through each grown
+#      member showing the new level and a before -> after stat comparison.
+#   3. A final confirm continues to the world map.
+#
+# Note: the scenario font (Philosopher) has no "→" glyph — it renders as a
+# tofu box. All on-screen arrows use ASCII "->" (matching the equip screen).
 
 from __future__ import annotations
 
@@ -29,8 +35,6 @@ from engine.common.field_menu_theme import (
     GOLD,
     INK,
     MUTED,
-    TEAL,
-    VIOLET,
     draw_divider,
     fit_text,
     icon_surface,
@@ -38,6 +42,7 @@ from engine.common.field_menu_theme import (
     render_backdrop,
     render_header,
     render_icon_row,
+    render_modal,
     render_panel,
     render_row_frame,
 )
@@ -47,8 +52,8 @@ PAD_Y = 30
 GAP = 18
 LOOT_ROW_H = 54
 
-HP_GAIN = (132, 196, 111)
-MP_GAIN = TEAL
+# Colour for a positive stat delta in the level-up modal.
+GAIN = (132, 196, 111)
 
 
 class PostBattleScene(Scene):
@@ -73,9 +78,14 @@ class PostBattleScene(Scene):
         self._fonts_ready = False
 
         # animate the EXP tally on entry
-        self._exp_fill: float = 0.0      # 0.0 → 1.0
+        self._exp_fill: float = 0.0      # 0.0 -> 1.0
         self._exp_done: bool = False
         self._ready_to_exit: bool = False
+
+        # level-up modal sequence (shown once the tally completes)
+        self._lu_queue = self._build_lu_queue()
+        self._lu_index: int = 0
+        self._lu_active: bool = False
 
     # ── Font init ─────────────────────────────────────────────
 
@@ -100,12 +110,27 @@ class PostBattleScene(Scene):
                               pygame.K_KP_ENTER, pygame.K_z):
                 self._sfx_manager.play("confirm")
                 if not self._exp_done:
-                    # skip animation
+                    # skip the tally animation
                     self._exp_fill = 1.0
                     self._exp_done = True
-                    self._ready_to_exit = True
+                    self._on_tally_done()
+                elif self._lu_active:
+                    # advance through the level-up modals
+                    self._lu_index += 1
+                    if self._lu_index >= len(self._lu_queue):
+                        self._lu_active = False
+                        self._ready_to_exit = True
                 elif self._ready_to_exit:
                     self._on_continue()
+
+    def _on_tally_done(self) -> None:
+        """Called once the EXP tally is full. Opens the level-up modal
+        sequence if anyone grew, otherwise readies the continue prompt."""
+        if self._lu_queue:
+            self._lu_active = True
+            self._lu_index = 0
+        else:
+            self._ready_to_exit = True
 
     # ── Update ────────────────────────────────────────────────
 
@@ -114,7 +139,7 @@ class PostBattleScene(Scene):
             self._exp_fill = min(1.0, self._exp_fill + delta * 0.6)
             if self._exp_fill >= 1.0:
                 self._exp_done = True
-                self._ready_to_exit = True
+                self._on_tally_done()
 
     # ── Render ────────────────────────────────────────────────
 
@@ -142,7 +167,10 @@ class PostBattleScene(Scene):
                      title="Spoils", title_font=self._font_head)
         self._render_spoils(screen, spoils_rect)
 
-        self._render_hint(screen)
+        if self._lu_active:
+            self._render_levelup_modal(screen)
+        else:
+            self._render_hint(screen)
 
     def _layout(self, screen: pygame.Surface) -> tuple[pygame.Rect, pygame.Rect]:
         sw, sh = screen.get_size()
@@ -227,19 +255,18 @@ class PostBattleScene(Scene):
         exp = self._font_meta.render(exp_txt, True, DIM if ko else MUTED)
 
         if leveled:
-            lu = result.level_ups[-1]
+            old_level = result.level_ups[0].old_level
+            new_level = result.level_ups[-1].new_level
             lvl = fit_text(
-                self._font_row, f"LEVEL UP   {lu.old_level} → {lu.new_level}",
+                self._font_row, f"LEVEL UP!   Lv {old_level} -> {new_level}",
                 GOLD, max_w,
             )
-            gains = self._render_gains(lu)
             line_gap = 6
             block_h = (name.get_height() + line_gap + lvl.get_height()
-                       + line_gap + gains.get_height() + line_gap + exp.get_height())
+                       + line_gap + exp.get_height())
             ty = rect.y + (rect.h - block_h) // 2
             screen.blit(name, (tx, ty)); ty += name.get_height() + line_gap
             screen.blit(lvl, (tx, ty)); ty += lvl.get_height() + line_gap
-            screen.blit(gains, (tx, ty)); ty += gains.get_height() + line_gap
             screen.blit(exp, (tx, ty))
         else:
             line_gap = 8
@@ -248,29 +275,92 @@ class PostBattleScene(Scene):
             screen.blit(name, (tx, ty)); ty += name.get_height() + line_gap
             screen.blit(exp, (tx, ty))
 
-    def _render_gains(self, lu) -> pygame.Surface:
-        """Render the HP/MP/stat gains for a level-up onto one surface."""
-        parts = [
-            (f"HP +{lu.hp_gained}", HP_GAIN),
-            (f"MP +{lu.mp_gained}", MP_GAIN),
-        ]
-        for label, val in (
-            ("STR", lu.str_gained), ("DEX", lu.dex_gained),
-            ("CON", lu.con_gained), ("INT", lu.int_gained),
-        ):
-            if val:
-                parts.append((f"{label} +{val}", VIOLET))
+    # ── Level-up modal ────────────────────────────────────────
 
-        gap = 16
-        surfs = [(self._font_meta.render(t, True, c), c) for t, c in parts]
-        width = sum(s.get_width() for s, _ in surfs) + gap * (len(surfs) - 1)
-        height = max(s.get_height() for s, _ in surfs)
-        out = pygame.Surface((max(1, width), height), pygame.SRCALPHA)
-        cx = 0
-        for s, _ in surfs:
-            out.blit(s, (cx, 0))
-            cx += s.get_width() + gap
-        return out
+    def _build_lu_queue(self) -> list[dict]:
+        """One entry per member who gained at least one level, each holding the
+        new level and before -> after totals for every stat. Built once at
+        construction so the modal can step through it."""
+        queue: list[dict] = []
+        for r in self._rewards.member_results:
+            if not r.level_ups:
+                continue
+            last = r.level_ups[-1]
+            # "before" is the post-growth total minus everything gained here.
+            stats = [
+                ("HP", last.hp_max, sum(lu.hp_gained for lu in r.level_ups)),
+                ("MP", last.mp_max, sum(lu.mp_gained for lu in r.level_ups)),
+                ("STR", last.str_total, sum(lu.str_gained for lu in r.level_ups)),
+                ("DEX", last.dex_total, sum(lu.dex_gained for lu in r.level_ups)),
+                ("CON", last.con_total, sum(lu.con_gained for lu in r.level_ups)),
+                ("INT", last.int_total, sum(lu.int_gained for lu in r.level_ups)),
+            ]
+            queue.append({
+                "member_id": r.member_id,
+                "member_name": r.member_name,
+                "old_level": r.level_ups[0].old_level,
+                "new_level": last.new_level,
+                "stats": [(label, total - gained, total) for label, total, gained in stats],
+            })
+        return queue
+
+    def _render_levelup_modal(self, screen: pygame.Surface) -> None:
+        s = self._lu_queue[self._lu_index]
+        rect = render_modal(screen, 540, 432, title="LEVEL UP",
+                            title_font=self._font_head)
+
+        # ── Portrait + name + new level ───────────────────────
+        portrait = 88
+        px, py = rect.x + 28, rect.y + 58
+        icon = icon_surface(
+            f"member_{s['member_id']}", portrait,
+            image_path=member_icon_path(s["member_id"]),
+        )
+        screen.blit(icon, (px, py))
+
+        tx = px + portrait + 22
+        name = self._font_title.render(s["member_name"], True, INK)
+        screen.blit(name, (tx, py + 8))
+        lvl = self._font_row.render(
+            f"Lv {s['old_level']} -> {s['new_level']}", True, GOLD)
+        screen.blit(lvl, (tx, py + 8 + name.get_height() + 8))
+
+        # page indicator when more than one member grew
+        if len(self._lu_queue) > 1:
+            idx = self._font_meta.render(
+                f"{self._lu_index + 1} / {len(self._lu_queue)}", True, MUTED)
+            screen.blit(idx, (rect.right - idx.get_width() - 22, rect.y + 18))
+
+        # ── Stat table: LABEL  before  ->  after  (+gain) ─────
+        dy = py + portrait + 22
+        draw_divider(screen, rect.x + 28, dy, rect.w - 56)
+        dy += 18
+
+        col_label  = rect.x + 40
+        col_before = rect.x + 210
+        col_arrow  = rect.x + 276
+        col_after  = rect.x + 330
+        col_gain   = rect.x + 420
+        for label, before, after in s["stats"]:
+            gain = after - before
+            screen.blit(self._font_stat.render(label, True, MUTED), (col_label, dy))
+            self._blit_right(screen, self._font_stat, str(before), DIM, col_before, dy)
+            screen.blit(self._font_stat.render("->", True, MUTED), (col_arrow, dy))
+            self._blit_right(screen, self._font_stat, str(after), INK, col_after + 46, dy)
+            if gain > 0:
+                screen.blit(self._font_meta.render(f"+{gain}", True, GAIN), (col_gain, dy))
+            dy += self._font_stat.get_height() + 10
+
+        # ── Hint ──────────────────────────────────────────────
+        last_modal = self._lu_index >= len(self._lu_queue) - 1
+        text = "ENTER  continue" if last_modal else "ENTER  next"
+        hint = self._font_hint.render(text, True, C_TEXT_DIM)
+        screen.blit(hint, (rect.centerx - hint.get_width() // 2, rect.bottom - 34))
+
+    @staticmethod
+    def _blit_right(screen, font, text, color, right_x, y) -> None:
+        surf = font.render(text, True, color)
+        screen.blit(surf, (right_x - surf.get_width(), y))
 
     # ── Spoils ────────────────────────────────────────────────
 

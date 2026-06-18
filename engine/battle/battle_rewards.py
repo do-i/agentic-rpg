@@ -155,6 +155,12 @@ class RewardCalculator:
                 dex_gained=dex_gain,
                 con_gained=con_gain,
                 int_gained=int_gain,
+                hp_max=member.hp_max,
+                mp_max=member.mp_max,
+                str_total=member.str_,
+                dex_total=member.dex,
+                con_total=member.con,
+                int_total=member.int_,
             ))
 
         return level_ups

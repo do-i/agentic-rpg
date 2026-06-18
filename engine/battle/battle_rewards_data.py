@@ -16,6 +16,14 @@ class LevelUpResult:
     dex_gained:  int
     con_gained:  int
     int_gained:  int
+    # Post-growth absolute totals — drive the before -> after columns in the
+    # level-up modal. "before" is recovered as total - gained.
+    hp_max:      int
+    mp_max:      int
+    str_total:   int
+    dex_total:   int
+    con_total:   int
+    int_total:   int
 
 
 @dataclass(frozen=True)
