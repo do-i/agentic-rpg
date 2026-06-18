@@ -7,11 +7,10 @@ from __future__ import annotations
 import pygame
 
 from engine.common.field_menu_theme import (
-    DIM,
     dim_screen,
     draw_divider,
-    render_modal,
     render_panel,
+    render_toast,
 )
 from engine.shop.shop_constants import (
     C_HINT,
@@ -91,11 +90,11 @@ def draw_popup(
     font_toast: pygame.font.Font,
     font_hint: pygame.font.Font,
 ) -> None:
-    ph = 88
-    modal = render_modal(screen, popup_w, ph)
-    msg = font_toast.render(message, True, msg_color)
-    screen.blit(msg, (modal.x + (popup_w - msg.get_width()) // 2, modal.y + 18))
-    hint = font_hint.render("ENTER / ESC  close", True, DIM)
-    screen.blit(hint, (modal.x + (popup_w - hint.get_width()) // 2, modal.bottom - 28))
+    # border_color retained for call-site compatibility; the themed toast
+    # supplies its own border.
+    render_toast(
+        screen, font_toast, font_hint, message,
+        msg_color=msg_color, width=popup_w,
+    )
 
 

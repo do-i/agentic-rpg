@@ -123,6 +123,30 @@ def render_modal(
     return rect
 
 
+def render_toast(
+    screen: pygame.Surface,
+    font_msg: pygame.font.Font,
+    font_hint: pygame.font.Font,
+    message: str,
+    *,
+    msg_color: tuple[int, int, int] = INK,
+    hint: str = "ENTER / ESC  close",
+    width: int = 420,
+    height: int = 88,
+) -> pygame.Rect:
+    """Centered themed popup: a single message line with a dismiss hint.
+
+    Shared by inn rest, save confirmation, shop, spell, and status feedback.
+    Returns the modal rect.
+    """
+    modal = render_modal(screen, width, height)
+    msg = font_msg.render(message, True, msg_color)
+    screen.blit(msg, (modal.x + (width - msg.get_width()) // 2, modal.y + 18))
+    sub = font_hint.render(hint, True, DIM)
+    screen.blit(sub, (modal.x + (width - sub.get_width()) // 2, modal.bottom - 28))
+    return modal
+
+
 def render_hint(
     screen: pygame.Surface,
     font: pygame.font.Font,

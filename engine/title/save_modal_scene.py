@@ -11,6 +11,7 @@ from engine.common.save_slot_data import SaveSlot
 from engine.common.field_menu_theme import (
     DIM, GOLD, INK, MUTED,
     dim_screen, draw_divider, render_modal, render_panel, render_row_frame,
+    render_toast,
 )
 
 MODAL_W       = 700
@@ -235,9 +236,7 @@ class SaveModalScene(Scene):
         screen.blit(hint, (bx + 20, by + 60))
 
     def _render_popup(self, screen: pygame.Surface) -> None:
-        ph = 88
-        modal = render_modal(screen, POPUP_W, ph)
-        msg = self._font_toast.render(self._popup_text, True, (132, 196, 111))
-        screen.blit(msg, (modal.x + (POPUP_W - msg.get_width()) // 2, modal.y + 18))
-        hint = self._font_hint.render("ENTER / ESC  close", True, DIM)
-        screen.blit(hint, (modal.x + (POPUP_W - hint.get_width()) // 2, modal.bottom - 28))
+        render_toast(
+            screen, self._font_toast, self._font_hint, self._popup_text,
+            msg_color=(132, 196, 111), width=POPUP_W,
+        )

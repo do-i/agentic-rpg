@@ -14,7 +14,7 @@ from engine.common.game_state_holder import GameStateHolder
 from engine.common.menu_sfx_mixin import MenuSfxMixin
 from engine.common.field_menu_theme import (
     DIM, EMBER, GOLD, INK, MUTED, TEAL,
-    dim_screen, draw_divider, draw_stat_bar, render_modal, render_panel,
+    dim_screen, draw_divider, draw_stat_bar, render_panel, render_toast,
 )
 from engine.world.sprite_sheet import SpriteSheet
 
@@ -211,9 +211,8 @@ class InnScene(MenuSfxMixin, Scene):
             screen.blit(hint, (mx + PAD, y + (FOOTER_H - hint.get_height()) // 2))
 
     def _draw_popup(self, screen: pygame.Surface) -> None:
-        ph = 88
-        modal = render_modal(screen, POPUP_W, ph)
-        msg = self._font_toast.render("The party rested and recovered!", True, C_TOAST)
-        screen.blit(msg, (modal.x + (POPUP_W - msg.get_width()) // 2, modal.y + 18))
-        hint = self._font_hint.render("ENTER / ESC  close", True, C_HINT)
-        screen.blit(hint, (modal.x + (POPUP_W - hint.get_width()) // 2, modal.bottom - 28))
+        render_toast(
+            screen, self._font_toast, self._font_hint,
+            "The party rested and recovered!",
+            msg_color=C_TOAST, width=POPUP_W,
+        )
