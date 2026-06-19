@@ -37,16 +37,15 @@ from engine.common.field_menu_theme import (
     VIOLET,
     draw_divider,
     fit_text,
-    icon_surface,
     load_image,
     member_icon_path,
     render_backdrop,
     render_header,
     render_icon_row,
     render_panel,
-    render_row_frame,
     wrap_text,
 )
+from engine.common.member_card import CARD_COLUMN_EXTRA, member_column_width, render_member_column
 from engine.common.menu_popup import render_popup
 from engine.common.target_select_overlay_renderer import TargetSelectOverlay
 from engine.common.warp_select_overlay import WarpSelectOverlay
@@ -418,10 +417,12 @@ class StatusScene(WizardScene):
         top = PAD_Y + 92
         panel_h = max(360, sh - top - 62)
         available = sw - PAD_X * 2 - GAP * 2
-        member_w = min(300, max(260, int(sw * 0.24)))
-        remaining = available - member_w
+        member_w = member_column_width(sw)
+        # Portrait column (col 2) keeps its pre-widening budget; the extra card
+        # width is reclaimed from the lore column (col 3) so margins hold.
+        remaining = available - (member_w - CARD_COLUMN_EXTRA)
         detail_w = remaining // 2
-        action_w = remaining - detail_w
+        action_w = remaining - detail_w - CARD_COLUMN_EXTRA
         member_rect = pygame.Rect(PAD_X, top, member_w, panel_h)
         detail_rect = pygame.Rect(member_rect.right + GAP, top, detail_w, panel_h)
         action_rect = pygame.Rect(detail_rect.right + GAP, top, action_w, panel_h)
@@ -430,57 +431,14 @@ class StatusScene(WizardScene):
     # ── Col 1: party cards (matches the equipment party panel) ─
 
     def _render_members(self, screen: pygame.Surface, panel: pygame.Rect) -> None:
-        members = self._members()
-        x = panel.x + 16
-        top = panel.y + 52
-        w = panel.w - 32
-        if not members:
-            msg = self._font_row.render("No members.", True, C_TEXT_DIM)
-            screen.blit(msg, (x, top))
-            return
-        sel = self._page(PAGE_MEMBER).selection
-        active_page = self.page_id == PAGE_MEMBER
-
-        n = len(members)
-        gap = 14
-        avail = (panel.bottom - 16) - top
-        row_h = min(118, (avail - gap * (n - 1)) // n)
-        portrait = min(row_h - 16, 92)
-
-        for i, m in enumerate(members):
-            selected = (i == sel)
-            row = pygame.Rect(x, top + i * (row_h + gap), w, row_h)
-            self._render_member_card(
-                screen, row, m, portrait,
-                focused=selected and active_page,
-                dimmed=selected and not active_page,
-            )
-
-    def _render_member_card(
-        self, screen: pygame.Surface, rect: pygame.Rect, m: MemberState,
-        portrait: int, *, focused: bool, dimmed: bool,
-    ) -> None:
-        render_row_frame(screen, rect, focused=focused, dimmed_sel=dimmed)
-        icon = icon_surface(f"member_{m.id}", portrait, image_path=member_icon_path(m.id))
-        screen.blit(icon, (rect.x + 12, rect.y + (rect.h - portrait) // 2))
-
-        tx = rect.x + 24 + portrait
-        max_w = rect.right - tx - 14
-        name = fit_text(self._font_head, f"{m.name}  Lv{m.level}", INK, max_w)
-        cls = fit_text(self._font_row, m.class_name.title(), GOLD, max_w)
-        hp = self._font_meta.render(f"HP {m.hp}/{m.hp_max}", True, MUTED)
-        mp = self._font_meta.render(f"MP {m.mp}/{m.mp_max}", True, MUTED)
-
-        line_gap = 6
-        block_h = (name.get_height() + line_gap + cls.get_height()
-                   + line_gap + max(hp.get_height(), mp.get_height()))
-        ty = rect.y + (rect.h - block_h) // 2
-        screen.blit(name, (tx, ty))
-        ty += name.get_height() + line_gap
-        screen.blit(cls, (tx, ty))
-        ty += cls.get_height() + line_gap
-        screen.blit(hp, (tx, ty))
-        screen.blit(mp, (tx + max(hp.get_width() + 18, 96), ty))
+        render_member_column(
+            screen, panel, self._members(),
+            selection=self._page(PAGE_MEMBER).selection,
+            active_page=self.page_id == PAGE_MEMBER,
+            font_head=self._font_head,
+            font_row=self._font_row,
+            font_meta=self._font_meta,
+        )
 
     # ── Col 2: member detail + action menu ────────────────────
 
