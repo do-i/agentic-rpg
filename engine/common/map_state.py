@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from engine.world.position_data import Position
+from engine.world.sprite_sheet import Direction
 
 
 class MapState:
@@ -21,15 +22,25 @@ class MapState:
         self.display_name: str = display_name
         self.position: Position = position if position is not None else Position(0, 0)
         self._visited: set[str] = set(visited) if visited is not None else set()
+        # Direction the player should face on arrival at the current map.
+        # Transient (not serialized): set by move_to, consumed when the world
+        # scene builds the Player. Defaults to facing south.
+        self.facing: Direction = Direction.DOWN
 
     # -- Mutation --
 
-    def move_to(self, map_id: str, position: Position) -> None:
-        """Switch to a new map and record previous as visited."""
+    def move_to(self, map_id: str, position: Position, facing: Direction) -> None:
+        """Switch to a new map and record previous as visited.
+
+        ``facing`` is the direction the player should face on arrival — for a
+        portal this is the direction of travel through the door, so the player
+        ends up facing away from the entrance rather than always facing south.
+        """
         if self.current and self.current not in self._visited:
             self._visited.add(self.current)
         self.current = map_id
         self.position = position
+        self.facing = facing
 
     def set_position(self, position: Position) -> None:
         """Update position within the current map."""

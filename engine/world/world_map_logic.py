@@ -185,6 +185,9 @@ def check_portals(tile_map: TileMap, player: Player) -> dict | None:
             return {
                 "map": portal.target_map,
                 "position": [portal.target_position.x, portal.target_position.y],
+                # Carry the direction of travel so the player arrives facing
+                # the way they walked (away from the entrance), not always south.
+                "facing": int(player.facing_direction),
             }
     return None
 
@@ -200,10 +203,16 @@ def apply_transition(holder: GameStateHolder, game_state_manager: GameStateManag
         raise KeyError(f"transition missing required field 'position': {transition!r}")
     if "map" not in transition:
         raise KeyError(f"transition missing required field 'map': {transition!r}")
+    if "facing" not in transition:
+        raise KeyError(f"transition missing required field 'facing': {transition!r}")
     state = holder.get()
     target_map = transition["map"]
     map_changed = target_map != state.map.current
-    state.map.move_to(target_map, Position.from_list(transition["position"]))
+    state.map.move_to(
+        target_map,
+        Position.from_list(transition["position"]),
+        Direction(transition["facing"]),
+    )
     if map_changed:
         game_state_manager.save(state, slot_index=0)
 

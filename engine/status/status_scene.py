@@ -57,6 +57,7 @@ from engine.party.party_state import exp_pct
 from engine.spell.spell_logic import learned_spells, is_field_castable
 from engine.status.status_logic import apply_spell, apply_spell_all, valid_targets
 from engine.world.warp_logic import warp_destinations, WarpDestination
+from engine.world.sprite_sheet import Direction
 
 
 PAGE_MEMBER   = "member"
@@ -349,7 +350,7 @@ class StatusScene(WizardScene):
     def _on_warp_confirm(self, spell: dict, caster: MemberState, dest: WarpDestination) -> None:
         caster.mp = max(0, caster.mp - spell["mp_cost"])
         state = self._holder.get()
-        state.map.move_to(dest.map_id, dest.position)
+        state.map.move_to(dest.map_id, dest.position, Direction.DOWN)
         self._game_state_manager.save(state, slot_index=0)
         self._warp_overlay = None
         self._scene_manager.switch(self._registry.get(self._return_scene_name))

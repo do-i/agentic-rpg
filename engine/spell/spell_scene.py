@@ -15,6 +15,7 @@ from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
 from engine.io.save_manager import GameStateManager
 from engine.world.warp_logic import warp_destinations, WarpDestination
+from engine.world.sprite_sheet import Direction
 from engine.common.warp_select_overlay import WarpSelectOverlay
 from engine.common.font_provider import get_fonts
 from engine.common.font_roles import CAPTION
@@ -236,7 +237,7 @@ class SpellScene(WizardScene):
         state.map.current changed (see WorldMapScene._ensure_init)."""
         caster.mp = max(0, caster.mp - spell["mp_cost"])
         state = self._holder.get()
-        state.map.move_to(dest.map_id, dest.position)
+        state.map.move_to(dest.map_id, dest.position, Direction.DOWN)
         self._game_state_manager.save(state, slot_index=0)
         self._warp_overlay = None
         self._scene_manager.switch(self._registry.get(self._return_scene_name))

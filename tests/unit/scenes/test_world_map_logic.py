@@ -222,6 +222,7 @@ class TestCheckPortals:
     def test_returns_transition_on_trigger(self):
         player = MagicMock()
         player.collision_rect_position = MagicMock(x=100, y=200)
+        player.facing_direction = Direction.UP
 
         portal = MagicMock()
         portal.is_triggered_by.return_value = True
@@ -233,7 +234,9 @@ class TestCheckPortals:
 
         result = check_portals(tile_map, player)
 
-        assert result == {"map": "dungeon_01", "position": [5, 3]}
+        assert result == {
+            "map": "dungeon_01", "position": [5, 3], "facing": int(Direction.UP),
+        }
 
     def test_returns_none_when_not_triggered(self):
         player = MagicMock()
@@ -264,7 +267,8 @@ class TestApplyTransition:
         player = MagicMock()
         player.tile_position = Position(3, 4)
 
-        transition = {"map": "dungeon_01", "position": [10, 20]}
+        transition = {"map": "dungeon_01", "position": [10, 20],
+                      "facing": int(Direction.UP)}
 
         # save must come after move_to so the snapshot lands at the destination.
         manager = MagicMock()
@@ -274,7 +278,7 @@ class TestApplyTransition:
         apply_transition(holder, gsm, player, transition)
 
         state.map.move_to.assert_called_once_with(
-            "dungeon_01", Position(10, 20),
+            "dungeon_01", Position(10, 20), Direction.UP,
         )
         gsm.save.assert_called_once_with(state, slot_index=0)
         ordered = [name for name, *_ in manager.mock_calls]
@@ -291,9 +295,10 @@ class TestApplyTransition:
         player = MagicMock()
         player.tile_position = Position(0, 0)
 
-        apply_transition(holder, gsm, player, {"map": "town_01", "position": [5, 6]})
+        apply_transition(holder, gsm, player, {"map": "town_01", "position": [5, 6],
+                                               "facing": int(Direction.LEFT)})
 
-        state.map.move_to.assert_called_once_with("town_01", Position(5, 6))
+        state.map.move_to.assert_called_once_with("town_01", Position(5, 6), Direction.LEFT)
         gsm.save.assert_not_called()
 
     def test_missing_map_raises(self):
@@ -313,6 +318,15 @@ class TestApplyTransition:
 
         with pytest.raises(KeyError, match="'position'"):
             apply_transition(holder, gsm, player, {"map": "town_01"})
+
+    def test_missing_facing_raises(self):
+        holder = MagicMock()
+        gsm = MagicMock()
+        player = MagicMock()
+        player.tile_position = Position(0, 0)
+
+        with pytest.raises(KeyError, match="'facing'"):
+            apply_transition(holder, gsm, player, {"map": "town_01", "position": [0, 0]})
 
 
 # ── load_inn_cost / load_shop_items ───────────────────────────

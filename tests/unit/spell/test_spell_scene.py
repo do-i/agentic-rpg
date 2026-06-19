@@ -15,6 +15,7 @@ from engine.party.member_state import MemberState
 from engine.spell.spell_scene import SpellScene, PAGE_MEMBER, PAGE_SPELL
 from engine.audio.sfx_manager import SfxManager
 from engine.world.position_data import Position
+from engine.world.sprite_sheet import Direction
 
 
 CLERIC_YAML = """\
@@ -253,9 +254,9 @@ def make_warp_scene(tmp_path):
     state.party.add_member(make_member(name="Aric", class_name="hero"))
     state.flags.add_flag("aric_teleport_unlocked")
     # Standing in the forest, having visited the town (and its shop interior).
-    state.map.move_to("town_ardel", Position(1, 1))
-    state.map.move_to("town_ardel_shop", Position(1, 1))
-    state.map.move_to("zone_forest", Position(1, 1))
+    state.map.move_to("town_ardel", Position(1, 1), Direction.DOWN)
+    state.map.move_to("town_ardel_shop", Position(1, 1), Direction.DOWN)
+    state.map.move_to("zone_forest", Position(1, 1), Direction.DOWN)
     holder = GameStateHolder()
     holder.set(state)
 

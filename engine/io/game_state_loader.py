@@ -13,6 +13,7 @@ from engine.io.yaml_loader import load_yaml_required_cached
 from engine.party.member_state import MemberState
 from engine.party.party_data import build_member, load_party_entry
 from engine.world.position_data import Position
+from engine.world.sprite_sheet import Direction
 from engine.party.party_state import calc_exp_next
 from engine.util.playtime import Playtime
 
@@ -49,6 +50,7 @@ def from_new_game(
     state.map.move_to(
         map_id=start["map"],
         position=Position.from_list(start["position"]),
+        facing=Direction.DOWN,
     )
 
     state.playtime.start_session()

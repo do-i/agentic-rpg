@@ -113,6 +113,11 @@ class Player:
             AnimationController(sprite_sheet) if sprite_sheet else None
         )
 
+    def set_facing(self, direction: Direction) -> None:
+        """Set the idle facing direction (e.g. on arrival at a new map)."""
+        if self._animation:
+            self._animation.set_direction(direction)
+
     # ── Properties ────────────────────────────────────────────
 
     @property

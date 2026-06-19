@@ -66,6 +66,13 @@ class AnimationController:
     def current_scaled_frame(self, size: tuple[int, int]) -> pygame.Surface:
         return self._sheet.get_scaled_frame(self._direction, self._frame_index, size)
 
+    def set_direction(self, direction: Direction) -> None:
+        """Face a direction without moving (idle pose). Used on map arrival."""
+        self._direction = direction
+        self._frame_index = IDLE_FRAME
+        self._timer = 0.0
+        self._moving = False
+
     @property
     def direction(self) -> Direction:
         return self._direction

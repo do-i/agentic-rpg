@@ -10,13 +10,16 @@ from engine.common.font_provider import get_fonts
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.color_constants import C_BG, C_TEXT, C_TEXT_DIM
 from engine.party.party_state import PartyState
+from engine.world.sprite_sheet import Direction
 from engine.world.sprite_sheet_cache import SpriteSheetCache
+from engine.world.world_map_init import load_party_member_sprite
 
 MODAL_W = 480
 ROW_H = 50
 TITLE_H = 42
 HINT_H = 32
 PAD = 20
+SPRITE_SIZE = 42
 
 
 class SwitchCharacterScene(Scene):
@@ -44,6 +47,8 @@ class SwitchCharacterScene(Scene):
         )
         self._selected = self._get_selected_index()
         self._fonts_ready = False
+        # member id -> idle DOWN frame scaled to SPRITE_SIZE (None when no sheet)
+        self._sprite_frames: dict[str, pygame.Surface | None] = {}
 
     def _get_selected_index(self) -> int:
         for i, member in enumerate(self._members):
@@ -81,6 +86,20 @@ class SwitchCharacterScene(Scene):
             self._sfx_manager.play("select")
         self._on_close()
 
+    def _member_frame(self, member_id: str) -> pygame.Surface | None:
+        if member_id not in self._sprite_frames:
+            sheet = load_party_member_sprite(
+                member_id, self._scenario_path, self._sprite_cache
+            )
+            self._sprite_frames[member_id] = (
+                sheet.get_scaled_frame(
+                    Direction.DOWN, 0, (SPRITE_SIZE, SPRITE_SIZE)
+                )
+                if sheet is not None
+                else None
+            )
+        return self._sprite_frames[member_id]
+
     def update(self, delta: float) -> None:
         pass
 
@@ -103,10 +122,18 @@ class SwitchCharacterScene(Scene):
         for i, member in enumerate(self._members):
             is_selected = i == self._selected
             color = C_TEXT if is_selected else C_TEXT_DIM
+            band_y = row_y + i * ROW_H
+
+            sprite = self._member_frame(member.id)
+            if sprite is not None:
+                sprite_y = band_y + (ROW_H - SPRITE_SIZE) // 2
+                screen.blit(sprite, (modal_x + PAD, sprite_y))
+
             prefix = "> " if is_selected else "  "
             label = f"{prefix}{member.name}"
             text = self._font_row.render(label, True, color)
-            screen.blit(text, (modal_x + PAD, row_y + i * ROW_H))
+            text_y = band_y + (ROW_H - self._font_row.get_height()) // 2
+            screen.blit(text, (modal_x + PAD + SPRITE_SIZE + 12, text_y))
 
         hint_y = modal_y + TITLE_H + len(self._members) * ROW_H + PAD * 2
         hint = self._font_hint.render("UP/DOWN Select  Enter Confirm  ESC Cancel", True, C_TEXT_DIM)

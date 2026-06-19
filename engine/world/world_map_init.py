@@ -88,6 +88,9 @@ def init_world_map(
         player_speed=player_speed,
         debug_collision=debug_collision,
     )
+    # Arrive facing the direction recorded on the last transition (the way the
+    # player walked through the door), instead of the default south-facing pose.
+    player.set_facing(state.map.facing)
 
     if balance is not None:
         state.repository.configure_caps(balance)

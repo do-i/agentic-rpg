@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 from engine.world.position_data import Position
+from engine.world.sprite_sheet import Direction
 from engine.common.map_state import MapState
 
 
@@ -26,24 +27,28 @@ class TestMapStateInit:
 
 class TestMoveTo:
     def test_updates_current_and_position(self, empty_map_state):
-        empty_map_state.move_to("town_01", Position(10, 5))
+        empty_map_state.move_to("town_01", Position(10, 5), Direction.DOWN)
         assert empty_map_state.current == "town_01"
         assert empty_map_state.position == Position(10, 5)
 
+    def test_records_arrival_facing(self, empty_map_state):
+        empty_map_state.move_to("town_01", Position(10, 5), Direction.UP)
+        assert empty_map_state.facing == Direction.UP
+
     def test_records_previous_map_as_visited(self):
         s = MapState(current="zone_01", position=Position(0, 0))
-        s.move_to("town_01", Position(5, 5))
+        s.move_to("town_01", Position(5, 5), Direction.DOWN)
         assert s.has_visited("zone_01")
 
     def test_does_not_record_empty_current(self, empty_map_state):
-        empty_map_state.move_to("town_01", Position(0, 0))
+        empty_map_state.move_to("town_01", Position(0, 0), Direction.DOWN)
         assert empty_map_state.visited == []
 
     def test_no_duplicate_in_visited(self):
         s = MapState(current="zone_01", position=Position(0, 0))
-        s.move_to("town_01", Position(0, 0))
-        s.move_to("zone_01", Position(0, 0))  # back to zone_01
-        s.move_to("town_01", Position(0, 0))  # town_01 again
+        s.move_to("town_01", Position(0, 0), Direction.DOWN)
+        s.move_to("zone_01", Position(0, 0), Direction.DOWN)  # back to zone_01
+        s.move_to("town_01", Position(0, 0), Direction.DOWN)  # town_01 again
         assert s.visited.count("town_01") == 1
 
 
