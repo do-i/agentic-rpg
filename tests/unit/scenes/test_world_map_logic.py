@@ -10,7 +10,7 @@ from engine.world.position_data import Position
 from engine.world.world_map_logic import (
     try_interact, dispatch_dialogue_result,
     apply_join_party,
-    check_portals, apply_transition,
+    check_portals, apply_transition, face_into_map,
     load_inn_cost, load_shop_items, load_recipes,
 )
 from engine.world.sprite_sheet import Direction
@@ -250,6 +250,51 @@ class TestCheckPortals:
 
         result = check_portals(tile_map, player)
         assert result is None
+
+
+# ── face_into_map ─────────────────────────────────────────────
+
+class TestFaceIntoMap:
+    """Arrival-facing correction for map transitions.
+
+    Opposite-edge links (the common case) must be left untouched; only
+    same-edge links — where the travel facing points back off the entered
+    edge — get flipped to face into the map.
+    """
+
+    def test_mid_map_arrival_keeps_facing(self):
+        # Regression: a mid-map arrival facing UP is 15 tiles from the north
+        # edge and must NOT be flipped to DOWN (the "always faces south" bug).
+        assert face_into_map(Direction.UP, 20, 15, 41, 31) == Direction.UP
+
+    def test_opposite_edge_link_keeps_travel_facing(self):
+        # Walked south off map A, arrived at the NORTH edge of a 41x31 map.
+        # Facing DOWN points into the map (south border is 29 tiles away) -> kept.
+        assert face_into_map(Direction.DOWN, 20, 1, 41, 31) == Direction.DOWN
+
+    def test_same_edge_link_flips_to_face_inward(self):
+        # marshland -> harborgate: exit south, land at harborgate's SOUTH gate
+        # (20,29) on a 41x31 map. The south border is 1 tile ahead, so DOWN
+        # would stare off-map -> flips to UP, into the town.
+        assert face_into_map(Direction.DOWN, 20, 29, 41, 31) == Direction.UP
+
+    def test_same_edge_link_flips_marshland_south_gap(self):
+        # harborgate -> marshland: land in marshland's south gap (21,37) on a
+        # 50x40 map; south border is 2 tiles ahead -> DOWN flips to UP.
+        assert face_into_map(Direction.DOWN, 21, 37, 50, 40) == Direction.UP
+
+    def test_west_edge_arrival_facing_inward_unchanged(self):
+        # Arrived at the WEST edge facing RIGHT (into the map) -> kept.
+        assert face_into_map(Direction.RIGHT, 1, 15, 60, 30) == Direction.RIGHT
+
+    def test_same_edge_east_link_flips(self):
+        # Landed one tile from the EAST edge still facing RIGHT -> flips to LEFT.
+        assert face_into_map(Direction.RIGHT, 58, 14, 60, 28) == Direction.LEFT
+
+    def test_door_exit_facing_inward_unchanged(self):
+        # Stepping out of a building onto a tile near the north wall facing DOWN
+        # (into the map): south border is far -> unchanged.
+        assert face_into_map(Direction.DOWN, 15, 3, 30, 20) == Direction.DOWN
 
 
 # ── apply_transition ──────────────────────────────────────────

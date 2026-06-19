@@ -109,9 +109,16 @@ class Player:
         )
 
     def change_sprite(self, sprite_sheet: SpriteSheet | None) -> None:
+        # Preserve the current facing across the swap. A fresh AnimationController
+        # defaults to DOWN, so without this a sprite reload (e.g. the one the world
+        # scene runs on the first frame after a map transition) would wipe the
+        # arrival facing and leave the player always looking south.
+        prev_direction = self._animation.direction if self._animation else None
         self._animation = (
             AnimationController(sprite_sheet) if sprite_sheet else None
         )
+        if self._animation is not None and prev_direction is not None:
+            self._animation.set_direction(prev_direction)
 
     def set_facing(self, direction: Direction) -> None:
         """Set the idle facing direction (e.g. on arrival at a new map)."""

@@ -5,8 +5,10 @@ from __future__ import annotations
 import math
 import pytest
 import pygame
+from unittest.mock import MagicMock
 from engine.world.player import Player, PLAYER_SPEED, PLAYER_WIDTH, PLAYER_HEIGHT, COLLISION_W, COLLISION_H, COLLISION_OFFSET_X, COLLISION_OFFSET_Y
 from engine.world.position_data import Position
+from engine.world.sprite_sheet import Direction
 
 
 # ── Helpers ───────────────────────────────────────────────────
@@ -34,6 +36,28 @@ def make_player(tile_x: int = 5, tile_y: int = 5, sprite_sheet=None) -> Player:
         map_height_px=MAP_H,
         sprite_sheet=sprite_sheet,
     )
+
+# ── Sprite swap preserves facing ──────────────────────────────
+
+class TestChangeSpritePreservesFacing:
+    def test_change_sprite_keeps_current_facing(self):
+        # Regression: the world scene reloads the player sprite on the first
+        # frame after a map transition. A fresh AnimationController defaults to
+        # DOWN, so the swap must carry the arrival facing over or the player
+        # always ends up looking south.
+        player = make_player(sprite_sheet=MagicMock())
+        player.set_facing(Direction.UP)
+        assert player.facing_direction == Direction.UP
+
+        player.change_sprite(MagicMock())
+        assert player.facing_direction == Direction.UP
+
+    def test_change_sprite_keeps_left_facing(self):
+        player = make_player(sprite_sheet=MagicMock())
+        player.set_facing(Direction.LEFT)
+        player.change_sprite(MagicMock())
+        assert player.facing_direction == Direction.LEFT
+
 
 # ── Construction ──────────────────────────────────────────────
 

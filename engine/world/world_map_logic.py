@@ -175,6 +175,49 @@ def apply_join_party(scenario_path: Path, party, member_id: str) -> bool:
     return True
 
 
+# How far (in tiles) the player's facing border may be before we assume they
+# arrived through it and would otherwise spawn staring back off the map. Landing
+# tiles sit 1-2 tiles inside an edge; anything deeper is a normal inward arrival.
+_OFF_MAP_FACING_MARGIN = 2
+
+# Distance from a tile to the map border in the direction the player faces.
+_DIST_TO_FACED_BORDER = {
+    Direction.UP:    lambda x, y, w, h: y,
+    Direction.DOWN:  lambda x, y, w, h: (h - 1) - y,
+    Direction.LEFT:  lambda x, y, w, h: x,
+    Direction.RIGHT: lambda x, y, w, h: (w - 1) - x,
+}
+_OPPOSITE_FACING = {
+    Direction.UP: Direction.DOWN,
+    Direction.DOWN: Direction.UP,
+    Direction.LEFT: Direction.RIGHT,
+    Direction.RIGHT: Direction.LEFT,
+}
+
+
+def face_into_map(
+    facing: Direction, tile_x: int, tile_y: int, map_w: int, map_h: int
+) -> Direction:
+    """Correct arrival facing so the player never spawns staring off the map.
+
+    Most map links connect opposite edges (exit south -> enter the north edge),
+    so the travel direction already points *into* the destination and is kept
+    unchanged. But some links connect the *same* compass edge of both maps
+    (the world layout is a graph, not a coherent grid): there, arriving with the
+    travel facing leaves the player at the edge they entered, looking back out
+    of it. Detect that by checking the border the player faces — only when it is
+    right in front of them (within a couple tiles) do we flip the facing inward.
+    A mid-map arrival, or one already facing inward, is left untouched.
+
+    Purely a sprite-orientation fix: it never moves the player, so it cannot push
+    them into a wall.
+    """
+    dist = _DIST_TO_FACED_BORDER[facing](tile_x, tile_y, map_w, map_h)
+    if dist <= _OFF_MAP_FACING_MARGIN:
+        return _OPPOSITE_FACING[facing]
+    return facing
+
+
 def check_portals(tile_map: TileMap, player: Player) -> dict | None:
     """Check if player is on a portal. Returns transition dict or None."""
     if tile_map is None or player is None:

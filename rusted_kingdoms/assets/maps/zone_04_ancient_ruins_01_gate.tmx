@@ -5,18 +5,18 @@
  <tileset firstgid="2385" source="../tilesets/stone_tile_stares_16x16.tsx"/>
  <tileset firstgid="2641" source="../tilesets/sample_01.tsx"/>
  <objectgroup id="5" name="portals">
-  <object id="2" name="exit_zone_04_ancient_ruins_02_courtyard" x="1272" y="396.5" width="12" height="83.1667">
+  <object id="2" name="exit_zone_04_ancient_ruins_02_courtyard" x="1.42109e-14" y="358.167" width="12" height="57.1667">
    <properties>
     <property name="target_map" value="zone_04_ancient_ruins_02_courtyard"/>
-    <property name="target_position_x" type="int" value="2"/>
+    <property name="target_position_x" type="int" value="40"/>
     <property name="target_position_y" type="int" value="15"/>
    </properties>
   </object>
-  <object id="3" name="exit_zone_03_marshland" x="0" y="370" width="7" height="44.6667">
+  <object id="3" name="exit_zone_03_marshland" x="1275.83" y="403.417" width="7" height="72.9167">
    <properties>
     <property name="target_map" value="zone_03_marshland"/>
     <property name="target_position_x" type="int" value="1"/>
-    <property name="target_position_y" type="int" value="32"/>
+    <property name="target_position_y" type="int" value="31"/>
    </properties>
   </object>
   <object id="5" name="town_03_ruinwatch" x="898.25" y="1.625" width="27.75" height="1.375">

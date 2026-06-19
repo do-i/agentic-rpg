@@ -1,26 +1,26 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="50" height="35" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="9">
- <tileset firstgid="1" source="../tilesets/grass_cave_walls_24x14.tsx"/>
- <tileset firstgid="337" source="../tilesets/icon_table_stage_14x9.tsx"/>
- <tileset firstgid="100337" source="../tilesets/stone_tile_stares_16x16.tsx"/>
+<?xml version='1.0' encoding='utf-8'?>
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="50" height="35" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="10">
+ <tileset firstgid="1" source="../tilesets/grass_cave_walls_24x14.tsx" />
+ <tileset firstgid="337" source="../tilesets/icon_table_stage_14x9.tsx" />
+ <tileset firstgid="100337" source="../tilesets/stone_tile_stares_16x16.tsx" />
  <objectgroup id="5" name="portals">
   <object id="1" name="town_01_ardel" x="927.5" y="-3.5" width="32.5" height="9">
    <properties>
-    <property name="target_map" value="town_01_ardel"/>
-    <property name="target_position_x" type="int" value="27"/>
-    <property name="target_position_y" type="int" value="12"/>
+    <property name="target_map" value="town_01_ardel" />
+    <property name="target_position_x" type="int" value="27" />
+    <property name="target_position_y" type="int" value="12" />
    </properties>
   </object>
   <object id="2" name="zone_02_open_plains" x="1.5" y="805.5" width="2.5" height="48.5">
    <properties>
-    <property name="target_map" value="zone_02_open_plains"/>
-    <property name="target_position_x" type="int" value="28"/>
-    <property name="target_position_y" type="int" value="6"/>
+    <property name="target_map" value="zone_02_open_plains" />
+    <property name="target_position_x" type="int" value="28" />
+    <property name="target_position_y" type="int" value="6" />
    </properties>
   </object>
- </objectgroup>
+ <object id="9" x="928" y="0" width="32" height="32"><properties><property name="target_map" value="town_01_ardel" /><property name="target_position_x" type="int" value="20" /><property name="target_position_y" type="int" value="17" /></properties></object></objectgroup>
  <objectgroup id="8" name="boss_enemy">
-  <object id="8" name="boss" x="30.6667" y="802.667" width="28.6667" height="58.6667"/>
+  <object id="8" name="boss" x="30.6667" y="802.667" width="28.6667" height="58.6667" />
  </objectgroup>
  <layer id="1" name="ground" width="50" height="35">
   <data encoding="csv">

@@ -13,7 +13,7 @@
    <properties>
     <property name="target_map" value="town_01_ardel"/>
     <property name="target_position_x" type="int" value="24"/>
-    <property name="target_position_y" type="int" value="3"/>
+    <property name="target_position_y" type="int" value="4"/>
    </properties>
   </object>
  </objectgroup>

@@ -27,6 +27,7 @@ from engine.world.sprite_sheet import SpriteSheet
 from engine.world.sprite_sheet_cache import SpriteSheetCache
 from engine.world.tile_map import TileMap
 from engine.world.tile_map_factory import TileMapFactory
+from engine.world.world_map_logic import face_into_map
 
 
 @dataclass
@@ -90,7 +91,14 @@ def init_world_map(
     )
     # Arrive facing the direction recorded on the last transition (the way the
     # player walked through the door), instead of the default south-facing pose.
-    player.set_facing(state.map.facing)
+    # Corrected so same-edge map links don't spawn the player staring back off
+    # the edge they just entered (see face_into_map).
+    arrival_facing = face_into_map(
+        state.map.facing,
+        state.map.position.x, state.map.position.y,
+        tile_map.width, tile_map.height,
+    )
+    player.set_facing(arrival_facing)
 
     if balance is not None:
         state.repository.configure_caps(balance)
