@@ -1,5 +1,6 @@
 id: town_02_millhaven
 name: Millhaven
+warp_order: 40
 bgm: town.bamboo
 inn:
   cost: 120

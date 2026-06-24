@@ -17,7 +17,9 @@ from engine.shop.shop_constants import (
 from engine.shop.shop_renderer import (
     draw_dim_overlay, draw_footer, draw_modal_box, draw_shop_header,
 )
-from engine.common.field_menu_theme import EMBER, GOLD, render_modal, render_panel
+from engine.common.field_menu_theme import (
+    EMBER, GOLD, render_modal, render_panel, wrap_text,
+)
 
 # ── Colors (magic-core-shop-specific — field-menu theme) ─────
 C_HEADER      = GOLD
@@ -191,25 +193,38 @@ class MagicCoreShopRenderer:
         _, label, rate, _ = sel
         total = qty * rate
 
-        ow, oh = 480, 110
-        modal = render_modal(screen, ow, oh)
-        ox, oy = modal.x, modal.y
-
-        msg = self._font_confirm.render(
-            f"Exchange {qty} x {label} for {total:,} GP?",
-            True, C_CONFIRM_TXT)
-        screen.blit(msg, (ox + 20, oy + 20))
-
+        ow = 480
+        inner = ow - 40
+        pad_top, hint_gap, pad_bot = 22, 22, 24
+        msg = f"Exchange {qty} x {label} for {total:,} GP?"
+        lines = wrap_text(self._font_confirm, msg, inner)
+        line_h = self._font_confirm.get_height() + 4
         hint = self._font_hint.render(
             "ENTER / Y - Confirm    ESC / N - Cancel", True, C_HINT)
-        screen.blit(hint, (ox + 20, oy + 64))
+
+        oh = pad_top + len(lines) * line_h + hint_gap + hint.get_height() + pad_bot
+        modal = render_modal(screen, ow, oh)
+
+        y = modal.y + pad_top
+        for line in lines:
+            screen.blit(
+                self._font_confirm.render(line, True, C_CONFIRM_TXT),
+                (modal.x + 20, y))
+            y += line_h
+        screen.blit(hint, (modal.x + 20, y + hint_gap))
 
     # ── Popup ────────────────────────────────────────────────
 
     def _draw_popup(self, screen: pygame.Surface, popup_text: str) -> None:
-        pw, ph = 460, 88
+        pw = 460
+        lines = wrap_text(self._font_toast, popup_text, pw - 40)
+        line_h = self._font_toast.get_height() + 4
+        ph = 18 + len(lines) * line_h + 32
         modal = render_modal(screen, pw, ph)
-        msg = self._font_toast.render(popup_text, True, C_GP_GAIN)
-        screen.blit(msg, (modal.x + (pw - msg.get_width()) // 2, modal.y + 18))
+        y = modal.y + 18
+        for line in lines:
+            msg = self._font_toast.render(line, True, C_GP_GAIN)
+            screen.blit(msg, (modal.x + (pw - msg.get_width()) // 2, y))
+            y += line_h
         hint = self._font_hint.render("ENTER / ESC  close", True, C_HINT)
         screen.blit(hint, (modal.x + (pw - hint.get_width()) // 2, modal.bottom - 28))

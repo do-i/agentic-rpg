@@ -1,4 +1,5 @@
 name: Mountain Foothills
+warp_order: 110
 bgm: zone.alpine
 
 enemy_spawn:

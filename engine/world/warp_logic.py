@@ -18,11 +18,17 @@ from engine.io.yaml_loader import load_yaml_optional_cached
 from engine.world.position_data import Position
 
 
+CATEGORY_TOWN = "town"
+CATEGORY_WORLD = "world"
+
+
 @dataclass(frozen=True)
 class WarpDestination:
     map_id: str
     name: str
     position: Position
+    category: str  # CATEGORY_TOWN | CATEGORY_WORLD
+    order: int     # warp_order from the map yaml (low = earlier in the list)
 
 
 def _maps_assets_dir(scenario_path: Path) -> Path:
@@ -96,25 +102,58 @@ def build_landing_index(maps_assets_dir: Path) -> dict[str, Position]:
     return index
 
 
-def _load_map_name(maps_data_dir: Path, map_id: str) -> str:
-    data = load_yaml_optional_cached(maps_data_dir / f"{map_id}.yaml")
-    if not data:
-        return map_id
+def _load_map_data(maps_data_dir: Path, map_id: str) -> dict:
+    return load_yaml_optional_cached(maps_data_dir / f"{map_id}.yaml") or {}
+
+
+def _map_name(data: dict, map_id: str) -> str:
     return data.get("name") or map_id
 
 
-def warp_destinations(map_state, scenario_path: Path) -> list[WarpDestination]:
-    """Visited, top-level locations Aric can teleport to, sorted by name.
+def _map_category(data: dict) -> str:
+    """Classify a destination as a town or a world-map zone.
 
-    Excludes the current map, interiors/sub-maps, and any map with no known
-    incoming portal (nowhere defined to land).
+    Read from the scenario data rather than hardcoded id prefixes: settlements
+    carry an ``inn`` and/or ``shop`` block, while overworld field zones do not.
+    """
+    if "inn" in data or "shop" in data:
+        return CATEGORY_TOWN
+    return CATEGORY_WORLD
+
+
+def _map_order(data: dict, maps_data_dir: Path, map_id: str) -> int:
+    """The ``warp_order`` declared by a teleport-target map.
+
+    Required (no default): the teleport list ordering is data-driven, so a
+    warp-reachable map with no ``warp_order`` is a scenario error we surface
+    rather than guess a position for.
+    """
+    order = data.get("warp_order")
+    if order is None:
+        raise ValueError(
+            f"warp destination {map_id!r} is missing required property "
+            f"'warp_order' in {maps_data_dir / f'{map_id}.yaml'}.\n"
+            f"Add an integer ordering it within its group (towns / world map), "
+            f"e.g.\n  warp_order: 40"
+        )
+    return int(order)
+
+
+def warp_destinations(map_state, scenario_path: Path) -> list[WarpDestination]:
+    """Visited, top-level locations Aric can teleport to.
+
+    Grouped by category — towns first, then world-map zones — and within each
+    group ordered by each map's ``warp_order`` (a predefined natural/progression
+    order declared in the map yaml). Excludes the current map, interiors/
+    sub-maps, and any map with no known incoming portal (nowhere to land).
     """
     maps_assets = _maps_assets_dir(scenario_path)
     maps_data = _maps_data_dir(scenario_path)
     all_ids = {p.stem for p in maps_assets.glob("*.tmx")}
     landing = build_landing_index(maps_assets)
 
-    out: list[WarpDestination] = []
+    towns: list[WarpDestination] = []
+    world: list[WarpDestination] = []
     for map_id in map_state.visited:
         if map_id == map_state.current:
             continue
@@ -122,10 +161,17 @@ def warp_destinations(map_state, scenario_path: Path) -> list[WarpDestination]:
             continue
         if map_id not in landing:
             continue
-        out.append(WarpDestination(
+        data = _load_map_data(maps_data, map_id)
+        category = _map_category(data)
+        dest = WarpDestination(
             map_id=map_id,
-            name=_load_map_name(maps_data, map_id),
+            name=_map_name(data, map_id),
             position=landing[map_id],
-        ))
-    out.sort(key=lambda d: d.name)
-    return out
+            category=category,
+            order=_map_order(data, maps_data, map_id),
+        )
+        (towns if category == CATEGORY_TOWN else world).append(dest)
+
+    towns.sort(key=lambda d: d.order)
+    world.sort(key=lambda d: d.order)
+    return towns + world

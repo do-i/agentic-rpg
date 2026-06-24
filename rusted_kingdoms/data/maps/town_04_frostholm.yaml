@@ -1,5 +1,6 @@
 id: town_04_frostholm
 name: Frostholm
+warp_order: 120
 bgm: town.bamboo
 inn:
   cost: 450
@@ -43,8 +44,7 @@ npcs:
     present:
       excludes: [npc_kael_joined]
     animation:
-      mode: step
-      speed: 0.8
+      mode: still
 
   - id: frostholm_quartermaster
     name: "Quartermaster"

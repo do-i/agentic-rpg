@@ -1,4 +1,5 @@
 name: Sunken Cave
+warp_order: 150
 bgm: zone.dark
 
 enemy_spawn:

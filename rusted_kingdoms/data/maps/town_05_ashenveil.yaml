@@ -1,5 +1,6 @@
 id: town_05_ashenveil
 name: Ashenveil
+warp_order: 140
 bgm: town.default
 inn:
   cost: 800

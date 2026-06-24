@@ -1,4 +1,5 @@
 name: Open Plains
+warp_order: 30
 bgm: zone.open_plains
 
 enemy_spawn:

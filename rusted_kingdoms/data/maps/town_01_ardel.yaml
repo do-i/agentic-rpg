@@ -1,5 +1,6 @@
 id: town_01_ardel
 name: Ardel Village
+warp_order: 10
 bgm: town.default
 inn:
   cost: 50

@@ -34,3 +34,11 @@ entries:
     lines:
       - "The foothills are not a road. They're a warning."
       - "If you still mean to climb, settle your business first."
+
+  # Fallback — the player reached Frostholm before the story pointed them here.
+  # Flavor only; recruiting Kael stays gated behind the captain (story_act4_started).
+  - condition:
+      excludes: [npc_kael_joined]
+    lines:
+      - "Cold has a way of sorting people. Most don't last up here."
+      - "You're still chasing something. Come back when it catches up to you."

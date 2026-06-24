@@ -1,5 +1,6 @@
 id: town_03_ruinwatch
 name: Ruinwatch
+warp_order: 100
 bgm: town.default
 inn:
   cost: 250

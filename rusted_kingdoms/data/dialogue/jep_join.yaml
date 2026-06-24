@@ -33,3 +33,11 @@ entries:
     lines:
       - "Ruinwatch? Bad stairs, worse ghosts, excellent locked doors."
       - "Come back when the ruins start whispering your name. That's usually when things get profitable."
+
+  # Fallback — the player reached the vaults before the story pointed them here.
+  # Flavor only; recruiting Jep stays gated on story_act3_started above.
+  - condition:
+      excludes: [npc_jep_joined]
+    lines:
+      - "Whoa-! ...Okay, you're not a ghost. Good. Ghosts don't haggle."
+      - "I'm just cataloguing. Professionally. Don't mind me."

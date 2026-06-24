@@ -1,4 +1,5 @@
 name: Mountain Pass
+warp_order: 130
 bgm: zone.alpine
 
 enemy_spawn:

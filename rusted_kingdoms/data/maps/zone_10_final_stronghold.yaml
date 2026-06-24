@@ -1,4 +1,5 @@
 name: Final Stronghold
+warp_order: 180
 bgm: zone.dark
 
 enemy_spawn:

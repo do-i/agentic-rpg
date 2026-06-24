@@ -239,8 +239,10 @@ def _write_warp_scenario(tmp_path):
     (maps_assets / "town_ardel_shop.tmx").write_text(
         _tmx_with_portals([("town_ardel", (9, 9))]))
 
-    (maps_data / "zone_forest.yaml").write_text("name: Greenwood Forest\n")
-    (maps_data / "town_ardel.yaml").write_text("name: Ardel Village\n")
+    (maps_data / "zone_forest.yaml").write_text(
+        "name: Greenwood Forest\nwarp_order: 20\n")
+    (maps_data / "town_ardel.yaml").write_text(
+        "name: Ardel Village\nwarp_order: 10\nshop:\n  items: []\n")
     (maps_data / "town_ardel_shop.yaml").write_text("name: Ardel Shop\n")
 
 

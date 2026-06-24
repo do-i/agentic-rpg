@@ -1,5 +1,6 @@
 # data/maps/world.yaml
 name: Starting Forest
+warp_order: 20
 bgm: zone.starting_forest
 
 enemy_spawn:
