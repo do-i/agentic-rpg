@@ -12,6 +12,8 @@ from engine.io.game_state_loader import (
 )
 
 FAKE_CLASS_DATA = {
+    "exp_base": 100,
+    "exp_factor": 2.0,
     "stat_growth": {"hp": [10], "mp": [5], "str": [2], "dex": [2], "con": [2], "int": [2]},
     "abilities": [],
 }

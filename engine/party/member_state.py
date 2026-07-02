@@ -80,10 +80,15 @@ class MemberState:
             "con": growth["con"],
             "int": growth["int"],
         }
-        if "exp_base" in class_data:
-            self.exp_base = int(class_data["exp_base"])
-        if "exp_factor" in class_data:
-            self.exp_factor = float(class_data["exp_factor"])
+        for key in ("exp_base", "exp_factor"):
+            if key not in class_data:
+                raise ValueError(
+                    f'class YAML for {self.class_name!r} '
+                    f'(data/classes/{self.class_name}.yaml): missing required '
+                    f'"{key}" — e.g. exp_base: 100 / exp_factor: 2.0'
+                )
+        self.exp_base = int(class_data["exp_base"])
+        self.exp_factor = float(class_data["exp_factor"])
         slots = class_data.get("equipment_slots") or {}
         self.equipment_slots = {str(k): list(v or []) for k, v in slots.items()}
         if "default_row" in class_data:
@@ -94,6 +99,22 @@ class MemberState:
                     f"{row!r} (e.g. 'default_row: front')"
                 )
             self.row = row
+
+    def exp_curve_base(self) -> int:
+        if self.exp_base <= 0:
+            raise RuntimeError(
+                f"member {self.id!r}: exp_base not loaded — load_class_data() "
+                f"must run (party join / load_game) before EXP math"
+            )
+        return self.exp_base
+
+    def exp_curve_factor(self) -> float:
+        if self.exp_factor <= 0:
+            raise RuntimeError(
+                f"member {self.id!r}: exp_factor not loaded — load_class_data() "
+                f"must run (party join / load_game) before EXP math"
+            )
+        return self.exp_factor
 
     # Kept for backward compatibility — tests and legacy callers.
     def load_stat_growth(self, class_data: dict) -> None:

@@ -4,13 +4,13 @@ Findings from a full-codebase review (2026-07-02). Ordered by priority:
 P1 = architecture/correctness, P2 = duplication & structure, P3 = hygiene.
 Each item is self-contained and can be picked up independently.
 
-Status legend: 🟥 not started · 🟨 in progress · ❓ decision needed
+Status legend: 🟥 not started · 🟨 in progress · ✅ done · ❓ decision needed
 
 ---
 
 ## P1 — Architecture & correctness
 
-### 1. 🟥 Engine hardcodes the scenario path
+### 1. ✅ Engine hardcodes the scenario path (done: c9164fe)
 
 `engine/common/field_menu_theme.py:9-11`:
 
@@ -36,7 +36,7 @@ imported by 23 files, so the bad dependency is everywhere.
 
 **Done when** `grep -rn "rusted_kingdoms" engine/` returns nothing.
 
-### 2. 🟥 Enemy battle size derived from name length
+### 2. ✅ Enemy battle size derived from name length (done: 385372f)
 
 `engine/battle/battle_asset_cache.py:85-86`:
 
@@ -57,7 +57,7 @@ arbitrary base, so balance-neutral name edits alter visuals.
 - Migrate the current effective sizes so nothing visually changes:
   generate the list once with the old formula, write it into the YAML.
 
-### 3. 🟥 Silent fallback defaults across data loading (~150 sites)
+### 3. ✅ Silent fallback defaults across data loading (done — see note)
 
 `grep -rn '\.get("[a-z_]*", ' engine --include="*.py"` → 151 hits. The
 repo convention is: no hardcoded fallback values; missing required data
@@ -79,6 +79,18 @@ hotspots: `engine/item/item_catalog.py` (7), `engine/item/item_effect_handler.py
 
 **Done when** every remaining `.get(k, default)` in a loader has a
 documented rationale.
+
+**Outcome note:** the audit found most loaders already validated required
+fields with ValueError+example (item_catalog, item_effect_handler,
+dialogue_engine). Changes made: `engine/io/yaml_require.require()` helper;
+`window_title` and `ui.menu_backdrop` now required in the manifest;
+class YAML `exp_base`/`exp_factor` now required (the engine's
+`_FALLBACK_EXP_BASE` scenario-data table was deleted; `calc_exp_next` is
+MemberState-only); enemy `size` required; validate.py checks class exp
+curves and enemy sizes. Remaining `.get(k, default)` sites are documented
+optionals (drops/ai/boss flags, save-file back-compat reads, engine debug
+settings) — runtime dict access outside loaders is P2 typed-models
+territory, not silent scenario fallbacks.
 
 ---
 

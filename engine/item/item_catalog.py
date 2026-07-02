@@ -104,6 +104,9 @@ class ItemCatalog:
                     sell_price = int(sell_price_raw) if sell_price_raw is not None else 0
                     sellable = entry.get("sellable", sell_price_raw is not None)
                 else:
+                    # Non-equipment optionals by design: sell_price absent/null
+                    # = worth 0 GP; sellable absent = sellable (key items opt
+                    # out explicitly with sellable: false).
                     slot_category = ""
                     equippable = frozenset()
                     stats = ()

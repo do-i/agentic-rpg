@@ -10,8 +10,7 @@ from engine.battle.combatant import Combatant
 from engine.util.pseudo_random import PseudoRandom
 from engine.util.weighted_pick import weighted_pick
 from engine.party.party_state import (
-    PartyState, calc_exp_next, stat_gain_at, recalc_exp_next,
-    _FALLBACK_EXP_BASE, _FALLBACK_EXP_FACTOR, LEVEL_CAP,
+    PartyState, calc_exp_next, stat_gain_at, recalc_exp_next, LEVEL_CAP,
 )
 from engine.party.member_state import MemberState
 from engine.settings.balance_data import BalanceData
@@ -24,7 +23,6 @@ from engine.battle.battle_rewards_data import (
 
 # Re-export so existing imports keep working
 __all__ = [
-    "exp_required",
     "LevelUpResult",
     "MemberExpResult",
     "LootResult",
@@ -38,13 +36,6 @@ __all__ = [
 # and flows into RewardCalculator via DI. LEVEL_CAP is re-exported from
 # party_state to keep it single-sourced.
 EXP_CAP = 1_000_000
-
-
-def exp_required(class_name: str, level: int) -> int:
-    """Legacy helper that accepts a bare class_name. Uses the fallback
-    per-class EXP base + factor from party_state (kept for tests)."""
-    base = _FALLBACK_EXP_BASE.get(class_name.lower(), 100)
-    return int(base * math.pow(level, _FALLBACK_EXP_FACTOR))
 
 
 class RewardCalculator:
@@ -166,12 +157,9 @@ class RewardCalculator:
         return level_ups
 
     def _exp_required(self, member: MemberState, level: int) -> int:
-        """EXP required to *reach* the given level. Uses the member's
-        per-class exp_base/exp_factor if loaded, else the fallback table."""
-        base   = member.exp_base   or _FALLBACK_EXP_BASE.get(
-            member.class_name.lower(), 100)
-        factor = member.exp_factor or _FALLBACK_EXP_FACTOR
-        return int(base * math.pow(level, factor))
+        """EXP required to *reach* the given level, from the member's
+        per-class exp curve (load_class_data must have run)."""
+        return int(member.exp_curve_base() * math.pow(level, member.exp_curve_factor()))
 
     # ── Loot ─────────────────────────────────────────────────
 

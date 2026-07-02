@@ -70,6 +70,7 @@ class TestLoadClassData:
         m = make_member()
         m.load_class_data({
             "stat_growth": {k: [1] * 10 for k in ("str", "dex", "con", "int")},
+            "exp_base": 100, "exp_factor": 2.0,
             "equipment_slots": {"weapon": None, "shield": ["shield"]},
         })
         assert m.equipment_slots == {"weapon": [], "shield": ["shield"]}
@@ -79,16 +80,18 @@ class TestLoadClassData:
         m = make_member()
         m.load_stat_growth({
             "stat_growth": {k: [1] * 10 for k in ("str", "dex", "con", "int")},
+            "exp_base": 100, "exp_factor": 2.0,
         })
         assert m.stat_growth is not None
 
-    def test_omitted_exp_curve_keeps_defaults(self):
+    def test_omitted_exp_curve_raises(self):
+        # exp_base/exp_factor are required — the engine holds no fallback
+        # EXP table (scenario data lives in the scenario).
         m = make_member()
-        m.load_class_data({
-            "stat_growth": {k: [1] * 10 for k in ("str", "dex", "con", "int")},
-        })
-        assert m.exp_base == 0
-        assert m.exp_factor == 0.0
+        with pytest.raises(ValueError, match="exp_base"):
+            m.load_class_data({
+                "stat_growth": {k: [1] * 10 for k in ("str", "dex", "con", "int")},
+            })
 
 
 # ── repr ─────────────────────────────────────────────────────

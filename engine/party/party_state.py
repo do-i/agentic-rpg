@@ -47,41 +47,19 @@ LEVEL_CAP = 100
 # Stat keys that have growth tables in class YAML
 GROWTH_STATS = ("str", "dex", "con", "int")
 
-# Fallback EXP curve for legacy callers that pass a bare class_name string
-# instead of a MemberState. Duplicates values from the demo scenario's class
-# YAMLs; production callers should pass MemberState so the per-class curve
-# is read directly from the scenario. Scheduled for removal (see
-# docs/plans/action_items_v3.md item 3 — scenario data must not live here).
-_FALLBACK_EXP_BASE:   dict[str, int] = {
-    "hero":     100,
-    "warrior":  110,
-    "sorcerer":  95,
-    "cleric":    95,
-    "rogue":     90,
-}
-_FALLBACK_EXP_FACTOR = 2.0
-
-
 def calc_exp_next(
-    member_or_class: MemberState | str,
+    member: MemberState,
     level: int,
     level_cap: int = LEVEL_CAP,
 ) -> int:
     """EXP required to reach level+1. Returns 0 at level cap.
 
-    Accepts either a MemberState (preferred — uses exp_base/exp_factor
-    cached from the class YAML) or a bare class_name string (legacy).
+    Uses the member's exp_base/exp_factor cached from the class YAML —
+    load_class_data() must have run (party join / load_game).
     """
     if level >= level_cap:
         return 0
-    if isinstance(member_or_class, MemberState):
-        base   = member_or_class.exp_base   or _FALLBACK_EXP_BASE.get(
-            member_or_class.class_name.lower(), 100)
-        factor = member_or_class.exp_factor or _FALLBACK_EXP_FACTOR
-    else:
-        base   = _FALLBACK_EXP_BASE.get(member_or_class.lower(), 100)
-        factor = _FALLBACK_EXP_FACTOR
-    return int(base * math.pow(level + 1, factor))
+    return int(member.exp_curve_base() * math.pow(level + 1, member.exp_curve_factor()))
 
 
 def stat_gain_at(member: MemberState, stat: str, level: int) -> int:

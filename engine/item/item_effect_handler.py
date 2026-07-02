@@ -72,6 +72,9 @@ class ItemEffectHandler:
                     f"item {item_id!r} ({path.name}): effect 'revive' requires "
                     f"'revive_hp_pct'. Example:\n  revive_hp_pct: 0.5"
                 )
+            # amount/cures/revive_hp_pct defaults only fill fields the
+            # validated effect type never reads (checked above); consumable
+            # absent = consumed on use.
             self._defs[item_id] = FieldItemDef(
                 id=item_id,
                 effect=effect,

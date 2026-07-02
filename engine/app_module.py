@@ -30,6 +30,7 @@ from engine.record.recorder import RecordPlaybackManager
 from engine.util.pseudo_random import PseudoRandom
 from engine.common.font_provider import FontProvider, init_fonts
 from engine.common.field_menu_theme import init_theme_assets
+from engine.io.yaml_require import require
 import random as _random
 
 
@@ -261,5 +262,8 @@ class AppModule(Module):
     ) -> Game:
         speed = self._playback_speed if self._mode == "playback" else 1.0
         scene_manager.switch(registry.get("boot"))
-        window_title = loader.load().get("window_title", "")
+        window_title = require(
+            loader.load(), "window_title", loader.scenario_path / "manifest.yaml",
+            'window_title: "My Game"',
+        )
         return Game(config, clock, scene_manager, recorder, window_title=window_title, playback_speed=speed)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 from engine.battle.battle_rewards import (
-    RewardCalculator, exp_required, LevelUpResult,
+    RewardCalculator, LevelUpResult,
     EXP_CAP, LEVEL_CAP,
 )
 from engine.battle.combatant import Combatant
@@ -16,6 +16,8 @@ _rng = PseudoRandom(seed=0)
 
 
 STAT_GROWTH = {
+    "exp_base": 100,
+    "exp_factor": 2.0,
     "stat_growth": {
         "str": [3, 2, 3, 2, 3, 2, 3, 2, 3, 2],
         "dex": [2, 1, 2, 1, 2, 1, 2, 1, 2, 1],
@@ -53,17 +55,22 @@ def _party_with(members: list[MemberState]) -> PartyState:
 
 
 class TestExpRequired:
-    def test_level_1_hero(self):
-        assert exp_required("hero", 1) == 100
+    """EXP-to-reach-level comes from the member's class curve (exp_base 100,
+    exp_factor 2.0 in the STAT_GROWTH fixture) — no engine fallback table."""
 
-    def test_level_2_hero(self):
-        assert exp_required("hero", 2) == 400
+    def test_level_1(self):
+        calc = RewardCalculator(_rng)
+        assert calc._exp_required(_make_member(), 1) == 100
 
-    def test_unknown_class_uses_default_base(self):
-        assert exp_required("unknown", 1) == 100
+    def test_level_2(self):
+        calc = RewardCalculator(_rng)
+        assert calc._exp_required(_make_member(), 2) == 400
 
-    def test_case_insensitive(self):
-        assert exp_required("Hero", 2) == exp_required("hero", 2)
+    def test_unloaded_class_data_raises(self):
+        m = _make_member()
+        m.exp_base = 0
+        with pytest.raises(RuntimeError, match="load_class_data"):
+            RewardCalculator(_rng)._exp_required(m, 2)
 
 
 class TestRewardCalculatorBasic:
@@ -132,7 +139,7 @@ class TestRewardCalculatorBasic:
 class TestLevelUp:
     def test_level_up_occurs(self):
         calc = RewardCalculator(_rng)
-        # hero level 2 needs exp_required("hero", 2) = 400
+        # hero level 2 needs 100 * 2^2 = 400 (class curve from fixture)
         m = _make_member(level=1, exp=350)
         enemies = [_make_enemy(100)]
         party = _party_with([m])

@@ -11,6 +11,8 @@ from engine.party.party_state import (
 
 
 STAT_GROWTH = {
+    "exp_base": 100,
+    "exp_factor": 2.0,
     "stat_growth": {
         "str": [3, 2, 3, 2, 3, 2, 3, 2, 3, 2],
         "dex": [2, 1, 2, 1, 2, 1, 2, 1, 2, 1],
@@ -32,17 +34,27 @@ def _make_member(name="Aric", protagonist=True, class_name="hero", level=1) -> M
 # -- calc_exp_next --
 
 class TestCalcExpNext:
+    def _member(self, base=100, factor=2.0):
+        m = _make_member()
+        m.exp_base, m.exp_factor = base, factor
+        return m
+
     def test_returns_positive_for_low_level(self):
-        assert calc_exp_next("hero", 1) > 0
+        assert calc_exp_next(self._member(), 1) > 0
 
     def test_returns_zero_at_cap(self):
-        assert calc_exp_next("hero", LEVEL_CAP) == 0
+        assert calc_exp_next(self._member(), LEVEL_CAP) == 0
 
     def test_increases_with_level(self):
-        assert calc_exp_next("hero", 10) > calc_exp_next("hero", 5)
+        m = self._member()
+        assert calc_exp_next(m, 10) > calc_exp_next(m, 5)
 
-    def test_different_classes_differ(self):
-        assert calc_exp_next("warrior", 5) != calc_exp_next("rogue", 5)
+    def test_different_curves_differ(self):
+        assert calc_exp_next(self._member(base=110), 5) != calc_exp_next(self._member(base=90), 5)
+
+    def test_unloaded_class_data_raises(self):
+        with pytest.raises(RuntimeError, match="load_class_data"):
+            calc_exp_next(_make_member(), 1)
 
 
 # -- MemberState --
@@ -65,6 +77,8 @@ class TestMemberStateStatGrowth:
 
     def test_recalc_exp_next(self):
         m = _make_member(level=1)
+        m.load_stat_growth(STAT_GROWTH)
+        recalc_exp_next(m)
         old = m.exp_next
         m.level = 5
         recalc_exp_next(m)

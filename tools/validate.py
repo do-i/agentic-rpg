@@ -420,6 +420,13 @@ def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict)
     if classes_dir.exists():
         for f in classes_dir.rglob("*.yaml"):
             visit(f)
+            # every class needs an EXP curve — the engine has no fallback table
+            doc = load_yaml(f)
+            if isinstance(doc, dict):
+                for key in ("exp_base", "exp_factor"):
+                    if key not in doc:
+                        err(f"{f.name}: class missing required '{key}' "
+                            f"(e.g. {key}: 100)")
 
     # visit all audio index files
     audio_dir = root / "data" / "audio"

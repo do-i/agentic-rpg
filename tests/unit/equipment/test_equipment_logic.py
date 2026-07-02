@@ -327,6 +327,7 @@ class TestLoadClassDataEquipmentSlots:
         )
         m.load_class_data({
             "stat_growth": {"str": [1]*10, "dex": [1]*10, "con": [1]*10, "int": [1]*10},
+            "exp_base": 100, "exp_factor": 2.0,
             "equipment_slots": {"weapon": ["sword", "axe"], "shield": ["all"]},
         })
         assert m.equipment_slots == {"weapon": ["sword", "axe"], "shield": ["all"]}
@@ -339,5 +340,6 @@ class TestLoadClassDataEquipmentSlots:
         )
         m.load_class_data({
             "stat_growth": {"str": [1]*10, "dex": [1]*10, "con": [1]*10, "int": [1]*10},
+            "exp_base": 100, "exp_factor": 2.0,
         })
         assert m.equipment_slots == {}

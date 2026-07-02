@@ -87,10 +87,10 @@ class EnemyLoader:
             is_enemy=True,
             boss=data.get("boss", False),          # absent = not a boss
             sprite_id=enemy_id,
-            sprite_scale=data.get("sprite_scale", 100),  # visual tweak only
+            sprite_scale=data.get("sprite_scale", 100),  # optional — 100 = drawn at rect size
             size=data["size"],
             exp_yield=data["exp"],
-            drops=data.get("drops", {}),
+            drops=data.get("drops", {}),               # optional — absent = drops nothing
             ai_data=ai_data,
         )
 
