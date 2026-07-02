@@ -98,7 +98,7 @@ class BattleAssetCache:
         try:
             frame = sheet.get_frame(Direction.DOWN, 0)
             w, h = self.enemy_rect_size(enemy)
-            scaled = pygame.transform.scale(frame, (w, h))
+            scaled = self._scale_frame(frame, (w, h))
             self._enemy_sprites[sprite_id] = scaled
             return scaled
         except (pygame.error, KeyError, ValueError) as e:
@@ -125,7 +125,7 @@ class BattleAssetCache:
         try:
             for col in range(frame_count):
                 frame = sheet.get_frame(Direction.DOWN, col, row_offset=row_offset)
-                frames.append(pygame.transform.scale(frame, (w, h)))
+                frames.append(self._scale_frame(frame, (w, h)))
         except (pygame.error, KeyError, ValueError) as e:
             _log.warning("Enemy attack frames failed: %s row=%d — %s",
                          sprite_id, row_offset, e)
@@ -133,10 +133,24 @@ class BattleAssetCache:
         self._enemy_anim_frames[key] = frames
         return frames
 
+    @staticmethod
+    def _scale_frame(frame: pygame.Surface, size: tuple[int, int]) -> pygame.Surface:
+        """Downscaling (pre-rendered battle sheets) filters smoothly;
+        upscaling (legacy 64 px map sheets) stays nearest-neighbor to
+        preserve the pixel-art look."""
+        if frame.get_width() > size[0] and frame.get_height() > size[1]:
+            return pygame.transform.smoothscale(frame, size)
+        return pygame.transform.scale(frame, size)
+
     def _load_enemy_sheet(self, sprite_id: str) -> SpriteSheet | None:
+        """Prefer a pre-rendered `<sprite_id>_battle.tsx` sheet (graded to
+        match the battle backgrounds); fall back to the world-map sheet."""
         if sprite_id in self._enemy_sheets:
             return self._enemy_sheets[sprite_id]
-        tsx_path = self._scenario_path / "assets" / "sprites" / "enemies" / f"{sprite_id}.tsx"
+        sprites_dir = self._scenario_path / "assets" / "sprites" / "enemies"
+        tsx_path = sprites_dir / f"{sprite_id}_battle.tsx"
+        if not tsx_path.exists():
+            tsx_path = sprites_dir / f"{sprite_id}.tsx"
         if not tsx_path.exists():
             self._enemy_sheets[sprite_id] = None
             return None

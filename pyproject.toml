@@ -19,6 +19,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=9.0.2",
+    # asset tooling (tools/make_battle_sprites.py)
+    "numpy",
+    "pillow",
 ]
 
 [tool.pytest.ini_options]

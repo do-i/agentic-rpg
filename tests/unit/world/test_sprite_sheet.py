@@ -97,6 +97,43 @@ class TestFrameCount:
         assert sprite_sheet.frame_count == FRAMES_PER_ROW
 
 
+# ── TSX-driven geometry ───────────────────────────────────────
+
+class TestTsxGeometry:
+    """Tile size and column count come from the TSX attributes, so
+    pre-rendered battle sheets (e.g. 256 px tiles) load correctly."""
+
+    def make_big_tsx(self, tmp_path: Path, tile: int, cols: int, rows: int) -> Path:
+        tsx = tmp_path / "big.tsx"
+        tsx.write_text(f"""<?xml version="1.0" encoding="UTF-8"?>
+<tileset version="1.10" name="big" tilewidth="{tile}" tileheight="{tile}" tilecount="{cols * rows}" columns="{cols}">
+ <image source="big.png" width="{tile * cols}" height="{tile * rows}"/>
+</tileset>""")
+        return tsx
+
+    def test_larger_tiles_sliced_from_tsx_attributes(self, tmp_path):
+        tile, cols, rows = 128, 9, 4
+        tsx = self.make_big_tsx(tmp_path, tile, cols, rows)
+        fake = pygame.Surface((tile * cols, tile * rows), pygame.SRCALPHA)
+        with patch("pygame.image.load", return_value=fake):
+            sheet = SpriteSheet(tsx)
+        assert sheet.frame_size == (tile, tile)
+        assert sheet.row_count == rows
+        frame = sheet.get_frame(Direction.DOWN, 0)
+        assert frame.get_size() == (tile, tile)
+
+    def test_missing_tilewidth_raises(self, tmp_path):
+        tsx = tmp_path / "bad.tsx"
+        tsx.write_text("""<?xml version="1.0" encoding="UTF-8"?>
+<tileset version="1.10" name="bad" tileheight="64" tilecount="36" columns="9">
+ <image source="bad.png" width="576" height="256"/>
+</tileset>""")
+        fake = pygame.Surface((576, 256), pygame.SRCALPHA)
+        with patch("pygame.image.load", return_value=fake):
+            with pytest.raises(ValueError, match="tilewidth"):
+                SpriteSheet(tsx)
+
+
 # ── load_npc_face ─────────────────────────────────────────────
 
 class TestLoadNpcFace:
