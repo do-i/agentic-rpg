@@ -4,6 +4,7 @@ id: skeleton_knight_black_knight
 name: Black Knight
 type: undead
 rank: SS
+size: medium
 sprite_scale: 320
 hp: 360
 atk: 55
@@ -45,6 +46,7 @@ id: skeleton_knight_mace_guard
 name: Mace Guard
 type: undead
 rank: SS
+size: small
 sprite_scale: 320
 hp: 372
 atk: 54
@@ -83,6 +85,7 @@ id: vampire_noble_base
 name: Vampire Noble
 type: demon
 rank: SS
+size: small
 sprite_scale: 290
 hp: 320
 atk: 60
@@ -124,6 +127,7 @@ id: vampire_noble_masked_vampire
 name: Masked Vampire
 type: demon
 rank: SS
+size: medium
 sprite_scale: 290
 hp: 325
 atk: 60
@@ -165,6 +169,7 @@ id: vampire_noble_blood_court_duelist
 name: Blood Court Duelist
 type: demon
 rank: SS
+size: small
 sprite_scale: 290
 hp: 332
 atk: 62
@@ -203,6 +208,7 @@ id: vampire_bat_lord_base
 name: Vampire Bat Lord
 type: demon
 rank: SS
+size: small
 sprite_scale: 280
 hp: 310
 atk: 60
@@ -244,6 +250,7 @@ id: vampire_bat_lord_white_wing_lord
 name: White Wing Lord
 type: demon
 rank: SS
+size: medium
 sprite_scale: 280
 hp: 318
 atk: 61
@@ -282,6 +289,7 @@ id: vampire_bat_lord_blood_saber_lord
 name: Blood Saber Lord
 type: demon
 rank: SS
+size: small
 sprite_scale: 280
 hp: 335
 atk: 63
@@ -323,6 +331,7 @@ id: troll_berserker_stone_troll
 name: Stone Troll
 type: beast
 rank: SS
+size: medium
 sprite_scale: 360
 hp: 380
 atk: 56
@@ -364,6 +373,7 @@ id: troll_shaman_crystal_sage
 name: Crystal Sage
 type: beast
 rank: SS
+size: medium
 sprite_scale: 320
 hp: 340
 atk: 54
@@ -405,6 +415,7 @@ id: wartotaur_warlord_base
 name: Wartotaur Warlord
 type: beast
 rank: SS
+size: medium
 sprite_scale: 360
 hp: 365
 atk: 60
@@ -446,6 +457,7 @@ id: wartotaur_warlord_bronze_halberdier
 name: Bronze Halberdier
 type: beast
 rank: SS
+size: medium
 sprite_scale: 360
 hp: 372
 atk: 61
@@ -484,6 +496,7 @@ id: fallen_angel_base
 name: Fallen Angel
 type: demon
 rank: SS
+size: medium
 sprite_scale: 310
 hp: 322
 atk: 62
@@ -522,6 +535,7 @@ id: fallen_angel_ash_wing
 name: Ash Wing
 type: demon
 rank: SS
+size: medium
 sprite_scale: 310
 hp: 318
 atk: 63
@@ -563,6 +577,7 @@ id: alien_invader_base
 name: Alien Invader
 type: demon
 rank: SS
+size: small
 sprite_scale: 290
 hp: 328
 atk: 60
@@ -601,6 +616,7 @@ id: alien_invader_night_alien
 name: Night Alien
 type: demon
 rank: SS
+size: medium
 sprite_scale: 290
 hp: 332
 atk: 60
@@ -642,6 +658,7 @@ id: alien_invader_red_crystal_invader
 name: Red Crystal Invader
 type: demon
 rank: SS
+size: small
 sprite_scale: 290
 hp: 348
 atk: 62
@@ -683,6 +700,7 @@ id: fallen_angel_red_judicator
 name: Red Judicator
 type: demon
 rank: SS
+size: large
 boss: true
 immune_to: [instant_kill]
 sprite_scale: 380

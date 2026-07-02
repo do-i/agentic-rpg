@@ -4,6 +4,7 @@ id: dark_fairy_base
 name: Dark Fairy
 type: demon
 rank: S
+size: small
 sprite_scale: 220
 hp: 215
 atk: 44
@@ -40,6 +41,7 @@ id: dark_fairy_purple_hex_fairy
 name: Purple Hex Fairy
 type: demon
 rank: S
+size: small
 sprite_scale: 220
 hp: 220
 atk: 44
@@ -78,6 +80,7 @@ id: dark_fairy_redcap_fairy
 name: Redcap Fairy
 type: demon
 rank: S
+size: medium
 sprite_scale: 220
 hp: 218
 atk: 45
@@ -119,6 +122,7 @@ id: pumpkin_jack_harvest_reaper
 name: Harvest Reaper
 type: demon
 rank: S
+size: medium
 sprite_scale: 270
 hp: 230
 atk: 46
@@ -159,6 +163,7 @@ id: sheep_cultist_base
 name: Sheep Cultist
 type: humanoid
 rank: S
+size: small
 sprite_scale: 260
 hp: 210
 atk: 38
@@ -197,6 +202,7 @@ id: sheep_cultist_white_robed_cultist
 name: White Robed Cultist
 type: humanoid
 rank: S
+size: small
 sprite_scale: 260
 hp: 222
 atk: 39
@@ -235,6 +241,7 @@ id: sheep_cultist_crystal_cultist
 name: Crystal Cultist
 type: humanoid
 rank: S
+size: medium
 sprite_scale: 260
 hp: 218
 atk: 40
@@ -276,6 +283,7 @@ id: troll_berserker_base
 name: Troll Berserker
 type: beast
 rank: S
+size: medium
 sprite_scale: 320
 hp: 250
 atk: 42
@@ -317,6 +325,7 @@ id: troll_berserker_swamp_troll
 name: Swamp Troll
 type: beast
 rank: S
+size: medium
 sprite_scale: 320
 hp: 248
 atk: 41
@@ -358,6 +367,7 @@ id: troll_shaman_swamp_hexer
 name: Swamp Hexer
 type: beast
 rank: S
+size: medium
 sprite_scale: 300
 hp: 225
 atk: 38
@@ -399,6 +409,7 @@ id: troll_shaman_base
 name: Troll Sage
 type: beast
 rank: S
+size: large
 boss: true
 immune_to: [instant_kill]
 sprite_scale: 360
@@ -427,6 +438,7 @@ id: minotaur_brute_base
 name: Minotaur Brute
 type: beast
 rank: S
+size: medium
 sprite_scale: 320
 hp: 260
 atk: 48
@@ -468,6 +480,7 @@ id: minotaur_brute_club_brute
 name: Club Brute
 type: beast
 rank: S
+size: small
 sprite_scale: 320
 hp: 275
 atk: 49
@@ -506,6 +519,7 @@ id: minotaur_brute_armored_minotaur
 name: Armored Minotaur
 type: beast
 rank: S
+size: small
 sprite_scale: 320
 hp: 290
 atk: 48
@@ -541,6 +555,7 @@ id: boarman_berserker_base
 name: Boarman Berserker
 type: beast
 rank: S
+size: medium
 sprite_scale: 300
 hp: 268
 atk: 50
@@ -579,6 +594,7 @@ id: boarman_berserker_blackhide_raider
 name: Blackhide Raider
 type: beast
 rank: S
+size: small
 sprite_scale: 300
 hp: 270
 atk: 51
@@ -617,6 +633,7 @@ id: boarman_berserker_tusk_charger
 name: Tusk Charger
 type: beast
 rank: S
+size: medium
 sprite_scale: 300
 hp: 282
 atk: 52
@@ -655,6 +672,7 @@ id: pigman_guard_base
 name: Pigman Guard
 type: humanoid
 rank: S
+size: medium
 sprite_scale: 290
 hp: 255
 atk: 43
@@ -690,6 +708,7 @@ id: pigman_guard_boar_guard
 name: Boar Guard
 type: humanoid
 rank: S
+size: small
 sprite_scale: 290
 hp: 268
 atk: 44
@@ -728,6 +747,7 @@ id: pigman_guard_halberd_guard
 name: Halberd Guard
 type: humanoid
 rank: S
+size: small
 sprite_scale: 290
 hp: 262
 atk: 46
@@ -766,6 +786,7 @@ id: lizard_dragon_guard_base
 name: Lizard Dragon Guard
 type: beast
 rank: S
+size: small
 sprite_scale: 320
 hp: 285
 atk: 49
@@ -807,6 +828,7 @@ id: lizard_dragon_guard_blue_drake_guard
 name: Blue Drake Guard
 type: beast
 rank: S
+size: small
 sprite_scale: 320
 hp: 290
 atk: 49
@@ -848,6 +870,7 @@ id: lizard_dragon_guard_trident_guard
 name: Trident Guard
 type: beast
 rank: S
+size: small
 sprite_scale: 320
 hp: 295
 atk: 51
@@ -889,6 +912,7 @@ id: wartotaur_warlord_blackhorn_chief
 name: Blackhorn Chief
 type: beast
 rank: S
+size: large
 boss: true
 immune_to: [instant_kill]
 sprite_scale: 360

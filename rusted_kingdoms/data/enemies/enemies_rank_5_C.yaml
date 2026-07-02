@@ -4,6 +4,7 @@ id: skeleton_monster_base
 name: Skeleton
 type: undead
 rank: C
+size: medium
 sprite_scale: 240
 hp: 88
 atk: 19
@@ -39,6 +40,7 @@ id: skeleton_monster_rusted_sword
 name: Rusted Sword Skeleton
 type: undead
 rank: C
+size: medium
 sprite_scale: 240
 hp: 92
 atk: 20
@@ -74,6 +76,7 @@ id: zombie_guard_base
 name: Zombie Guard
 type: undead
 rank: C
+size: medium
 sprite_scale: 250
 hp: 96
 atk: 19
@@ -109,6 +112,7 @@ id: zombie_guard_rusted_sentry
 name: Rusted Sentry
 type: undead
 rank: C
+size: small
 sprite_scale: 250
 hp: 100
 atk: 19
@@ -144,6 +148,7 @@ id: zombie_guard_wounded_guard
 name: Wounded Guard
 type: undead
 rank: C
+size: small
 sprite_scale: 250
 hp: 86
 atk: 18
@@ -179,6 +184,7 @@ id: zombie_monster_base
 name: Shambler
 type: undead
 rank: C
+size: medium
 sprite_scale: 240
 hp: 90
 atk: 18
@@ -216,6 +222,7 @@ id: zombie_monster_armed_zombie
 name: Armed Shambler
 type: undead
 rank: C
+size: medium
 sprite_scale: 240
 hp: 95
 atk: 20
@@ -251,6 +258,7 @@ id: zombie_monster_ragged_worker
 name: Ragged Worker
 type: undead
 rank: C
+size: small
 sprite_scale: 240
 hp: 80
 atk: 17
@@ -286,6 +294,7 @@ id: skeleton_archer_base
 name: Skeleton Archer
 type: undead
 rank: C
+size: medium
 sprite_scale: 240
 hp: 84
 atk: 20
@@ -321,6 +330,7 @@ id: pumpkin_jack_base
 name: Pumpkin Jack
 type: demon
 rank: C
+size: medium
 sprite_scale: 240
 hp: 78
 atk: 24
@@ -359,6 +369,7 @@ id: bat_demon_red_wing_fiend
 name: Red Wing Fiend
 type: demon
 rank: C
+size: medium
 barrier: true
 requires_item: veil_breaker
 sprite_scale: 220
@@ -402,6 +413,7 @@ id: skeleton_knight_base
 name: Skeleton Knight
 type: undead
 rank: C
+size: large
 boss: true
 immune_to: [instant_kill]
 sprite_scale: 290

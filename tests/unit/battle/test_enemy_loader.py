@@ -19,6 +19,7 @@ GOBLIN_DOC = {
     "mres": 2,
     "dex": 10,
     "exp": 5,
+    "size": "medium",
     "boss": False,
     "sprite_scale": 100,
     "drops": {"loot": [{"item": "potion", "weight": 10}]},
@@ -35,6 +36,7 @@ BAT_DOC = {
     "mres": 1,
     "dex": 14,
     "exp": 3,
+    "size": "small",
 }
 
 
@@ -44,6 +46,7 @@ def minimal_enemy_doc(enemy_id: str, **overrides) -> dict:
         "id": enemy_id,
         "name": enemy_id.replace("_", " ").title(),
         "hp": 10, "atk": 5, "def": 3, "mres": 2, "dex": 8, "exp": 0,
+        "size": "medium",
     }
     doc.update(overrides)
     return doc
@@ -144,6 +147,33 @@ class TestBuildRequired:
         assert c.exp_yield == 0
         assert c.boss is False          # absent boss → not a boss
         assert c.sprite_scale == 100    # absent sprite_scale → default
+
+    def test_missing_size_raises(self, tmp_path):
+        d = tmp_path / "e"
+        d.mkdir()
+        doc = minimal_enemy_doc("no_size")
+        del doc["size"]
+        (d / "enemies_rank_1_SS.yaml").write_text(yaml.dump(doc))
+        loader = EnemyLoader(d)
+        with pytest.raises(KeyError, match="size"):
+            loader.load("no_size")
+
+    def test_invalid_size_raises(self, tmp_path):
+        d = tmp_path / "e"
+        d.mkdir()
+        doc = minimal_enemy_doc("bad_size", size="colossal")
+        (d / "enemies_rank_1_SS.yaml").write_text(yaml.dump(doc))
+        loader = EnemyLoader(d)
+        with pytest.raises(ValueError, match="colossal"):
+            loader.load("bad_size")
+
+    def test_size_reaches_combatant(self, tmp_path):
+        d = tmp_path / "e"
+        d.mkdir()
+        doc = minimal_enemy_doc("small_guy", size="small")
+        (d / "enemies_rank_1_SS.yaml").write_text(yaml.dump(doc))
+        loader = EnemyLoader(d)
+        assert loader.load("small_guy").size == "small"
 
 
 # ── AI loading ────────────────────────────────────────────────

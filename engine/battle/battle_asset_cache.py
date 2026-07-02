@@ -79,13 +79,11 @@ class BattleAssetCache:
     def enemy_rect_size(self, enemy: Combatant) -> tuple:
         if enemy.id in self._enemy_size:
             return self._enemy_size[enemy.id]
-        if enemy.boss:
-            base = ENEMY_SIZES["large"]
-        else:
-            idx = len(enemy.name) % 3
-            base = [ENEMY_SIZES["medium"], ENEMY_SIZES["small"], ENEMY_SIZES["medium"]][idx]
+        base = ENEMY_SIZES["large"] if enemy.boss else ENEMY_SIZES[enemy.size]
         scale = enemy.sprite_scale / 100.0
-        return (int(base[0] * scale), int(base[1] * scale))
+        size = (int(base[0] * scale), int(base[1] * scale))
+        self._enemy_size[enemy.id] = size
+        return size
 
     def load_enemy_sprite(self, enemy: Combatant) -> pygame.Surface | None:
         sprite_id = enemy.sprite_id or enemy.id

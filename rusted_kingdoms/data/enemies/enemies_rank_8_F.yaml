@@ -4,6 +4,7 @@ id: goblin
 name: Goblin
 type: humanoid
 rank: F
+size: medium
 sprite_scale: 250
 hp: 25
 atk: 9
@@ -39,6 +40,7 @@ id: goblin_warrior
 name: Goblin Warrior
 type: humanoid
 rank: F
+size: medium
 sprite_scale: 300
 hp: 35
 atk: 11
@@ -74,6 +76,7 @@ id: goblin_scout_base
 name: Goblin Scout
 type: humanoid
 rank: F
+size: medium
 sprite_scale: 250
 hp: 22
 atk: 10
@@ -107,6 +110,7 @@ id: goblin_scout_sling_scout
 name: Sling Scout
 type: humanoid
 rank: F
+size: medium
 sprite_scale: 250
 hp: 24
 atk: 11
@@ -140,6 +144,7 @@ id: goblin_scout_hooded_goblin
 name: Hooded Goblin
 type: humanoid
 rank: F
+size: small
 sprite_scale: 250
 hp: 28
 atk: 11
@@ -178,6 +183,7 @@ id: grik_the_grin_192
 name: Grik the Grin
 type: beast
 rank: F
+size: large
 boss: true
 immune_to: [instant_kill]
 sprite_scale: 300

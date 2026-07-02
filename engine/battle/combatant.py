@@ -64,6 +64,8 @@ class Combatant:
     sprite_id: str = ""         # enemies — battler sheet override; empty falls back to
                                 # enemy id (assets/sprites/enemies/<id>.tsx)
     sprite_scale: int = 100     # enemies — enlarge sprite by this %, 100 = no change
+    size: str = "medium"        # enemies — battle rect class (ENEMY_SIZES key);
+                                # EnemyLoader requires it explicitly in enemy YAML
 
     # battle-only state
     status_effects: list[ActiveStatus] = field(default_factory=list)

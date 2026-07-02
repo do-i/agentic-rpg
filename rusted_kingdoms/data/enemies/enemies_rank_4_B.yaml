@@ -4,6 +4,7 @@ id: goblin_bomber_base
 name: Goblin Bomber
 type: humanoid
 rank: B
+size: small
 sprite_scale: 250
 hp: 105
 atk: 24
@@ -40,6 +41,7 @@ id: goblin_bomber_redcap_bomber
 name: Redcap Bomber
 type: humanoid
 rank: B
+size: small
 sprite_scale: 250
 hp: 110
 atk: 25
@@ -81,6 +83,7 @@ id: goblin_bomber_club_sapper
 name: Club Sapper
 type: humanoid
 rank: B
+size: medium
 sprite_scale: 250
 hp: 120
 atk: 25
@@ -114,6 +117,7 @@ id: goblin_crossbowman_base
 name: Goblin Crossbowman
 type: humanoid
 rank: B
+size: medium
 sprite_scale: 250
 hp: 102
 atk: 25
@@ -147,6 +151,7 @@ id: goblin_crossbowman_hooded_marksman
 name: Hooded Marksman
 type: humanoid
 rank: B
+size: medium
 sprite_scale: 250
 hp: 105
 atk: 26
@@ -180,6 +185,7 @@ id: goblin_crossbowman_knife_backup
 name: Knife Backup
 type: humanoid
 rank: B
+size: medium
 sprite_scale: 250
 hp: 108
 atk: 24
@@ -213,6 +219,7 @@ id: frankenstein_brawler_base
 name: Frankenstein Brawler
 type: construct
 rank: B
+size: medium
 sprite_scale: 290
 hp: 156
 atk: 24
@@ -248,6 +255,7 @@ id: frankenstein_brawler_scarred_construct
 name: Scarred Construct
 type: construct
 rank: B
+size: medium
 sprite_scale: 290
 hp: 165
 atk: 25
@@ -283,6 +291,7 @@ id: pumpkin_jack_lantern_duelist
 name: Lantern Duelist
 type: demon
 rank: B
+size: medium
 barrier: true
 requires_item: veil_breaker
 sprite_scale: 260
@@ -323,6 +332,7 @@ id: titch_the_ticker_171
 name: Titch the Ticker
 type: construct
 rank: B
+size: large
 boss: true
 immune_to: [instant_kill]
 sprite_scale: 320

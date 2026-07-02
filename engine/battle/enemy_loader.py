@@ -11,6 +11,7 @@ import yaml
 
 from engine.io.yaml_loader import iter_yaml_documents, load_yaml_required
 from engine.battle.combatant import Combatant
+from engine.battle.constants import ENEMY_SIZES
 
 _log = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ class EnemyLoader:
             return None
         return self._build(doc)
 
-    _REQUIRED = ("name", "hp", "atk", "def", "mres", "dex", "exp")
+    _REQUIRED = ("name", "hp", "atk", "def", "mres", "dex", "exp", "size")
 
     def _build(self, data: dict) -> Combatant:
         enemy_id = data["id"]
@@ -63,7 +64,12 @@ class EnemyLoader:
         if missing:
             raise KeyError(
                 f"enemy {enemy_id!r}: missing required fields "
-                f"{missing} (from rank YAML)"
+                f"{missing} (from rank YAML, e.g. size: medium)"
+            )
+        if data["size"] not in ENEMY_SIZES:
+            raise ValueError(
+                f'enemy {enemy_id!r} in {self._index.get(enemy_id, "rank YAML")}: '
+                f'invalid "size" {data["size"]!r} — one of {sorted(ENEMY_SIZES)}'
             )
         ai_data = self._load_ai_data(data)
 
@@ -82,6 +88,7 @@ class EnemyLoader:
             boss=data.get("boss", False),          # absent = not a boss
             sprite_id=enemy_id,
             sprite_scale=data.get("sprite_scale", 100),  # visual tweak only
+            size=data["size"],
             exp_yield=data["exp"],
             drops=data.get("drops", {}),
             ai_data=ai_data,

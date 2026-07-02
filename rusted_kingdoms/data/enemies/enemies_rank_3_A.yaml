@@ -4,6 +4,7 @@ id: orc_raider_base
 name: Orc Raider
 type: humanoid
 rank: A
+size: small
 sprite_scale: 270
 hp: 145
 atk: 28
@@ -39,6 +40,7 @@ id: orc_raider_shield_bruiser
 name: Shield Bruiser
 type: humanoid
 rank: A
+size: medium
 sprite_scale: 270
 hp: 158
 atk: 27
@@ -74,6 +76,7 @@ id: orc_raider_spear_raider
 name: Spear Raider
 type: humanoid
 rank: A
+size: medium
 sprite_scale: 270
 hp: 150
 atk: 30
@@ -109,6 +112,7 @@ id: orc_archer_base
 name: Orc Archer
 type: humanoid
 rank: A
+size: small
 sprite_scale: 270
 hp: 138
 atk: 30
@@ -146,6 +150,7 @@ id: orc_archer_forest_bowman
 name: Forest Bowman
 type: humanoid
 rank: A
+size: small
 sprite_scale: 270
 hp: 142
 atk: 31
@@ -183,6 +188,7 @@ id: orc_archer_greatbow_raider
 name: Greatbow Raider
 type: humanoid
 rank: A
+size: medium
 sprite_scale: 270
 hp: 148
 atk: 33
@@ -218,6 +224,7 @@ id: orc_shaman_base
 name: Orc Shaman
 type: humanoid
 rank: A
+size: small
 sprite_scale: 270
 hp: 140
 atk: 27
@@ -254,6 +261,7 @@ id: orc_shaman_bone_caller
 name: Bone Caller
 type: humanoid
 rank: A
+size: medium
 sprite_scale: 270
 hp: 145
 atk: 28
@@ -293,6 +301,7 @@ id: orc_shaman_red_hood_shaman
 name: Red Hood Shaman
 type: humanoid
 rank: A
+size: large
 boss: true
 immune_to: [instant_kill]
 sprite_scale: 320
@@ -321,6 +330,7 @@ id: lizard_monster_base
 name: Lizardman
 type: beast
 rank: A
+size: medium
 sprite_scale: 280
 hp: 175
 atk: 32
@@ -356,6 +366,7 @@ id: lizard_monster_blue_scale_lizard
 name: Blue Scale Lizard
 type: beast
 rank: A
+size: medium
 sprite_scale: 280
 hp: 180
 atk: 32
@@ -389,6 +400,7 @@ id: lizard_monster_winged_lizard
 name: Winged Lizard
 type: beast
 rank: A
+size: small
 sprite_scale: 280
 hp: 168
 atk: 35
@@ -428,6 +440,7 @@ id: pirate_captain_base
 name: Pirate Reaver
 type: humanoid
 rank: A
+size: small
 sprite_scale: 280
 hp: 178
 atk: 34
@@ -461,6 +474,7 @@ id: pirate_captain_cutlass_raider
 name: Cutlass Raider
 type: humanoid
 rank: A
+size: medium
 sprite_scale: 280
 hp: 184
 atk: 36
@@ -497,6 +511,7 @@ id: skeleton_archer_greatbow_bones
 name: Greatbow Bones
 type: undead
 rank: A
+size: medium
 sprite_scale: 270
 hp: 178
 atk: 35
@@ -530,6 +545,7 @@ id: skeleton_archer_hooded_archer
 name: Hooded Archer
 type: undead
 rank: A
+size: small
 sprite_scale: 270
 hp: 172
 atk: 34
@@ -566,6 +582,7 @@ id: skeleton_monster_hooded_bones
 name: Hooded Bones
 type: undead
 rank: A
+size: medium
 sprite_scale: 270
 hp: 185
 atk: 33
@@ -602,6 +619,7 @@ id: frankenstein_brawler_graveyard_smasher
 name: Graveyard Smasher
 type: construct
 rank: A
+size: medium
 sprite_scale: 300
 hp: 230
 atk: 33
@@ -637,6 +655,7 @@ id: pirate_captain_eyepatch_captain
 name: Eyepatch Captain
 type: humanoid
 rank: A
+size: large
 boss: true
 immune_to: [instant_kill]
 sprite_scale: 320

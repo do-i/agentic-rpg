@@ -400,6 +400,20 @@ def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict)
     if enemies_dir.exists():
         for f in enemies_dir.rglob("*.yaml"):
             visit(f)
+        # every enemy needs a valid battle size (engine ENEMY_SIZES key)
+        valid_sizes = {"small", "medium", "large", "boss"}
+        for f in sorted(enemies_dir.glob("enemies_rank_*.yaml")):
+            with open(f, "r") as fh:
+                for doc in yaml.safe_load_all(fh):
+                    if not isinstance(doc, dict) or "id" not in doc:
+                        continue
+                    size = doc.get("size")
+                    if size is None:
+                        err(f"{f.name}: enemy '{doc['id']}' missing required "
+                            f"'size' (one of {sorted(valid_sizes)})")
+                    elif size not in valid_sizes:
+                        err(f"{f.name}: enemy '{doc['id']}' has invalid "
+                            f"size '{size}' (one of {sorted(valid_sizes)})")
 
     # visit all class files
     classes_dir = root / "data" / "classes"
