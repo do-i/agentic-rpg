@@ -5,10 +5,50 @@ from typing import Iterable
 
 import pygame
 
+from engine.io.yaml_require import require
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-ASSET_ROOT = REPO_ROOT / "rusted_kingdoms" / "assets"
-DEFAULT_BG = ASSET_ROOT / "images" / "battle_bg" / "zone4-sanctum-bg-1280x468.webp"
+
+# Scenario-owned theme assets, configured once at DI time (AppModule) from
+# the manifest — the engine never hardcodes a scenario path. Same pattern
+# as font_provider.init_fonts()/get_fonts().
+_ASSET_ROOT: Path | None = None
+_MENU_BACKDROP: Path | None = None
+
+
+def init_theme_assets(scenario_path: Path, manifest: dict) -> None:
+    """Resolve the menu backdrop and asset root from the scenario manifest."""
+    global _ASSET_ROOT, _MENU_BACKDROP
+    backdrop_rel = require(
+        manifest, "ui.menu_backdrop", scenario_path / "manifest.yaml",
+        "ui:\n  menu_backdrop: assets/images/battle_bg/zone4-sanctum-bg-1280x468.webp",
+    )
+    backdrop = scenario_path / backdrop_rel
+    if not backdrop.exists():
+        raise ValueError(
+            f'"ui.menu_backdrop" in {scenario_path / "manifest.yaml"} points to '
+            f"a missing file: {backdrop}"
+        )
+    _ASSET_ROOT = scenario_path / "assets"
+    _MENU_BACKDROP = backdrop
+
+
+def theme_asset_root() -> Path:
+    if _ASSET_ROOT is None:
+        raise RuntimeError(
+            "Theme assets not configured — init_theme_assets() must run "
+            "before rendering (wired in AppModule.provide_scene_registry)."
+        )
+    return _ASSET_ROOT
+
+
+def _menu_backdrop() -> Path:
+    if _MENU_BACKDROP is None:
+        raise RuntimeError(
+            "Theme assets not configured — init_theme_assets() must run "
+            "before rendering (wired in AppModule.provide_scene_registry)."
+        )
+    return _MENU_BACKDROP
+
 
 INK = (242, 236, 211)
 MUTED = (184, 174, 142)
@@ -64,7 +104,9 @@ def _display_cache_id() -> int:
     return id(display) if display is not None else 0
 
 
-def render_backdrop(screen: pygame.Surface, bg_path: Path = DEFAULT_BG) -> None:
+def render_backdrop(screen: pygame.Surface, bg_path: Path | None = None) -> None:
+    if bg_path is None:
+        bg_path = _menu_backdrop()
     sw, sh = screen.get_size()
     display_id = _display_cache_id()
     cache_key = (display_id, sw, sh, bg_path)
@@ -319,7 +361,7 @@ def icon_surface(
 
 
 def member_icon_path(member_id: str) -> Path | None:
-    path = ASSET_ROOT / "images" / f"{member_id}_profile.png"
+    path = theme_asset_root() / "images" / f"{member_id}_profile.png"
     return path if path.exists() else None
 
 

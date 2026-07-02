@@ -28,7 +28,6 @@ from engine.common.font_provider import get_fonts
 from engine.common.color_constants import C_TEXT_DIM, HP_LOW_THRESHOLD
 from engine.common.font_roles import CAPTION
 from engine.common.field_menu_theme import (
-    ASSET_ROOT,
     DIM,
     GOLD,
     INK,
@@ -43,6 +42,7 @@ from engine.common.field_menu_theme import (
     render_header,
     render_icon_row,
     render_panel,
+    theme_asset_root,
     wrap_text,
 )
 from engine.common.member_card import CARD_COLUMN_EXTRA, member_column_width, render_member_column
@@ -119,7 +119,6 @@ BAR_H = 10
 HP_BAR_OK  = (132, 196, 111)
 HP_BAR_LOW = (203, 82, 47)
 BAR_TRACK  = (17, 17, 22)
-STATUS_PORTRAIT_DIR = ASSET_ROOT / "images" / "party_portraits_large"
 
 
 class StatusScene(WizardScene):
@@ -683,7 +682,8 @@ def _spell_icon_key(spell: dict) -> str:
 
 
 def _status_portrait_path(member_id: str) -> Path | None:
-    path = STATUS_PORTRAIT_DIR / f"{member_id}_status_portrait.webp"
+    portrait_dir = theme_asset_root() / "images" / "party_portraits_large"
+    path = portrait_dir / f"{member_id}_status_portrait.webp"
     if path.exists():
         return path
     return member_icon_path(member_id)

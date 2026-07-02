@@ -48,9 +48,10 @@ LEVEL_CAP = 100
 GROWTH_STATS = ("str", "dex", "con", "int")
 
 # Fallback EXP curve for legacy callers that pass a bare class_name string
-# instead of a MemberState. Matches the values shipped in the rusted_kingdoms
-# scenario class YAMLs; production callers should pass MemberState so the
-# per-class curve is read directly from the scenario.
+# instead of a MemberState. Duplicates values from the demo scenario's class
+# YAMLs; production callers should pass MemberState so the per-class curve
+# is read directly from the scenario. Scheduled for removal (see
+# docs/plans/action_items_v3.md item 3 — scenario data must not live here).
 _FALLBACK_EXP_BASE:   dict[str, int] = {
     "hero":     100,
     "warrior":  110,

@@ -11,7 +11,8 @@ from engine.game import Game
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scenario", default="./rusted_kingdoms")
+    parser.add_argument("--scenario", required=True,
+                        help="path to a scenario package directory")
     parser.add_argument(
         "--mode",
         choices=["normal", "record", "playback"],

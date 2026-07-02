@@ -29,6 +29,7 @@ from engine.audio.sfx_manager import SfxManager
 from engine.record.recorder import RecordPlaybackManager
 from engine.util.pseudo_random import PseudoRandom
 from engine.common.font_provider import FontProvider, init_fonts
+from engine.common.field_menu_theme import init_theme_assets
 import random as _random
 
 
@@ -221,6 +222,7 @@ class AppModule(Module):
         rng: PseudoRandom,
         sprite_cache: SpriteSheetCache,
     ) -> SceneRegistry:
+        init_theme_assets(loader.scenario_path, loader.load())
         registry = SceneRegistry()
         register_scenes(registry, SceneDeps(
             settings=settings,

@@ -13,6 +13,10 @@ title:
 font:
   path: assets/fonts/Philosopher-Regular.ttf
 
+ui:
+  # Backdrop behind field menus (item/spell/equip/status/shops/inn).
+  menu_backdrop: assets/images/battle_bg/zone4-sanctum-bg-1280x468.webp
+
 apothecary:
   sprite: assets/sprites/npc/female_wiz_01.tsx
   icons:
