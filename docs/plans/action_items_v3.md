@@ -96,7 +96,7 @@ territory, not silent scenario fallbacks.
 
 ## P2 — Duplication & structure
 
-### 4. 🟥 `field_menu_theme.py` is the app-wide UI kit, misnamed and in one file
+### 4. ✅ `field_menu_theme.py` is the app-wide UI kit (done: 0da5921)
 
 417 lines in `engine/common/field_menu_theme.py` used by 23 files across
 every feature (shop, inn, title, battle, dialogue, status…). It bundles:
@@ -109,7 +109,7 @@ palette constants, image/backdrop/icon caches, `render_backdrop`,
   the 23 imports are a mechanical update.
 - Fold in the scenario-path fix from item 1.
 
-### 5. 🟥 Lazy font-init boilerplate copy-pasted in ~26 scenes
+### 5. ✅ Lazy font-init boilerplate copy-pasted in ~26 scenes (done: e404a2d)
 
 Every scene hand-rolls the same pattern (`engine/inn/inn_scene.py:67-79`
 is representative): a `_fonts_ready` flag plus `_init_fonts()` calling
@@ -123,7 +123,7 @@ is representative): a `_fonts_ready` flag plus `_init_fonts()` calling
 - Migrate scenes opportunistically (whenever a scene is touched), not as
   one big-bang PR; start with the shop family while doing item 6.
 
-### 6. 🟥 Shop family triplication (~1,750 lines)
+### 6. ✅ Shop family triplication (done: fb0e53a)
 
 `engine/shop/` holds three scene+renderer pairs (item shop 328+272,
 apothecary 268+305, magic-core shop 220+230) that each reimplement:
@@ -140,7 +140,7 @@ machine, GP checks, toast feedback. Scroll-clamp logic alone appears in
   layouts but consume the shared state objects.
 - Then migrate the other scroll-clamp sites opportunistically.
 
-### 7. 🟥 Oversized scenes mixing flow and rendering
+### 7. ✅ Oversized scenes mixing flow and rendering (done — see note)
 
 The battle package already separates scene / renderers / asset cache;
 these do not:
@@ -160,6 +160,15 @@ these do not:
 - `status_scene` first (biggest, and already has `StatusLogic` to lean
   on); `world_map_scene` second (extract overlay/warp handling into
   `world_map_overlays`-style helpers, some exist already).
+
+**Outcome note:** status (689→297 + StatusRenderer, c7ad039), spell
+(426→231 + SpellRenderer, 0a663af), post-battle (415→158 +
+PostBattleRenderer, 25910c0). `item_scene.py` and `world_map_scene.py`
+turned out to already delegate all drawing (ItemRenderer /
+WorldMapRenderer) — their length is input-mode flow, not mixed
+rendering, so no split was needed. FontSet migration rode along:
+inn, all shop renderers, and the three new renderers use it; the
+remaining ~18 scenes migrate opportunistically when touched.
 
 ---
 
