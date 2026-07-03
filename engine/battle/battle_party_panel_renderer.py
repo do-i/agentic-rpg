@@ -3,7 +3,7 @@
 # Draws the bottom-left party roster. Each member is a vertical card laid out
 # left-to-right: a 100x100 framed portrait (identical to the field-menu /
 # equipment screens) over the name and HP/MP bars. Styling comes from
-# field_menu_theme so the bottom of the battle screen matches the menu UI.
+# engine.common.ui so the bottom of the battle screen matches the menu UI.
 
 from __future__ import annotations
 
@@ -19,10 +19,8 @@ from engine.battle.battle_renderer_constants import (
 )
 from engine.common.color_constants import HP_LOW_THRESHOLD
 from engine.common.font_provider import get_fonts
-from engine.common.field_menu_theme import (
-    DIM, INK,
-    draw_stat_bar, fit_text, icon_surface, member_icon_path, render_row_frame,
-)
+from engine.common.ui.theme import DIM, INK, member_icon_path
+from engine.common.ui.chrome import draw_stat_bar, fit_text, icon_surface, render_row_frame
 
 C_TARGET = (204, 170, 255)
 CARD_PAD = 4   # horizontal breathing room either side of the 100px portrait

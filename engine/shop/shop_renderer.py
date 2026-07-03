@@ -6,12 +6,7 @@ from __future__ import annotations
 
 import pygame
 
-from engine.common.field_menu_theme import (
-    dim_screen,
-    draw_divider,
-    render_panel,
-    render_toast,
-)
+from engine.common.ui.chrome import dim_screen, draw_divider, render_panel, render_toast
 from engine.shop.shop_constants import (
     C_HINT,
     HEADER_H,

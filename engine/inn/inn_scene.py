@@ -12,9 +12,13 @@ from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.menu_sfx_mixin import MenuSfxMixin
-from engine.common.field_menu_theme import (
-    DIM, EMBER, GOLD, INK, MUTED, TEAL,
-    dim_screen, draw_divider, draw_stat_bar, render_panel, render_toast,
+from engine.common.ui.theme import DIM, EMBER, GOLD, INK, MUTED, TEAL
+from engine.common.ui.chrome import (
+    dim_screen,
+    draw_divider,
+    draw_stat_bar,
+    render_panel,
+    render_toast,
 )
 from engine.world.sprite_sheet import SpriteSheet
 

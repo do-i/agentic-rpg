@@ -8,9 +8,13 @@ from engine.common.font_provider import get_fonts
 from engine.io.save_manager import GameStateManager
 from engine.common.game_state import GameState
 from engine.common.save_slot_data import SaveSlot
-from engine.common.field_menu_theme import (
-    DIM, GOLD, INK, MUTED,
-    dim_screen, draw_divider, render_modal, render_panel, render_row_frame,
+from engine.common.ui.theme import DIM, GOLD, INK, MUTED
+from engine.common.ui.chrome import (
+    dim_screen,
+    draw_divider,
+    render_modal,
+    render_panel,
+    render_row_frame,
     render_toast,
 )
 

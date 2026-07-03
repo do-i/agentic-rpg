@@ -12,8 +12,8 @@ def _stub_theme_assets(tmp_path_factory):
     """Give every test a configured theme (normally done by AppModule at DI
     time from ui.menu_backdrop). The backdrop file doesn't exist, so
     render_backdrop falls back to its solid fill — fine for unit tests.
-    test_field_menu_theme.py re-clears this to exercise the strict path."""
-    from engine.common import field_menu_theme as theme
+    test_ui_theme.py re-clears this to exercise the strict path."""
+    from engine.common.ui import theme
     root = tmp_path_factory.mktemp("theme_assets")
     theme._ASSET_ROOT = root
     theme._MENU_BACKDROP = root / "images" / "backdrop.webp"

@@ -19,10 +19,8 @@ from engine.common.game_state_holder import GameStateHolder
 from engine.common.font_provider import get_fonts
 from engine.common.color_constants import C_TEXT_DIM
 from engine.common.font_roles import CAPTION
-from engine.common.field_menu_theme import (
-    DIM,
-    INK,
-    MUTED,
+from engine.common.ui.theme import DIM, INK, MUTED
+from engine.common.ui.chrome import (
     render_backdrop,
     render_header,
     render_icon_row,

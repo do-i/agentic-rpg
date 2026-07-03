@@ -27,9 +27,8 @@ from engine.battle.combatant import Combatant
 from engine.battle.constants import ENEMY_AREA_H
 from engine.common.color_constants import C_BG
 from engine.common.font_provider import get_fonts
-from engine.common.field_menu_theme import (
-    EMBER, TEAL, render_panel, wrap_text,
-)
+from engine.common.ui.theme import EMBER, TEAL
+from engine.common.ui.chrome import render_panel, wrap_text
 
 
 class BattleRenderer:

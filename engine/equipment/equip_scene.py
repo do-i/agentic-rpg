@@ -19,11 +19,8 @@ from engine.common.font_roles import CAPTION
 from engine.common.color_constants import (
     C_TEXT_MUT, C_TEXT_DIM, C_HEAD,
 )
-from engine.common.field_menu_theme import (
-    DIM,
-    GOLD,
-    INK,
-    MUTED,
+from engine.common.ui.theme import DIM, GOLD, INK, MUTED
+from engine.common.ui.chrome import (
     draw_divider,
     render_backdrop,
     render_header,

@@ -10,16 +10,8 @@ from engine.common.font_provider import get_fonts
 from engine.common.font_roles import CAPTION
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.menu_sfx_mixin import MenuSfxMixin
-from engine.common.field_menu_theme import (
-    DIM,
-    GOLD,
-    INK,
-    MUTED,
-    fit_text,
-    render_hint,
-    render_modal,
-    render_row_frame,
-)
+from engine.common.ui.theme import DIM, GOLD, INK, MUTED
+from engine.common.ui.chrome import fit_text, render_hint, render_modal, render_row_frame
 from engine.world.sprite_sheet import Direction
 from engine.world.sprite_sheet_cache import SpriteSheetCache
 from engine.world.world_map_init import load_party_member_sprite

@@ -11,7 +11,8 @@ from dataclasses import dataclass
 import pygame
 
 from engine.common.font_provider import get_fonts
-from engine.common.field_menu_theme import GOLD, INK, MUTED, DIM, render_row_frame
+from engine.common.ui.theme import DIM, GOLD, INK, MUTED
+from engine.common.ui.chrome import render_row_frame
 
 
 @dataclass

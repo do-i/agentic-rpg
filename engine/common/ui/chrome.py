@@ -1,3 +1,9 @@
+# engine/common/ui/chrome.py
+#
+# Themed drawing helpers shared by every menu-style scene: backdrop,
+# panels, modals, toasts, rows, icons, bars, and text fitting. Palette
+# lives in theme.py; image loading/caching in image_cache.py.
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -5,66 +11,24 @@ from typing import Iterable
 
 import pygame
 
-from engine.io.yaml_require import require
+from engine.common.ui.image_cache import display_cache_id, load_image
+from engine.common.ui.theme import (
+    BORDER,
+    BORDER_ACTIVE,
+    DIM,
+    EMBER,
+    GOLD,
+    INK,
+    MUTED,
+    PANEL,
+    PANEL_DARK,
+    ROW,
+    ROW_ACTIVE,
+    TEAL,
+    VIOLET,
+    menu_backdrop_path,
+)
 
-
-# Scenario-owned theme assets, configured once at DI time (AppModule) from
-# the manifest — the engine never hardcodes a scenario path. Same pattern
-# as font_provider.init_fonts()/get_fonts().
-_ASSET_ROOT: Path | None = None
-_MENU_BACKDROP: Path | None = None
-
-
-def init_theme_assets(scenario_path: Path, manifest: dict) -> None:
-    """Resolve the menu backdrop and asset root from the scenario manifest."""
-    global _ASSET_ROOT, _MENU_BACKDROP
-    backdrop_rel = require(
-        manifest, "ui.menu_backdrop", scenario_path / "manifest.yaml",
-        "ui:\n  menu_backdrop: assets/images/battle_bg/zone4-sanctum-bg-1280x468.webp",
-    )
-    backdrop = scenario_path / backdrop_rel
-    if not backdrop.exists():
-        raise ValueError(
-            f'"ui.menu_backdrop" in {scenario_path / "manifest.yaml"} points to '
-            f"a missing file: {backdrop}"
-        )
-    _ASSET_ROOT = scenario_path / "assets"
-    _MENU_BACKDROP = backdrop
-
-
-def theme_asset_root() -> Path:
-    if _ASSET_ROOT is None:
-        raise RuntimeError(
-            "Theme assets not configured — init_theme_assets() must run "
-            "before rendering (wired in AppModule.provide_scene_registry)."
-        )
-    return _ASSET_ROOT
-
-
-def _menu_backdrop() -> Path:
-    if _MENU_BACKDROP is None:
-        raise RuntimeError(
-            "Theme assets not configured — init_theme_assets() must run "
-            "before rendering (wired in AppModule.provide_scene_registry)."
-        )
-    return _MENU_BACKDROP
-
-
-INK = (242, 236, 211)
-MUTED = (184, 174, 142)
-DIM = (101, 96, 88)
-GOLD = (231, 184, 86)
-EMBER = (203, 82, 47)
-TEAL = (67, 166, 160)
-VIOLET = (126, 101, 204)
-PANEL = (22, 22, 28, 228)
-PANEL_DARK = (10, 10, 14, 188)
-BORDER = (126, 98, 55)
-BORDER_ACTIVE = (235, 190, 89)
-ROW = (30, 30, 38, 164)
-ROW_ACTIVE = (79, 51, 38, 214)
-
-_IMAGE_CACHE: dict[tuple[int, Path], pygame.Surface | None] = {}
 _BG_CACHE: dict[tuple[int, int, int, Path], pygame.Surface] = {}
 _ICON_CACHE: dict[tuple[int, str, int, bool], pygame.Surface] = {}
 
@@ -79,36 +43,11 @@ _ICON_COLORS: tuple[tuple[int, int, int], ...] = (
 )
 
 
-def load_image(path: Path) -> pygame.Surface | None:
-    display_id = _display_cache_id()
-    if display_id == 0:
-        return _load_image_uncached(path)
-    cache_key = (display_id, path)
-    if cache_key not in _IMAGE_CACHE:
-        _IMAGE_CACHE[cache_key] = _load_image_uncached(path)
-    return _IMAGE_CACHE[cache_key]
-
-
-def _load_image_uncached(path: Path) -> pygame.Surface | None:
-    try:
-        image = pygame.image.load(str(path))
-        if pygame.display.get_surface() is not None:
-            return image.convert_alpha()
-        return image
-    except (FileNotFoundError, pygame.error):
-        return None
-
-
-def _display_cache_id() -> int:
-    display = pygame.display.get_surface() if pygame.display.get_init() else None
-    return id(display) if display is not None else 0
-
-
 def render_backdrop(screen: pygame.Surface, bg_path: Path | None = None) -> None:
     if bg_path is None:
-        bg_path = _menu_backdrop()
+        bg_path = menu_backdrop_path()
     sw, sh = screen.get_size()
-    display_id = _display_cache_id()
+    display_id = display_cache_id()
     cache_key = (display_id, sw, sh, bg_path)
     bg = _BG_CACHE.get(cache_key) if display_id else None
     if bg is None:
@@ -330,7 +269,7 @@ def icon_surface(
         image = load_image(image_path)
         if image is not None:
             return _frame_icon(pygame.transform.smoothscale(image, (size, size)), size, dimmed)
-    display_id = _display_cache_id()
+    display_id = display_cache_id()
     cache_key = (display_id, key, size, dimmed)
     if display_id:
         cached = _ICON_CACHE.get(cache_key)
@@ -358,11 +297,6 @@ def icon_surface(
     if display_id:
         _ICON_CACHE[cache_key] = surf
     return surf.copy()
-
-
-def member_icon_path(member_id: str) -> Path | None:
-    path = theme_asset_root() / "images" / f"{member_id}_profile.png"
-    return path if path.exists() else None
 
 
 def draw_stat_bar(

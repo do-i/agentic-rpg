@@ -6,7 +6,7 @@ import pygame
 from engine.common.scene.scene import Scene
 from engine.dialogue.dialogue_engine import DialogueResult
 from engine.common.font_provider import get_fonts
-from engine.common.field_menu_theme import wrap_text
+from engine.common.ui.chrome import wrap_text
 
 # Typewriter speeds — characters revealed per second
 TEXT_SPEEDS = {

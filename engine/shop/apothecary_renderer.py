@@ -19,7 +19,8 @@ from engine.shop.shop_constants import (
 from engine.shop.shop_renderer import (
     draw_dim_overlay, draw_footer, draw_modal_box, draw_popup, draw_shop_header,
 )
-from engine.common.field_menu_theme import EMBER, GOLD, render_panel
+from engine.common.ui.theme import EMBER, GOLD
+from engine.common.ui.chrome import render_panel
 
 # ── Colors (apothecary-specific — field-menu theme) ─────────
 C_BORDER  = GOLD

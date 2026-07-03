@@ -10,15 +10,8 @@ from __future__ import annotations
 import pygame
 
 from engine.common.color_constants import C_TEXT_DIM
-from engine.common.field_menu_theme import (
-    GOLD,
-    INK,
-    MUTED,
-    fit_text,
-    icon_surface,
-    member_icon_path,
-    render_row_frame,
-)
+from engine.common.ui.theme import GOLD, INK, MUTED, member_icon_path
+from engine.common.ui.chrome import fit_text, icon_surface, render_row_frame
 from engine.party.member_state import MemberState
 
 # The roster cards are widened past the historical 300px base so that

@@ -2,7 +2,7 @@
 #
 # Victory / spoils screen shown after a won battle. Restyled to match the
 # field-menu screens (Status / Equip / Spell): themed backdrop, accent header,
-# bordered panels, and the shared INK/GOLD/MUTED palette via field_menu_theme.
+# bordered panels, and the shared INK/GOLD/MUTED palette via engine.common.ui.
 #
 # Layout:
 #   Header              — "VICTORY" + total EXP earned subtitle.
@@ -30,15 +30,11 @@ from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.battle.battle_rewards import BattleRewards
 from engine.common.color_constants import C_TEXT_DIM
-from engine.common.field_menu_theme import (
-    DIM,
-    GOLD,
-    INK,
-    MUTED,
+from engine.common.ui.theme import DIM, GOLD, INK, MUTED, member_icon_path
+from engine.common.ui.chrome import (
     draw_divider,
     fit_text,
     icon_surface,
-    member_icon_path,
     render_backdrop,
     render_header,
     render_icon_row,

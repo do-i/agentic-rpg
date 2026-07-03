@@ -4,14 +4,7 @@
 
 from __future__ import annotations
 
-from engine.common.field_menu_theme import (
-    BORDER,
-    DIM,
-    EMBER,
-    GOLD,
-    INK,
-    MUTED,
-)
+from engine.common.ui.theme import BORDER, DIM, EMBER, GOLD, INK, MUTED
 
 # ── Colors (shared across shops — field-menu theme) ──────────
 C_BG       = (16, 16, 20)

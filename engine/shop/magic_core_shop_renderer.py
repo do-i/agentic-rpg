@@ -17,9 +17,8 @@ from engine.shop.shop_constants import (
 from engine.shop.shop_renderer import (
     draw_dim_overlay, draw_footer, draw_modal_box, draw_shop_header,
 )
-from engine.common.field_menu_theme import (
-    EMBER, GOLD, render_modal, render_panel, wrap_text,
-)
+from engine.common.ui.theme import EMBER, GOLD
+from engine.common.ui.chrome import render_modal, render_panel, wrap_text
 
 # ── Colors (magic-core-shop-specific — field-menu theme) ─────
 C_HEADER      = GOLD

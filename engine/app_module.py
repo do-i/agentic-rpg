@@ -29,7 +29,7 @@ from engine.audio.sfx_manager import SfxManager
 from engine.record.recorder import RecordPlaybackManager
 from engine.util.pseudo_random import PseudoRandom
 from engine.common.font_provider import FontProvider, init_fonts
-from engine.common.field_menu_theme import init_theme_assets
+from engine.common.ui.theme import init_theme_assets
 from engine.io.yaml_require import require
 import random as _random
 

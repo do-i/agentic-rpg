@@ -9,19 +9,8 @@ import pygame
 from engine.common.color_constants import HP_LOW_THRESHOLD
 from engine.common.font_provider import get_fonts
 from engine.common.font_roles import CAPTION
-from engine.common.field_menu_theme import (
-    DIM,
-    GOLD,
-    INK,
-    MUTED,
-    PANEL_DARK,
-    TEAL,
-    draw_stat_bar,
-    member_icon_path,
-    render_hint,
-    render_icon_row,
-    render_modal,
-)
+from engine.common.ui.theme import DIM, GOLD, INK, MUTED, PANEL_DARK, TEAL, member_icon_path
+from engine.common.ui.chrome import draw_stat_bar, render_hint, render_icon_row, render_modal
 from engine.party.member_state import MemberState
 
 # ── Bar colors ────────────────────────────────────────────────

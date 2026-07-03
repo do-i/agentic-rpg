@@ -27,22 +27,24 @@ from engine.common.game_state_holder import GameStateHolder
 from engine.common.font_provider import get_fonts
 from engine.common.color_constants import C_TEXT_DIM, HP_LOW_THRESHOLD
 from engine.common.font_roles import CAPTION
-from engine.common.field_menu_theme import (
+from engine.common.ui.theme import (
     DIM,
     GOLD,
     INK,
     MUTED,
     TEAL,
     VIOLET,
+    member_icon_path,
+    theme_asset_root,
+)
+from engine.common.ui.image_cache import load_image
+from engine.common.ui.chrome import (
     draw_divider,
     fit_text,
-    load_image,
-    member_icon_path,
     render_backdrop,
     render_header,
     render_icon_row,
     render_panel,
-    theme_asset_root,
     wrap_text,
 )
 from engine.common.member_card import CARD_COLUMN_EXTRA, member_column_width, render_member_column

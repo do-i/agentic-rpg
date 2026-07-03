@@ -1,4 +1,4 @@
-# tests/unit/common/test_field_menu_theme.py
+# tests/unit/common/test_ui_theme.py
 #
 # Theme assets come from the scenario manifest (ui.menu_backdrop) — the
 # engine holds no hardcoded scenario path. Unconfigured use fails loudly.
@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from engine.common import field_menu_theme as theme
+from engine.common.ui import theme
 from engine.io.yaml_require import require
 
 
@@ -36,7 +36,7 @@ class TestInitThemeAssets:
         scenario, manifest = make_scenario(tmp_path)
         theme.init_theme_assets(scenario, manifest)
         assert theme.theme_asset_root() == scenario / "assets"
-        assert theme._menu_backdrop() == scenario / "assets" / "images" / "bg.webp"
+        assert theme.menu_backdrop_path() == scenario / "assets" / "images" / "bg.webp"
 
     def test_missing_ui_section_raises(self, tmp_path):
         with pytest.raises(ValueError, match="ui"):

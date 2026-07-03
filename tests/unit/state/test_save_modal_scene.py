@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pygame
 
-from engine.common.field_menu_theme import dim_screen
+from engine.common.ui.chrome import dim_screen
 from engine.title.save_modal_scene import SaveModalScene
 
 

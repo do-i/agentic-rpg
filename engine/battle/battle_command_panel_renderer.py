@@ -3,7 +3,7 @@
 # Draws the bottom-middle command panel: the active combatant's main
 # Attack/Defend/Spell/Item/Run list during PLAYER_TURN, the spell or item
 # submenu during SELECT_SPELL/SELECT_ITEM, and the targeting prompt during
-# SELECT_TARGET. Styled with field_menu_theme to match the menu UI.
+# SELECT_TARGET. Styled with engine.common.ui to match the menu UI.
 
 from __future__ import annotations
 
@@ -13,9 +13,8 @@ from engine.battle.battle_state import BattleState, BattlePhase
 from engine.battle.combatant import Combatant
 from engine.common.font_provider import get_fonts
 from engine.common.font_roles import CAPTION
-from engine.common.field_menu_theme import (
-    DIM, INK, MUTED, VIOLET, fit_text, render_row_frame,
-)
+from engine.common.ui.theme import DIM, INK, MUTED, VIOLET
+from engine.common.ui.chrome import fit_text, render_row_frame
 
 C_TARGET = (204, 170, 255)
 

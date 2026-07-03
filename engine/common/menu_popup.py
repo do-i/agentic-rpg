@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pygame
 
-from engine.common.field_menu_theme import render_toast
+from engine.common.ui.chrome import render_toast
 
 
 POPUP_W = 420

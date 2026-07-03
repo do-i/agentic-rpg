@@ -10,15 +10,8 @@ import pygame
 
 from engine.common.font_provider import get_fonts
 from engine.common.font_roles import CAPTION
-from engine.common.field_menu_theme import (
-    DIM,
-    GOLD,
-    INK,
-    MUTED,
-    render_hint,
-    render_icon_row,
-    render_modal,
-)
+from engine.common.ui.theme import DIM, GOLD, INK, MUTED
+from engine.common.ui.chrome import render_hint, render_icon_row, render_modal
 from engine.world.warp_logic import CATEGORY_TOWN, WarpDestination
 
 # ── Layout ────────────────────────────────────────────────────
