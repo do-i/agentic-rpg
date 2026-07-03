@@ -6,6 +6,7 @@ Default root: current working directory (expects manifest.yaml at root)
 """
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -251,6 +252,15 @@ def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict)
         else:
             visit(balance_path)
 
+    # manifest → refs.battle_backgrounds
+    battle_bg_ref = manifest.get("refs", {}).get("battle_backgrounds")
+    if battle_bg_ref:
+        battle_bg_path = root / battle_bg_ref
+        if not battle_bg_path.exists():
+            err(f"[manifest] refs.battle_backgrounds not found: {battle_bg_ref}")
+        else:
+            visit(battle_bg_path)
+
     # manifest → refs.party (now the single source of truth for character data)
     party_ref = manifest.get("refs", {}).get("party")
     if party_ref:
@@ -394,6 +404,36 @@ def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict)
     if encount_dir.exists():
         for f in encount_dir.rglob("*.yaml"):
             visit(f)
+
+        # every zone's battle background must have a ground_rect entry, and
+        # that rect must fall inside the background's own WxH (e.g.
+        # "zone7-bg-1280x468" -> 1280x468)
+        battle_bg_ref = manifest.get("refs", {}).get("battle_backgrounds")
+        battle_bg_path = root / battle_bg_ref if battle_bg_ref else None
+        if battle_bg_path and battle_bg_path.exists():
+            bg_entries = load_yaml_list(battle_bg_path)
+            known_bg_ids = {
+                e["id"] for e in bg_entries if isinstance(e, dict) and "id" in e
+            }
+            dim_re = re.compile(r"-(\d+)x(\d+)$")
+            for e in bg_entries:
+                if not isinstance(e, dict) or "id" not in e or "ground_rect" not in e:
+                    continue
+                m = dim_re.search(e["id"])
+                if not m:
+                    continue
+                canvas_w, canvas_h = int(m.group(1)), int(m.group(2))
+                r = e["ground_rect"]
+                right, bottom = r.get("x", 0) + r.get("width", 0), r.get("y", 0) + r.get("height", 0)
+                if r.get("x", 0) < 0 or r.get("y", 0) < 0 or right > canvas_w or bottom > canvas_h:
+                    err(f"{battle_bg_ref}: '{e['id']}' ground_rect {r} falls outside "
+                        f"the {canvas_w}x{canvas_h} image bounds (right={right}, bottom={bottom})")
+            for f in sorted(encount_dir.glob("*.yaml")):
+                data = load_yaml(f)
+                bg_id = data.get("background") if isinstance(data, dict) else None
+                if bg_id and bg_id not in known_bg_ids:
+                    err(f"{f.name}: background '{bg_id}' has no ground_rect "
+                        f"entry in {battle_bg_ref}")
 
     # visit all enemy files (rank files + boss move sets)
     enemies_dir = root / "data" / "enemies"

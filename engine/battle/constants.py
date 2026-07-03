@@ -10,6 +10,10 @@ from __future__ import annotations
 ENEMY_AREA_H = 468
 ROW_H = 56
 
+# Small downward nudge off the ground rect's vertical center — keeps
+# sprites from reading as dead-center/floating within their ground area.
+ENEMY_CY_NUDGE = 10
+
 ENEMY_LAYOUTS = {
     1: [(0,   0)],
     2: [(-80, 0),  (80,  0)],

@@ -74,5 +74,6 @@ refs:
   encount:    data/encount/
   recipe:     data/recipe/
   balance:    data/balance.yaml
+  battle_backgrounds: data/battle_backgrounds.yaml
   assets:     assets/
   tmx:        assets/maps/

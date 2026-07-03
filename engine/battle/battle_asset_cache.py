@@ -15,6 +15,7 @@ from engine.common.font_provider import get_fonts
 from engine.battle.combatant import Combatant
 from engine.battle.constants import ENEMY_SIZES
 from engine.battle.battle_renderer_constants import PORTRAIT_SIZE
+from engine.battle.ground_rect_catalog import GroundRect, GroundRectCatalog
 from engine.party.party_data import load_party_entries
 from engine.world.sprite_sheet import SpriteSheet, Direction
 
@@ -34,6 +35,7 @@ class BattleAssetCache:
         self._enemy_sheets: dict[str, SpriteSheet | None] = {}
         self._enemy_anim_frames: dict[tuple[str, int, int], list[pygame.Surface]] = {}
         self._bg_cache: dict[str, pygame.Surface | None] = {}
+        self._ground_rects: GroundRectCatalog | None = None
 
     # ── Fonts ─────────────────────────────────────────────────
 
@@ -174,3 +176,11 @@ class BattleAssetCache:
                 _log.warning("Battle background load failed: %s — %s", path, e)
         self._bg_cache[bg_id] = None
         return None
+
+    # ── Ground rects ──────────────────────────────────────────
+
+    def ground_rect(self, bg_id: str) -> GroundRect:
+        if self._ground_rects is None:
+            path = self._scenario_path / "data" / "battle_backgrounds.yaml"
+            self._ground_rects = GroundRectCatalog(path)
+        return self._ground_rects.get(bg_id)

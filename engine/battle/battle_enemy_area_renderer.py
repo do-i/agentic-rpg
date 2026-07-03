@@ -17,7 +17,8 @@ from engine.battle.battle_fx import BattleFx
 from engine.battle.battle_hit_flash import HitFlash
 from engine.battle.battle_state import BattleState, BattlePhase
 from engine.battle.combatant import Combatant
-from engine.battle.constants import ENEMY_AREA_H, ENEMY_LAYOUTS
+from engine.battle.constants import ENEMY_AREA_H, ENEMY_CY_NUDGE, ENEMY_LAYOUTS
+from engine.battle.ground_rect_catalog import GroundRect
 from engine.battle.battle_renderer_constants import (
     C_FLOOR, C_HP_LOW, C_HP_OK,
 )
@@ -34,6 +35,10 @@ SQUASH_PHASE_OFFSET = 0.6
 # Fraction of the sprite (from the top) that participates in the squash —
 # head, shoulders, and upper chest move; waist/legs/feet stay planted.
 SQUASH_TOP_FRACTION = 0.60
+
+# Vertical space the ground clamp reserves below the feet for the HP bar +
+# name label (bar starts at feet+4, its outer border extends to feet+25).
+BAR_RESERVE_PX = 32
 
 # Attack-triggered animations. LPC layout:
 #   row 2 = spellcast DOWN (7 frames, cols 0-6)
@@ -69,12 +74,15 @@ class EnemyAreaRenderer:
                              (0, ENEMY_AREA_H - 60, self._screen_w, 60))
             pygame.draw.line(screen, (42, 42, 68),
                              (0, ENEMY_AREA_H - 60), (self._screen_w, ENEMY_AREA_H - 60))
+            ground = GroundRect(x=0, y=0, width=self._screen_w, height=ENEMY_AREA_H)
+        else:
+            ground = self._assets.ground_rect(state.background)
 
         enemies = state.enemies
         n = len(enemies)
         offsets = ENEMY_LAYOUTS.get(n, ENEMY_LAYOUTS[1])
         cx = self._screen_w // 2
-        cy = ENEMY_AREA_H // 2 + 10
+        cy = ground.top + ground.height // 2 + ENEMY_CY_NUDGE
 
         for i, enemy in enumerate(enemies):
             if enemy.is_ko:
@@ -82,7 +90,7 @@ class EnemyAreaRenderer:
                 continue
             ox, oy = offsets[i]
             self._draw_enemy(screen, enemy, cx + ox, cy + oy, i,
-                             state, target_pool, target_sel, fx=fx)
+                             state, target_pool, target_sel, fx=fx, ground=ground)
 
     def _draw_enemy(
         self, screen: pygame.Surface, enemy: Combatant,
@@ -90,8 +98,10 @@ class EnemyAreaRenderer:
         state: BattleState,
         target_pool: list[Combatant], target_sel: int,
         fx: BattleFx | None,
+        ground: GroundRect,
     ) -> None:
         w, h = self._assets.enemy_rect_size(enemy)
+        cx, cy = self._clamp_to_ground(cx, cy, w, h, ground)
         rx, ry = cx - w // 2, cy - h // 2
 
         shake_dx = fx.shake_offset(enemy) if fx else 0
@@ -163,6 +173,25 @@ class EnemyAreaRenderer:
                 and target_pool[target_sel] is enemy):
             pygame.draw.rect(screen, (204, 170, 255),
                              (rx - 2, ry - 2, w + 4, h + 4), 2, border_radius=5)
+
+    @staticmethod
+    def _clamp_to_ground(
+        cx: int, cy: int, w: int, h: int, ground: GroundRect,
+    ) -> tuple[int, int]:
+        """Only the feet need to be grounded — the head/torso may render
+        above the ground rect (e.g. against a cave wall or castle backdrop
+        that isn't part of the walkable floor). Horizontally the whole
+        sprite is kept inside the ground area so it doesn't stand over
+        water/void at the edges. Leaves BAR_RESERVE_PX below the feet for
+        the HP bar + name label."""
+        min_x, max_x = ground.left + w // 2, ground.right - w // 2
+        cx = min(max(cx, min_x), max(min_x, max_x))
+
+        min_feet = ground.top
+        max_feet = max(min_feet, ground.bottom - BAR_RESERVE_PX)
+        feet = min(max(cy + h // 2, min_feet), max_feet)
+        cy = feet - h // 2
+        return cx, cy
 
     def _attack_frame(
         self, enemy: Combatant, attack: tuple[str, float],

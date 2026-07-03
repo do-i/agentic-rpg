@@ -11,12 +11,14 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 from engine.battle.battle_floats import enemy_rect_size, float_pos
+from engine.battle.battle_enemy_area_renderer import BAR_RESERVE_PX, EnemyAreaRenderer
 from engine.battle.battle_state import BattleState
 from engine.battle.combatant import Combatant
 from engine.battle.constants import ENEMY_AREA_H, ENEMY_SIZES
 from engine.battle.battle_renderer_constants import (
     CARD_GAP, CARD_PORTRAIT, PANEL_GAP, PANEL_MARGIN,
 )
+from engine.battle.ground_rect_catalog import GroundRect
 from engine.common.color_constants import HP_LOW_THRESHOLD
 
 
@@ -129,6 +131,47 @@ class TestFloatPos:
         _, y_norm = float_pos(state_norm, normal, screen_width=1280)
         # Bigger sprite → float anchored higher (smaller y).
         assert y_boss < y_norm
+
+
+# ── EnemyAreaRenderer._clamp_to_ground ───────────────────────
+
+class TestClampToGround:
+    def test_center_position_is_unchanged(self):
+        ground = GroundRect(x=0, y=0, width=1280, height=468)
+        cx, cy = EnemyAreaRenderer._clamp_to_ground(640, 244, 80, 80, ground)
+        assert (cx, cy) == (640, 244)
+
+    def test_feet_pulled_up_to_ground_when_floating_above_it(self):
+        # zone10-style short ground strip: a boss-sized sprite whose feet
+        # land above the strip gets pulled down until its feet touch it —
+        # but only the feet; the body is free to render above ground.top.
+        ground = GroundRect(x=40, y=351, width=1200, height=117)
+        cx, cy = EnemyAreaRenderer._clamp_to_ground(640, 200, 96, 96, ground)
+        feet = cy + 96 // 2
+        assert feet == ground.top
+        assert cy - 96 // 2 < ground.top
+
+    def test_feet_pulled_up_to_leave_room_for_hp_bar(self):
+        # This is the zone10 bug: centering a large sprite in a short rect
+        # put its feet within a few px of the screen's bottom seam, with
+        # no room left for the HP bar/name below.
+        ground = GroundRect(x=40, y=351, width=1200, height=117)
+        cx, cy = EnemyAreaRenderer._clamp_to_ground(640, 419, 80, 80, ground)
+        feet = cy + 80 // 2
+        assert feet == ground.bottom - BAR_RESERVE_PX
+
+    def test_horizontal_edge_clamped_to_narrow_ground(self):
+        # zone7-style ground patch narrower than the screen: a far-left
+        # formation slot must not land in the water past the patch edge.
+        ground = GroundRect(x=160, y=310, width=960, height=158)
+        cx, cy = EnemyAreaRenderer._clamp_to_ground(100, 350, 52, 52, ground)
+        assert cx == ground.left + 52 // 2
+
+    def test_degenerate_ground_smaller_than_sprite_does_not_invert(self):
+        ground = GroundRect(x=0, y=0, width=10, height=10)
+        cx, cy = EnemyAreaRenderer._clamp_to_ground(5, 5, 80, 80, ground)
+        assert cx == ground.left + 80 // 2
+        assert cy + 80 // 2 == ground.top
 
 
 # ── HP_LOW_THRESHOLD selection logic ─────────────────────────
