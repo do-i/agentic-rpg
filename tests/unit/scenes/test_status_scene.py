@@ -75,9 +75,10 @@ class TestStatusSceneInit:
         assert scene.page_id == PAGE_MEMBER
         assert scene._page(PAGE_MEMBER).selection == 0
 
-    def test_fonts_not_ready_on_init(self):
+    def test_fonts_lazy_on_init(self):
+        # FontSet resolves on first access — construction needs no pygame font
         scene, _ = make_scene()
-        assert not scene._fonts_ready
+        assert scene._renderer._fonts._resolved is None
 
 
 # ── Member navigation ─────────────────────────────────────────
@@ -188,7 +189,7 @@ class TestRender:
         scene.handle_events(_key(pygame.K_RETURN))      # detail (renders col 3)
         scene.render(pygame.Surface((1280, 766)))
 
-    def test_fonts_ready_after_first_render(self):
+    def test_fonts_resolved_after_first_render(self):
         scene, _ = make_scene()
         scene.render(pygame.Surface((1280, 766)))
-        assert scene._fonts_ready
+        assert scene._renderer._fonts._resolved is not None
