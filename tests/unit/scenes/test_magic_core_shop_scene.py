@@ -67,9 +67,9 @@ class TestExchange:
         repo.get_item("mc_s").tags = {"magic_core"}
 
         scene, _, _ = make_scene(repo)
-        scene._list_sel = 0
+        scene._list.selection = 0
         scene._state = "qty"
-        scene._qty = 3
+        scene._picker.qty = 3
 
         scene._do_exchange()
 
@@ -82,9 +82,9 @@ class TestExchange:
         repo.get_item("mc_xs").tags = {"magic_core"}
 
         scene, _, _ = make_scene(repo)
-        scene._list_sel = 0
+        scene._list.selection = 0
         scene._state = "qty"
-        scene._qty = 2
+        scene._picker.qty = 2
 
         scene._do_exchange()
 
@@ -97,9 +97,9 @@ class TestExchange:
         repo.get_item("mc_m").tags = {"magic_core"}
 
         scene, _, _ = make_scene(repo)
-        scene._list_sel = 0
+        scene._list.selection = 0
         scene._state = "qty"
-        scene._qty = 10  # more than owned
+        scene._picker.qty = 10  # more than owned
 
         scene._do_exchange()
 

@@ -13,8 +13,8 @@ from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.menu_sfx_mixin import MenuSfxMixin
+from engine.common.scroll_list import ScrollListState
 from engine.world.sprite_sheet import SpriteSheet
-from engine.common.item_selection_view import ItemSelectionView
 from engine.shop.apothecary_renderer import ApothecaryRenderer, SPRITE_SIZE, VISIBLE_ROWS
 
 # MC size label → item id mapping
@@ -49,8 +49,7 @@ class ApothecaryScene(MenuSfxMixin, Scene):
         self._sfx_manager   = sfx_manager
 
         self._state        = "list"   # list | detail | popup
-        self._list_sel     = 0
-        self._scroll       = 0
+        self._list         = ScrollListState(VISIBLE_ROWS)
         self._popup_text   = ""
         self._sprite_surf: pygame.Surface | None = None
         self._sprite_loaded = False
@@ -124,11 +123,7 @@ class ApothecaryScene(MenuSfxMixin, Scene):
         return self._is_unlocked(recipe) and self._has_inputs(recipe) and self._can_afford(recipe)
 
     def _selected(self) -> dict | None:
-        recipes = self._visible_recipes()
-        if not recipes:
-            return None
-        idx = min(self._list_sel, len(recipes) - 1)
-        return recipes[idx]
+        return self._list.selected(self._visible_recipes())
 
     def _owned_qty(self, item_id: str) -> int:
         entry = self._holder.get().repository.get_item(item_id)
@@ -167,11 +162,11 @@ class ApothecaryScene(MenuSfxMixin, Scene):
             return
 
         if key == pygame.K_UP:
-            self._list_sel = self._set_sel_hover(self._list_sel, max(0, self._list_sel - 1))
-            self._clamp_scroll()
+            if self._list.move(-1, len(recipes)):
+                self._play("hover")
         elif key == pygame.K_DOWN:
-            self._list_sel = self._set_sel_hover(self._list_sel, min(len(recipes) - 1, self._list_sel + 1))
-            self._clamp_scroll()
+            if self._list.move(1, len(recipes)):
+                self._play("hover")
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             sel = self._selected()
             if sel and self._is_unlocked(sel) and not self._is_duplicate_blocked(sel):
@@ -195,11 +190,6 @@ class ApothecaryScene(MenuSfxMixin, Scene):
             if self._can_craft(sel):
                 self._play("confirm")
                 self._do_craft(sel)
-
-    def _clamp_scroll(self) -> None:
-        self._scroll = ItemSelectionView.clamp_scroll(
-            self._list_sel, self._scroll, len(self._visible_recipes()), VISIBLE_ROWS,
-        )
 
     # ── Craft ─────────────────────────────────────────────────
 
@@ -250,8 +240,8 @@ class ApothecaryScene(MenuSfxMixin, Scene):
             screen,
             state=self._state,
             recipes=self._visible_recipes(),
-            list_sel=self._list_sel,
-            scroll=self._scroll,
+            list_sel=self._list.selection,
+            scroll=self._list.scroll,
             popup_text=self._popup_text,
             gp=self._holder.get().repository.gp,
             sprite_surf=self._sprite_surf,

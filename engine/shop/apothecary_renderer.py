@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Callable
 
 import pygame
-from engine.common.font_provider import get_fonts
+from engine.common.font_provider import FontSet
 from engine.common.item_selection_view import (
     ItemRow, ItemSelectionTheme, ItemSelectionView,
 )
@@ -51,18 +51,11 @@ class ApothecaryRenderer:
     """Handles all rendering for the apothecary scene."""
 
     def __init__(self) -> None:
-        self._fonts_ready = False
+        self._fonts = FontSet(
+            title=(22, True), row=16, detail=16, detail_b=(16, True),
+            hint=15, toast=(20, True),
+        )
         self._view = ItemSelectionView(_theme())
-
-    def _init_fonts(self) -> None:
-        f = get_fonts()
-        self._font_title    = f.get(22, bold=True)
-        self._font_row      = f.get(16)
-        self._font_detail    = f.get(16)
-        self._font_detail_b  = f.get(16, bold=True)
-        self._font_hint      = f.get(15)
-        self._font_toast     = f.get(20, bold=True)
-        self._fonts_ready = True
 
     # ── Main entry point ─────────────────────────────────────
 
@@ -87,8 +80,6 @@ class ApothecaryRenderer:
         is_duplicate_blocked: Callable[[dict], bool] | None = None,
         icons: dict[str, pygame.Surface] | None = None,
     ) -> None:
-        if not self._fonts_ready:
-            self._init_fonts()
 
         full_rows = min(len(recipes), VISIBLE_ROWS) if recipes else 1
         has_overflow = len(recipes) > VISIBLE_ROWS
@@ -107,8 +98,8 @@ class ApothecaryRenderer:
             title_color=C_HEADER,
             gp=gp,
             gp_color=C_GP,
-            font_title=self._font_title,
-            font_row=self._font_row,
+            font_title=self._fonts.title,
+            font_row=self._fonts.row,
             pad=PAD,
             sprite_surf=sprite_surf,
             sprite_size=SPRITE_SIZE,
@@ -119,7 +110,7 @@ class ApothecaryRenderer:
         list_rect = pygame.Rect(mx, list_y, MODAL_W, list_h)
 
         if not recipes:
-            empty = self._font_hint.render("No recipes available.", True, C_DIM)
+            empty = self._fonts.hint.render("No recipes available.", True, C_DIM)
             screen.blit(empty, (mx + PAD, list_y + 16))
         else:
             dup_blocked = is_duplicate_blocked or (lambda _r: False)
@@ -134,7 +125,7 @@ class ApothecaryRenderer:
 
         draw_footer(
             screen, mx, my + mh - FOOTER_H - 4, MODAL_W, PAD,
-            "select · ENTER view · ESC close", self._font_hint,
+            "select · ENTER view · ESC close", self._fonts.hint,
         )
 
         if state == "detail" and selected:
@@ -145,7 +136,7 @@ class ApothecaryRenderer:
         elif state == "popup":
             draw_popup(
                 screen, POPUP_W, popup_text, C_TOAST, C_BORDER,
-                self._font_toast, self._font_hint,
+                self._fonts.toast, self._fonts.hint,
             )
 
     # ── Row model ────────────────────────────────────────────
@@ -238,12 +229,12 @@ class ApothecaryRenderer:
 
         # recipe name
         scroll_name = sel.get("scroll_name", sel["id"])
-        lbl = self._font_detail_b.render(scroll_name, True, C_HEADER)
+        lbl = self._fonts.detail_b.render(scroll_name, True, C_HEADER)
         screen.blit(lbl, (ox + 20, cy))
         cy += 28
 
         # output
-        out_s = self._font_detail.render(f"Output:  {out_name} x{out_qty}", True, C_READY)
+        out_s = self._fonts.detail.render(f"Output:  {out_name} x{out_qty}", True, C_READY)
         screen.blit(out_s, (ox + 20, cy))
         cy += 24
 
@@ -252,7 +243,7 @@ class ApothecaryRenderer:
         cy += 8
 
         # inputs header
-        inp_lbl = self._font_detail_b.render("Inputs:", True, C_TEXT)
+        inp_lbl = self._fonts.detail_b.render("Inputs:", True, C_TEXT)
         screen.blit(inp_lbl, (ox + 20, cy))
         cy += line_h
 
@@ -265,7 +256,7 @@ class ApothecaryRenderer:
             has_enough = owned >= req_qty
             color = C_TEXT if has_enough else C_WARN
             txt = f"  {name}  x{req_qty}  (owned: {owned})"
-            s = self._font_detail.render(txt, True, color)
+            s = self._fonts.detail.render(txt, True, color)
             screen.blit(s, (ox + 28, cy))
             cy += line_h
 
@@ -279,7 +270,7 @@ class ApothecaryRenderer:
             has_enough = owned >= req_qty
             color = C_TEXT if has_enough else C_WARN
             txt = f"  {name}  x{req_qty}  (owned: {owned})"
-            s = self._font_detail.render(txt, True, color)
+            s = self._fonts.detail.render(txt, True, color)
             screen.blit(s, (ox + 28, cy))
             cy += line_h
 
@@ -288,11 +279,11 @@ class ApothecaryRenderer:
         # GP cost
         affordable = can_afford(sel)
         gp_color = C_GP if affordable else C_WARN
-        gp_s = self._font_detail.render(
+        gp_s = self._fonts.detail.render(
             f"Cost: {gp_cost:,} GP", True, gp_color)
         screen.blit(gp_s, (ox + 20, cy))
 
-        bal_s = self._font_detail.render(f"Balance: {gp:,} GP", True, C_DIM)
+        bal_s = self._fonts.detail.render(f"Balance: {gp:,} GP", True, C_DIM)
         screen.blit(bal_s, (ox + ow - bal_s.get_width() - 20, cy))
         cy += 28
 
@@ -302,5 +293,5 @@ class ApothecaryRenderer:
             hint_text = "ENTER craft · ESC back"
         else:
             hint_text = "ESC back"
-        hint = self._font_hint.render(hint_text, True, C_HINT)
+        hint = self._fonts.hint.render(hint_text, True, C_HINT)
         screen.blit(hint, (ox + ow // 2 - hint.get_width() // 2, cy))

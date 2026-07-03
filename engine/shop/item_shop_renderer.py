@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Callable
 
 import pygame
-from engine.common.font_provider import get_fonts
+from engine.common.font_provider import FontSet
 from engine.common.item_selection_view import (
     ItemRow, ItemSelectionTheme, ItemSelectionView,
 )
@@ -52,22 +52,14 @@ class ItemShopRenderer:
     """Handles all rendering for the item shop scene."""
 
     def __init__(self) -> None:
-        self._fonts_ready = False
+        self._fonts = FontSet(
+            title=(22, True), row=16, qty=(20, True), arrow=20,
+            hint=15, toast=(20, True), desc=18,
+        )
         self._view = ItemSelectionView(_theme())
 
-    def _init_fonts(self) -> None:
-        f = get_fonts()
-        self._font_title  = f.get(22, bold=True)
-        self._font_row    = f.get(16)
-        self._font_qty    = f.get(20, bold=True)
-        self._font_arrow  = f.get(20)
-        self._font_hint   = f.get(15)
-        self._font_toast  = f.get(20, bold=True)
-        self._font_desc   = f.get(18)
-        self._fonts_ready = True
-
     def _desc_panel_height(self) -> int:
-        lh = self._font_desc.get_height() + 4
+        lh = self._fonts.desc.get_height() + 4
         return DESC_PAD * 2 + lh * DESC_LINES
 
     # ── Main entry point ─────────────────────────────────────
@@ -92,8 +84,6 @@ class ItemShopRenderer:
         sell_tag: str | None = None,
         description: Callable[[dict], str] | None = None,
     ) -> None:
-        if not self._fonts_ready:
-            self._init_fonts()
 
         desc_h = self._desc_panel_height()
         full_rows = min(len(avail), VISIBLE_ROWS) if avail else 1
@@ -118,8 +108,8 @@ class ItemShopRenderer:
             title_color=C_HEADER,
             gp=gp,
             gp_color=C_GP,
-            font_title=self._font_title,
-            font_row=self._font_row,
+            font_title=self._fonts.title,
+            font_row=self._fonts.row,
             pad=PAD,
             sprite_surf=sprite_surf,
             sprite_size=SPRITE_SIZE,
@@ -134,7 +124,7 @@ class ItemShopRenderer:
                 "No items available." if mode == "buy"
                 else "Nothing to sell."
             )
-            empty = self._font_hint.render(empty_msg, True, C_DIM)
+            empty = self._fonts.hint.render(empty_msg, True, C_DIM)
             screen.blit(empty, (mx + PAD, list_y + 16))
         else:
             rows = [
@@ -155,7 +145,7 @@ class ItemShopRenderer:
         )
         draw_footer(
             screen, mx, my + mh - FOOTER_H - 4, MODAL_W, PAD,
-            footer_hint, self._font_hint,
+            footer_hint, self._fonts.hint,
         )
 
         if state == "qty" and selected:
@@ -165,7 +155,7 @@ class ItemShopRenderer:
         elif state == "popup":
             draw_popup(
                 screen, POPUP_W, popup_text, C_TOAST, C_BORDER,
-                self._font_toast, self._font_hint,
+                self._fonts.toast, self._fonts.hint,
             )
 
     # ── Row model ────────────────────────────────────────────
@@ -208,7 +198,7 @@ class ItemShopRenderer:
 
         if not text:
             text = "—"
-        font = self._font_desc
+        font = self._fonts.desc
         lh = font.get_height() + 4
         inner_w = panel_w - DESC_PAD * 2
         lines = wrap_text(font, text, inner_w, limit=DESC_LINES)
@@ -241,13 +231,13 @@ class ItemShopRenderer:
         render_panel(screen, pygame.Rect(ox, oy, ow, oh), active=True)
 
         name = display_name(sel)
-        lbl  = self._font_row.render(name, True, C_HEADER)
+        lbl  = self._fonts.row.render(name, True, C_HEADER)
         screen.blit(lbl, (ox + 20, oy + 12))
 
         # qty selector — arrows use non-bold font for glyph compatibility
-        left_s  = self._font_arrow.render(" ", True, C_TEXT)
-        num_s   = self._font_qty.render(f"  {qty}  ", True, C_TEXT)
-        right_s = self._font_arrow.render(" ", True, C_TEXT)
+        left_s  = self._fonts.arrow.render(" ", True, C_TEXT)
+        num_s   = self._fonts.qty.render(f"  {qty}  ", True, C_TEXT)
+        right_s = self._fonts.arrow.render(" ", True, C_TEXT)
         total_w = left_s.get_width() + num_s.get_width() + right_s.get_width()
         cx = ox + ow // 2 - total_w // 2
         cy = oy + 38
@@ -258,16 +248,16 @@ class ItemShopRenderer:
         # total price
         if mode == "buy":
             col = C_WARN if total > gp else C_GP
-            total_s = self._font_row.render(f"Total: {total:,} GP", True, col)
+            total_s = self._fonts.row.render(f"Total: {total:,} GP", True, col)
             screen.blit(total_s, (ox + 20, oy + 76))
             if total > gp:
-                warn = self._font_hint.render("Not enough GP", True, C_WARN)
+                warn = self._fonts.hint.render("Not enough GP", True, C_WARN)
                 screen.blit(warn, (ox + ow - warn.get_width() - 20, oy + 80))
         else:
-            total_s = self._font_row.render(f"Receive: {total:,} GP", True, C_GP)
+            total_s = self._fonts.row.render(f"Receive: {total:,} GP", True, C_GP)
             screen.blit(total_s, (ox + 20, oy + 76))
 
-        hint = self._font_hint.render(
+        hint = self._fonts.hint.render(
             "qty ±1    qty ±5    ENTER confirm    ESC back",
             True, C_HINT)
         screen.blit(hint, (ox + ow // 2 - hint.get_width() // 2, oy + oh - 20))

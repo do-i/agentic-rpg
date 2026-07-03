@@ -9,6 +9,8 @@ from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
+from engine.common.quantity_picker import QuantityPicker
+from engine.common.scroll_list import ScrollListState
 from engine.party.repository_state import RepositoryState
 from engine.shop.magic_core_shop_renderer import MagicCoreShopRenderer
 
@@ -52,8 +54,9 @@ class MagicCoreShopScene(Scene):
         self._sfx_manager  = sfx_manager
 
         self._state        = "list"   # list | qty | confirm | popup
-        self._list_sel     = 0        # index into _available()
-        self._qty          = 1
+        # wrap-around cursor; the MC list is short and never scrolls
+        self._list         = ScrollListState(max(len(mc_sizes), 1), wrap=True)
+        self._picker       = QuantityPicker(QTY_STEP_SMALL, QTY_STEP_LARGE, loop=True)
         self._popup_text   = ""
         self._renderer     = MagicCoreShopRenderer()
 
@@ -73,24 +76,7 @@ class MagicCoreShopScene(Scene):
         return result
 
     def _selected(self) -> tuple[str, str, int, int] | None:
-        avail = self._available()
-        if not avail:
-            return None
-        idx = min(self._list_sel, len(avail) - 1)
-        return avail[idx]
-
-    def _clamp_list_sel(self) -> None:
-        avail = self._available()
-        if avail:
-            self._list_sel = max(0, min(self._list_sel, len(avail) - 1))
-
-    def _qty_loop(self, delta: int, max_qty: int) -> None:
-        """Adjust quantity with looping."""
-        self._qty += delta
-        if self._qty < 1:
-            self._qty = max_qty
-        elif self._qty > max_qty:
-            self._qty = 1
+        return self._list.selected(self._available())
 
     # ── Events ────────────────────────────────────────────────
 
@@ -122,18 +108,14 @@ class MagicCoreShopScene(Scene):
             return
 
         if key == pygame.K_UP:
-            old = self._list_sel
-            self._list_sel = (self._list_sel - 1) % len(avail)
-            if self._list_sel != old:
+            if self._list.move(-1, len(avail)):
                 self._sfx_manager.play("hover")
         elif key == pygame.K_DOWN:
-            old = self._list_sel
-            self._list_sel = (self._list_sel + 1) % len(avail)
-            if self._list_sel != old:
+            if self._list.move(1, len(avail)):
                 self._sfx_manager.play("hover")
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             self._sfx_manager.play("confirm")
-            self._qty = 1
+            self._picker.reset()
             self._state = "qty"
         elif key == pygame.K_ESCAPE:
             self._sfx_manager.play("cancel")
@@ -150,16 +132,16 @@ class MagicCoreShopScene(Scene):
             self._sfx_manager.play("cancel")
             self._state = "list"
         elif key == pygame.K_LEFT:
-            self._qty_loop(-QTY_STEP_SMALL, max_qty)
+            self._picker.decrease_small(max_qty)
             self._sfx_manager.play("hover")
         elif key == pygame.K_RIGHT:
-            self._qty_loop(QTY_STEP_SMALL, max_qty)
+            self._picker.increase_small(max_qty)
             self._sfx_manager.play("hover")
         elif key == pygame.K_UP:
-            self._qty_loop(-QTY_STEP_LARGE, max_qty)
+            self._picker.decrease_large(max_qty)
             self._sfx_manager.play("hover")
         elif key == pygame.K_DOWN:
-            self._qty_loop(QTY_STEP_LARGE, max_qty)
+            self._picker.increase_large(max_qty)
             self._sfx_manager.play("hover")
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             _, _, rate, _ = sel
@@ -185,7 +167,7 @@ class MagicCoreShopScene(Scene):
         if not sel:
             return
         item_id, label, rate, max_qty = sel
-        qty   = min(self._qty, max_qty)
+        qty   = min(self._picker.qty, max_qty)
         total = qty * rate
 
         repo = self._repo()
@@ -198,7 +180,7 @@ class MagicCoreShopScene(Scene):
 
         self._popup_text  = f"Exchanged {qty} x {label}    +{total:,} GP"
         self._state       = "popup"
-        self._clamp_list_sel()
+        self._list.clamp(len(self._available()))
 
     # ── Update ────────────────────────────────────────────────
 
@@ -212,8 +194,8 @@ class MagicCoreShopScene(Scene):
             screen,
             state=self._state,
             avail=self._available(),
-            list_sel=self._list_sel,
-            qty=self._qty,
+            list_sel=self._list.selection,
+            qty=self._picker.qty,
             popup_text=self._popup_text,
             gp=self._repo().gp,
             selected=self._selected(),

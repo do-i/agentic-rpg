@@ -11,8 +11,9 @@ from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
 from engine.common.menu_sfx_mixin import MenuSfxMixin
+from engine.common.quantity_picker import QuantityPicker
+from engine.common.scroll_list import ScrollListState
 from engine.world.sprite_sheet import SpriteSheet
-from engine.common.item_selection_view import ItemSelectionView
 from engine.item.item_catalog import ItemCatalog
 from engine.shop.item_shop_renderer import ItemShopRenderer, SPRITE_SIZE, VISIBLE_ROWS
 
@@ -52,9 +53,8 @@ class ItemShopScene(MenuSfxMixin, Scene):
 
         self._mode         = MODE_BUY
         self._state        = "list"   # list | qty | popup
-        self._list_sel     = 0
-        self._scroll       = 0
-        self._qty          = 1
+        self._list         = ScrollListState(VISIBLE_ROWS)
+        self._picker       = QuantityPicker(QTY_STEP_SMALL, QTY_STEP_LARGE)
         self._popup_text   = ""
         self._sell_tag: str | None = None  # None = show all sellable items
         self._sprite_surf: pygame.Surface | None = None
@@ -122,19 +122,14 @@ class ItemShopScene(MenuSfxMixin, Scene):
         except ValueError:
             i = 0
         self._sell_tag = order[(i + 1) % len(order)]
-        self._list_sel = 0
-        self._scroll = 0
+        self._list.reset()
         self._play("hover")
 
     def _available(self) -> list[dict]:
         return self._buy_available() if self._mode == MODE_BUY else self._sell_available()
 
     def _selected(self) -> dict | None:
-        avail = self._available()
-        if not avail:
-            return None
-        idx = min(self._list_sel, len(avail) - 1)
-        return avail[idx]
+        return self._list.selected(self._available())
 
     def _owned_qty(self, item_id: str) -> int:
         entry = self._holder.get().repository.get_item(item_id)
@@ -168,8 +163,7 @@ class ItemShopScene(MenuSfxMixin, Scene):
 
     def _toggle_mode(self) -> None:
         self._mode = MODE_SELL if self._mode == MODE_BUY else MODE_BUY
-        self._list_sel = 0
-        self._scroll = 0
+        self._list.reset()
         self._sell_tag = None
         self._play("hover")
 
@@ -191,11 +185,11 @@ class ItemShopScene(MenuSfxMixin, Scene):
             return
 
         if key == pygame.K_UP:
-            self._list_sel = self._set_sel_hover(self._list_sel, max(0, self._list_sel - 1))
-            self._clamp_scroll()
+            if self._list.move(-1, len(avail)):
+                self._play("hover")
         elif key == pygame.K_DOWN:
-            self._list_sel = self._set_sel_hover(self._list_sel, min(len(avail) - 1, self._list_sel + 1))
-            self._clamp_scroll()
+            if self._list.move(1, len(avail)):
+                self._play("hover")
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             sel = self._selected()
             if sel is None:
@@ -203,12 +197,12 @@ class ItemShopScene(MenuSfxMixin, Scene):
             if self._mode == MODE_BUY:
                 if self._row_price(sel) <= self._holder.get().repository.gp:
                     self._play("confirm")
-                    self._qty   = 1
+                    self._picker.reset()
                     self._state = "qty"
             else:
                 if sel["owned"] > 0:
                     self._play("confirm")
-                    self._qty   = 1
+                    self._picker.reset()
                     self._state = "qty"
         elif key == pygame.K_ESCAPE:
             self._play("cancel")
@@ -237,24 +231,23 @@ class ItemShopScene(MenuSfxMixin, Scene):
             self._play("cancel")
             self._state = "list"
         elif key == pygame.K_LEFT:
-            self._qty = self._set_sel_hover(self._qty, max(1, self._qty - QTY_STEP_SMALL))
+            if self._picker.decrease_small(max_q):
+                self._play("hover")
         elif key == pygame.K_RIGHT:
-            self._qty = self._set_sel_hover(self._qty, min(max_q, self._qty + QTY_STEP_SMALL))
+            if self._picker.increase_small(max_q):
+                self._play("hover")
         elif key == pygame.K_UP:
-            self._qty = self._set_sel_hover(self._qty, min(max_q, self._qty + QTY_STEP_LARGE))
+            if self._picker.increase_large(max_q):
+                self._play("hover")
         elif key == pygame.K_DOWN:
-            self._qty = self._set_sel_hover(self._qty, max(1, self._qty - QTY_STEP_LARGE))
+            if self._picker.decrease_large(max_q):
+                self._play("hover")
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             self._play("confirm")
             if self._mode == MODE_BUY:
                 self._do_buy()
             else:
                 self._do_sell()
-
-    def _clamp_scroll(self) -> None:
-        self._scroll = ItemSelectionView.clamp_scroll(
-            self._list_sel, self._scroll, len(self._available()), VISIBLE_ROWS,
-        )
 
     # ── Buy ───────────────────────────────────────────────────
 
@@ -264,13 +257,13 @@ class ItemShopScene(MenuSfxMixin, Scene):
             return
         item_id = sel["id"]
         price   = self._row_price(sel)
-        total   = price * self._qty
+        total   = price * self._picker.qty
         repo    = self._holder.get().repository
 
         if total > 0 and not repo.spend_gp(total):
             return  # not enough GP
 
-        repo.add_item(item_id, self._qty)
+        repo.add_item(item_id, self._picker.qty)
         # apply tags from shop data
         entry = repo.get_item(item_id)
         if entry:
@@ -278,7 +271,7 @@ class ItemShopScene(MenuSfxMixin, Scene):
                 entry.tags.add(tag)
 
         name = self._display_name(sel)
-        self._popup_text  = f"Bought {self._qty} x {name}"
+        self._popup_text  = f"Bought {self._picker.qty} x {name}"
         self._state       = "popup"
 
     # ── Sell ──────────────────────────────────────────────────
@@ -289,10 +282,10 @@ class ItemShopScene(MenuSfxMixin, Scene):
             return
         item_id = sel["id"]
         repo    = self._holder.get().repository
-        gained  = repo.sell_item(item_id, self._qty)
+        gained  = repo.sell_item(item_id, self._picker.qty)
         name    = self._display_name(sel)
         if gained > 0:
-            self._popup_text = f"Sold {self._qty} x {name} for {gained:,} GP"
+            self._popup_text = f"Sold {self._picker.qty} x {name} for {gained:,} GP"
         else:
             self._popup_text = f"Cannot sell {name}"
         self._state = "popup"
@@ -314,9 +307,9 @@ class ItemShopScene(MenuSfxMixin, Scene):
             sell_tag=self._sell_tag,
             state=self._state,
             avail=self._available(),
-            list_sel=self._list_sel,
-            scroll=self._scroll,
-            qty=self._qty,
+            list_sel=self._list.selection,
+            scroll=self._list.scroll,
+            qty=self._picker.qty,
             popup_text=self._popup_text,
             gp=self._holder.get().repository.gp,
             sprite_surf=self._sprite_surf,
