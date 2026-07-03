@@ -51,6 +51,43 @@ class FontProvider:
         return self.get(self._sizes["xlarge"])
 
 
+class FontSet:
+    """Declarative lazy font bundle — replaces the hand-rolled
+    `_fonts_ready` / `_init_fonts()` boilerplate in every scene.
+
+    Declare once in __init__ (no pygame needed yet):
+
+        self._fonts = FontSet(title=(22, True), row=16, hint=15)
+
+    First attribute access resolves every declared font through the
+    global FontProvider (which requires init_fonts / pygame.font init)
+    and caches them: `self._fonts.title`, `self._fonts.row`, ...
+    """
+
+    def __init__(self, **spec: int | tuple[int, bool]) -> None:
+        self._spec = {
+            name: (v, False) if isinstance(v, int) else v
+            for name, v in spec.items()
+        }
+        self._resolved: dict[str, pygame.font.Font] | None = None
+
+    def __getattr__(self, name: str) -> pygame.font.Font:
+        if name.startswith("_"):
+            raise AttributeError(name)
+        if self._resolved is None:
+            provider = get_fonts()
+            self._resolved = {
+                n: provider.get(size, bold=bold)
+                for n, (size, bold) in self._spec.items()
+            }
+        try:
+            return self._resolved[name]
+        except KeyError:
+            raise AttributeError(
+                f"FontSet has no font {name!r} — declared: {sorted(self._spec)}"
+            ) from None
+
+
 def init_fonts(font_path: str | None, sizes: dict[str, int]) -> FontProvider:
     global _instance
     _instance = FontProvider(font_path, sizes)

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pygame
-from engine.common.font_provider import get_fonts
+from engine.common.font_provider import FontSet
 
 from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
@@ -68,19 +68,11 @@ class InnScene(MenuSfxMixin, Scene):
         self._sfx_manager   = sfx_manager
 
         self._state         = "confirm"   # confirm | no_gp | popup
-        self._fonts_ready   = False
+        self._fonts = FontSet(title=(22, True), row=16, hint=15, toast=(22, True))
         self._sprite_loaded = False
         self._sprite_surf: pygame.Surface | None = None
 
     # ── Init ──────────────────────────────────────────────────
-
-    def _init_fonts(self) -> None:
-        f = get_fonts()
-        self._font_title  = f.get(22, bold=True)
-        self._font_row    = f.get(16)
-        self._font_hint   = f.get(15)
-        self._font_toast  = f.get(22, bold=True)
-        self._fonts_ready = True
 
     def _init_sprite(self) -> None:
         self._sprite_surf = SpriteSheet.load_npc_face(self._sprite_path, SPRITE_SIZE)
@@ -125,8 +117,6 @@ class InnScene(MenuSfxMixin, Scene):
     # ── Render ────────────────────────────────────────────────
 
     def render(self, screen: pygame.Surface) -> None:
-        if not self._fonts_ready:
-            self._init_fonts()
         if not self._sprite_loaded:
             self._init_sprite()
 
@@ -150,10 +140,10 @@ class InnScene(MenuSfxMixin, Scene):
             self._draw_popup(screen)
 
     def _draw_header(self, screen: pygame.Surface, mx: int, my: int, gp: int) -> None:
-        title = self._font_title.render("Inn", True, C_HEADER)
+        title = self._fonts.title.render("Inn", True, C_HEADER)
         screen.blit(title, (mx + PAD, my + (HEADER_H - title.get_height()) // 2))
 
-        gp_s = self._font_row.render(f"GP  {gp:,}", True, C_GP)
+        gp_s = self._fonts.row.render(f"GP  {gp:,}", True, C_GP)
         screen.blit(gp_s, (mx + MODAL_W - gp_s.get_width() - PAD,
                             my + (HEADER_H - gp_s.get_height()) // 2))
 
@@ -167,7 +157,7 @@ class InnScene(MenuSfxMixin, Scene):
             screen.blit(self._sprite_surf, (mx + PAD, body_y))
 
         # cost label beside sprite
-        cost_s = self._font_title.render(f"{self._cost:,} GP / night", True, C_GP)
+        cost_s = self._fonts.title.render(f"{self._cost:,} GP / night", True, C_GP)
         screen.blit(cost_s, (mx + PAD + SPRITE_SIZE + PAD,
                               body_y + (SPRITE_SIZE - cost_s.get_height()) // 2))
 
@@ -178,7 +168,7 @@ class InnScene(MenuSfxMixin, Scene):
             row_y += ROW_H
 
     def _draw_member_row(self, screen, x, y, w, member) -> None:
-        name_s = self._font_row.render(member.name, True, C_TEXT)
+        name_s = self._fonts.row.render(member.name, True, C_TEXT)
         screen.blit(name_s, (x, y + 4))
 
         bar_x   = x + 110
@@ -187,36 +177,36 @@ class InnScene(MenuSfxMixin, Scene):
         bar_y2  = y + 6 + BAR_H + 6
 
         # HP bar
-        hp_label = self._font_hint.render("HP", True, C_MUTED)
+        hp_label = self._fonts.hint.render("HP", True, C_MUTED)
         screen.blit(hp_label, (bar_x, bar_y))
         bx = bar_x + 22
         draw_stat_bar(screen, pygame.Rect(bx, bar_y, bar_w, BAR_H),
                       member.hp, member.hp_max, C_HP)
-        hp_s = self._font_hint.render(f"{member.hp}/{member.hp_max}", True, C_MUTED)
+        hp_s = self._fonts.hint.render(f"{member.hp}/{member.hp_max}", True, C_MUTED)
         screen.blit(hp_s, (bx + bar_w + 4, bar_y))
 
         # MP bar
-        mp_label = self._font_hint.render("MP", True, C_MUTED)
+        mp_label = self._fonts.hint.render("MP", True, C_MUTED)
         screen.blit(mp_label, (bar_x, bar_y2))
         draw_stat_bar(screen, pygame.Rect(bx, bar_y2, bar_w, BAR_H),
                       member.mp, member.mp_max, C_MP)
-        mp_s = self._font_hint.render(f"{member.mp}/{member.mp_max}", True, C_MUTED)
+        mp_s = self._fonts.hint.render(f"{member.mp}/{member.mp_max}", True, C_MUTED)
         screen.blit(mp_s, (bx + bar_w + 4, bar_y2))
 
     def _draw_footer(self, screen: pygame.Surface, mx: int, y: int, gp: int) -> None:
         draw_divider(screen, mx + 10, y, MODAL_W - 20)
 
         if self._state == "no_gp":
-            msg = self._font_hint.render("Not enough GP.", True, C_WARN)
+            msg = self._fonts.hint.render("Not enough GP.", True, C_WARN)
             screen.blit(msg, (mx + PAD, y + (FOOTER_H - msg.get_height()) // 2))
         else:
-            hint = self._font_hint.render(
+            hint = self._fonts.hint.render(
                 "ENTER  rest · ESC  cancel", True, C_HINT)
             screen.blit(hint, (mx + PAD, y + (FOOTER_H - hint.get_height()) // 2))
 
     def _draw_popup(self, screen: pygame.Surface) -> None:
         render_toast(
-            screen, self._font_toast, self._font_hint,
+            screen, self._fonts.toast, self._fonts.hint,
             "The party rested and recovered!",
             msg_color=C_TOAST, width=POPUP_W,
         )
