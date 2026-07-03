@@ -1,5 +1,6 @@
 id: zone_09_volcanic_region
 name: Volcanic Region
+background: zone9-bg-1280x468
 density: 0.16
 
 entries:

@@ -1,5 +1,6 @@
 id: zone_07_sunken_cave
 name: Sunken Cave
+background: zone7-bg-1280x468
 density: 0.15
 
 entries:
