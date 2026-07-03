@@ -70,7 +70,7 @@ party:
     hp_max: 18
     mp: 18
     mp_max: 18
-    stats: { str: 26, dex: 26, con: 27, int: 9 }
+    stats: { str: 26, dex: 26, con: 27, int: 22 }
     equipped:
       weapon: oak_staff
       shield: buckler
@@ -101,9 +101,9 @@ party:
     exp: 0
     hp: 22
     hp_max: 22
-    mp: 10
-    mp_max: 10
-    stats: { str: 18, dex: 17, con: 18, int: 5 }
+    mp: 20
+    mp_max: 20
+    stats: { str: 18, dex: 17, con: 18, int: 24 }
     equipped:
       weapon: oak_staff
       shield: ""

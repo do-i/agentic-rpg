@@ -95,9 +95,9 @@ class TestIncomingPhysical:
 
 class TestSpellIgnoresRow:
     def test_back_row_caster_full_spell_damage(self):
-        # spell uses int * spell_coeff - def — row never enters the formula.
+        # spell uses int * spell_coeff - mres — row never enters the formula.
         sorc = make_combatant("Sorc", mp=30, mres=15, row="back")
-        goblin = make_combatant("Goblin", hp=50, hp_max=50, def_=3, is_enemy=True)
+        goblin = make_combatant("Goblin", hp=50, hp_max=50, mres=3, is_enemy=True)
         state = make_state([sorc], [goblin])
         spell = {"name": "Fire", "type": "spell", "spell_coeff": 2.0, "mp_cost": 8}
         state.pending_action = {

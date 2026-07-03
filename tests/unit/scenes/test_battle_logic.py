@@ -180,7 +180,7 @@ class TestResolveAction:
 
     def test_offensive_spell_deals_magic_damage(self):
         hero = make_combatant("Hero", mp=30, mres=15)
-        goblin = make_combatant("Goblin", hp=50, hp_max=50, def_=3, is_enemy=True)
+        goblin = make_combatant("Goblin", hp=50, hp_max=50, mres=3, is_enemy=True)
         state = make_battle_state([hero], [goblin])
         spell = {"name": "Fire", "type": "spell", "spell_coeff": 2.0, "mp_cost": 8}
         state.pending_action = {
@@ -189,6 +189,7 @@ class TestResolveAction:
 
         resolve_action(state, SCREEN_W)
 
+        # Magic is mitigated by the target's mres, not physical DEF.
         # dmg = max(1, int(15 * 2.0) - 3) = 27
         assert goblin.hp == 23
 

@@ -113,7 +113,9 @@ def resolve_spell(
         state.add_float("Debuff", *float_pos(state, target, screen_width), C_DMG_MAGIC)
         msgs.append(f"{source.name} casts {spell_name} on {target.name}!")
     else:
-        dmg = max(1, int(source.mres * coeff) - target.effective_def) if source else 10
+        # Offensive spells are mitigated by the target's magic resistance
+        # (mres), not physical DEF — mirroring how physical attacks use DEF.
+        dmg = max(1, int(source.mres * coeff) - target.mres) if source else 10
         actual = target.apply_damage(dmg, rng)
         state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_MAGIC)
         if fx:
