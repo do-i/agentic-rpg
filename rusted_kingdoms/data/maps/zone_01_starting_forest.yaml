@@ -22,6 +22,7 @@ transport:
 
 npcs:
   - id: bridge_guard_zone5
+    name: "Guardsman Pike"
     type: gate
     position: [4, 8]
     dialogue: bridge_guard_zone5
@@ -30,6 +31,8 @@ npcs:
       excludes: [boss_zone04_defeated]
 
   - id: stronghold_gate_guard
+
+    name: "Warden Malc"
     type: gate
     position: [28, 8]
     dialogue: stronghold_gate_guard

@@ -84,6 +84,7 @@ class FieldMenuScene(MenuSfxMixin, Scene):
             MenuEntry("Spells",    KIND_SCENE_SWITCH, "spells", "sigil",   "cast field magic and utilities"),
             MenuEntry("Items",     KIND_SCENE_SWITCH, "items",  "satchel", "use, sort, and inspect supplies"),
             MenuEntry("Equipment", KIND_SCENE_SWITCH, "equip",  "blade",   "tune gear and compare stats"),
+            MenuEntry("Quests",    KIND_SCENE_SWITCH, "quest_board", "quest", "track main and side quests"),
             MenuEntry("Character", KIND_OVERLAY,      "switch", "person",  "control a different party member"),
             MenuEntry("Save",      KIND_OVERLAY,      "save",   "seal",    "record the current journey"),
             MenuEntry("Quit",      KIND_OVERLAY,      "quit",   "quit",    "exit the game to desktop"),
@@ -210,7 +211,9 @@ class FieldMenuScene(MenuSfxMixin, Scene):
         render_header(screen, self._font_title, self._font_hint, "FIELD MENU", MENU_SUBTITLE, 52, 34)
 
         menu_w = min(460, max(340, int(sw * 0.42)))
-        menu_h = min(54 + len(self._entries) * (ROW_H + 8) + 18, sh - 190)
+        # sh - 160 leaves room for the header above and the key hint below
+        # while still fitting all eight command rows un-clipped at 766px.
+        menu_h = min(54 + len(self._entries) * (ROW_H + 8) + 18, sh - 160)
         menu_rect = pygame.Rect((sw - menu_w) // 2, 122, menu_w, menu_h)
 
         render_panel(screen, menu_rect, active=True, title="Commands", title_font=self._font_panel)

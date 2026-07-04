@@ -14,7 +14,7 @@ npcs:
       mode: step
       speed: 0.6
   - id: quarantine_patient
-    name: "Refugee"
+    name: "Edda"
     dialogue: harborgate_patient
     position: [14, 5]
     sprite: assets/sprites/npc/village_male_person_quiet_neighbor.tsx

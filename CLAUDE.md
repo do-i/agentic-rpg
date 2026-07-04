@@ -53,7 +53,8 @@ and logic together (no global `dto/` / `service/` / `ui/` directories).
 - **`item/`** — `ItemCatalog`, `ItemEntry`, `ItemEffectHandler`, `ItemLogic`, `ItemScene`, plus `MagicCoreCatalog`.
 - **`equipment/`** — `EquipScene` + `equipment_logic`.
 - **`field_menu/`** — Field/pause menu.
-- **`shop/`** — Item shop, magic-core shop, apothecary (crafting) scenes + renderers.
+- **`quest/`** — `QuestCatalog` (loads `data/quests.yaml`) + `QuestBoardScene` (main/sub quest list with flag-derived status).
+- **`shop/`** — Item shop (also reused for weapon/armor shops via `open_shop: weapon|armor`), magic-core shop, apothecary (crafting) scenes + renderers.
 - **`inn/`** — `InnScene` (rest / save).
 - **`spell/`** — `SpellScene` + `spell_logic`.
 - **`status/`** — Status screen + `StatusLogic` (spell/effect application).

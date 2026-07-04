@@ -7,6 +7,7 @@ inn:
 
 npcs:
   - id: inn_keeper
+    name: "Nan"
     dialogue: inn_harborgate
     position: [8, 3]
     sprite: assets/sprites/npc/female_blue_01.tsx

@@ -44,9 +44,13 @@ class NpcLoader:
         return [self._parse_npc(entry) for entry in data.get("npcs", [])]
 
     def _parse_npc(self, entry: dict) -> Npc:
-        for key in ("id", "position"):
+        for key in ("id", "name", "position"):
             if key not in entry:
-                raise KeyError(f"npc entry missing required field {key!r}: {entry!r}")
+                raise KeyError(
+                    f"npc entry missing required field {key!r}: {entry!r}. "
+                    f"Every NPC needs an id, a display name (shown in the "
+                    f"dialogue box), and a [x, y] tile position."
+                )
         npc_id         = entry["id"]
         dialogue       = entry.get("dialogue", npc_id)
         position       = entry["position"]
@@ -64,6 +68,7 @@ class NpcLoader:
 
         return Npc(
             npc_id=npc_id,
+            name=entry["name"],
             dialogue_id=dialogue,
             tile_x=position[0],
             tile_y=position[1],

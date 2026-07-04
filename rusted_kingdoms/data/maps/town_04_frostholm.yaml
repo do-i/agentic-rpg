@@ -31,6 +31,7 @@ shop:
 
 npcs:
   - id: frostholm_captain
+    name: "Captain Roark"
     dialogue: frostholm_captain_hint
     position: [18, 27]
     sprite: assets/sprites/npc/plate_knight_open_helmet.tsx
@@ -47,7 +48,7 @@ npcs:
       mode: still
 
   - id: frostholm_quartermaster
-    name: "Quartermaster"
+    name: "Quartermaster Brida"
     dialogue: frostholm_quartermaster
     position: [12, 7]
     sprite: assets/sprites/npc/female_sword_fighter_base.tsx
@@ -57,14 +58,14 @@ npcs:
       speed: 0.6
 
   - id: frostholm_sentry
-    name: "Gate Sentry"
+    name: "Sentry Ulf"
     dialogue: frostholm_sentry
     position: [26, 7]
     sprite: assets/sprites/npc/plate_knight_mace_knight.tsx
     default_facing: left
 
   - id: frostholm_courtier
-    name: "Courtier"
+    name: "Lady Ashwyn"
     dialogue: frostholm_courtier
     position: [33, 15]
     sprite: assets/sprites/npc/merchant_wealthy_bowler.tsx
@@ -75,7 +76,7 @@ npcs:
       range: 3
 
   - id: frostholm_beggar
-    name: "Beggar"
+    name: "Old Skerry"
     dialogue: frostholm_beggar
     position: [5, 16]
     sprite: assets/sprites/npc/village_male_person_quiet_neighbor.tsx

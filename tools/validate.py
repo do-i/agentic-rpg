@@ -164,10 +164,11 @@ def collect_flags(root: Path) -> tuple[dict[str, list[str]], dict[str, list[str]
             data = load_yaml(f)
             if not isinstance(data, dict):
                 continue
-            for item in data.get("shop", {}).get("items", []):
-                flag = item.get("unlock_flag")
-                if flag:
-                    add_consumed(flag, str(rel))
+            for section in ("shop", "weapon_shop", "armor_shop"):
+                for item in data.get(section, {}).get("items", []):
+                    flag = item.get("unlock_flag")
+                    if flag:
+                        add_consumed(flag, str(rel))
 
             # world map NPC present conditions
             for npc in data.get("npcs", []):
@@ -196,6 +197,16 @@ def collect_flags(root: Path) -> tuple[dict[str, list[str]], dict[str, list[str]
                     flag = entry.get("unlock_flag")
                     if flag:
                         add_consumed(flag, str(rel))
+
+    # quest registry — the quest board reads these flags
+    quests_path = root / "data" / "quests.yaml"
+    if quests_path.exists():
+        for entry in load_yaml_list(quests_path):
+            if isinstance(entry, dict):
+                for key in ("started_flag", "completed_flag"):
+                    flag = entry.get(key)
+                    if flag:
+                        add_consumed(flag, f"quests.yaml:{entry.get('id')}")
 
     # story scripts / cutscenes — set_flag in on_complete (already covered by dialogue loop)
 
@@ -291,6 +302,15 @@ def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict)
                     if dlg_id and dlg_id not in dialogue_reg:
                         err(f"[party.yaml] {mid!r} recruit.dialogue not found: {dlg_id!r}")
 
+    # manifest → refs.quests (quest board registry)
+    quests_ref = manifest.get("refs", {}).get("quests")
+    if quests_ref:
+        quests_path = root / quests_ref
+        if not quests_path.exists():
+            err(f"[manifest] refs.quests not found: {quests_ref}")
+        else:
+            visit(quests_path)
+
     # maps — traverse all map files
     maps_dir = root / "data" / "maps"
     if maps_dir.exists():
@@ -302,10 +322,11 @@ def forward_pass(root: Path, item_reg: dict, char_reg: dict, dialogue_reg: dict)
             rel = map_file.relative_to(root)
 
             # shop items → item registry
-            for item in data.get("shop", {}).get("items", []):
-                item_id = item.get("id")
-                if item_id and item_id not in item_reg:
-                    err(f"[map:{rel}] shop item id not found in items registry: '{item_id}'")
+            for section in ("shop", "weapon_shop", "armor_shop"):
+                for item in data.get(section, {}).get("items", []):
+                    item_id = item.get("id")
+                    if item_id and item_id not in item_reg:
+                        err(f"[map:{rel}] {section} item id not found in items registry: '{item_id}'")
 
             # npcs → dialogue files
             for npc in data.get("npcs", []):

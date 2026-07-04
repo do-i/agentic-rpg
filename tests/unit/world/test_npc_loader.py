@@ -45,7 +45,7 @@ class TestNpcLoader:
 
     def test_loads_basic_npc(self, loader, tmp_path):
         p = write_map(tmp_path, {
-            "npcs": [{"id": "elder", "dialogue": "elder_intro", "position": [12, 8]}]
+            "npcs": [{"id": "elder", "name": "Elder", "dialogue": "elder_intro", "position": [12, 8]}]
         })
         npcs = loader.load_from_map(p)
         assert len(npcs) == 1
@@ -55,8 +55,8 @@ class TestNpcLoader:
     def test_loads_multiple_npcs(self, loader, tmp_path):
         p = write_map(tmp_path, {
             "npcs": [
-                {"id": "npc_a", "dialogue": "dlg_a", "position": [1, 1]},
-                {"id": "npc_b", "dialogue": "dlg_b", "position": [2, 2]},
+                {"id": "npc_a", "name": "A", "dialogue": "dlg_a", "position": [1, 1]},
+                {"id": "npc_b", "name": "B", "dialogue": "dlg_b", "position": [2, 2]},
             ]
         })
         npcs = loader.load_from_map(p)
@@ -66,6 +66,7 @@ class TestNpcLoader:
         p = write_map(tmp_path, {
             "npcs": [{
                 "id": "gate",
+                "name": "Gatekeeper",
                 "dialogue": "gate_dlg",
                 "position": [5, 5],
                 "present": {
@@ -83,7 +84,7 @@ class TestNpcLoader:
 
     def test_npc_position_translated_to_pixels(self, loader, tmp_path):
         p = write_map(tmp_path, {
-            "npcs": [{"id": "n", "dialogue": "d", "position": [3, 7]}]
+            "npcs": [{"id": "n", "name": "N", "dialogue": "d", "position": [3, 7]}]
         })
         npcs = loader.load_from_map(p)
         pos = npcs[0].pixel_position
@@ -92,28 +93,28 @@ class TestNpcLoader:
 
     def test_default_facing_loaded(self, loader, tmp_path):
         p = write_map(tmp_path, {
-            "npcs": [{"id": "n", "dialogue": "d", "position": [1, 1], "default_facing": "left"}]
+            "npcs": [{"id": "n", "name": "N", "dialogue": "d", "position": [1, 1], "default_facing": "left"}]
         })
         npcs = loader.load_from_map(p)
         assert npcs[0]._default_facing == Direction.LEFT
 
     def test_default_facing_defaults_to_down(self, loader, tmp_path):
         p = write_map(tmp_path, {
-            "npcs": [{"id": "n", "dialogue": "d", "position": [1, 1]}]
+            "npcs": [{"id": "n", "name": "N", "dialogue": "d", "position": [1, 1]}]
         })
         npcs = loader.load_from_map(p)
         assert npcs[0]._default_facing == Direction.DOWN
 
     def test_no_sprite_gives_none(self, loader, tmp_path):
         p = write_map(tmp_path, {
-            "npcs": [{"id": "n", "dialogue": "d", "position": [1, 1]}]
+            "npcs": [{"id": "n", "name": "N", "dialogue": "d", "position": [1, 1]}]
         })
         npcs = loader.load_from_map(p)
         assert npcs[0]._sprite_sheet is None
 
     def test_sprite_path_missing_logs_warn(self, loader_with_path, tmp_path):
         p = write_map(tmp_path, {
-            "npcs": [{"id": "n", "dialogue": "d", "position": [1, 1],
+            "npcs": [{"id": "n", "name": "N", "dialogue": "d", "position": [1, 1],
                       "sprite": "assets/sprites/npc/nonexistent.tsx"}]
         })
         # missing sprite → no crash, no sprite loaded
@@ -122,7 +123,7 @@ class TestNpcLoader:
 
     def test_no_scenario_path_skips_sprite(self, loader, tmp_path):
         p = write_map(tmp_path, {
-            "npcs": [{"id": "n", "dialogue": "d", "position": [1, 1],
+            "npcs": [{"id": "n", "name": "N", "dialogue": "d", "position": [1, 1],
                       "sprite": "assets/sprites/npc/man_01.tsx"}]
         })
         npcs = loader.load_from_map(p)
@@ -134,14 +135,19 @@ class TestNpcLoader:
             loader.load_from_map(p)
 
     def test_missing_position_raises(self, loader, tmp_path):
-        p = write_map(tmp_path, {"npcs": [{"id": "n"}]})
+        p = write_map(tmp_path, {"npcs": [{"id": "n", "name": "N"}]})
         with pytest.raises(KeyError, match="position"):
+            loader.load_from_map(p)
+
+    def test_missing_name_raises(self, loader, tmp_path):
+        p = write_map(tmp_path, {"npcs": [{"id": "n", "position": [1, 1]}]})
+        with pytest.raises(KeyError, match="name"):
             loader.load_from_map(p)
 
 
 class TestParseFromMapData:
     def test_parses_already_loaded_dict_without_reading_disk(self, loader):
-        data = {"npcs": [{"id": "n", "position": [1, 2]}]}
+        data = {"npcs": [{"id": "n", "name": "N", "position": [1, 2]}]}
         npcs = loader.parse_from_map_data(data)
         assert len(npcs) == 1
         assert npcs[0].id == "n"

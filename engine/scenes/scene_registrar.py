@@ -25,6 +25,8 @@ from engine.item.item_catalog import ItemCatalog
 from engine.item.item_effect_handler import ItemEffectHandler
 from engine.item.item_scene import ItemScene
 from engine.item.magic_core_catalog_state import build_mc_catalog
+from engine.quest.quest_board_scene import QuestBoardScene
+from engine.quest.quest_catalog import QuestCatalog
 from engine.record.recorder import RecordPlaybackManager
 from engine.settings.balance_data import BalanceData
 from engine.settings.engine_config_data import EngineConfigData
@@ -85,6 +87,7 @@ def register_scenes(registry: SceneRegistry, deps: SceneDeps) -> None:
     sfx_manager = deps.sfx_manager
 
     mc_catalog = build_mc_catalog(load_magic_cores(loader.scenario_path))
+    quest_catalog = QuestCatalog(loader.scenario_path / "data" / "quests.yaml")
 
     registry.register_singleton("boot", BootScene(scene_manager, loader, registry))
 
@@ -176,4 +179,13 @@ def register_scenes(registry: SceneRegistry, deps: SceneDeps) -> None:
             return_scene_name="world_map",
             sfx_manager=sfx_manager,
             game_state_manager=game_state_manager,
+        ))
+    registry.register_factory("quest_board",
+        lambda: QuestBoardScene(
+            holder=holder,
+            scene_manager=scene_manager,
+            registry=registry,
+            quest_catalog=quest_catalog,
+            return_scene_name="world_map",
+            sfx_manager=sfx_manager,
         ))

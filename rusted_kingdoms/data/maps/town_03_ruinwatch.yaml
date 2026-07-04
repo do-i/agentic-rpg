@@ -35,13 +35,14 @@ shop:
 
 npcs:
   - id: ruinwatch_scholar
+    name: "Emeth"
     dialogue: ruinwatch_scholar_hint
     position: [18, 27]
     sprite: assets/sprites/npc/wizard_blue_robed_mage.tsx
     default_facing: down
 
   - id: ruinwatch_archivist
-    name: "Archivist"
+    name: "Archivist Hesta"
     dialogue: ruinwatch_archivist
     position: [12, 7]
     sprite: assets/sprites/npc/village_female_person_elder_matron.tsx
@@ -51,7 +52,7 @@ npcs:
       speed: 0.5
 
   - id: ruinwatch_mason
-    name: "Stonemason"
+    name: "Mason Grote"
     dialogue: ruinwatch_mason
     position: [26, 7]
     sprite: assets/sprites/npc/village_male_person_older_villager.tsx
@@ -61,7 +62,7 @@ npcs:
       speed: 0.6
 
   - id: ruinwatch_pilgrim
-    name: "Pilgrim"
+    name: "Sela"
     dialogue: ruinwatch_pilgrim
     position: [33, 15]
     sprite: assets/sprites/npc/village_female_person_long_hair_green_skirt.tsx
@@ -72,7 +73,7 @@ npcs:
       range: 3
 
   - id: ruinwatch_digger
-    name: "Relic Hunter"
+    name: "Ferd"
     dialogue: ruinwatch_digger
     position: [3, 22]
     sprite: assets/sprites/npc/rogue_hooded_rogue.tsx

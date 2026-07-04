@@ -4,7 +4,7 @@ bgm: town.bamboo
 
 npcs:
   - id: millhaven_miller
-    name: "Old Miller"
+    name: "Old Havel"
     dialogue: millhaven_miller
     position: [5, 6]
     sprite: assets/sprites/npc/farmer_male_older_farmer.tsx

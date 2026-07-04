@@ -400,17 +400,28 @@ class TestLoadMapData:
             "shop:\n  items:\n    - id: potion\n      buy_price: 50\n"
         )
 
-        items = load_shop_items(tmp_path, "town_01")
+        items = load_shop_items(tmp_path, "town_01", "shop")
         assert len(items) == 1
         assert items[0]["id"] == "potion"
 
-    def test_load_shop_items_empty(self, tmp_path):
+    def test_load_shop_items_weapon_section(self, tmp_path):
+        maps_dir = tmp_path / "data" / "maps"
+        maps_dir.mkdir(parents=True)
+        (maps_dir / "town_01.yaml").write_text(
+            "weapon_shop:\n  items:\n    - id: iron_sword\n      buy_price: 350\n"
+        )
+
+        items = load_shop_items(tmp_path, "town_01", "weapon_shop")
+        assert len(items) == 1
+        assert items[0]["id"] == "iron_sword"
+
+    def test_load_shop_items_missing_section_raises(self, tmp_path):
         maps_dir = tmp_path / "data" / "maps"
         maps_dir.mkdir(parents=True)
         (maps_dir / "town_01.yaml").write_text("npcs: []\n")
 
-        items = load_shop_items(tmp_path, "town_01")
-        assert items == []
+        with pytest.raises(ValueError, match="shop.items"):
+            load_shop_items(tmp_path, "town_01", "shop")
 
 
 # ── load_recipes ──────────────────────────────────────────────

@@ -37,6 +37,7 @@ shop:
 
 npcs:
   - id: mc_shop_keeper
+    name: "Corm"
     dialogue: mc_shop_intro
     position: [10, 3]
     sprite: assets/sprites/npc/male_blond_01.tsx
@@ -46,6 +47,7 @@ npcs:
       mode: step
       speed: 0.8
   - id: item_shop_keeper
+    name: "Wilkin"
     dialogue: item_shop_ardel
     position: [6, 3]
     sprite: assets/sprites/npc/teen_halfmessy_01.tsx
@@ -55,6 +57,7 @@ npcs:
       mode: step
       speed: 0.7
   - id: apothecary
+    name: "Yarrow"
     dialogue: apothecary_ardel
     position: [8, 3]
     sprite: assets/sprites/npc/female_wiz_01.tsx
@@ -63,3 +66,62 @@ npcs:
     animation:
       mode: step
       speed: 0.6
+  - id: weapon_shop_keeper
+    name: Dagan
+    dialogue: weapon_shop_ardel
+    position: [4, 3]
+    sprite: assets/sprites/npc/male_sword_fighter_axe_fighter.tsx
+    default_facing: down
+    interaction_range: 2.5
+    animation:
+      mode: step
+      speed: 0.7
+  - id: armor_shop_keeper
+    name: Hetta
+    dialogue: armor_shop_ardel
+    position: [12, 3]
+    sprite: assets/sprites/npc/village_female_person_apron_keeper.tsx
+    default_facing: down
+    interaction_range: 2.5
+    animation:
+      mode: step
+      speed: 0.7
+
+weapon_shop:
+  items:
+    - id: wooden_stick
+      buy_price: 30
+      unlock_flag: story_quest_started
+    - id: dagger
+      buy_price: 120
+      unlock_flag: story_quest_started
+    - id: short_sword
+      buy_price: 150
+      unlock_flag: story_quest_started
+    - id: oak_staff
+      buy_price: 180
+      unlock_flag: story_quest_started
+    - id: short_bow
+      buy_price: 220
+      unlock_flag: story_act2_started
+
+armor_shop:
+  items:
+    - id: cloth_hood
+      buy_price: 40
+      unlock_flag: story_quest_started
+    - id: leather_hat
+      buy_price: 60
+      unlock_flag: story_quest_started
+    - id: cloth_robe
+      buy_price: 70
+      unlock_flag: story_quest_started
+    - id: buckler
+      buy_price: 90
+      unlock_flag: story_quest_started
+    - id: leather_vest
+      buy_price: 150
+      unlock_flag: story_quest_started
+    - id: light_armor
+      buy_price: 300
+      unlock_flag: story_act2_started

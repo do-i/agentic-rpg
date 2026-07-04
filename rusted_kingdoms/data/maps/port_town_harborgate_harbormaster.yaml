@@ -4,7 +4,7 @@ bgm: town.default
 
 npcs:
   - id: port_master
-    name: "Harbormaster"
+    name: "Harbormaster Vance"
     dialogue: port_master_intro
     position: [5, 6]
     sprite: assets/sprites/npc/male_old_02.tsx

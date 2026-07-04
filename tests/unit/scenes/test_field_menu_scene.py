@@ -59,7 +59,7 @@ class TestEntries:
     def test_entry_list_has_expected_order(self):
         scene, *_ = make_scene()
         labels = [e.label for e in scene._entries]
-        assert labels == ["Status", "Spells", "Items", "Equipment", "Character", "Save", "Quit"]
+        assert labels == ["Status", "Spells", "Items", "Equipment", "Quests", "Character", "Save", "Quit"]
 
     def test_items_status_equipment_spells_dispatch_by_scene_switch(self):
         scene, *_ = make_scene()
@@ -68,6 +68,7 @@ class TestEntries:
         assert kinds["Status"] == KIND_SCENE_SWITCH
         assert kinds["Equipment"] == KIND_SCENE_SWITCH
         assert kinds["Spells"] == KIND_SCENE_SWITCH
+        assert kinds["Quests"] == KIND_SCENE_SWITCH
 
     def test_save_is_overlay(self):
         scene, *_ = make_scene()

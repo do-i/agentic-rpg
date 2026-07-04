@@ -16,7 +16,7 @@ shop:
 
 npcs:
   - id: harborgate_dockhand
-    name: "Dockhand"
+    name: "Cobb"
     dialogue: harborgate_dockhand
     position: [21, 14]
     sprite: assets/sprites/npc/village_male_person_market_runner.tsx
@@ -27,7 +27,7 @@ npcs:
       range: 4
 
   - id: harborgate_clerk
-    name: "Customs Clerk"
+    name: "Clerk Isolde"
     dialogue: harborgate_clerk
     position: [12, 7]
     sprite: assets/sprites/npc/village_female_person_practical_pants.tsx
@@ -37,14 +37,14 @@ npcs:
       speed: 0.6
 
   - id: harborgate_stevedore
-    name: "Stevedore"
+    name: "Brant"
     dialogue: harborgate_stevedore
     position: [30, 9]
     sprite: assets/sprites/npc/male_sword_fighter_base.tsx
     default_facing: left
 
   - id: harborgate_sailor
-    name: "Stranded Sailor"
+    name: "Tam"
     dialogue: harborgate_sailor
     position: [33, 17]
     sprite: assets/sprites/npc/man_01.tsx
@@ -55,7 +55,7 @@ npcs:
       range: 3
 
   - id: harborgate_fishwife
-    name: "Fishwife"
+    name: "Marla"
     dialogue: harborgate_fishwife
     position: [5, 16]
     sprite: assets/sprites/npc/village_female_person_basket_carrier.tsx

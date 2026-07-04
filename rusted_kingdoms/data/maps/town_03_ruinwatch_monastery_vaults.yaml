@@ -4,6 +4,7 @@ bgm: town.default
 
 npcs:
   - id: jep
+    name: "Jep"
     dialogue: jep_join
     position: [10, 5]
     sprite: assets/sprites/party/04_jep_walk.tsx

@@ -30,6 +30,12 @@ inn:
 item_shop:
   sprite: assets/sprites/npc/teen_halfmessy_01.tsx
 
+weapon_shop:
+  sprite: assets/sprites/npc/male_sword_fighter_axe_fighter.tsx
+
+armor_shop:
+  sprite: assets/sprites/npc/plate_knight_base.tsx
+
 item_box:
   sprite: assets/sprites/objects/item_box.tsx
 
@@ -73,6 +79,7 @@ refs:
   enemies:    data/enemies/
   encount:    data/encount/
   recipe:     data/recipe/
+  quests:     data/quests.yaml
   balance:    data/balance.yaml
   battle_backgrounds: data/battle_backgrounds.yaml
   assets:     assets/

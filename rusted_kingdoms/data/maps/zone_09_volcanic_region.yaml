@@ -9,7 +9,7 @@ enemy_spawn:
 
 npcs:
   - id: stronghold_gate_guard
-    name: "Gate Guard"
+    name: "Warden Malc"
     dialogue: stronghold_gate_guard
     position: [46, 17]
     sprite: assets/sprites/npc/plate_knight_open_helmet.tsx

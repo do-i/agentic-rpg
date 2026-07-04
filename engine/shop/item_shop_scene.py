@@ -41,6 +41,7 @@ class ItemShopScene(MenuSfxMixin, Scene):
         sprite_path: Path,
         sfx_manager,
         item_catalog: ItemCatalog,
+        title: str,
     ) -> None:
         self._holder        = holder
         self._scene_manager = scene_manager
@@ -59,7 +60,7 @@ class ItemShopScene(MenuSfxMixin, Scene):
         self._sell_tag: str | None = None  # None = show all sellable items
         self._sprite_surf: pygame.Surface | None = None
         self._sprite_loaded = False
-        self._renderer = ItemShopRenderer()
+        self._renderer = ItemShopRenderer(title=title)
 
     # ── Init ──────────────────────────────────────────────────
 

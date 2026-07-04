@@ -270,11 +270,32 @@ def load_inn_cost(scenario_path: Path, map_id: str) -> int:
     return inn["cost"]
 
 
-def load_shop_items(scenario_path: Path, map_id: str) -> list[dict]:
-    """Load shop items from map YAML data."""
+# Maps dialogue `open_shop:` values to (map YAML section, manifest sprite
+# section, shop window title). "item" predates the split, hence its map
+# section is plain "shop".
+SHOP_SECTIONS: dict[str, tuple[str, str, str]] = {
+    "item":   ("shop", "item_shop", "Item Shop"),
+    "weapon": ("weapon_shop", "weapon_shop", "Weapon Shop"),
+    "armor":  ("armor_shop", "armor_shop", "Armor Shop"),
+}
+
+
+def load_shop_items(scenario_path: Path, map_id: str, section: str) -> list[dict]:
+    """Load one shop section's inventory from map YAML data."""
     map_yaml = scenario_path / "data" / "maps" / f"{map_id}.yaml"
     map_data = load_yaml_required(map_yaml)
-    return map_data.get("shop", {}).get("items", [])
+    block = map_data.get(section)
+    if not isinstance(block, dict) or "items" not in block:
+        raise ValueError(
+            f"{map_id}.yaml: missing '{section}.items'. A dialogue on this map "
+            f"opens this shop, so the map must define its inventory. Example:\n"
+            f"{section}:\n"
+            f"  items:\n"
+            f"    - id: potion\n"
+            f"      buy_price: 100\n"
+            f"      unlock_flag: story_quest_started"
+        )
+    return block["items"]
 
 
 def load_recipes(scenario_path: Path) -> list[dict]:

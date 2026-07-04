@@ -51,7 +51,8 @@ def _theme() -> ItemSelectionTheme:
 class ItemShopRenderer:
     """Handles all rendering for the item shop scene."""
 
-    def __init__(self) -> None:
+    def __init__(self, title: str) -> None:
+        self._title = title
         self._fonts = FontSet(
             title=(22, True), row=16, qty=(20, True), arrow=20,
             hint=15, toast=(20, True), desc=18,
@@ -98,10 +99,10 @@ class ItemShopRenderer:
         draw_modal_box(screen, mx, my, MODAL_W, mh, C_BORDER)
 
         if mode == "buy":
-            title_text = "Item Shop — Buy"
+            title_text = f"{self._title} — Buy"
         else:
             tag_label = f"[{sell_tag}]" if sell_tag else "[All]"
-            title_text = f"Item Shop — Sell {tag_label}"
+            title_text = f"{self._title} — Sell {tag_label}"
         draw_shop_header(
             screen, mx, my, MODAL_W,
             title_text=title_text,

@@ -25,6 +25,7 @@ def make_npc(
 ) -> Npc:
     return Npc(
         npc_id="test_npc",
+        name="Test NPC",
         dialogue_id="test_dialogue",
         tile_x=tile_x,
         tile_y=tile_y,

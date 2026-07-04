@@ -46,6 +46,7 @@ def make_scene(gp: int = 500):
         sprite_path=MagicMock(),
         sfx_manager=SfxManager.null(),
         item_catalog=MagicMock(),
+        title="Item Shop",
     )
     return scene, repo, on_close
 

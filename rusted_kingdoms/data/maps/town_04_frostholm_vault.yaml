@@ -4,7 +4,7 @@ bgm: town.bamboo
 
 npcs:
   - id: vault_warden
-    name: "Vault Warden"
+    name: "Warden Hild"
     dialogue: frostholm_vault_warden
     position: [8, 4]
     sprite: assets/sprites/npc/plate_knight_open_helmet.tsx

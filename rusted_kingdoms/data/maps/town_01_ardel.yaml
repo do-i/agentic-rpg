@@ -88,14 +88,14 @@ npcs:
       range: 3
 
   - id: ardel_fisherman
-    name: "Old Fisher"
+    name: "Old Marn"
     dialogue: ardel_fisherman
     position: [3, 8]
     sprite: assets/sprites/npc/male_old_02.tsx
     default_facing: right
 
   - id: ardel_child
-    name: "Village Child"
+    name: "Pip"
     dialogue: ardel_child
     position: [15, 8]
     sprite: assets/sprites/npc/village_female_person_basket_carrier.tsx

@@ -38,8 +38,10 @@ class DialogueScene(Scene):
         on_complete: callable,
         text_speed: str = "fast",
         portrait: pygame.Surface | None = None,
+        speaker: str | None = None,
     ) -> None:
         self._lines = result.lines
+        self._speaker = speaker
         self._on_complete_cb = on_complete
         self._on_complete_data = result.on_complete
         self._speed = TEXT_SPEEDS.get(text_speed, TEXT_SPEEDS["fast"])
@@ -133,6 +135,17 @@ class DialogueScene(Scene):
         box_surf.fill((12, 12, 30, 220))
         screen.blit(box_surf, (BOX_MARGIN, box_y))
         pygame.draw.rect(screen, (160, 160, 100), (BOX_MARGIN, box_y, box_w, BOX_H), 2)
+
+        # speaker name plate — sits on the box's top border
+        if self._speaker:
+            name_s = self._font_speaker.render(self._speaker, True, (235, 210, 140))
+            plate_w = name_s.get_width() + 20
+            plate_h = name_s.get_height() + 8
+            plate_x = BOX_MARGIN + 14
+            plate_y = box_y - plate_h // 2
+            pygame.draw.rect(screen, (24, 22, 40), (plate_x, plate_y, plate_w, plate_h))
+            pygame.draw.rect(screen, (160, 160, 100), (plate_x, plate_y, plate_w, plate_h), 1)
+            screen.blit(name_s, (plate_x + 10, plate_y + 4))
 
         # portrait
         px = BOX_MARGIN + BOX_PAD

@@ -7,6 +7,7 @@ inn:
 
 npcs:
   - id: inn_keeper
+    name: "Fenwick"
     dialogue: inn_ruinwatch
     position: [8, 3]
     sprite: assets/sprites/npc/female_blue_01.tsx

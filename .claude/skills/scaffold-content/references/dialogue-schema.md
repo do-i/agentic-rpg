@@ -75,7 +75,7 @@ on_complete:
     position: [x, y]
     fade: in                   # in | out
   start_battle: <enemy_id>
-  open_shop: true
+  open_shop: item        # item | weapon | armor | magic_core
   open_inn: true
   open_apothecary: true
 ```

@@ -67,6 +67,7 @@ class Npc:
     def __init__(
         self,
         npc_id: str,
+        name: str,
         dialogue_id: str,
         tile_x: int,
         tile_y: int,
@@ -85,6 +86,7 @@ class Npc:
         self._rng = rng
         self._tile_size = tile_size
         self.id = npc_id
+        self.name = name
         self.dialogue_id = dialogue_id
         self._origin_px = tile_x * tile_size
         self._origin_py = tile_y * tile_size

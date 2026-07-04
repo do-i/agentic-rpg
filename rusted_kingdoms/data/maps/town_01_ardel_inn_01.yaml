@@ -7,6 +7,7 @@ inn:
 
 npcs:
   - id: inn_keeper
+    name: "Berta"
     dialogue: inn_ardel
     position: [5, 3]
     sprite: assets/sprites/npc/female_blue_01.tsx

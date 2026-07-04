@@ -49,6 +49,7 @@ from engine.world.world_map_logic import (
     load_inn_cost,
     load_recipes,
     load_shop_items,
+    SHOP_SECTIONS,
     try_interact,
     try_interact_item_box,
     try_interact_sign,
@@ -262,6 +263,7 @@ class WorldMapScene(Scene):
                 on_complete=self._on_dialogue_complete,
                 text_speed=self._text_speed,
                 portrait=npc.portrait if npc else None,
+                speaker=npc.name if npc else None,
             )
             return
 
@@ -306,8 +308,8 @@ class WorldMapScene(Scene):
         if shop_type == "magic_core":
             self._open_mc_shop()
             return
-        if shop_type == "item":
-            self._open_item_shop()
+        if shop_type in SHOP_SECTIONS:
+            self._open_item_shop(shop_type)
             return
 
         if remaining.get("open_apothecary"):
@@ -371,11 +373,12 @@ class WorldMapScene(Scene):
 
     # ── Item Shop ─────────────────────────────────────────────
 
-    def _open_item_shop(self) -> None:
+    def _open_item_shop(self, shop_type: str) -> None:
         state = self._holder.get()
         map_id = state.map.current
-        shop_items = load_shop_items(self._loader.scenario_path, map_id)
-        sprite_path = self._loader.scenario_path / self._manifest_sprite("item_shop")
+        map_section, manifest_section, title = SHOP_SECTIONS[shop_type]
+        shop_items = load_shop_items(self._loader.scenario_path, map_id, map_section)
+        sprite_path = self._loader.scenario_path / self._manifest_sprite(manifest_section)
         self._overlays.item_shop = ItemShopScene(
             holder=self._holder,
             scene_manager=self._scene_manager,
@@ -385,6 +388,7 @@ class WorldMapScene(Scene):
             sprite_path=sprite_path,
             sfx_manager=self._sfx_manager,
             item_catalog=self._item_catalog,
+            title=title,
         )
 
     def _close_item_shop(self) -> None:
