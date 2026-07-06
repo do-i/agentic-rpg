@@ -7,6 +7,7 @@ import pygame
 from engine.settings.engine_config_data import EngineConfigData
 from engine.util.frame_clock import FrameClock
 from engine.common.scene.scene_manager import SceneManager
+from engine.common.ui.framebuffer import ensure_framebuffer, present_frame
 from engine.record.recorder import RecordPlaybackManager
 
 _REPEAT_KEYS     = {pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT}
@@ -31,6 +32,7 @@ class Game:
             pygame.RESIZABLE,
         )
         pygame.display.set_caption(window_title)
+        self._framebuffer: pygame.Surface | None = None
         self._clock = clock
         self._scene_manager = scene_manager
         self._recorder = recorder
@@ -67,7 +69,9 @@ class Game:
                 self._scene_manager.update(delta)
                 if not self._running:
                     break
-            self._scene_manager.render(self._screen)
+            self._framebuffer = ensure_framebuffer(self._framebuffer, self._screen.get_size())
+            self._scene_manager.render(self._framebuffer)
+            present_frame(self._screen, self._framebuffer)
             pygame.display.flip()
         pygame.quit()
 

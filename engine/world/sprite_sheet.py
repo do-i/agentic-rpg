@@ -69,6 +69,8 @@ class SpriteSheet:
         image_src = image_el.attrib["source"]
         image_path = (self._tsx_path.parent / image_src).resolve()
         sheet = pygame.image.load(str(image_path))
+        if pygame.display.get_surface() is not None:
+            sheet = sheet.convert_alpha()
 
         self._row_count = sheet.get_height() // self._frame_h
         for row in range(self._row_count):

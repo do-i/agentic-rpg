@@ -34,6 +34,8 @@ class ItemBoxSprite:
         image_path = (self._tsx_path.parent / image_src).resolve()
 
         sheet = pygame.image.load(str(image_path))
+        if pygame.display.get_surface() is not None:
+            sheet = sheet.convert_alpha()
         self._closed = sheet.subsurface(pygame.Rect(0, 0, tile_w, tile_h))
         self._opened = sheet.subsurface(pygame.Rect(tile_w, 0, tile_w, tile_h))
         self._width = tile_w
