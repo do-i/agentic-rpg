@@ -1,4 +1,5 @@
 name: Windcut Shelf
+warp_order: 120
 bgm: zone.alpine
 
 enemy_spawn:

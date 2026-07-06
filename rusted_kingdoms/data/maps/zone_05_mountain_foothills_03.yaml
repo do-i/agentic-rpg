@@ -1,4 +1,5 @@
 name: Ticker's Ascent
+warp_order: 125
 bgm: zone.alpine
 
 enemy_spawn:

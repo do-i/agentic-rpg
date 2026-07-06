@@ -1,4 +1,5 @@
 name: Shaman Gate
+warp_order: 140
 bgm: zone.alpine
 
 enemy_spawn:

@@ -1,4 +1,5 @@
 name: Ravine Crossing
+warp_order: 135
 bgm: zone.alpine
 
 enemy_spawn:

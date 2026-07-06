@@ -7,7 +7,7 @@
  <tileset firstgid="911" source="../tilesets/astralpixels/finestre.tsx"/>
  <tileset firstgid="936" source="../tilesets/ground/terrain-v7.tsx"/>
  <objectgroup id="8" name="portals">
-  <object id="11" name="zone_06_mountain_pass" x="130" y="20"><properties><property name="target_map" value="zone_06_mountain_pass"/><property name="target_position_x" type="int" value="1"/><property name="target_position_y" type="int" value="16"/></properties></object>
+  <object id="11" name="zone_06_mountain_pass_01" x="130" y="20"><properties><property name="target_map" value="zone_06_mountain_pass_01"/><property name="target_position_x" type="int" value="1"/><property name="target_position_y" type="int" value="16"/></properties></object>
   <object id="12" name="palace" x="624" y="192" width="64" height="5"><properties><property name="target_map" value="town_04_frostholm_palace"/><property name="target_position_x" type="int" value="10"/><property name="target_position_y" type="int" value="11"/></properties></object>
   <object id="13" name="item_shop" x="1136" y="192" width="64" height="5"><properties><property name="target_map" value="town_04_frostholm_shop"/><property name="target_position_x" type="int" value="7"/><property name="target_position_y" type="int" value="10"/></properties></object>
   <object id="14" name="inn" x="272" y="800" width="64" height="5"><properties><property name="target_map" value="town_04_frostholm_inn"/><property name="target_position_x" type="int" value="5"/><property name="target_position_y" type="int" value="9"/></properties></object>
