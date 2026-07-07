@@ -14,7 +14,7 @@
   </object>
   <object id="2" name="exit_zone_05_mountain_foothills" x="544" y="-4" width="160" height="12">
    <properties>
-    <property name="target_map" value="zone_05_mountain_foothills"/>
+    <property name="target_map" value="zone_05_mountain_foothills_01"/>
     <property name="target_position_x" type="int" value="8"/>
     <property name="target_position_y" type="int" value="28"/>
    </properties>

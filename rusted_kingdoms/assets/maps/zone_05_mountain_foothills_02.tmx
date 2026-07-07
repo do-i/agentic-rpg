@@ -3,9 +3,9 @@
  <tileset firstgid="1" source="../tilesets/ground/terrain-v7.tsx"/>
  <tileset firstgid="2049" source="../tilesets/stone_tile_stares_16x16.tsx"/>
  <objectgroup id="2" name="portals">
-  <object id="1" name="entry_zone_05_mountain_foothills" x="-4" y="448" width="12" height="128">
+  <object id="1" name="entry_zone_05_mountain_foothills_01" x="-4" y="448" width="12" height="128">
    <properties>
-    <property name="target_map" value="zone_05_mountain_foothills"/>
+    <property name="target_map" value="zone_05_mountain_foothills_01"/>
     <property name="target_position_x" type="int" value="56"/>
     <property name="target_position_y" type="int" value="19"/>
    </properties>

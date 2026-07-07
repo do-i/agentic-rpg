@@ -1,5 +1,5 @@
-# data/dialogue/sign_zone_05_mountain_foothills.yaml
-id: sign_zone_05_mountain_foothills
+# data/dialogue/sign_zone_05_mountain_foothills_01.yaml
+id: sign_zone_05_mountain_foothills_01
 type: board
 entries:
   - lines:
