@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import pygame
 import pytest
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from engine.battle.battle_damage_float_renderer import DamageFloatRenderer
 from engine.battle.battle_state import BattleState, DamageFloat
 from engine.world.world_map_renderer import WorldMapRenderer
 
@@ -82,6 +84,43 @@ class TestDamageFloatCache:
         assert b.cached_surfaces is not None
         assert a.cached_surfaces is not b.cached_surfaces
 
+    def test_cached_glyphs_do_not_keep_fade_alpha(self):
+        renderer, _ = _make_renderer()
+        state = BattleState(party=[], enemies=[])
+        f = DamageFloat("12", 0, 0, (255, 255, 255), alpha=96)
+        state.damage_floats.append(f)
+
+        screen = pygame.Surface((40, 40))
+        renderer._damage_floats.draw(screen, state)
+
+        assert f.cached_surfaces is not None
+        shadow, surf = f.cached_surfaces
+        assert shadow.get_alpha() == 255
+        assert surf.get_alpha() == 255
+
+    def test_half_alpha_glyph_blends_into_opaque_framebuffer(self):
+        class PixelFont:
+            def render(self, _text, _antialias, color):
+                surf = pygame.Surface((3, 3), pygame.SRCALPHA)
+                surf.fill((0, 0, 0, 0))
+                surf.set_at((1, 1), (*color, 255))
+                return surf
+
+        renderer = DamageFloatRenderer(SimpleNamespace(font_dmg=PixelFont()))
+        state = BattleState(party=[], enemies=[])
+        state.damage_floats.append(DamageFloat("7", 5, 5, (200, 40, 20), alpha=128))
+        screen = pygame.Surface((20, 20))
+        bg = (10, 20, 30)
+        screen.fill(bg)
+
+        renderer.draw(screen, state)
+
+        assert screen.get_at((5, 6))[:3] == bg
+        blended = screen.get_at((6, 6))[:3]
+        assert bg[0] < blended[0] < 200
+        assert bg[1] < blended[1] < 40
+        assert 20 < blended[2] < bg[2]
+
 
 class TestFlashCache:
     """Hit-flash cache now lives on the shared HitFlash helper."""
@@ -153,4 +192,3 @@ class TestWorldMapOverlayReuse:
         screen = pygame.Surface((320, 240), pygame.SRCALPHA)
         self._render_world(renderer, screen, fade_alpha=0)
         assert renderer._fade_surf is None
-
