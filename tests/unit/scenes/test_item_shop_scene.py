@@ -11,7 +11,10 @@ import pygame
 import pytest
 
 from engine.audio.sfx_manager import SfxManager
+from engine.common.font_provider import init_fonts
 from engine.common.game_state_holder import GameStateHolder
+from engine.item.item_catalog import ItemCatalog
+from engine.party.member_state import MemberState
 from engine.party.repository_state import RepositoryState
 from engine.shop.item_shop_scene import ItemShopScene, MODE_BUY, MODE_SELL
 
@@ -22,6 +25,12 @@ SHOP_ITEMS = [
     {"id": "elixir", "name": "Elixir", "buy_price": 1000,
      "unlock_flag": "shop_elixir_unlocked"},
 ]
+
+
+@pytest.fixture
+def fonts():
+    pygame.font.init()
+    init_fonts(None, {"small": 12, "medium": 16, "large": 20, "xlarge": 28})
 
 
 def key_event(key: int) -> pygame.event.Event:
@@ -49,6 +58,68 @@ def make_scene(gp: int = 500):
         title="Item Shop",
     )
     return scene, repo, on_close
+
+
+def make_equipment_scene(tmp_path, gp: int = 500):
+    items_dir = tmp_path / "items"
+    items_dir.mkdir()
+    (items_dir / "weapons.yaml").write_text(
+        "- id: iron_sword\n"
+        "  name: Iron Sword\n"
+        "  type: weapon\n"
+        "  slot_category: sword\n"
+        "  stats: {str: 4}\n"
+        "  buy_price: 100\n"
+        "  sell_price: 50\n"
+    )
+    catalog = ItemCatalog(items_dir)
+    repo = RepositoryState(gp=gp, catalog=catalog)
+    hero = _member("hero", "Aric", {"weapon": ["sword"]})
+    mage = _member("mage", "Elise", {"weapon": ["staff"]})
+    guard = _member("guard", "Kael", {"weapon": ["sword"]})
+    scout = _member("scout", "Reiya", {"weapon": ["dagger"]})
+    priest = _member("priest", "Jep", {"weapon": ["staff"]})
+    state = MagicMock()
+    state.repository = repo
+    state.party.members = [hero, mage, guard, scout, priest]
+    state.flags.has_flag.return_value = False
+    holder = MagicMock(spec=GameStateHolder)
+    holder.get.return_value = state
+
+    scene = ItemShopScene(
+        holder=holder,
+        scene_manager=MagicMock(),
+        registry=MagicMock(),
+        on_close=MagicMock(),
+        shop_items=[{"id": "iron_sword", "name": "Iron Sword", "buy_price": 100}],
+        sprite_path=MagicMock(),
+        sfx_manager=SfxManager.null(),
+        item_catalog=catalog,
+        title="Weapon Shop",
+    )
+    return scene, repo, hero, mage
+
+
+def _member(member_id: str, name: str, equipment_slots: dict[str, list[str]]) -> MemberState:
+    member = MemberState(
+        member_id=member_id,
+        name=name,
+        protagonist=member_id == "hero",
+        class_name=member_id,
+        level=1,
+        exp=0,
+        hp=20,
+        hp_max=20,
+        mp=5,
+        mp_max=5,
+        str_=10,
+        dex=8,
+        con=9,
+        int_=6,
+        equipped={},
+    )
+    member.equipment_slots = equipment_slots
+    return member
 
 
 class TestBuyAvailability:
@@ -86,6 +157,57 @@ class TestBuyFlow:
         assert scene._picker.qty == 6
         scene.handle_events([key_event(pygame.K_UP)])       # clamp at 10
         assert scene._picker.qty == 10
+
+
+class TestEquipmentBuyFlow:
+    def test_purchase_prompts_for_party_member_and_equips(self, tmp_path):
+        scene, repo, hero, _ = make_equipment_scene(tmp_path, gp=500)
+        scene.handle_events([key_event(pygame.K_RETURN)])   # qty
+        scene.handle_events([key_event(pygame.K_RETURN)])   # buy, then equip prompt
+
+        assert scene._state == "equip"
+        assert repo.gp == 400
+        assert repo.has_item("iron_sword")
+
+        scene.handle_events([key_event(pygame.K_RETURN)])   # equip Aric
+        assert scene._state == "popup"
+        assert hero.equipped["weapon"] == "iron_sword"
+        assert repo.has_item("iron_sword") is False
+
+    def test_ineligible_party_member_cannot_equip_purchased_item(self, tmp_path):
+        scene, repo, hero, mage = make_equipment_scene(tmp_path, gp=500)
+        scene.handle_events([key_event(pygame.K_RETURN)])
+        scene.handle_events([key_event(pygame.K_RETURN)])
+
+        scene.handle_events([key_event(pygame.K_DOWN)])     # Elise cannot use swords
+        scene.handle_events([key_event(pygame.K_RETURN)])
+        assert scene._state == "equip"
+        assert "weapon" not in mage.equipped
+        assert repo.has_item("iron_sword")
+
+        scene.handle_events([key_event(pygame.K_UP)])
+        scene.handle_events([key_event(pygame.K_RETURN)])
+        assert hero.equipped["weapon"] == "iron_sword"
+
+    def test_escape_skips_optional_equip_prompt(self, tmp_path):
+        scene, repo, hero, _ = make_equipment_scene(tmp_path, gp=500)
+        scene.handle_events([key_event(pygame.K_RETURN)])
+        scene.handle_events([key_event(pygame.K_RETURN)])
+        scene.handle_events([key_event(pygame.K_ESCAPE)])
+
+        assert scene._state == "popup"
+        assert "weapon" not in hero.equipped
+        assert repo.has_item("iron_sword")
+
+    def test_equipment_shop_preview_render_smoke(self, tmp_path, fonts):
+        scene, _, _, _ = make_equipment_scene(tmp_path, gp=500)
+        scene._sprite_loaded = True
+        scene._sprite_surf = None
+
+        scene.render(pygame.Surface((1280, 720)))
+        scene.handle_events([key_event(pygame.K_RETURN)])
+        scene.handle_events([key_event(pygame.K_RETURN)])
+        scene.render(pygame.Surface((1280, 720)))
 
 
 class TestSellFlow:

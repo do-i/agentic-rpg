@@ -14,7 +14,8 @@ from engine.common.menu_sfx_mixin import MenuSfxMixin
 from engine.common.quantity_picker import QuantityPicker
 from engine.common.scroll_list import ScrollListState
 from engine.world.sprite_sheet import SpriteSheet
-from engine.item.item_catalog import ItemCatalog
+from engine.item.item_catalog import EQUIPMENT_TYPES, ItemCatalog, ItemDef
+from engine.equipment.equipment_logic import can_equip, equip
 from engine.shop.item_shop_renderer import ItemShopRenderer, SPRITE_SIZE, VISIBLE_ROWS
 
 QTY_STEP_SMALL = 1
@@ -27,8 +28,8 @@ MODE_SELL = "sell"
 class ItemShopScene(MenuSfxMixin, Scene):
     """
     Item shop overlay. TAB toggles between buy and sell. States within
-    each mode: list → qty → toast (loop). ESC closes from list state,
-    goes back from qty state.
+    each mode: list → qty → equip/toast (loop). ESC closes from list state,
+    goes back from qty state, and skips the optional post-purchase equip prompt.
     """
 
     def __init__(
@@ -53,10 +54,13 @@ class ItemShopScene(MenuSfxMixin, Scene):
         self._item_catalog  = item_catalog
 
         self._mode         = MODE_BUY
-        self._state        = "list"   # list | qty | popup
+        self._state        = "list"   # list | qty | equip | popup
         self._list         = ScrollListState(VISIBLE_ROWS)
         self._picker       = QuantityPicker(QTY_STEP_SMALL, QTY_STEP_LARGE)
         self._popup_text   = ""
+        self._equip_selection = 0
+        self._pending_equip_item_id: str | None = None
+        self._pending_buy_text = ""
         self._sell_tag: str | None = None  # None = show all sellable items
         self._sprite_surf: pygame.Surface | None = None
         self._sprite_loaded = False
@@ -147,6 +151,37 @@ class ItemShopScene(MenuSfxMixin, Scene):
         # buy rows use "buy_price"; sell rows already normalize to "price".
         return item.get("price", item.get("buy_price", 0))
 
+    def _item_def(self, item_id: str) -> ItemDef | None:
+        return self._item_catalog.get(item_id)
+
+    def _selected_item_def(self) -> ItemDef | None:
+        sel = self._selected()
+        if sel is None:
+            return None
+        return self._item_def(sel["id"])
+
+    def _selected_is_equipment(self) -> bool:
+        defn = self._selected_item_def()
+        return defn is not None and defn.type in EQUIPMENT_TYPES
+
+    def _pending_equip_def(self) -> ItemDef | None:
+        if not self._pending_equip_item_id:
+            return None
+        return self._item_def(self._pending_equip_item_id)
+
+    def _members(self):
+        return list(self._holder.get().party.members)
+
+    def _clamp_equip_selection(self) -> None:
+        members = self._members()
+        if not members:
+            self._equip_selection = 0
+            return
+        self._equip_selection = max(0, min(self._equip_selection, len(members) - 1))
+
+    def _has_equippable_member(self, item_def: ItemDef) -> bool:
+        return any(can_equip(member, item_def) for member in self._members())
+
     # ── Events ────────────────────────────────────────────────
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
@@ -156,6 +191,9 @@ class ItemShopScene(MenuSfxMixin, Scene):
             if self._state == "popup":
                 if self.is_popup_dismiss_key(event.key):
                     self._state = "list"
+                return
+            if self._state == "equip":
+                self._handle_equip(event.key)
                 return
             if self._state == "list":
                 self._handle_list(event.key)
@@ -191,6 +229,10 @@ class ItemShopScene(MenuSfxMixin, Scene):
         elif key == pygame.K_DOWN:
             if self._list.move(1, len(avail)):
                 self._play("hover")
+        elif key == pygame.K_LEFT and self._mode == MODE_BUY and self._selected_is_equipment():
+            self._move_equip_selection(-1)
+        elif key == pygame.K_RIGHT and self._mode == MODE_BUY and self._selected_is_equipment():
+            self._move_equip_selection(1)
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             sel = self._selected()
             if sel is None:
@@ -250,6 +292,47 @@ class ItemShopScene(MenuSfxMixin, Scene):
             else:
                 self._do_sell()
 
+    def _move_equip_selection(self, delta: int) -> None:
+        members = self._members()
+        if not members:
+            return
+        self._equip_selection = self._set_sel_hover(
+            self._equip_selection,
+            (self._equip_selection + delta) % len(members),
+        )
+
+    def _handle_equip(self, key: int) -> None:
+        item_def = self._pending_equip_def()
+        members = self._members()
+        if item_def is None or not members:
+            self._state = "popup"
+            return
+
+        self._clamp_equip_selection()
+        if key == pygame.K_ESCAPE:
+            self._play("cancel")
+            self._popup_text = self._pending_buy_text
+            self._pending_equip_item_id = None
+            self._state = "popup"
+        elif key == pygame.K_UP:
+            self._move_equip_selection(-1)
+        elif key == pygame.K_DOWN:
+            self._move_equip_selection(1)
+        elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+            member = members[self._equip_selection]
+            if not can_equip(member, item_def):
+                self._play("cancel")
+                return
+            try:
+                equip(member, self._holder.get().repository, self._item_catalog, item_def.id)
+            except ValueError:
+                self._play("cancel")
+                return
+            self._play("confirm")
+            self._popup_text = f"Equipped {item_def.name} on {member.name}"
+            self._pending_equip_item_id = None
+            self._state = "popup"
+
     # ── Buy ───────────────────────────────────────────────────
 
     def _do_buy(self) -> None:
@@ -272,8 +355,16 @@ class ItemShopScene(MenuSfxMixin, Scene):
                 entry.tags.add(tag)
 
         name = self._display_name(sel)
-        self._popup_text  = f"Bought {self._picker.qty} x {name}"
-        self._state       = "popup"
+        self._pending_buy_text = f"Bought {self._picker.qty} x {name}"
+        item_def = self._item_def(item_id)
+        if item_def is not None and item_def.type in EQUIPMENT_TYPES and self._has_equippable_member(item_def):
+            self._pending_equip_item_id = item_id
+            self._clamp_equip_selection()
+            self._popup_text = f"Equip {name}?"
+            self._state = "equip"
+        else:
+            self._popup_text = self._pending_buy_text
+            self._state = "popup"
 
     # ── Sell ──────────────────────────────────────────────────
 
@@ -319,4 +410,8 @@ class ItemShopScene(MenuSfxMixin, Scene):
             display_name=self._display_name,
             row_price=self._row_price,
             description=self._description,
+            members=self._members(),
+            equip_selection=self._equip_selection,
+            pending_equip_item_id=self._pending_equip_item_id,
+            item_catalog=self._item_catalog,
         )
