@@ -27,7 +27,8 @@ on completion. Delete this file when all items are done.
   raise on unknown effect names (currently silently returns "" and masks YAML typos).
   Add a Protocol for the MemberState/Combatant target contract.
 
-- [ ] **3. Rename private cross-module import `_is_player_facing`**
+- [x] **3. Rename private cross-module import `_is_player_facing`**
+  Done: renamed to `is_player_facing` across world_map_logic/renderer/scene.
   `engine/world/world_map_logic.py` exports `_is_player_facing`, imported by
   `world_map_scene.py:43`. Rename to `is_player_facing`.
 

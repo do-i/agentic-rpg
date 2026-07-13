@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pygame
 
-from engine.world.world_map_logic import _is_player_facing
+from engine.world.world_map_logic import is_player_facing
 
 
 class WorldMapRenderer:
@@ -50,7 +50,7 @@ class WorldMapRenderer:
         def render_npc(npc):
             near = (npc.is_near(player_pos)
                     and npc.is_facing_toward(player_pos)
-                    and _is_player_facing(player, npc.pixel_position)
+                    and is_player_facing(player, npc.pixel_position)
                     and dialogue is None)
             npc.render(
                 screen,
@@ -65,7 +65,7 @@ class WorldMapRenderer:
 
         def render_box(box):
             near = (box.is_near(player_pos)
-                    and _is_player_facing(player, box.pixel_position)
+                    and is_player_facing(player, box.pixel_position)
                     and dialogue is None)
             box.render(
                 screen,
@@ -77,7 +77,7 @@ class WorldMapRenderer:
 
         def render_sign(sign):
             near = (sign.is_near(player_pos)
-                    and _is_player_facing(player, sign.pixel_position)
+                    and is_player_facing(player, sign.pixel_position)
                     and dialogue is None)
             sign.render(screen, camera.offset_x, camera.offset_y, near=near)
 

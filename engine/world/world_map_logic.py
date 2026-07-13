@@ -27,7 +27,7 @@ _DIR_DX = {Direction.LEFT: -1, Direction.RIGHT: 1, Direction.UP: 0, Direction.DO
 _DIR_DY = {Direction.UP: -1, Direction.DOWN: 1, Direction.LEFT: 0, Direction.RIGHT: 0}
 
 
-def _is_player_facing(player: Player, npc_pos) -> bool:
+def is_player_facing(player: Player, npc_pos) -> bool:
     """True if the NPC is roughly in the direction the player faces."""
     pp = player.pixel_position
     dx = npc_pos.x - pp.x
@@ -59,7 +59,7 @@ def try_interact(player: Player, npcs: list[Npc], flags, dialogue_engine: Dialog
     def _sort_key(npc: Npc):
         np = npc.pixel_position
         dist_sq = (np.x - player_pos.x) ** 2 + (np.y - player_pos.y) ** 2
-        facing = 0 if _is_player_facing(player, np) else 1
+        facing = 0 if is_player_facing(player, np) else 1
         return (dist_sq, facing)
 
     candidates.sort(key=_sort_key)
@@ -83,7 +83,7 @@ def try_interact_sign(player: Player, signs: list[Sign], flags, dialogue_engine:
 
     candidates: list[Sign] = []
     for sign in signs:
-        if sign.is_near(player_pos) and _is_player_facing(player, sign.pixel_position):
+        if sign.is_near(player_pos) and is_player_facing(player, sign.pixel_position):
             candidates.append(sign)
 
     if not candidates:
@@ -138,7 +138,7 @@ def try_interact_item_box(
             continue
         if not box.is_near(player_pos):
             continue
-        if not _is_player_facing(player, box.pixel_position):
+        if not is_player_facing(player, box.pixel_position):
             continue
         candidates.append(box)
 

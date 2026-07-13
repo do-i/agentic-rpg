@@ -40,7 +40,7 @@ from engine.world.tile_map_factory import TileMapFactory
 from engine.world.world_map_battle_launcher import launch_battle_from_enemy
 from engine.world.world_map_init import init_world_map, load_party_member_sprite
 from engine.world.world_map_logic import (
-    _is_player_facing,
+    is_player_facing,
     apply_item_box_loot,
     apply_join_party,
     apply_transition,
@@ -523,7 +523,7 @@ class WorldMapScene(Scene):
             other_rects = npc_rects_all[:i] + npc_rects_all[i + 1:]
             notices = (npc.is_near(player_pos)
                        and npc.is_facing_toward(player_pos)
-                       and _is_player_facing(self._player, npc.pixel_position))
+                       and is_player_facing(self._player, npc.pixel_position))
             npc.update(delta, near=notices,
                        collision_map=self._tile_map.collision_map,
                        npc_rects=other_rects)
