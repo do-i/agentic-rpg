@@ -17,7 +17,11 @@ on completion. Delete this file when all items are done.
   `debug.party` / `debug.collision` use forbidden `.get(k, False)` fallbacks — all
   missing keys must raise with file/property/example.
 
-- [ ] **2. `ItemEffectHandler.apply_to_target` — dispatch table + target Protocol**
+- [x] **2. `ItemEffectHandler.apply_to_target` — dispatch table + target Protocol**
+  Done: per-effect methods behind a class-level dispatch dict (class-level because
+  tests build instances via `__new__`); shared `_strip_statuses` helper; unknown
+  effects now raise at YAML load time and in `apply_to_target`; added `EffectTarget`
+  Protocol documenting the MemberState/Combatant contract.
   `engine/item/item_effect_handler.py:142` — if/elif ladder over effect strings with
   `hasattr` duck-typing. Move each effect to a small method behind a dispatch dict;
   raise on unknown effect names (currently silently returns "" and masks YAML typos).

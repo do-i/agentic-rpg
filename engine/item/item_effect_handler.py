@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 from pathlib import Path
-from typing import Callable
+from typing import Protocol
 
 from engine.io.yaml_loader import load_yaml_optional
 from engine.party.member_state import MemberState
@@ -13,7 +13,21 @@ from engine.party.repository_state import RepositoryState
 from engine.item.item_defs_data import FieldItemDef, UseResult
 
 # Re-export so existing imports keep working
-__all__ = ["FieldItemDef", "UseResult", "ItemEffectHandler"]
+__all__ = ["FieldItemDef", "UseResult", "ItemEffectHandler", "EffectTarget"]
+
+
+class EffectTarget(Protocol):
+    """
+    What an item effect needs from its target. Satisfied by MemberState
+    (field use) and Combatant (battle use). Combatants additionally carry
+    `status_effects`; status handling checks for it at runtime because
+    MemberState has no such field.
+    """
+    name: str
+    hp: int
+    hp_max: int
+    mp: int
+    mp_max: int
 
 
 def _status_name(s) -> str:
@@ -57,6 +71,12 @@ class ItemEffectHandler:
                     f"Example:\n  target: single_alive"
                 )
             effect = entry["effect"]
+            if effect not in self._EFFECT_DISPATCH:
+                raise ValueError(
+                    f"item {item_id!r} ({path.name}): unknown effect {effect!r}. "
+                    f"Valid: {' | '.join(self._EFFECT_DISPATCH)}. "
+                    f"Example:\n  effect: restore_hp"
+                )
             if effect in ("restore_hp", "restore_mp") and "amount" not in entry:
                 raise ValueError(
                     f"item {item_id!r} ({path.name}): effect {effect!r} requires "
@@ -139,64 +159,86 @@ class ItemEffectHandler:
         warning_str = "  ".join(warnings) if warnings else ""
         return UseResult(success=True, warning=warning_str, messages=messages)
 
-    def apply_to_target(self, defn: FieldItemDef, member: MemberState) -> str:
+    def apply_to_target(self, defn: FieldItemDef, member: EffectTarget) -> str:
         """
-        Apply effect to one member or combatant. The target can be either a
-        MemberState (field use) or a Combatant (battle use) — both expose the
-        hp/mp/status_effects fields this method reads.
+        Apply effect to one member or combatant.
 
         Returns a warning string if item would have no effect, else "".
         """
-        effect = defn.effect
+        handler = self._EFFECT_DISPATCH.get(defn.effect)
+        if handler is None:
+            raise ValueError(
+                f"item {defn.id!r}: unknown effect {defn.effect!r}. "
+                f"Valid: {' | '.join(self._EFFECT_DISPATCH)}."
+            )
+        return handler(self, defn, member)
 
-        if effect == "restore_hp":
-            if member.hp >= member.hp_max:
-                member.hp = member.hp_max   # apply anyway (warn-and-allow)
-                return f"{member.name} is already at full HP."
-            member.hp = min(member.hp_max, member.hp + defn.amount)
+    # ── Effect implementations (warn-and-allow) ───────────────
 
-        elif effect == "restore_mp":
-            if member.mp >= member.mp_max:
-                member.mp = member.mp_max
-                return f"{member.name} is already at full MP."
-            member.mp = min(member.mp_max, member.mp + defn.amount)
+    @staticmethod
+    def _strip_statuses(member: EffectTarget, cures: list[str]) -> bool:
+        """
+        Remove statuses named in `cures`; returns True if any were removed.
+        No-op for targets without status_effects (MemberState).
+        """
+        if not hasattr(member, "status_effects"):
+            return False
+        removed = False
+        for status in cures:
+            before = len(member.status_effects)
+            member.status_effects = [
+                s for s in member.status_effects
+                if _status_name(s).lower() != status.lower()
+            ]
+            removed = removed or len(member.status_effects) < before
+        return removed
 
-        elif effect == "restore_full":
-            warn_parts = []
-            if member.hp >= member.hp_max:
-                warn_parts.append("HP")
-            if member.mp_max > 0 and member.mp >= member.mp_max:
-                warn_parts.append("MP")
-            member.hp = member.hp_max
-            if member.mp_max > 0:
-                member.mp = member.mp_max
-            for status in defn.cures:
-                if hasattr(member, "status_effects"):
-                    member.status_effects = [
-                        s for s in member.status_effects
-                        if _status_name(s).lower() != status.lower()
-                    ]
-            if warn_parts:
-                return f"{member.name}'s {' and '.join(warn_parts)} already full."
-
-        elif effect == "cure":
-            if not hasattr(member, "status_effects"):
-                return ""
-            cured_any = False
-            for status in defn.cures:
-                before = len(member.status_effects)
-                member.status_effects = [
-                    s for s in member.status_effects
-                    if _status_name(s).lower() != status.lower()
-                ]
-                if len(member.status_effects) < before:
-                    cured_any = True
-            if not cured_any:
-                return f"{member.name} has no matching status effect."
-
-        elif effect == "revive":
-            if member.hp > 0:
-                return f"{member.name} is not KO'd."
-            member.hp = max(1, int(member.hp_max * defn.revive_hp_pct))
-
+    def _restore_hp(self, defn: FieldItemDef, member: EffectTarget) -> str:
+        if member.hp >= member.hp_max:
+            member.hp = member.hp_max   # apply anyway (warn-and-allow)
+            return f"{member.name} is already at full HP."
+        member.hp = min(member.hp_max, member.hp + defn.amount)
         return ""
+
+    def _restore_mp(self, defn: FieldItemDef, member: EffectTarget) -> str:
+        if member.mp >= member.mp_max:
+            member.mp = member.mp_max
+            return f"{member.name} is already at full MP."
+        member.mp = min(member.mp_max, member.mp + defn.amount)
+        return ""
+
+    def _restore_full(self, defn: FieldItemDef, member: EffectTarget) -> str:
+        warn_parts = []
+        if member.hp >= member.hp_max:
+            warn_parts.append("HP")
+        if member.mp_max > 0 and member.mp >= member.mp_max:
+            warn_parts.append("MP")
+        member.hp = member.hp_max
+        if member.mp_max > 0:
+            member.mp = member.mp_max
+        self._strip_statuses(member, defn.cures)
+        if warn_parts:
+            return f"{member.name}'s {' and '.join(warn_parts)} already full."
+        return ""
+
+    def _cure(self, defn: FieldItemDef, member: EffectTarget) -> str:
+        if not hasattr(member, "status_effects"):
+            return ""
+        if not self._strip_statuses(member, defn.cures):
+            return f"{member.name} has no matching status effect."
+        return ""
+
+    def _revive(self, defn: FieldItemDef, member: EffectTarget) -> str:
+        if member.hp > 0:
+            return f"{member.name} is not KO'd."
+        member.hp = max(1, int(member.hp_max * defn.revive_hp_pct))
+        return ""
+
+    # Class-level so instances built via __new__ (tests) still dispatch.
+    _EFFECT_DISPATCH = {
+        "restore_hp":   _restore_hp,
+        "restore_mp":   _restore_mp,
+        "restore_full": _restore_full,
+        "cure":         _cure,
+        "revive":       _revive,
+    }
