@@ -35,6 +35,11 @@ def make_player(tile_x: int = 5, tile_y: int = 5, sprite_sheet=None) -> Player:
         map_width_px=MAP_W,
         map_height_px=MAP_H,
         sprite_sheet=sprite_sheet,
+        smooth_collision=True,
+        tile_size=32,
+        fps=60,
+        player_speed=PLAYER_SPEED,
+        debug_collision=False,
     )
 
 # ── Sprite swap preserves facing ──────────────────────────────

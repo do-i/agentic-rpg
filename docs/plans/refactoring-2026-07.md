@@ -32,7 +32,12 @@ on completion. Delete this file when all items are done.
   `engine/world/world_map_logic.py` exports `_is_player_facing`, imported by
   `world_map_scene.py:43`. Rename to `is_player_facing`.
 
-- [ ] **4. `WorldMapScene.__init__` — 31 params, 18 hardcoded defaults**
+- [x] **4. `WorldMapScene.__init__` — 31 params, 18 hardcoded defaults**
+  Done: 21 required keyword-only params; injects `EngineConfigData`/`BalanceData`
+  instead of 10 exploded scalars. Also fixed `BattleScene`, `Player`, `EnemySprite`
+  (rng default was a lie — `__init__` dereferences it). `Npc` left as-is: its
+  defaults encode documented-optional YAML fields (a data-schema decision, not
+  dead parameters).
   `engine/world/world_map_scene.py:67` — violates no-hardcoded-defaults rule
   (`screen_width=1280`, `text_speed="fast"`, `enemy_spawn_global_interval=30.0`, …).
   Drop all defaults; make `| None = None` collaborators required (AppModule always

@@ -40,6 +40,9 @@ ENEMY_BOSS_COLOR      = (160, 0, 200)   # purple for bosses
 # rows 8-11 (UP/LEFT/DOWN/RIGHT, matching Direction enum order).
 ENEMY_WALK_ROW_OFFSET = 8
 
+# How far (in tiles) a wandering enemy may stray from its spawn tile.
+WANDER_RANGE_TILES = 4
+
 _DIR_DX = {Direction.LEFT: -1, Direction.RIGHT: 1, Direction.UP: 0,  Direction.DOWN: 0}
 _DIR_DY = {Direction.UP:   -1, Direction.DOWN:  1, Direction.LEFT: 0, Direction.RIGHT: 0}
 
@@ -69,12 +72,12 @@ class EnemySprite:
         formation: list[str],         # full enemy id list; first id = visible sprite
         tile_x: int,
         tile_y: int,
-        is_boss: bool = False,
-        chase_range: int = 0,         # tiles; 0 = never chases
-        sprite_sheet: SpriteSheet | None = None,
-        rng: PseudoRandom | None = None,
-        wander_range: int = 4,        # tiles from spawn
-        tile_size: int = 32,
+        *,
+        is_boss: bool,
+        chase_range: int,             # tiles; 0 = never chases
+        sprite_sheet: SpriteSheet | None,
+        rng: PseudoRandom,
+        tile_size: int,
     ) -> None:
         self._tile_size     = tile_size
         self.formation      = formation
@@ -89,7 +92,7 @@ class EnemySprite:
 
         self._rng           = rng
         self._sprite_sheet  = sprite_sheet
-        self._wander_range  = wander_range
+        self._wander_range  = WANDER_RANGE_TILES
         self._move_speed    = tile_size * 3.5   # px/sec
 
         # Animation

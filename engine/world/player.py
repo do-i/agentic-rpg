@@ -15,10 +15,9 @@ from engine.world.character_sprite_constants import (
     COLLISION_OFFSET_Y,
 )
 
-# Fallback defaults — authoritative values live in scenario balance YAML
-# / engine settings; injected via Player.__init__.
-PLAYER_SPEED    = 5
-DEBUG_COLLISION = False
+# Reference speed for tests — the authoritative value lives in scenario
+# balance YAML and is injected via Player.__init__.
+PLAYER_SPEED = 5
 
 PLAYER_WIDTH  = CHAR_SPRITE_SIZE
 PLAYER_HEIGHT = CHAR_SPRITE_SIZE
@@ -83,12 +82,13 @@ class Player:
         start: Position,
         map_width_px: int,
         map_height_px: int,
-        sprite_sheet: SpriteSheet | None = None,
-        smooth_collision: bool = True,
-        tile_size: int = 32,
-        fps: int = 60,
-        player_speed: int = PLAYER_SPEED,
-        debug_collision: bool = DEBUG_COLLISION,
+        *,
+        sprite_sheet: SpriteSheet | None,
+        smooth_collision: bool,
+        tile_size: int,
+        fps: int,
+        player_speed: int,
+        debug_collision: bool,
     ) -> None:
         self._tile_size = tile_size
         self._fps = fps

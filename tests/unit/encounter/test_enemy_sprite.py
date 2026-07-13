@@ -24,6 +24,7 @@ def make_sprite(formation=None, tile_x=5, tile_y=5, is_boss=False,
         tile_y=tile_y,
         is_boss=is_boss,
         chase_range=chase_range,
+        sprite_sheet=None,
         tile_size=tile_size,
         rng=_rng,
     )

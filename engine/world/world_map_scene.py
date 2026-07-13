@@ -27,6 +27,10 @@ from engine.io.save_manager import GameStateManager
 from engine.item.item_effect_handler import ItemEffectHandler
 from engine.item.item_catalog import ItemCatalog
 from engine.item.magic_core_catalog_state import MagicCoreCatalogState
+from engine.record.recorder import RecordPlaybackManager
+from engine.settings.balance_data import BalanceData
+from engine.settings.engine_config_data import EngineConfigData
+from engine.util.pseudo_random import PseudoRandom
 from engine.shop.apothecary_scene import ApothecaryScene
 from engine.shop.item_shop_scene import ItemShopScene
 from engine.shop.magic_core_shop_scene import MagicCoreShopScene
@@ -36,6 +40,7 @@ from engine.world.item_box_loader import ItemBoxLoader
 from engine.world.item_box_scene import ItemBoxScene
 from engine.world.npc_loader import NpcLoader
 from engine.world.player import COLLISION_W, COLLISION_H
+from engine.world.sprite_sheet_cache import SpriteSheetCache
 from engine.world.tile_map_factory import TileMapFactory
 from engine.world.world_map_battle_launcher import launch_battle_from_enemy
 from engine.world.world_map_init import init_world_map, load_party_member_sprite
@@ -60,12 +65,13 @@ from engine.world.world_map_renderer import WorldMapRenderer
 
 class WorldMapScene(Scene):
     """
-    Phase 6 — adds Magic Core Shop overlay support.
+    World-map scene with overlay support (shops, dialogue, inn, item boxes).
     Visible enemy system: enemies spawn on the map and battle triggers on collision.
     """
 
     def __init__(
         self,
+        *,
         holder: GameStateHolder,
         loader: ManifestLoader,
         tile_map_factory: TileMapFactory,
@@ -77,34 +83,24 @@ class WorldMapScene(Scene):
         item_box_loader: ItemBoxLoader,
         item_catalog: ItemCatalog,
         encounter_manager: EncounterManager,
-        encounter_resolver: EncounterResolver | None = None,
-        enemy_spawn_global_interval: float = 30.0,
-        effect_handler: ItemEffectHandler | None = None,
-        mc_catalog: MagicCoreCatalogState | None = None,
-        text_speed: str = "fast",
-        smooth_collision: bool = True,
-        mc_exchange_confirm_large: bool = True,
-        bgm_manager: BgmManager | None = None,
-        *,
+        encounter_resolver: EncounterResolver,
+        effect_handler: ItemEffectHandler,
+        mc_catalog: MagicCoreCatalogState,
+        bgm_manager: BgmManager,
         sfx_manager: SfxManager,
-        screen_width: int = 1280,
-        screen_height: int = 766,
-        tile_size: int = 32,
-        fps: int = 60,
-        player_speed: int = 5,
-        debug_collision: bool = False,
-        balance=None,
-        recorder=None,
-        rng=None,
-        sprite_cache=None,
+        settings: EngineConfigData,
+        balance: BalanceData,
+        recorder: RecordPlaybackManager,
+        rng: PseudoRandom,
+        sprite_cache: SpriteSheetCache,
     ) -> None:
-        self._screen_width = screen_width
-        self._screen_height = screen_height
-        self._tile_size = tile_size
-        self._fps = fps
-        self._smooth_collision = smooth_collision
-        self._player_speed = player_speed
-        self._debug_collision = debug_collision
+        self._screen_width = settings.screen_width
+        self._screen_height = settings.screen_height
+        self._tile_size = settings.tile_size
+        self._fps = settings.fps
+        self._smooth_collision = settings.smooth_collision
+        self._player_speed = balance.player_speed
+        self._debug_collision = settings.debug_collision
         self._balance = balance
         self._holder = holder
         self._loader = loader
@@ -118,11 +114,11 @@ class WorldMapScene(Scene):
         self._item_catalog = item_catalog
         self._encounter_manager = encounter_manager
         self._encounter_resolver = encounter_resolver
-        self._enemy_spawn_global_interval = enemy_spawn_global_interval
+        self._enemy_spawn_global_interval = settings.enemy_spawn_global_interval
         self._effect_handler = effect_handler
-        self._text_speed = text_speed
-        self._mc_exchange_confirm_large = mc_exchange_confirm_large
-        self._mc_catalog = mc_catalog or MagicCoreCatalogState()
+        self._text_speed = settings.text_speed
+        self._mc_exchange_confirm_large = settings.mc_exchange_confirm_large
+        self._mc_catalog = mc_catalog
         self._bgm_manager = bgm_manager
         self._sfx_manager = sfx_manager
         self._recorder = recorder

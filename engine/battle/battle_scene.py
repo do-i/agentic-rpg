@@ -32,6 +32,7 @@ from engine.battle.battle_renderer import BattleRenderer
 from engine.battle.battle_fx import BattleFx
 from engine.item.item_effect_handler import ItemEffectHandler
 from engine.io.save_manager import GameStateManager
+from engine.settings.balance_data import BalanceData
 from engine.audio.bgm_manager import BgmManager
 from engine.audio.sfx_manager import SfxManager
 from engine.util.pseudo_random import PseudoRandom
@@ -53,14 +54,14 @@ class BattleScene(Scene):
         screen_width: int,
         screen_height: int,
         *,
-        scenario_path: str = "",
-        boss_flag: str = "",
-        effect_handler: ItemEffectHandler | None = None,
-        game_state_manager: GameStateManager | None = None,
-        bgm_manager: BgmManager | None = None,
+        scenario_path: str,
+        boss_flag: str,
+        effect_handler: ItemEffectHandler,
+        game_state_manager: GameStateManager,
+        bgm_manager: BgmManager,
         sfx_manager: SfxManager,
-        rng: PseudoRandom | None = None,
-        balance=None,
+        rng: PseudoRandom,
+        balance: BalanceData,
     ) -> None:
         self._state = battle_state
         self._scene_manager = scene_manager
