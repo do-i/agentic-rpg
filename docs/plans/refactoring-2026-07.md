@@ -45,7 +45,11 @@ on completion. Delete this file when all items are done.
   Same treatment for the milder cases if time allows: `npc.py:67`, `battle_scene.py:47`,
   `player.py:81`, `enemy_sprite.py:67`.
 
-- [ ] **5. `ItemShopRenderer.render` — 21 params → view-model dataclass**
+- [x] **5. `ItemShopRenderer.render` — 21 params → view-model dataclass**
+  Done: `ShopViewState` frozen dataclass built per frame by the scene; render body
+  split into `_layout`/`_draw_header`/`_draw_list`/footer/overlay helpers with a
+  `_ModalLayout` geometry object. Verified headlessly: buy list, qty overlay, and
+  sell mode all render correctly (screenshots via verify harness).
   `engine/shop/item_shop_renderer.py:90` — scene marshals 20 args per frame. Introduce
   a frame view-state dataclass built by the scene; split the 131-line body into
   layout / header / list / party-preview / footer / overlay helpers.

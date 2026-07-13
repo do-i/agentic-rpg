@@ -16,7 +16,9 @@ from engine.common.scroll_list import ScrollListState
 from engine.world.sprite_sheet import SpriteSheet
 from engine.item.item_catalog import EQUIPMENT_TYPES, ItemCatalog, ItemDef
 from engine.equipment.equipment_logic import can_equip, equip
-from engine.shop.item_shop_renderer import ItemShopRenderer, SPRITE_SIZE, VISIBLE_ROWS
+from engine.shop.item_shop_renderer import (
+    ItemShopRenderer, ShopViewState, SPRITE_SIZE, VISIBLE_ROWS,
+)
 
 QTY_STEP_SMALL = 1
 QTY_STEP_LARGE = 5
@@ -393,8 +395,7 @@ class ItemShopScene(MenuSfxMixin, Scene):
         if not self._sprite_loaded:
             self._init_sprite()
 
-        self._renderer.render(
-            screen,
+        self._renderer.render(screen, ShopViewState(
             mode=self._mode,
             sell_tag=self._sell_tag,
             state=self._state,
@@ -414,4 +415,4 @@ class ItemShopScene(MenuSfxMixin, Scene):
             equip_selection=self._equip_selection,
             pending_equip_item_id=self._pending_equip_item_id,
             item_catalog=self._item_catalog,
-        )
+        ))

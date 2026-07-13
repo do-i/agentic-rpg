@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Callable
 
 import pygame
@@ -60,6 +61,45 @@ C_UP = (120, 220, 120)
 C_DOWN = (220, 110, 110)
 
 
+@dataclass(frozen=True)
+class ShopViewState:
+    """Per-frame snapshot of everything the item shop renderer draws.
+    Built by ItemShopScene.render; the renderer holds no scene state."""
+    state: str
+    mode: str
+    avail: list[dict]
+    list_sel: int
+    scroll: int
+    qty: int
+    popup_text: str
+    gp: int
+    sprite_surf: pygame.Surface | None
+    selected: dict | None
+    owned_qty: Callable[[str], int]
+    display_name: Callable[[dict], str]
+    row_price: Callable[[dict], int]
+    sell_tag: str | None
+    description: Callable[[dict], str]
+    members: list[MemberState]
+    equip_selection: int
+    pending_equip_item_id: str | None
+    item_catalog: ItemCatalog
+
+
+@dataclass(frozen=True)
+class _ModalLayout:
+    """Resolved modal geometry for one frame."""
+    mx: int
+    my: int
+    modal_w: int
+    mh: int
+    left_w: int
+    party_w: int
+    list_h: int
+    desc_h: int
+    body_h: int
+
+
 def _theme() -> ItemSelectionTheme:
     return ItemSelectionTheme(
         sel_bg=C_SEL_BG, sel_bdr=C_SEL_BDR,
@@ -87,37 +127,64 @@ class ItemShopRenderer:
 
     # ── Main entry point ─────────────────────────────────────
 
-    def render(
-        self,
-        screen: pygame.Surface,
-        state: str,
-        avail: list[dict],
-        list_sel: int,
-        scroll: int,
-        qty: int,
-        popup_text: str,
-        gp: int,
-        sprite_surf: pygame.Surface | None,
-        selected: dict | None,
-        owned_qty: Callable[[str], int],
-        display_name: Callable[[dict], str],
-        *,
-        mode: str = "buy",
-        row_price: Callable[[dict], int] | None = None,
-        sell_tag: str | None = None,
-        description: Callable[[dict], str] | None = None,
-        members: list[MemberState] | None = None,
-        equip_selection: int = 0,
-        pending_equip_item_id: str | None = None,
-        item_catalog: ItemCatalog | None = None,
-    ) -> None:
-
-        selected_def = self._item_def(selected, pending_equip_item_id, item_catalog)
+    def render(self, screen: pygame.Surface, view: ShopViewState) -> None:
+        selected_def = self._item_def(view)
         show_party = (
-            mode == "buy"
+            view.mode == "buy"
             and selected_def is not None
             and selected_def.type in EQUIPMENT_TYPES
         )
+        lay = self._layout(screen, view, show_party)
+
+        draw_dim_overlay(screen)
+        draw_modal_box(screen, lay.mx, lay.my, lay.modal_w, lay.mh, C_BORDER)
+        self._draw_header(screen, view, lay)
+
+        list_rect = pygame.Rect(
+            lay.mx + PAD, lay.my + HEADER_H + PAD, lay.left_w, lay.list_h,
+        )
+        self._draw_list(screen, view, list_rect)
+
+        desc_text = view.description(view.selected) if view.selected else ""
+        self._draw_description(
+            screen, list_rect.x, list_rect.bottom + DESC_GAP,
+            lay.left_w, lay.desc_h, desc_text,
+        )
+
+        if show_party and selected_def is not None:
+            party_rect = pygame.Rect(
+                list_rect.right + COL_GAP, list_rect.y, lay.party_w, lay.body_h,
+            )
+            self._draw_party_preview(
+                screen,
+                party_rect,
+                view.members,
+                selected_def,
+                view.item_catalog,
+                view.equip_selection,
+                active=view.state == "equip",
+                pending=view.state == "equip"
+                and view.pending_equip_item_id == selected_def.id,
+            )
+
+        draw_footer(
+            screen, lay.mx, lay.my + lay.mh - FOOTER_H - 4, lay.modal_w, PAD,
+            self._footer_hint(view, show_party), self._fonts.hint,
+        )
+
+        if view.state == "qty" and view.selected:
+            self._draw_qty_overlay(screen, lay, view)
+        elif view.state == "popup":
+            draw_popup(
+                screen, POPUP_W, view.popup_text, C_TOAST, C_BORDER,
+                self._fonts.toast, self._fonts.hint,
+            )
+
+    # ── Layout ───────────────────────────────────────────────
+
+    def _layout(
+        self, screen: pygame.Surface, view: ShopViewState, show_party: bool,
+    ) -> _ModalLayout:
         modal_w = min(screen.get_width() - 64, EQUIP_MODAL_W) if show_party else MODAL_W
         left_w = min(MODAL_W - PAD * 2, modal_w - PAD * 2)
         party_w = 0
@@ -126,121 +193,83 @@ class ItemShopRenderer:
             party_w = modal_w - PAD * 2 - COL_GAP - left_w
 
         desc_h = self._desc_panel_height()
-        full_rows = min(len(avail), VISIBLE_ROWS) if avail else 1
-        has_overflow = len(avail) > VISIBLE_ROWS
+        full_rows = min(len(view.avail), VISIBLE_ROWS) if view.avail else 1
+        has_overflow = len(view.avail) > VISIBLE_ROWS
         list_h = self._view.list_height(full_rows, has_overflow)
-        left_body_h = list_h + DESC_GAP + desc_h
-        body_h = left_body_h
+        body_h = list_h + DESC_GAP + desc_h
         if show_party:
-            body_h = max(body_h, self._party_panel_min_height(members or []))
+            body_h = max(body_h, self._party_panel_min_height(view.members))
         mh = HEADER_H + PAD + body_h + FOOTER_H + PAD
+        return _ModalLayout(
+            mx=(screen.get_width() - modal_w) // 2,
+            my=(screen.get_height() - mh) // 2,
+            modal_w=modal_w,
+            mh=mh,
+            left_w=left_w,
+            party_w=party_w,
+            list_h=list_h,
+            desc_h=desc_h,
+            body_h=body_h,
+        )
 
-        mx = (screen.get_width()  - modal_w) // 2
-        my = (screen.get_height() - mh) // 2
+    # ── Sections ─────────────────────────────────────────────
 
-        draw_dim_overlay(screen)
-        draw_modal_box(screen, mx, my, modal_w, mh, C_BORDER)
-
-        if mode == "buy":
+    def _draw_header(
+        self, screen: pygame.Surface, view: ShopViewState, lay: _ModalLayout,
+    ) -> None:
+        if view.mode == "buy":
             title_text = f"{self._title} — Buy"
         else:
-            tag_label = f"[{sell_tag}]" if sell_tag else "[All]"
+            tag_label = f"[{view.sell_tag}]" if view.sell_tag else "[All]"
             title_text = f"{self._title} — Sell {tag_label}"
         draw_shop_header(
-            screen, mx, my, modal_w,
+            screen, lay.mx, lay.my, lay.modal_w,
             title_text=title_text,
             title_color=C_HEADER,
-            gp=gp,
+            gp=view.gp,
             gp_color=C_GP,
             font_title=self._fonts.title,
             font_row=self._fonts.row,
             pad=PAD,
-            sprite_surf=sprite_surf,
+            sprite_surf=view.sprite_surf,
             sprite_size=SPRITE_SIZE,
         )
 
-        list_y = my + HEADER_H + PAD
-        list_rect = pygame.Rect(mx + PAD, list_y, left_w, list_h)
-
-        if not avail:
+    def _draw_list(
+        self, screen: pygame.Surface, view: ShopViewState, list_rect: pygame.Rect,
+    ) -> None:
+        if not view.avail:
             empty_msg = (
-                "No items available." if mode == "buy"
+                "No items available." if view.mode == "buy"
                 else "Nothing to sell."
             )
             empty = self._fonts.hint.render(empty_msg, True, C_DIM)
-            screen.blit(empty, (list_rect.x, list_y + 16))
-        else:
-            rows = [
-                self._build_row(item, gp, owned_qty, display_name, mode, row_price)
-                for item in avail
-            ]
-            self._view.render(screen, list_rect, rows, list_sel, scroll, active=(state == "list"))
-
-        desc_text = description(selected) if (description and selected) else ""
-        self._draw_description(
-            screen, list_rect.x, list_y + list_h + DESC_GAP,
-            left_w, desc_h, desc_text,
+            screen.blit(empty, (list_rect.x, list_rect.y + 16))
+            return
+        rows = [self._build_row(item, view) for item in view.avail]
+        self._view.render(
+            screen, list_rect, rows, view.list_sel, view.scroll,
+            active=(view.state == "list"),
         )
 
-        if show_party and selected_def is not None:
-            party_rect = pygame.Rect(
-                list_rect.right + COL_GAP,
-                list_y,
-                party_w,
-                body_h,
-            )
-            self._draw_party_preview(
-                screen,
-                party_rect,
-                members or [],
-                selected_def,
-                item_catalog,
-                equip_selection,
-                active=state == "equip",
-                pending=state == "equip" and pending_equip_item_id == selected_def.id,
-            )
-
-        footer_hint = (
-            self._footer_hint(mode, state, show_party)
-            if mode == "buy"
-            else "TAB buy · T tag · ENTER sell · ESC close"
-        )
-        draw_footer(
-            screen, mx, my + mh - FOOTER_H - 4, modal_w, PAD,
-            footer_hint, self._fonts.hint,
-        )
-
-        if state == "qty" and selected:
-            self._draw_qty_overlay(
-                screen, mx, my, modal_w, mh, selected, qty, gp, display_name, mode, row_price,
-            )
-        elif state == "popup":
-            draw_popup(
-                screen, POPUP_W, popup_text, C_TOAST, C_BORDER,
-                self._fonts.toast, self._fonts.hint,
-            )
-
-    def _footer_hint(self, mode: str, state: str, show_party: bool) -> str:
-        if state == "equip":
+    def _footer_hint(self, view: ShopViewState, show_party: bool) -> str:
+        if view.mode != "buy":
+            return "TAB buy · T tag · ENTER sell · ESC close"
+        if view.state == "equip":
             return "UP/DOWN party · ENTER equip · ESC skip"
-        if state == "qty":
+        if view.state == "qty":
             return "LEFT/RIGHT qty ±1 · UP/DOWN qty ±5 · ENTER confirm · ESC back"
-        if mode == "buy" and show_party:
+        if show_party:
             return "UP/DOWN item · LEFT/RIGHT party · ENTER buy · TAB sell · ESC close"
         return "TAB sell · ENTER buy · ESC close"
 
-    def _item_def(
-        self,
-        selected: dict | None,
-        pending_equip_item_id: str | None,
-        item_catalog: ItemCatalog | None,
-    ) -> ItemDef | None:
-        if item_catalog is None:
-            return None
-        item_id = pending_equip_item_id or (selected["id"] if selected else None)
+    def _item_def(self, view: ShopViewState) -> ItemDef | None:
+        item_id = view.pending_equip_item_id or (
+            view.selected["id"] if view.selected else None
+        )
         if not item_id:
             return None
-        return item_catalog.get(item_id)
+        return view.item_catalog.get(item_id)
 
     def _party_panel_min_height(self, members: list[MemberState]) -> int:
         if not members:
@@ -254,30 +283,19 @@ class ItemShopRenderer:
 
     # ── Row model ────────────────────────────────────────────
 
-    def _build_row(
-        self,
-        item: dict,
-        gp: int,
-        owned_qty: Callable[[str], int],
-        display_name: Callable[[dict], str],
-        mode: str,
-        row_price: Callable[[dict], int] | None,
-    ) -> ItemRow:
-        price = row_price(item) if row_price else item["buy_price"]
-        if mode == "buy":
-            affordable = price <= gp
-            owned = owned_qty(item["id"])
+    def _build_row(self, item: dict, view: ShopViewState) -> ItemRow:
+        price = view.row_price(item)
+        if view.mode == "buy":
             return ItemRow(
-                title=display_name(item),
-                subtitle=f"owned: {owned}",
+                title=view.display_name(item),
+                subtitle=f"owned: {view.owned_qty(item['id'])}",
                 right_text=f"{price:,} GP",
-                locked=not affordable,
+                locked=price > view.gp,
             )
         # sell mode: row already carries owned qty
-        owned = item.get("owned", 0)
         return ItemRow(
-            title=display_name(item),
-            subtitle=f"owned: {owned}",
+            title=view.display_name(item),
+            subtitle=f"owned: {item.get('owned', 0)}",
             right_text=f"{price:,} GP",
             locked=False,
         )
@@ -303,35 +321,25 @@ class ItemShopRenderer:
     # ── Qty overlay ──────────────────────────────────────────
 
     def _draw_qty_overlay(
-        self,
-        screen: pygame.Surface,
-        mx: int,
-        my: int,
-        modal_w: int,
-        mh: int,
-        sel: dict,
-        qty: int,
-        gp: int,
-        display_name: Callable[[dict], str],
-        mode: str,
-        row_price: Callable[[dict], int] | None,
+        self, screen: pygame.Surface, lay: _ModalLayout, view: ShopViewState,
     ) -> None:
-        price = row_price(sel) if row_price else sel["buy_price"]
-        total = qty * price
+        sel = view.selected
+        price = view.row_price(sel)
+        total = view.qty * price
 
-        ow, oh = min(MODAL_W - 40, modal_w - 40), 120
-        ox = mx + 20
-        oy = my + mh // 2 - oh // 2
+        ow, oh = min(MODAL_W - 40, lay.modal_w - 40), 120
+        ox = lay.mx + 20
+        oy = lay.my + lay.mh // 2 - oh // 2
 
         render_panel(screen, pygame.Rect(ox, oy, ow, oh), active=True)
 
-        name = display_name(sel)
+        name = view.display_name(sel)
         lbl  = self._fonts.row.render(name, True, C_HEADER)
         screen.blit(lbl, (ox + 20, oy + 12))
 
         # qty selector — arrows use non-bold font for glyph compatibility
         left_s  = self._fonts.arrow.render(" ", True, C_TEXT)
-        num_s   = self._fonts.qty.render(f"  {qty}  ", True, C_TEXT)
+        num_s   = self._fonts.qty.render(f"  {view.qty}  ", True, C_TEXT)
         right_s = self._fonts.arrow.render(" ", True, C_TEXT)
         total_w = left_s.get_width() + num_s.get_width() + right_s.get_width()
         cx = ox + ow // 2 - total_w // 2
@@ -341,11 +349,11 @@ class ItemShopRenderer:
         screen.blit(right_s, (cx + left_s.get_width() + num_s.get_width(), cy))
 
         # total price
-        if mode == "buy":
-            col = C_WARN if total > gp else C_GP
+        if view.mode == "buy":
+            col = C_WARN if total > view.gp else C_GP
             total_s = self._fonts.row.render(f"Total: {total:,} GP", True, col)
             screen.blit(total_s, (ox + 20, oy + 76))
-            if total > gp:
+            if total > view.gp:
                 warn = self._fonts.hint.render("Not enough GP", True, C_WARN)
                 screen.blit(warn, (ox + ow - warn.get_width() - 20, oy + 80))
         else:
