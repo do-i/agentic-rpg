@@ -6,7 +6,10 @@ on completion. Delete this file when all items are done.
 
 ## Items
 
-- [ ] **1. `EngineConfigData.load` — declarative extraction/validation**
+- [x] **1. `EngineConfigData.load` — declarative extraction/validation**
+  Done: spec-table extraction; missing font sizes now raise like other keys (new test).
+  Note: the `debug` block stays optional-with-off-default — codified by
+  `test_debug_block_is_optional`, so kept as a deliberate exception.
   `engine/settings/engine_config_data.py:41` — 82 lines / 28 branches of copy-paste
   (`.get` → if-None → append-missing, ×13). Replace with a spec table
   (dotted path, type) driving both extraction and validation. Make error handling

@@ -94,6 +94,12 @@ class TestEngineConfigData:
         with pytest.raises(KeyError, match="enemy_spawn.global_interval"):
             EngineConfigData.load(p)
 
+    def test_raises_when_font_size_missing(self, tmp_path):
+        fonts = {"sizes": {"small": 12, "medium": 16, "large": 20}}
+        p = write_settings(tmp_path, {**VALID, "fonts": fonts})
+        with pytest.raises(KeyError, match="fonts.sizes.xlarge"):
+            EngineConfigData.load(p)
+
     def test_debug_block_is_optional(self, tmp_path):
         p = write_settings(tmp_path, VALID)
         s = EngineConfigData.load(p)
