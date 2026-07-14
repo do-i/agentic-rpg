@@ -78,6 +78,16 @@ class ItemScene(WizardScene):
 
         self._renderer = ItemRenderer(effect_handler, mc_catalog)
 
+        # Per-key modal dispatch. M_NEWTAG is absent on purpose: it consumes
+        # raw TEXTINPUT events and is routed before this table is consulted.
+        self._modal_key_handlers = {
+            M_ACTION:  self._handle_action_key,
+            M_DISCARD: self._handle_discard_key,
+            M_AOE:     self._handle_aoe_key,
+            M_TAGS:    self._handle_tags_key,
+            M_MANAGE:  self._handle_manage_key,
+        }
+
         self._register_page(WizardPage(
             name=PAGE_POUCH,
             count_fn=lambda: len(TABS),
@@ -176,16 +186,12 @@ class ItemScene(WizardScene):
         for event in events:
             if event.type != pygame.KEYDOWN:
                 continue
-            if self._modal == M_ACTION:
-                self._handle_action_key(event.key)
-            elif self._modal == M_DISCARD:
-                self._handle_discard_key(event.key)
-            elif self._modal == M_AOE:
-                self._handle_aoe_key(event.key)
-            elif self._modal == M_TAGS:
-                self._handle_tags_key(event.key)
-            elif self._modal == M_MANAGE:
-                self._handle_manage_key(event.key)
+            # Re-resolve per event: a handler may switch or close the modal
+            # mid-batch (e.g. Action -> Discard), and a modal without a key
+            # handler (closed, or M_NEWTAG) swallows the rest of the batch.
+            handler = self._modal_key_handlers.get(self._modal)
+            if handler is not None:
+                handler(event.key)
 
     # ── Action modal ──────────────────────────────────────────
 

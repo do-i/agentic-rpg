@@ -5,13 +5,6 @@ validated and committed.
 
 ## P2 - Refactoring candidates
 
-- [ ] Clean up `ItemScene` modal handling.
-  - Keep behavior unchanged.
-  - Replace the long modal dispatch chain with a small explicit modal-state
-    dispatcher.
-  - Preserve current action, discard, AOE confirm, tag editing, manage, and
-    target overlay flows.
-
 - [ ] Refactor `WorldMapScene` only when touching behavior.
   - Do not split it solely because it is large.
   - If changing overlays, map init, or battle launch, extract that behavior into
