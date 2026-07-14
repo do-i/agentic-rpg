@@ -44,13 +44,6 @@ validated and committed.
   - Avoid content changes in the move commit.
   - Follow with separate commits for any missing coverage.
 
-- [ ] Add missing zone 7-10 grading presets to `tools/make_battle_sprites.py`.
-  - `BACKGROUND_PRESETS` only maps `zone1..6` (plus zone4 variants);
-    `zone7-bg-1280x468` .. `zone10-bg-1280x468` have no entry, so
-    `preset_for_background` raises for any enemy tagged with those backgrounds.
-  - Add the 4 missing entries and regenerate affected battle sprites with the
-    existing tool.
-
 - [ ] Fix package data configuration.
   - Remove or restructure `pyproject.toml` package-data that points at
     `../rusted_kingdoms/**`.

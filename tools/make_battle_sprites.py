@@ -86,6 +86,23 @@ PRESETS: dict[str, GradePreset] = {
         occl_strength=0.28, saturation=0.98,
         shadow_rgb=(24, 30, 44), shadow_alpha=100,
     ),
+    # dark violet murk, faint cold glow (zone 8 corrupted forest, zone 10
+    # stronghold approach)
+    "gloom": GradePreset(
+        light_top=0.94, light_falloff=0.08,
+        tint_top=(0.97, 0.96, 1.03), tint_bottom=(0.94, 0.95, 1.05),
+        rim_color=(200, 185, 225), rim_strength=0.26,
+        occl_strength=0.32, saturation=0.92,
+        shadow_rgb=(16, 14, 22), shadow_alpha=115,
+    ),
+    # hot lava light from below (zone 9 volcanic region)
+    "ember": GradePreset(
+        light_top=1.02, light_falloff=0.16,
+        tint_top=(1.05, 0.96, 0.90), tint_bottom=(1.08, 0.94, 0.84),
+        rim_color=(255, 160, 90), rim_strength=0.40,
+        occl_strength=0.30, saturation=1.10,
+        shadow_rgb=(40, 12, 8), shadow_alpha=110,
+    ),
     # zones without a painted background yet (default dark floor)
     "neutral": GradePreset(
         light_top=1.04, light_falloff=0.12,
@@ -106,6 +123,10 @@ BACKGROUND_PRESETS: dict[str, str] = {
     "zone4-sanctum-bg-1280x468": "mystic",
     "zone5-bg-1280x468": "frost",
     "zone6-bg-1280x468": "frost",
+    "zone7-bg-1280x468": "mystic",
+    "zone8-bg-1280x468": "gloom",
+    "zone9-bg-1280x468": "ember",
+    "zone10-bg-1280x468": "gloom",
     "none": "neutral",
 }
 
