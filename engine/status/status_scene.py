@@ -3,8 +3,9 @@
 # Field Status screen: party → member detail → action. Built on
 # engine.common.wizard_scene so navigation, hover SFX, and the scene-close
 # path are shared with EquipScene / SpellScene. Drawing lives in
-# status_renderer.StatusRenderer; this scene owns input, page flow, spell
-# casting, and the warp/target overlays.
+# status_renderer.StatusRenderer; the spell casting flow (MP checks,
+# warp/target overlays, popup) comes from FieldCastMixin, shared with
+# SpellScene. This scene owns input and page flow.
 #
 # Pages:
 #   MEMBER   (col 1) — party roster cards; col 2 shows the selected portrait,
@@ -19,20 +20,14 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pygame
 
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
-from engine.common.target_select_overlay_renderer import TargetSelectOverlay
-from engine.common.warp_select_overlay import WarpSelectOverlay
 from engine.common.wizard_scene import WizardPage, WizardScene
 from engine.io.save_manager import GameStateManager
-from engine.party.member_state import MemberState
-from engine.spell.spell_logic import learned_spells, is_field_castable
-from engine.status.status_logic import apply_spell, apply_spell_all, valid_targets
+from engine.spell.field_cast_mixin import FieldCastMixin
 from engine.status.status_renderer import (
     CAT_POSITION,
     CAT_SPELLS,
@@ -43,11 +38,9 @@ from engine.status.status_renderer import (
     ROWS,
     StatusRenderer,
 )
-from engine.world.warp_logic import warp_destinations, WarpDestination
-from engine.world.sprite_sheet import Direction
 
 
-class StatusScene(WizardScene):
+class StatusScene(FieldCastMixin, WizardScene):
     """Field party inspector. Pages: MEMBER → CATEGORY → DETAIL."""
 
     def __init__(
@@ -62,16 +55,8 @@ class StatusScene(WizardScene):
         game_state_manager: GameStateManager,
     ) -> None:
         super().__init__(scene_manager, registry, return_scene_name, sfx_manager)
-        self._holder = holder
-        self._scenario_path = scenario_path
-        self._game_state_manager = game_state_manager
-
-        self._spells: list[dict] = []
+        self._init_field_cast(holder, scenario_path, game_state_manager)
         self._detail_mode: str = CAT_SPELLS
-        self._target_overlay: TargetSelectOverlay | None = None
-        self._warp_overlay: WarpSelectOverlay | None = None
-        self._popup_text: str = ""
-        self._popup_active: bool = False
         self._renderer = StatusRenderer()
 
         self._register_page(WizardPage(
@@ -95,28 +80,6 @@ class StatusScene(WizardScene):
 
     # ── Helpers ───────────────────────────────────────────────
 
-    def _members(self) -> list[MemberState]:
-        return list(self._holder.get().party.members)
-
-    def _current_member(self) -> MemberState | None:
-        members = self._members()
-        if not members:
-            return None
-        sel = self._page(PAGE_MEMBER).selection
-        return members[min(sel, len(members) - 1)]
-
-    def _classes_dir(self) -> Path:
-        return Path(self._scenario_path) / "data" / "classes"
-
-    def _flags_set(self) -> set[str]:
-        return set(self._holder.get().flags.to_list())
-
-    def _load_spells(self) -> list[dict]:
-        member = self._current_member()
-        if member is None:
-            return []
-        return learned_spells(member, self._classes_dir(), self._flags_set())
-
     def _selected_category(self) -> str:
         return CATEGORIES[self._page(PAGE_CATEGORY).selection][0]
 
@@ -133,28 +96,6 @@ class StatusScene(WizardScene):
             return len(self._spells)
         return len(ROWS)
 
-    # ── Modal-overlay routing ────────────────────────────────
-
-    def _is_input_blocked(self) -> bool:
-        return (
-            self._target_overlay is not None
-            or self._warp_overlay is not None
-            or self._popup_active
-        )
-
-    def _handle_blocked_input(self, events: list[pygame.event.Event]) -> None:
-        if self._warp_overlay:
-            self._warp_overlay.handle_events(events)
-            return
-        if self._target_overlay:
-            self._target_overlay.handle_events(events)
-            return
-        for event in events:
-            if event.type == pygame.KEYDOWN and event.key in (
-                pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER,
-            ):
-                self._popup_active = False
-
     # ── Page confirm callbacks ───────────────────────────────
 
     def _confirm_member(self) -> str | None:
@@ -169,8 +110,7 @@ class StatusScene(WizardScene):
             self._spells = self._load_spells()
             if not self._spells:
                 member = self._current_member()
-                self._popup_text = f"{member.name} knows no spells."
-                self._popup_active = True
+                self._show_popup(f"{member.name} knows no spells.")
                 self._play("cancel")
                 return None
             self._detail_mode = CAT_SPELLS
@@ -201,78 +141,7 @@ class StatusScene(WizardScene):
         if member is None or not self._spells:
             return None
         spell = self._spells[self._page(PAGE_DETAIL).selection]
-        if not is_field_castable(spell):
-            self._play("cancel")
-            return None
-        if member.mp < spell["mp_cost"]:
-            self._popup_text = f"{member.name} has not enough MP."
-            self._popup_active = True
-            self._play("cancel")
-            return None
-        if spell.get("warp"):
-            return self._open_warp(spell, member)
-        target_type = spell.get("target")
-        if target_type in ("all_allies", "party"):
-            self._play("confirm")
-            msg = apply_spell_all(spell, member, self._holder.get().party.members)
-            self._popup_text = msg
-            self._popup_active = True
-            return None
-        targets = valid_targets(spell, self._holder.get().party.members)
-        if not targets:
-            self._popup_text = "No valid targets."
-            self._popup_active = True
-            self._play("cancel")
-            return None
-        self._play("confirm")
-        pending = spell
-        self._target_overlay = TargetSelectOverlay(
-            targets=targets,
-            item_label=spell["name"],
-            on_confirm=lambda t, s=pending, c=member: self._on_target_confirm(s, c, t),
-            on_cancel=self._on_target_cancel,
-            sfx_manager=self._sfx_manager,
-        )
-        return None
-
-    # ── Teleport / target callbacks ──────────────────────────
-
-    def _open_warp(self, spell: dict, caster: MemberState) -> str | None:
-        state = self._holder.get()
-        destinations = warp_destinations(state.map, Path(self._scenario_path))
-        if not destinations:
-            self._popup_text = "Nowhere to teleport to yet."
-            self._popup_active = True
-            self._play("cancel")
-            return None
-        self._play("confirm")
-        self._warp_overlay = WarpSelectOverlay(
-            destinations=destinations,
-            on_confirm=lambda dest, s=spell, c=caster: self._on_warp_confirm(s, c, dest),
-            on_cancel=self._on_warp_cancel,
-            sfx_manager=self._sfx_manager,
-        )
-        return None
-
-    def _on_warp_confirm(self, spell: dict, caster: MemberState, dest: WarpDestination) -> None:
-        caster.mp = max(0, caster.mp - spell["mp_cost"])
-        state = self._holder.get()
-        state.map.move_to(dest.map_id, dest.position, Direction.DOWN)
-        self._game_state_manager.save(state, slot_index=0)
-        self._warp_overlay = None
-        self._scene_manager.switch(self._registry.get(self._return_scene_name))
-
-    def _on_warp_cancel(self) -> None:
-        self._warp_overlay = None
-
-    def _on_target_confirm(self, spell: dict, caster: MemberState, target: MemberState) -> None:
-        msg = apply_spell(spell, caster, target)
-        self._target_overlay = None
-        self._popup_text = msg
-        self._popup_active = True
-
-    def _on_target_cancel(self) -> None:
-        self._target_overlay = None
+        return self._cast_spell(spell, member)
 
     # ── Render ────────────────────────────────────────────────
 
@@ -289,9 +158,4 @@ class StatusScene(WizardScene):
             spells=self._spells,
             display_name=self._display_name,
         )
-        if self._target_overlay:
-            self._target_overlay.render(screen)
-        if self._warp_overlay:
-            self._warp_overlay.render(screen)
-        if self._popup_active:
-            self._renderer.render_popup(screen, self._popup_text)
+        self._render_field_cast_overlays(screen)

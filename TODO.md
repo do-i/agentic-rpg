@@ -5,13 +5,6 @@ validated and committed.
 
 ## P2 - Refactoring candidates
 
-- [ ] Extract shared field spell casting flow.
-  - `SpellScene` and `StatusScene` duplicate field-cast checks, MP handling,
-    target overlay, warp overlay, popup behavior, and save/switch behavior after
-    teleport.
-  - Extract shared helper logic without changing UI behavior.
-  - Validate spell scene and status scene tests.
-
 - [ ] Split `EquipScene` rendering from scene flow.
   - Move layout and drawing into a sibling renderer.
   - Keep `EquipScene` responsible for wizard state, input, and equip/unequip
