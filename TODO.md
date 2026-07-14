@@ -5,12 +5,6 @@ validated and committed.
 
 ## P2 - Refactoring candidates
 
-- [ ] Split `EquipScene` rendering from scene flow.
-  - Move layout and drawing into a sibling renderer.
-  - Keep `EquipScene` responsible for wizard state, input, and equip/unequip
-    operations.
-  - Prefer the existing `ShopViewState` / renderer pattern where practical.
-
 - [ ] Clean up `ItemScene` modal handling.
   - Keep behavior unchanged.
   - Replace the long modal dispatch chain with a small explicit modal-state
