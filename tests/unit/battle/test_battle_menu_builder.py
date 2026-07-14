@@ -1,4 +1,4 @@
-# tests/unit/core/battle/test_battle_menu_builder.py
+# tests/unit/battle/test_battle_menu_builder.py
 
 from __future__ import annotations
 

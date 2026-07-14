@@ -1,4 +1,4 @@
-# tests/unit/core/state/test_item_entry_state.py
+# tests/unit/item/test_item_entry_state.py
 
 from __future__ import annotations
 

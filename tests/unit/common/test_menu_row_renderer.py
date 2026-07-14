@@ -1,4 +1,4 @@
-# tests/unit/core/state/test_menu_row_renderer.py
+# tests/unit/common/test_menu_row_renderer.py
 #
 # Smoke tests for the shared MenuRowRenderer helper. The renderer is pure
 # pygame drawing so we assert pixel sampling at a few known offsets.

@@ -1,4 +1,4 @@
-# tests/unit/core/state/test_repository_state.py
+# tests/unit/party/test_repository_state.py
 
 from __future__ import annotations
 

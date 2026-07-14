@@ -1,4 +1,4 @@
-# tests/unit/core/state/test_menu_popup.py
+# tests/unit/common/test_menu_popup.py
 #
 # Smoke tests for the shared MenuPopup helper. The popup now uses the shared
 # themed modal, so we assert structural behaviour (a panel is drawn and the

@@ -1,4 +1,4 @@
-# tests/unit/core/models/test_save_slot.py
+# tests/unit/common/test_save_slot.py
 
 from __future__ import annotations
 

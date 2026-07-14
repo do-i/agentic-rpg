@@ -1,4 +1,4 @@
-# tests/unit/core/scenes/test_world_map_logic.py
+# tests/unit/world/test_world_map_logic.py
 
 from __future__ import annotations
 

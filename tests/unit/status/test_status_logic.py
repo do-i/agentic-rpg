@@ -1,4 +1,4 @@
-# tests/unit/core/scenes/test_status_logic.py
+# tests/unit/status/test_status_logic.py
 
 from __future__ import annotations
 

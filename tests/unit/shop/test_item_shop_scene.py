@@ -1,4 +1,4 @@
-# tests/unit/scenes/test_item_shop_scene.py
+# tests/unit/shop/test_item_shop_scene.py
 #
 # ItemShopScene logic: buy/sell flows, quantity caps, mode toggle.
 # Rendering is exercised elsewhere; the renderer is mocked out.

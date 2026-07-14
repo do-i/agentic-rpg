@@ -1,4 +1,4 @@
-# tests/unit/core/state/test_yaml_loader.py
+# tests/unit/io/test_yaml_loader.py
 
 from __future__ import annotations
 

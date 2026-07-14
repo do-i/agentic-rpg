@@ -1,4 +1,4 @@
-# tests/unit/scenes/test_status_scene.py
+# tests/unit/status/test_status_scene.py
 
 from __future__ import annotations
 

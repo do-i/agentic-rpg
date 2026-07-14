@@ -1,4 +1,4 @@
-# tests/unit/core/item/test_item_catalog.py
+# tests/unit/item/test_item_catalog.py
 
 from __future__ import annotations
 

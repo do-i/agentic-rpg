@@ -1,4 +1,4 @@
-# tests/unit/core/state/test_bgm_manager.py
+# tests/unit/audio/test_bgm_manager.py
 #
 # Smoke tests for BgmManager: index parsing, key resolution, and the
 # enabled gate. Actual pygame.mixer.music calls are patched out.

@@ -1,4 +1,4 @@
-# tests/unit/core/state/test_sfx_manager.py
+# tests/unit/audio/test_sfx_manager.py
 #
 # Smoke tests for SfxManager: index parsing, play() gate, and the
 # play_battle_action dispatcher. Real pygame.mixer.Sound is patched out.

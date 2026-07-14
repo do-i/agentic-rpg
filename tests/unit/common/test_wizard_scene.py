@@ -1,4 +1,4 @@
-# tests/unit/core/state/test_wizard_scene.py
+# tests/unit/common/test_wizard_scene.py
 
 from __future__ import annotations
 

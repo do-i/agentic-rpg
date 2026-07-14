@@ -1,4 +1,4 @@
-# tests/unit/core/test_scene_manager.py
+# tests/unit/common/scene/test_scene_manager.py
 
 from __future__ import annotations
 

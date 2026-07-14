@@ -1,4 +1,4 @@
-# tests/unit/core/equipment/test_starting_equipment.py
+# tests/unit/equipment/test_starting_equipment.py
 #
 # Scenario integration: every character's starting `equipped:` block must
 # reference items in the real ItemCatalog AND be equippable by that class.

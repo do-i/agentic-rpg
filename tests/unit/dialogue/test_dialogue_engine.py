@@ -1,4 +1,4 @@
-# tests/unit/core/dialogue/test_dialogue_engine.py
+# tests/unit/dialogue/test_dialogue_engine.py
 
 from __future__ import annotations
 

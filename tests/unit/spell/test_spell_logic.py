@@ -1,4 +1,4 @@
-# tests/unit/core/spell/test_spell_logic.py
+# tests/unit/spell/test_spell_logic.py
 
 from __future__ import annotations
 

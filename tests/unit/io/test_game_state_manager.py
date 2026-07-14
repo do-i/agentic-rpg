@@ -1,4 +1,4 @@
-# tests/unit/core/state/test_game_state_manager.py
+# tests/unit/io/test_game_state_manager.py
 
 from __future__ import annotations
 

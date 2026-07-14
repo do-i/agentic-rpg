@@ -1,4 +1,4 @@
-# tests/unit/core/state/test_playtime.py
+# tests/unit/util/test_playtime.py
 
 from __future__ import annotations
 

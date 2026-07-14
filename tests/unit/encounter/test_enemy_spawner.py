@@ -1,4 +1,4 @@
-# tests/unit/core/encounter/test_enemy_spawner.py
+# tests/unit/encounter/test_enemy_spawner.py
 
 from __future__ import annotations
 

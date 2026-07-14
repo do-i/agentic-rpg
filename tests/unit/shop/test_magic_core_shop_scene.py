@@ -1,4 +1,4 @@
-# tests/unit/core/scenes/test_magic_core_shop_scene.py
+# tests/unit/shop/test_magic_core_shop_scene.py
 
 from __future__ import annotations
 

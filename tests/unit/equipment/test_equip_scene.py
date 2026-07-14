@@ -1,4 +1,4 @@
-# tests/unit/core/equipment/test_equip_scene.py
+# tests/unit/equipment/test_equip_scene.py
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-# tests/unit/state/test_map_state.py
+# tests/unit/common/test_map_state.py
 
 from __future__ import annotations
 

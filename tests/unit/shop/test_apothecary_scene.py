@@ -1,4 +1,4 @@
-# tests/unit/core/scenes/test_apothecary_scene.py
+# tests/unit/shop/test_apothecary_scene.py
 
 from __future__ import annotations
 

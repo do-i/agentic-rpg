@@ -1,4 +1,4 @@
-# tests/unit/common/test_ui_theme.py
+# tests/unit/common/ui/test_ui_theme.py
 #
 # Theme assets come from the scenario manifest (ui.menu_backdrop) — the
 # engine holds no hardcoded scenario path. Unconfigured use fails loudly.

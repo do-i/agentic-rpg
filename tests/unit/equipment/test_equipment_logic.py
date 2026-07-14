@@ -1,4 +1,4 @@
-# tests/unit/core/equipment/test_equipment_logic.py
+# tests/unit/equipment/test_equipment_logic.py
 
 from __future__ import annotations
 

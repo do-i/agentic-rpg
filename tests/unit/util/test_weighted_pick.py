@@ -1,4 +1,4 @@
-# tests/unit/core/state/test_weighted_pick.py
+# tests/unit/util/test_weighted_pick.py
 
 from __future__ import annotations
 

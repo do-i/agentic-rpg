@@ -1,4 +1,4 @@
-# tests/unit/core/world/test_player.py
+# tests/unit/world/test_player.py
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-# tests/unit/core/scenes/test_field_menu_scene.py
+# tests/unit/field_menu/test_field_menu_scene.py
 
 from __future__ import annotations
 

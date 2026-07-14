@@ -12,11 +12,6 @@ validated and committed.
 
 ## P3 - Test and packaging hygiene
 
-- [ ] Reorganize unit tests to mirror engine package layout.
-  - Move tests mechanically with `git mv`.
-  - Avoid content changes in the move commit.
-  - Follow with separate commits for any missing coverage.
-
 ## P4 - Small batchable cleanup
 
 - [ ] Rename `grik_the_grin_192` assets/ids if the sheet is standard 64 px tiles.

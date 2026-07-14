@@ -1,4 +1,4 @@
-# tests/unit/core/encounter/test_enemy_sprite.py
+# tests/unit/encounter/test_enemy_sprite.py
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-# tests/unit/core/encounter/test_encounter_manager.py
+# tests/unit/encounter/test_encounter_manager.py
 
 from __future__ import annotations
 

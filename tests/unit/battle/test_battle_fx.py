@@ -1,4 +1,4 @@
-# tests/unit/core/battle/test_battle_fx.py
+# tests/unit/battle/test_battle_fx.py
 
 from __future__ import annotations
 

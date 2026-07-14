@@ -1,4 +1,4 @@
-# tests/unit/core/battle/test_battle_renderer_caches.py
+# tests/unit/battle/test_battle_renderer_caches.py
 #
 # Targets the per-frame allocation caches added in step 4 of the code review:
 # damage-float surface cache, hit-flash overlay cache, and the fade /

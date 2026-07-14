@@ -1,4 +1,4 @@
-# tests/unit/core/battle/test_battle_renderer_layout.py
+# tests/unit/battle/test_battle_renderer_layout.py
 #
 # Pure-helper tests for the battle renderer: layout math, enemy_rect_size,
 # float_pos, and the HP color threshold logic. These don't exercise pygame

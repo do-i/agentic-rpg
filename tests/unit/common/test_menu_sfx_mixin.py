@@ -1,4 +1,4 @@
-# tests/unit/core/common/test_menu_sfx_mixin.py
+# tests/unit/common/test_menu_sfx_mixin.py
 
 from __future__ import annotations
 

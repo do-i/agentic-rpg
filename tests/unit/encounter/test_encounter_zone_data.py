@@ -1,4 +1,4 @@
-# tests/unit/core/encounter/test_encounter_zone_data.py
+# tests/unit/encounter/test_encounter_zone_data.py
 #
 # DTO smoke tests — confirm the dataclasses are immutable, accept defaults,
 # and that EncounterSet.total_weight sums correctly.
