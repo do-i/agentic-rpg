@@ -23,6 +23,11 @@ FRAME_WIDTH  = 64
 FRAME_HEIGHT = 64
 FRAMES_PER_ROW = 9
 
+# Portrait crop for dialogue: on a standard 64 px LPC frame the head starts
+# ~10 px below the frame top (empty space above the hair), so the crop
+# origin sits at this fraction of the frame height.
+PORTRAIT_HEAD_TOP_RATIO = 10 / 64
+
 
 class SpriteSheet:
     """
@@ -87,7 +92,7 @@ class SpriteSheet:
         crop_w = int(self._frame_w * 0.5)
         crop_h = int(self._frame_h * 0.5)
         x = self._frame_w // 4
-        y = int(self._frame_h * 10 / 64)
+        y = int(self._frame_h * PORTRAIT_HEAD_TOP_RATIO)
         head = idle.subsurface(pygame.Rect(x, y, crop_w, crop_h))
         return head
 

@@ -62,7 +62,3 @@ validated and committed.
 
 - [ ] Rename `grik_the_grin_192` assets/ids if the sheet is standard 64 px tiles.
   - Update the boss id/reference and generated battle sheet references together.
-
-- [ ] Name the portrait crop ratio constant.
-  - Replace the magic `10/64` head-crop ratio in `SpriteSheet.get_portrait` with a
-    named constant.
