@@ -70,7 +70,11 @@ on completion. Delete this file when all items are done.
   mixin/base for the common sub-states (pattern precedent: `MenuSfxMixin`).
   Renderers: move duplicated qty-overlay/popup drawing into `shop_renderer.py`.
 
-- [ ] **7. Split branchy battle/world helpers**
+- [x] **7. Split branchy battle/world helpers**
+  Done: `resolve_enemy_turn` split into `_resolve_basic_attack`/`_resolve_ability`;
+  `rng` made required across the enemy-AI helpers (was a `None` default that the
+  pick/targeting code dereferenced unconditionally). `find_sign_tiles` split into
+  `_referenced_tilesets`/`_local_tile_id`/`_iter_layer_tiles`.
   `battle_enemy_logic.py:15` `resolve_enemy_turn` (60 lines / 15 branches),
   `sign_locator.py:22` `find_sign_tiles` (15 branches) — split selection /
   targeting / resolution phases into small functions.

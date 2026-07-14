@@ -14,44 +14,56 @@ from engine.util.pseudo_random import PseudoRandom
 
 def resolve_enemy_turn(state: BattleState, screen_width: int,
                        sfx_manager,
-                       rng: PseudoRandom | None = None,
+                       rng: PseudoRandom,
                        fx: BattleFx | None = None) -> str:
     """Execute the current enemy's turn using AI data. Returns message."""
     active = state.active
     if not active or not active.is_enemy:
         return ""
-
-    targets = state.alive_party()
-    if not targets:
+    if not state.alive_party():
         return ""
 
     action = pick_enemy_action(active, state, rng)
-    action_type = action.get("action", "attack")
     ability_id = action.get("id", "")
-
-    # Resolve targeting
     target_list = resolve_targeting(active, state, ability_id, rng)
     if not target_list:
         return ""
 
-    if action_type == "attack":
-        target = target_list[0]
-        alive_before = not target.is_ko
-        dmg = max(1, active.atk - target.effective_def)
-        # Back-row party member halves incoming physical damage.
-        if target.row == "back":
-            dmg = max(1, dmg // 2)
-        actual = target.apply_damage(dmg, rng)
-        state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_PHYS)
-        if fx:
-            fx.play_attack(active, kind="thrust")
-            fx.hit(target)
-        sfx_manager.play("atk_impact")
-        if alive_before and target.is_ko:
-            sfx_manager.play("party_hit")
-        return f"{active.name} attacked {target.name} for {actual} damage!"
+    if action.get("action", "attack") == "attack":
+        return _resolve_basic_attack(
+            state, active, target_list[0], screen_width, sfx_manager, rng, fx,
+        )
+    return _resolve_ability(
+        state, active, ability_id, target_list, screen_width, sfx_manager, rng, fx,
+    )
 
-    # ability — display ability name, deal ATK-based damage to targets
+
+def _resolve_basic_attack(state: BattleState, active: Combatant,
+                          target: Combatant, screen_width: int,
+                          sfx_manager, rng: PseudoRandom,
+                          fx: BattleFx | None) -> str:
+    alive_before = not target.is_ko
+    dmg = max(1, active.atk - target.effective_def)
+    # Back-row party member halves incoming physical damage.
+    if target.row == "back":
+        dmg = max(1, dmg // 2)
+    actual = target.apply_damage(dmg, rng)
+    state.add_float(str(actual), *float_pos(state, target, screen_width), C_DMG_PHYS)
+    if fx:
+        fx.play_attack(active, kind="thrust")
+        fx.hit(target)
+    sfx_manager.play("atk_impact")
+    if alive_before and target.is_ko:
+        sfx_manager.play("party_hit")
+    return f"{active.name} attacked {target.name} for {actual} damage!"
+
+
+def _resolve_ability(state: BattleState, active: Combatant,
+                     ability_id: str, target_list: list[Combatant],
+                     screen_width: int, sfx_manager, rng: PseudoRandom,
+                     fx: BattleFx | None) -> str:
+    # Display ability name, deal ATK-based damage to targets. Abilities hit
+    # both rows at full strength (no back-row halving).
     ability_name = ability_id.replace("_", " ").title()
     if fx:
         fx.play_attack(active, kind="spellcast")
@@ -77,7 +89,7 @@ def resolve_enemy_turn(state: BattleState, screen_width: int,
 
 # ── Enemy AI — action selection ──────────────────────────────
 
-def pick_enemy_action(enemy: Combatant, state: BattleState, rng: PseudoRandom | None = None) -> dict:
+def pick_enemy_action(enemy: Combatant, state: BattleState, rng: PseudoRandom) -> dict:
     """Pick an action from the enemy's AI move list.
 
     Supports patterns:
@@ -121,7 +133,7 @@ def _check_condition(move: dict, enemy: Combatant, state: BattleState) -> bool:
     return True
 
 
-def _weighted_pick_move(moves: list[dict], rng: PseudoRandom | None = None) -> dict:
+def _weighted_pick_move(moves: list[dict], rng: PseudoRandom) -> dict:
     """Weighted random pick from a list of move dicts."""
     if not moves:
         return {"action": "attack"}
@@ -133,7 +145,7 @@ def _weighted_pick_move(moves: list[dict], rng: PseudoRandom | None = None) -> d
 
 def resolve_targeting(
     enemy: Combatant, state: BattleState, ability_id: str,
-    rng: PseudoRandom | None = None,
+    rng: PseudoRandom,
 ) -> list[Combatant]:
     """Pick target(s) for the enemy's action based on targeting data."""
     targeting = enemy.ai_data.get("targeting", {})

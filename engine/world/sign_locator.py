@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Iterator
 from xml.etree import ElementTree as ET
 
 # Tiled stores horizontal/vertical/diagonal flip state in the top three bits of
@@ -35,46 +36,65 @@ def find_sign_tiles(
 
     root = ET.parse(tmx_path).getroot()
     width = int(root.get("width"))
-
-    # (firstgid, name) for each referenced tileset, ascending by firstgid so a
-    # gid maps to the highest firstgid that does not exceed it.
-    tilesets = sorted(
-        (int(ts.get("firstgid")), Path(ts.get("source", "")).stem)
-        for ts in root.findall("tileset")
-    )
+    tilesets = _referenced_tilesets(root)
     if not any(name == tileset_name for _, name in tilesets):
         return []
-
-    def resolve_local(gid: int) -> int | None:
-        real = gid & _GID_FLAGS_MASK
-        if real == 0:
-            return None
-        match = None
-        for first, name in tilesets:
-            if first <= real:
-                match = (first, name)
-            else:
-                break
-        if match is None or match[1] != tileset_name:
-            return None
-        return real - match[0]
 
     found: list[tuple[int, int]] = []
     seen: set[tuple[int, int]] = set()
     for layer in root.findall("layer"):
-        data = layer.find("data")
-        if data is None or data.get("encoding") != "csv" or not data.text:
-            continue
-        cells = data.text.replace("\n", "").split(",")
-        for index, raw in enumerate(cells):
-            raw = raw.strip()
-            if not raw:
-                continue
-            local = resolve_local(int(raw))
-            if local is None or local not in tile_ids:
-                continue
-            coord = (index % width, index // width)
-            if coord not in seen:
+        for coord, local in _iter_layer_tiles(layer, width, tilesets, tileset_name):
+            if local in tile_ids and coord not in seen:
                 seen.add(coord)
                 found.append(coord)
     return found
+
+
+def _referenced_tilesets(root: ET.Element) -> list[tuple[int, str]]:
+    """(firstgid, name) for each referenced tileset, ascending by firstgid so
+    a gid maps to the highest firstgid that does not exceed it."""
+    return sorted(
+        (int(ts.get("firstgid")), Path(ts.get("source", "")).stem)
+        for ts in root.findall("tileset")
+    )
+
+
+def _local_tile_id(
+    gid: int, tilesets: list[tuple[int, str]], tileset_name: str,
+) -> int | None:
+    """Local id of *gid* within *tileset_name*, or None if it belongs to a
+    different tileset (or is the empty cell)."""
+    real = gid & _GID_FLAGS_MASK
+    if real == 0:
+        return None
+    match = None
+    for first, name in tilesets:
+        if first <= real:
+            match = (first, name)
+        else:
+            break
+    if match is None or match[1] != tileset_name:
+        return None
+    return real - match[0]
+
+
+def _iter_layer_tiles(
+    layer: ET.Element,
+    width: int,
+    tilesets: list[tuple[int, str]],
+    tileset_name: str,
+) -> Iterator[tuple[tuple[int, int], int]]:
+    """Yield ((tile_x, tile_y), local_id) for each cell of *layer* whose gid
+    resolves to *tileset_name*. Skips non-CSV layers."""
+    data = layer.find("data")
+    if data is None or data.get("encoding") != "csv" or not data.text:
+        return
+    cells = data.text.replace("\n", "").split(",")
+    for index, raw in enumerate(cells):
+        raw = raw.strip()
+        if not raw:
+            continue
+        local = _local_tile_id(int(raw), tilesets, tileset_name)
+        if local is None:
+            continue
+        yield (index % width, index // width), local
