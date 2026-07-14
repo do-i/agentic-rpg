@@ -12,16 +12,17 @@ from engine.common.scene.scene import Scene
 from engine.common.scene.scene_manager import SceneManager
 from engine.common.scene.scene_registry import SceneRegistry
 from engine.common.game_state_holder import GameStateHolder
-from engine.common.menu_sfx_mixin import MenuSfxMixin
 from engine.common.scroll_list import ScrollListState
 from engine.world.sprite_sheet import SpriteSheet
 from engine.shop.apothecary_renderer import ApothecaryRenderer, SPRITE_SIZE, VISIBLE_ROWS
+from engine.shop.shop_constants import STATE_DETAIL, STATE_LIST, STATE_POPUP
+from engine.shop.shop_scene_mixin import ShopSceneMixin
 
 # MC size label → item id mapping
 _MC_SIZE_TO_ID = {"XS": "mc_xs", "S": "mc_s", "M": "mc_m", "L": "mc_l", "XL": "mc_xl"}
 
 
-class ApothecaryScene(MenuSfxMixin, Scene):
+class ApothecaryScene(ShopSceneMixin, Scene):
     """
     Apothecary overlay.  States: list → detail → toast (loop).
     ESC closes from list state, goes back from detail state.
@@ -35,7 +36,7 @@ class ApothecaryScene(MenuSfxMixin, Scene):
         on_close: callable,
         recipes: list[dict],
         sprite_path: Path,
-        icon_paths: dict[str, Path] | None = None,
+        icon_paths: dict[str, Path],
         *,
         sfx_manager,
     ) -> None:
@@ -45,10 +46,10 @@ class ApothecaryScene(MenuSfxMixin, Scene):
         self._on_close      = on_close
         self._recipes       = recipes
         self._sprite_path   = sprite_path
-        self._icon_paths    = icon_paths or {}
+        self._icon_paths    = icon_paths
         self._sfx_manager   = sfx_manager
 
-        self._state        = "list"   # list | detail | popup
+        self._state        = STATE_LIST   # list | detail | popup
         self._list         = ScrollListState(VISIBLE_ROWS)
         self._popup_text   = ""
         self._sprite_surf: pygame.Surface | None = None
@@ -144,48 +145,41 @@ class ApothecaryScene(MenuSfxMixin, Scene):
         for event in events:
             if event.type != pygame.KEYDOWN:
                 continue
-            if self._state == "popup":
-                if self.is_popup_dismiss_key(event.key):
-                    self._state = "list"
+            if self._state == STATE_POPUP:
+                self._handle_popup(event.key)
                 return
-            if self._state == "list":
+            if self._state == STATE_LIST:
                 self._handle_list(event.key)
-            elif self._state == "detail":
+            elif self._state == STATE_DETAIL:
                 self._handle_detail(event.key)
 
     def _handle_list(self, key: int) -> None:
         recipes = self._visible_recipes()
         if not recipes:
             if key == pygame.K_ESCAPE:
-                self._play("cancel")
-                self._on_close()
+                self._close_shop()
             return
 
-        if key == pygame.K_UP:
-            if self._list.move(-1, len(recipes)):
-                self._play("hover")
-        elif key == pygame.K_DOWN:
-            if self._list.move(1, len(recipes)):
-                self._play("hover")
-        elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+        if self._nav_list(key, len(recipes)):
+            return
+        if key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             sel = self._selected()
             if sel and self._is_unlocked(sel) and not self._is_duplicate_blocked(sel):
                 self._play("confirm")
-                self._state = "detail"
+                self._state = STATE_DETAIL
             else:
                 self._play("cancel")
         elif key == pygame.K_ESCAPE:
-            self._play("cancel")
-            self._on_close()
+            self._close_shop()
 
     def _handle_detail(self, key: int) -> None:
         sel = self._selected()
         if not sel:
-            self._state = "list"
+            self._state = STATE_LIST
             return
         if key == pygame.K_ESCAPE:
             self._play("cancel")
-            self._state = "list"
+            self._state = STATE_LIST
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             if self._can_craft(sel):
                 self._play("confirm")
@@ -221,7 +215,7 @@ class ApothecaryScene(MenuSfxMixin, Scene):
 
         out_name = self._item_name(out_id) if out_id else "???"
         self._popup_text  = f"Crafted {out_qty} x {out_name}"
-        self._state       = "popup"
+        self._state       = STATE_POPUP
 
     # ── Update ────────────────────────────────────────────────
 

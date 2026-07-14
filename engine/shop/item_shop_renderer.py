@@ -19,6 +19,7 @@ from engine.party.member_state import MemberState
 from engine.shop.shop_constants import (
     C_DIM, C_GP, C_HINT, C_MUTED, C_TEXT, C_TOAST, C_WARN,
     HEADER_H, MODAL_W,
+    MODE_BUY, STATE_EQUIP, STATE_LIST, STATE_POPUP, STATE_QTY,
 )
 from engine.shop.shop_renderer import (
     draw_dim_overlay, draw_footer, draw_modal_box, draw_popup, draw_shop_header,
@@ -130,7 +131,7 @@ class ItemShopRenderer:
     def render(self, screen: pygame.Surface, view: ShopViewState) -> None:
         selected_def = self._item_def(view)
         show_party = (
-            view.mode == "buy"
+            view.mode == MODE_BUY
             and selected_def is not None
             and selected_def.type in EQUIPMENT_TYPES
         )
@@ -162,8 +163,8 @@ class ItemShopRenderer:
                 selected_def,
                 view.item_catalog,
                 view.equip_selection,
-                active=view.state == "equip",
-                pending=view.state == "equip"
+                active=view.state == STATE_EQUIP,
+                pending=view.state == STATE_EQUIP
                 and view.pending_equip_item_id == selected_def.id,
             )
 
@@ -172,9 +173,9 @@ class ItemShopRenderer:
             self._footer_hint(view, show_party), self._fonts.hint,
         )
 
-        if view.state == "qty" and view.selected:
+        if view.state == STATE_QTY and view.selected:
             self._draw_qty_overlay(screen, lay, view)
-        elif view.state == "popup":
+        elif view.state == STATE_POPUP:
             draw_popup(
                 screen, POPUP_W, view.popup_text, C_TOAST, C_BORDER,
                 self._fonts.toast, self._fonts.hint,
@@ -217,7 +218,7 @@ class ItemShopRenderer:
     def _draw_header(
         self, screen: pygame.Surface, view: ShopViewState, lay: _ModalLayout,
     ) -> None:
-        if view.mode == "buy":
+        if view.mode == MODE_BUY:
             title_text = f"{self._title} — Buy"
         else:
             tag_label = f"[{view.sell_tag}]" if view.sell_tag else "[All]"
@@ -240,7 +241,7 @@ class ItemShopRenderer:
     ) -> None:
         if not view.avail:
             empty_msg = (
-                "No items available." if view.mode == "buy"
+                "No items available." if view.mode == MODE_BUY
                 else "Nothing to sell."
             )
             empty = self._fonts.hint.render(empty_msg, True, C_DIM)
@@ -249,15 +250,15 @@ class ItemShopRenderer:
         rows = [self._build_row(item, view) for item in view.avail]
         self._view.render(
             screen, list_rect, rows, view.list_sel, view.scroll,
-            active=(view.state == "list"),
+            active=(view.state == STATE_LIST),
         )
 
     def _footer_hint(self, view: ShopViewState, show_party: bool) -> str:
-        if view.mode != "buy":
+        if view.mode != MODE_BUY:
             return "TAB buy · T tag · ENTER sell · ESC close"
-        if view.state == "equip":
+        if view.state == STATE_EQUIP:
             return "UP/DOWN party · ENTER equip · ESC skip"
-        if view.state == "qty":
+        if view.state == STATE_QTY:
             return "LEFT/RIGHT qty ±1 · UP/DOWN qty ±5 · ENTER confirm · ESC back"
         if show_party:
             return "UP/DOWN item · LEFT/RIGHT party · ENTER buy · TAB sell · ESC close"
@@ -285,7 +286,7 @@ class ItemShopRenderer:
 
     def _build_row(self, item: dict, view: ShopViewState) -> ItemRow:
         price = view.row_price(item)
-        if view.mode == "buy":
+        if view.mode == MODE_BUY:
             return ItemRow(
                 title=view.display_name(item),
                 subtitle=f"owned: {view.owned_qty(item['id'])}",
@@ -349,7 +350,7 @@ class ItemShopRenderer:
         screen.blit(right_s, (cx + left_s.get_width() + num_s.get_width(), cy))
 
         # total price
-        if view.mode == "buy":
+        if view.mode == MODE_BUY:
             col = C_WARN if total > view.gp else C_GP
             total_s = self._fonts.row.render(f"Total: {total:,} GP", True, col)
             screen.blit(total_s, (ox + 20, oy + 76))

@@ -13,6 +13,10 @@ from engine.common.quantity_picker import QuantityPicker
 from engine.common.scroll_list import ScrollListState
 from engine.party.repository_state import RepositoryState
 from engine.shop.magic_core_shop_renderer import MagicCoreShopRenderer
+from engine.shop.shop_constants import (
+    STATE_CONFIRM, STATE_LIST, STATE_POPUP, STATE_QTY,
+)
+from engine.shop.shop_scene_mixin import ShopSceneMixin
 
 # Confirm dialog threshold — rates at or above this trigger confirmation
 LARGE_RATE_THRESHOLD = 1_000
@@ -21,7 +25,7 @@ QTY_STEP_SMALL = 1
 QTY_STEP_LARGE = 10
 
 
-class MagicCoreShopScene(Scene):
+class MagicCoreShopScene(ShopSceneMixin, Scene):
     """
     Lets the player exchange Magic Cores for GP.
 
@@ -39,8 +43,7 @@ class MagicCoreShopScene(Scene):
         registry: SceneRegistry,
         on_close: callable,
         mc_sizes: list[tuple[str, str, int]],
-        confirm_large: bool = True,
-        return_scene_name: str = "world_map",
+        confirm_large: bool,
         *,
         sfx_manager,
     ) -> None:
@@ -50,10 +53,9 @@ class MagicCoreShopScene(Scene):
         self._on_close     = on_close
         self._mc_sizes     = mc_sizes
         self._confirm_large = confirm_large
-        self._return_scene_name = return_scene_name
         self._sfx_manager  = sfx_manager
 
-        self._state        = "list"   # list | qty | confirm | popup
+        self._state        = STATE_LIST   # list | qty | confirm | popup
         # wrap-around cursor; the MC list is short and never scrolls
         self._list         = ScrollListState(max(len(mc_sizes), 1), wrap=True)
         self._picker       = QuantityPicker(QTY_STEP_SMALL, QTY_STEP_LARGE, loop=True)
@@ -84,81 +86,77 @@ class MagicCoreShopScene(Scene):
         for event in events:
             if event.type != pygame.KEYDOWN:
                 continue
-            if self._state == "popup":
-                if event.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER):
-                    avail = self._available()
-                    if avail:
-                        self._state = "list"
-                    else:
-                        self._on_close()
+            if self._state == STATE_POPUP:
+                self._handle_popup(event.key)
                 return
-            if self._state == "list":
+            if self._state == STATE_LIST:
                 self._handle_list(event.key)
-            elif self._state == "qty":
+            elif self._state == STATE_QTY:
                 self._handle_qty(event.key)
-            elif self._state == "confirm":
+            elif self._state == STATE_CONFIRM:
                 self._handle_confirm(event.key)
+
+    def _after_popup_dismiss(self) -> None:
+        # Everything may have been exchanged — close instead of showing
+        # an empty list.
+        if self._available():
+            self._state = STATE_LIST
+        else:
+            self._on_close()
 
     def _handle_list(self, key: int) -> None:
         avail = self._available()
         if not avail:
             if key == pygame.K_ESCAPE:
-                self._sfx_manager.play("cancel")
-                self._on_close()
+                self._close_shop()
             return
 
-        if key == pygame.K_UP:
-            if self._list.move(-1, len(avail)):
-                self._sfx_manager.play("hover")
-        elif key == pygame.K_DOWN:
-            if self._list.move(1, len(avail)):
-                self._sfx_manager.play("hover")
-        elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-            self._sfx_manager.play("confirm")
+        if self._nav_list(key, len(avail)):
+            return
+        if key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+            self._play("confirm")
             self._picker.reset()
-            self._state = "qty"
+            self._state = STATE_QTY
         elif key == pygame.K_ESCAPE:
-            self._sfx_manager.play("cancel")
-            self._on_close()
+            self._close_shop()
 
     def _handle_qty(self, key: int) -> None:
         sel = self._selected()
         if not sel:
-            self._state = "list"
+            self._state = STATE_LIST
             return
         _, _, _, max_qty = sel
 
         if key == pygame.K_ESCAPE:
-            self._sfx_manager.play("cancel")
-            self._state = "list"
+            self._play("cancel")
+            self._state = STATE_LIST
         elif key == pygame.K_LEFT:
             self._picker.decrease_small(max_qty)
-            self._sfx_manager.play("hover")
+            self._play("hover")
         elif key == pygame.K_RIGHT:
             self._picker.increase_small(max_qty)
-            self._sfx_manager.play("hover")
+            self._play("hover")
         elif key == pygame.K_UP:
             self._picker.decrease_large(max_qty)
-            self._sfx_manager.play("hover")
+            self._play("hover")
         elif key == pygame.K_DOWN:
             self._picker.increase_large(max_qty)
-            self._sfx_manager.play("hover")
+            self._play("hover")
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
             _, _, rate, _ = sel
+            self._play("confirm")
             if self._confirm_large and rate >= LARGE_RATE_THRESHOLD:
-                self._sfx_manager.play("confirm")
-                self._state = "confirm"
+                self._state = STATE_CONFIRM
             else:
-                self._sfx_manager.play("confirm")
                 self._do_exchange()
 
     def _handle_confirm(self, key: int) -> None:
         if key in (pygame.K_RETURN, pygame.K_y):
-            self._sfx_manager.play("confirm")
+            self._play("confirm")
             self._do_exchange()
         elif key in (pygame.K_ESCAPE, pygame.K_n):
-            self._sfx_manager.play("cancel")
-            self._state = "qty"
+            self._play("cancel")
+            self._state = STATE_QTY
 
     # ── Exchange ──────────────────────────────────────────────
 
@@ -179,7 +177,7 @@ class MagicCoreShopScene(Scene):
         repo.add_gp(total)
 
         self._popup_text  = f"Exchanged {qty} x {label}    +{total:,} GP"
-        self._state       = "popup"
+        self._state       = STATE_POPUP
         self._list.clamp(len(self._available()))
 
     # ── Update ────────────────────────────────────────────────

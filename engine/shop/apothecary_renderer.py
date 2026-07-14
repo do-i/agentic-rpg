@@ -15,6 +15,7 @@ from engine.common.item_selection_view import (
 from engine.shop.shop_constants import (
     C_DIM, C_DIVIDER, C_GP, C_HINT, C_LOCKED, C_MUTED, C_TEXT, C_TOAST,
     C_WARN, HEADER_H, MODAL_W,
+    STATE_DETAIL, STATE_LIST, STATE_POPUP,
 )
 from engine.shop.shop_renderer import (
     draw_dim_overlay, draw_footer, draw_modal_box, draw_popup, draw_shop_header,
@@ -121,19 +122,19 @@ class ApothecaryRenderer:
                 )
                 for r in recipes
             ]
-            self._view.render(screen, list_rect, rows, list_sel, scroll, active=(state == "list"))
+            self._view.render(screen, list_rect, rows, list_sel, scroll, active=(state == STATE_LIST))
 
         draw_footer(
             screen, mx, my + mh - FOOTER_H - 4, MODAL_W, PAD,
             "select · ENTER view · ESC close", self._fonts.hint,
         )
 
-        if state == "detail" and selected:
+        if state == STATE_DETAIL and selected:
             self._draw_detail_overlay(
                 screen, mx, my, mh, selected, gp, is_unlocked, can_afford,
                 can_craft, item_name, mc_name, owned_qty,
             )
-        elif state == "popup":
+        elif state == STATE_POPUP:
             draw_popup(
                 screen, POPUP_W, popup_text, C_TOAST, C_BORDER,
                 self._fonts.toast, self._fonts.hint,

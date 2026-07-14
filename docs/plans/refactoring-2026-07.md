@@ -54,7 +54,16 @@ on completion. Delete this file when all items are done.
   a frame view-state dataclass built by the scene; split the 131-line body into
   layout / header / list / party-preview / footer / overlay helpers.
 
-- [ ] **6. Shop scene state machines — shared states + qty/popup handling**
+- [x] **6. Shop scene state machines — shared states + qty/popup handling**
+  Done: `STATE_*`/`MODE_*` constants in `shop_constants.py` used by all three
+  scenes and their renderers; new `ShopSceneMixin` (popup dismissal with
+  overridable landing state, UP/DOWN nav with hover sfx, ESC-close). MC shop
+  adopted MenuSfxMixin-style `_play`; dropped its dead `return_scene_name`
+  param and `confirm_large` default; apothecary `icon_paths` now required.
+  Qty-overlay key *direction* mapping stays per-scene by design (see
+  QuantityPicker docstring). Renderer qty/popup drawing dedup deferred — the
+  remaining bodies differ materially (item shop draws prices/warnings, MC
+  draws rate math); shared chrome already lives in `shop_renderer.py`.
   `item_shop_scene.py`, `apothecary_scene.py`, `magic_core_shop_scene.py` each
   hand-roll stringly `self._state` ("list"/"qty"/"popup"/…) with near-identical
   popup-dismiss and qty-picker key handling. Extract shared state constants and a

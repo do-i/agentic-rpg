@@ -13,6 +13,7 @@ from engine.common.item_selection_view import (
 from engine.shop.shop_constants import (
     C_DIM, C_GP, C_HINT, C_MUTED, C_TEXT,
     HEADER_H, MODAL_W,
+    STATE_CONFIRM, STATE_LIST, STATE_POPUP, STATE_QTY,
 )
 from engine.shop.shop_renderer import (
     draw_dim_overlay, draw_footer, draw_modal_box, draw_shop_header,
@@ -101,18 +102,18 @@ class MagicCoreShopRenderer:
         else:
             rows = [self._build_row(item) for item in avail]
             self._view.render(screen, list_rect, rows, list_sel, scroll=0,
-                              active=(state == "list"))
+                              active=(state == STATE_LIST))
 
         draw_footer(
             screen, mx, my + mh - FOOTER_H - 4, mw, PAD,
             "select · ENTER exchange · ESC close", self._fonts.hint,
         )
 
-        if state == "qty" and selected:
+        if state == STATE_QTY and selected:
             self._draw_qty_overlay(screen, mx, my, mw, mh, selected, qty)
-        elif state == "confirm" and selected:
+        elif state == STATE_CONFIRM and selected:
             self._draw_confirm_overlay(screen, selected, qty)
-        elif state == "popup":
+        elif state == STATE_POPUP:
             self._draw_popup(screen, popup_text)
 
     # ── Row model ────────────────────────────────────────────

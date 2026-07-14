@@ -66,6 +66,7 @@ def _make_scene(recipes, flags=("story_act2_started",), owned=None, gp=10_000):
         on_close=MagicMock(),
         recipes=list(recipes),
         sprite_path=None,
+        icon_paths={},
         sfx_manager=SfxManager.null(),
     )
     return scene, holder
