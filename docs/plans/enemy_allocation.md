@@ -6,7 +6,7 @@ This document records the post-rebuild enemy roster and zone allocation. Every e
 
 | # | Zone | Tier | Theme | Mooks | Boss | Barrier |
 |---|---|---|---|---|---|---|
-| 1 | Starting Forest | F | Goblin scouts in light woods | 5 | grik_the_grin_192 | — |
+| 1 | Starting Forest | F | Goblin scouts in light woods | 5 | grik_the_grin | — |
 | 2 | Open Plains | E | Bandit critters, lone wolves | 7 | wolf_beast_black_fur | — |
 | 3 | Marshland | D | Sewer ratfolk, bat fiends | 8 | ratkin_plague_doctor_black_mask_doctor | — |
 | 4 | Ancient Ruins | C | Restless dead | 10 | skeleton_knight_base | bat_demon_red_wing_fiend (veil_breaker) |
@@ -31,7 +31,7 @@ Format: `id` — name (type) — HP / ATK / DEF / MRES / DEX / EXP.
 | goblin_scout_base | Goblin Scout | humanoid | 22 | 10 | 3 | 2 | 12 | 26 |
 | goblin_scout_sling_scout | Sling Scout | humanoid | 24 | 11 | 4 | 3 | 11 | 28 |
 | goblin_scout_hooded_goblin | Hooded Goblin | humanoid | 28 | 11 | 4 | 3 | 12 | 30 |
-| **grik_the_grin_192** ★ | Grik the Grin | beast | 33 | 11 | 4 | 3 | 14 | 36 |
+| **grik_the_grin** ★ | Grik the Grin | beast | 33 | 11 | 4 | 3 | 14 | 36 |
 
 ### Zone 2 — Open Plains (Rank E)
 | id | name | type | HP | ATK | DEF | MRES | DEX | EXP |
@@ -177,7 +177,7 @@ The 10 conditional-AI move sets in `data/enemies/boss_move_sets/` were renamed t
 
 | Zone | Boss id (= filename) | Original moveset source |
 |---|---|---|
-| 1 | grik_the_grin_192 | inline (no `ai_ref`) |
+| 1 | grik_the_grin | inline (no `ai_ref`) |
 | 2 | wolf_beast_black_fur | mountain_bear.yaml |
 | 3 | ratkin_plague_doctor_black_mask_doctor | mud_crab_king.yaml |
 | 4 | skeleton_knight_base | forest_spider_giant.yaml |

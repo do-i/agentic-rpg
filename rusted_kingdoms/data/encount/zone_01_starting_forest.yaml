@@ -28,7 +28,7 @@ entries:
     chase_range: 10
 
 boss:
-  id: grik_the_grin_192
+  id: grik_the_grin
   name: Grik the Grin
   once: true
   on_complete:

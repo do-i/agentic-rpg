@@ -179,7 +179,7 @@ targeting:
   default: random_alive
 
 ---
-id: grik_the_grin_192
+id: grik_the_grin
 name: Grik the Grin
 type: beast
 rank: F
