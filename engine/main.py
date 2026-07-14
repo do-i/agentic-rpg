@@ -22,7 +22,28 @@ def parse_args():
     parser.add_argument("--playback-speed", type=float, default=1.0)
 
     parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument(
+        "--profile",
+        metavar="FILE",
+        default=None,
+        help="profile the run with cProfile; writes pstats data to FILE "
+             "and prints the top functions by cumulative time on exit",
+    )
     return parser.parse_args()
+
+
+def run_profiled(game: Game, stats_file: str) -> None:
+    import cProfile
+    import pstats
+
+    profiler = cProfile.Profile()
+    try:
+        profiler.runcall(game.run)
+    finally:
+        # Dump even on Ctrl-C so an interrupted session still yields a profile.
+        profiler.dump_stats(stats_file)
+        pstats.Stats(profiler).sort_stats("cumulative").print_stats(30)
+        print(f"profile written to {stats_file}")
 
 
 if __name__ == "__main__":
@@ -35,4 +56,8 @@ if __name__ == "__main__":
         playback_speed=args.playback_speed,
         seed=args.seed,
     )])
-    injector.get(Game).run()
+    game = injector.get(Game)
+    if args.profile:
+        run_profiled(game, args.profile)
+    else:
+        game.run()

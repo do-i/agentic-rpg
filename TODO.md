@@ -3,13 +3,6 @@
 Future sessions should pick one item at a time and keep each change separately
 validated and committed.
 
-## P1 - Workflow and correctness
-
-- [ ] Add profiling before performance optimization.
-  - Add or document a lightweight way to profile frame/update cost for world map,
-    battle, and menu render paths.
-  - Do not optimize render/update code until a profile identifies a hotspot.
-
 ## P2 - Refactoring candidates
 
 - [ ] Extract shared field spell casting flow.

@@ -6,6 +6,7 @@ Long-lived references for engine subsystems. Grouped by area; alphabetical withi
 - [architecture.md](architecture.md) — overall engine layout, DI, scene model
 - [flag.md](flag.md) — story / progression flags
 - [new-game.md](new-game.md) — new-game state factory
+- [profiling.md](profiling.md) — profiling frame/update cost (--profile flag)
 - [save.md](save.md) — save format and persistence
 - [scenario.md](scenario.md) — scenario manifest schema
 - [validation.md](validation.md) — scenario data validation rules
