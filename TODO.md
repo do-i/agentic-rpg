@@ -5,14 +5,6 @@ validated and committed.
 
 ## P1 - Workflow and correctness
 
-- [ ] Make pygame tests stable by default.
-  - Premise re-verified: with `DISPLAY` unset, tests fail immediately with
-    `pygame.error: No available video device` (verified on this sandbox with
-    `env -u DISPLAY`). Not a hang, but a hard failure on headless boxes.
-  - Fix by setting `SDL_VIDEODRIVER`/`SDL_AUDIODRIVER` to `dummy` via
-    `os.environ.setdefault` in `tests/conftest.py`, so a real display still
-    wins when present.
-
 - [ ] Add profiling before performance optimization.
   - Add or document a lightweight way to profile frame/update cost for world map,
     battle, and menu render paths.

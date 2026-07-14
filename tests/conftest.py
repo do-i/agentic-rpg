@@ -2,6 +2,16 @@
 
 from __future__ import annotations
 
+import os
+
+# Tests never need a real window or audio device; the dummy SDL drivers keep
+# the suite working on headless boxes (no DISPLAY -> "No available video
+# device") and stop windows flashing locally. setdefault so an explicit
+# SDL_VIDEODRIVER/SDL_AUDIODRIVER export still wins. Must run before any
+# engine import triggers pygame display/mixer init.
+os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
+os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
+
 import pytest
 from engine.world.position_data import Position
 from engine.common.map_state import MapState
