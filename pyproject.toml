@@ -33,7 +33,9 @@ addopts = "-v -x"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["engine"]
+include = ["engine", "engine.*"]
 
 [tool.setuptools.package-data]
-"engine" = ["../rusted_kingdoms/*", "../rusted_kingdoms/**/*"]
+# Runtime engine data only. Scenario content (rusted_kingdoms/) is passed
+# via --scenario at runtime and is not part of the engine package.
+"engine.settings" = ["settings.yaml"]

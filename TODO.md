@@ -44,13 +44,6 @@ validated and committed.
   - Avoid content changes in the move commit.
   - Follow with separate commits for any missing coverage.
 
-- [ ] Fix package data configuration.
-  - Remove or restructure `pyproject.toml` package-data that points at
-    `../rusted_kingdoms/**`.
-  - Scenario content should not be attached to the `engine` package unless
-    intentionally packaged separately.
-  - Verify with a clean editable install and game boot.
-
 ## P4 - Small batchable cleanup
 
 - [ ] Rename `grik_the_grin_192` assets/ids if the sheet is standard 64 px tiles.
