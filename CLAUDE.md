@@ -30,6 +30,11 @@ PYTHONWARNINGS="ignore::RuntimeWarning" python -m pytest
 
 # Data validation
 python tools/validate.py --root rusted_kingdoms
+
+# Map editor — pygame window, or web UI (React Flow; needs `pip install -e ".[dev,editor]"`
+# and a one-time `cd tools/map_editor_web && npm install && npm run build`)
+python -m tools.map_editor --scenario ./rusted_kingdoms
+python -m tools.map_editor --web --scenario ./rusted_kingdoms
 ```
 
 Pytest is configured in `pyproject.toml` with `-v -x` (verbose, stop on first failure). Test paths: `tests/` and `engine/`.
