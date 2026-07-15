@@ -15,6 +15,21 @@ import pytmx
 import yaml
 
 
+# A map is treated as a non-world (interior / sub-location) map if its id
+# contains any of these keywords — houses, shops, inns, caves, dungeons, etc.
+# Everything else (zones, town/port-town exteriors) is a world map.
+INTERIOR_KEYWORDS = (
+    "_house",
+    "_inn",
+    "_shop",
+    "_apothecary",
+    "_interior",
+    "_room",
+    "_cave",
+    "_dungeon",
+)
+
+
 @dataclass(frozen=True)
 class NpcMeta:
     npc_id: str
@@ -120,6 +135,16 @@ def build_portal_graph(
 
     nodes_by_id = {n.map_id: n for n in nodes}
     return PortalGraph(nodes=nodes, edges=edges, nodes_by_id=nodes_by_id)
+
+
+def is_world_map(node: GraphNode) -> bool:
+    """Whether a node is a world (overworld) map rather than an interior.
+
+    Interiors are sub-locations entered through a door — houses, shops, inns,
+    apothecaries, caves, dungeons — identified by a keyword in the map id.
+    Everything else (zones, town/port-town exteriors) is a world map.
+    """
+    return not any(kw in node.map_id for kw in INTERIOR_KEYWORDS)
 
 
 def _empty_meta() -> dict:

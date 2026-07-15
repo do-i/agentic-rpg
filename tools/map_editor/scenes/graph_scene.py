@@ -36,7 +36,12 @@ from tools.map_editor.edit.editor_state import (
     STEP_SOURCE_TILE,
 )
 from tools.map_editor.edit.tmx_writer import create_portal, delete_portal, save_portal_target
-from tools.map_editor.graph.portal_graph import GraphEdge, GraphNode, PortalGraph
+from tools.map_editor.graph.portal_graph import (
+    GraphEdge,
+    GraphNode,
+    PortalGraph,
+    is_world_map,
+)
 from tools.map_editor.graph.sprite_cache import SpriteCache
 from tools.map_editor.graph.spring_layout import spring_layout
 from tools.map_editor.graph.thumbnails import ThumbnailCache
@@ -71,19 +76,6 @@ PORT_INSET = 6  # keep attachment points this far from the node corners
 # overshoot small nodes when zoomed out, nor balloon when zoomed in.
 GEOM_SCALE_MIN = 0.5
 GEOM_SCALE_MAX = 1.3
-# A map is treated as a non-world (interior / sub-location) map if its id
-# contains any of these keywords — houses, shops, inns, caves, dungeons, etc.
-# Everything else (zones, town/port-town exteriors) is a world map.
-INTERIOR_KEYWORDS = (
-    "_house",
-    "_inn",
-    "_shop",
-    "_apothecary",
-    "_interior",
-    "_room",
-    "_cave",
-    "_dungeon",
-)
 # Outward unit normal for each node side.
 SIDE_NORMAL = {
     "left": (-1, 0),
@@ -454,7 +446,7 @@ class GraphScene(Scene):
         if not self._hide_non_world:
             return True
         node = self._graph.nodes_by_id.get(map_id)
-        return node is None or _is_world_map(node)
+        return node is None or is_world_map(node)
 
     def _edge_visible(self, edge: GraphEdge) -> bool:
         return self._node_visible(edge.source) and self._node_visible(edge.target)
@@ -1524,16 +1516,6 @@ def _exit_point(
     if best_t is None or best_t <= 0 or side is None:
         return None
     return (int(sx + best_t * dx), int(sy + best_t * dy)), side
-
-
-def _is_world_map(node: GraphNode) -> bool:
-    """Whether a node is a world (overworld) map rather than an interior.
-
-    Interiors are sub-locations entered through a door — houses, shops, inns,
-    apothecaries, caves, dungeons — identified by a keyword in the map id.
-    Everything else (zones, town/port-town exteriors) is a world map.
-    """
-    return not any(kw in node.map_id for kw in INTERIOR_KEYWORDS)
 
 
 def _side_of(point: tuple[int, int], rect: pygame.Rect) -> str:
