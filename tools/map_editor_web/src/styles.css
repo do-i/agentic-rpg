@@ -1,0 +1,246 @@
+:root {
+  color-scheme: dark;
+  --bg: #0e0e14;
+  --panel-bg: #16161e;
+  --border: #34344a;
+  --text: #e4e4ea;
+  --text-dim: #9a9ab0;
+  --accent: #f0dc78;
+  --marker: #5ce67a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+  font-size: 14px;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-bg);
+}
+
+.topbar .title {
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.topbar .counts {
+  color: var(--text-dim);
+}
+
+.topbar .toggle {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--text-dim);
+}
+
+.main-row {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.flow-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── nodes ── */
+
+.map-node {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #1c1c24;
+  overflow: hidden;
+}
+
+.map-node.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.map-node.interior {
+  opacity: 0.92;
+}
+
+.thumb-wrap {
+  position: relative;
+  line-height: 0;
+}
+
+.thumb-wrap img {
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+.portal-marker {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--marker);
+  border: 1px solid #0a3a16;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.map-node-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 6px;
+  font-size: 12px;
+  background: #232330;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.map-node-label .badges {
+  font-size: 11px;
+}
+
+.source-handle {
+  width: 12px !important;
+  height: 12px !important;
+  background: var(--marker) !important;
+  border: 2px solid #0a3a16 !important;
+  cursor: crosshair;
+}
+
+.target-handle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── side panel ── */
+
+.side-panel {
+  width: 340px;
+  border-left: 1px solid var(--border);
+  background: var(--panel-bg);
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.side-panel h2 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  color: var(--accent);
+}
+
+.side-panel h3 {
+  margin: 14px 0 6px;
+  font-size: 13px;
+}
+
+.side-panel dl {
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  gap: 4px 10px;
+  margin: 10px 0;
+}
+
+.side-panel dt {
+  color: var(--text-dim);
+}
+
+.side-panel dd {
+  margin: 0;
+  word-break: break-word;
+}
+
+.panel-thumb {
+  max-width: 100%;
+  border: 1px solid var(--border);
+  image-rendering: pixelated;
+}
+
+.npc-list {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+
+.npc-list li {
+  margin-bottom: 3px;
+}
+
+.dim {
+  color: var(--text-dim);
+}
+
+button.link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #7ab8f0;
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+}
+
+.panel-hint p {
+  color: var(--text-dim);
+}
+
+.fatal-error {
+  padding: 40px;
+}
+
+/* React Flow theme tweaks */
+
+.react-flow__edge-path {
+  stroke: #6e82a0;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.react-flow__edge-textbg {
+  fill: #1c1c24;
+}
+
+.react-flow__edge-text {
+  fill: var(--text);
+  font-size: 11px;
+}
+
+.react-flow__minimap {
+  background: var(--panel-bg);
+}
+
+.react-flow__controls button {
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.react-flow__controls button:hover {
+  background: #232330;
+}
