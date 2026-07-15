@@ -211,6 +211,168 @@ button.link {
   padding: 40px;
 }
 
+/* ── buttons ── */
+
+button {
+  background: #232330;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 5px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: #2e2e40;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+button.primary {
+  background: #2c4a2f;
+  border-color: #4a7a50;
+}
+
+button.primary:hover:not(:disabled) {
+  background: #38603c;
+}
+
+button.danger {
+  background: #4a2426;
+  border-color: #7a4044;
+}
+
+button.danger:hover:not(:disabled) {
+  background: #613034;
+}
+
+.topbar .hint {
+  font-size: 12px;
+}
+
+.panel-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* ── modals ── */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  max-width: 96vw;
+  max-height: 92vh;
+  overflow: auto;
+}
+
+.modal h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: var(--accent);
+}
+
+.modal h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.picker-row {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.dialog-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── tile picker ── */
+
+.tile-picker-canvas {
+  position: relative;
+  line-height: 0;
+  cursor: crosshair;
+  border: 1px solid var(--border);
+}
+
+.tile-picker-canvas img {
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+.tile-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+}
+
+.hover-cell {
+  position: absolute;
+  pointer-events: none;
+  outline: 2px solid rgba(240, 220, 120, 0.8);
+  outline-offset: -1px;
+}
+
+.picked-cell {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(92, 230, 122, 0.35);
+  outline: 2px solid var(--marker);
+  outline-offset: -1px;
+}
+
+.tile-picker-status {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+  min-height: 18px;
+}
+
+/* ── toast ── */
+
+.toast {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1d3a26;
+  border: 1px solid #3f7a50;
+  color: #dff5e4;
+  border-radius: 6px;
+  padding: 8px 18px;
+  z-index: 60;
+  max-width: 80vw;
+}
+
 /* React Flow theme tweaks */
 
 .react-flow__edge-path {

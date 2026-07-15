@@ -13,9 +13,18 @@ interface Props {
   nodesById: Map<string, MapNodeInfo>;
   edgesById: Map<string, PortalEdgeInfo>;
   onSelectMap: (mapId: string) => void;
+  onRetargetEdge: (edge: PortalEdgeInfo) => void;
+  onDeleteEdge: (edge: PortalEdgeInfo) => void;
 }
 
-export function SidePanel({ selection, nodesById, edgesById, onSelectMap }: Props) {
+export function SidePanel({
+  selection,
+  nodesById,
+  edgesById,
+  onSelectMap,
+  onRetargetEdge,
+  onDeleteEdge,
+}: Props) {
   return (
     <aside className="side-panel">
       {selection === null && (
@@ -36,6 +45,8 @@ export function SidePanel({ selection, nodesById, edgesById, onSelectMap }: Prop
           edge={edgesById.get(selection.id)}
           nodesById={nodesById}
           onSelectMap={onSelectMap}
+          onRetargetEdge={onRetargetEdge}
+          onDeleteEdge={onDeleteEdge}
         />
       )}
     </aside>
@@ -128,10 +139,14 @@ function EdgeDetails({
   edge,
   nodesById,
   onSelectMap,
+  onRetargetEdge,
+  onDeleteEdge,
 }: {
   edge: PortalEdgeInfo | undefined;
   nodesById: Map<string, MapNodeInfo>;
   onSelectMap: (mapId: string) => void;
+  onRetargetEdge: (edge: PortalEdgeInfo) => void;
+  onDeleteEdge: (edge: PortalEdgeInfo) => void;
 }) {
   if (!edge) return <p>Portal not found.</p>;
   const sourceName = nodesById.get(edge.source)?.display_name ?? edge.source;
@@ -164,6 +179,12 @@ function EdgeDetails({
           {edge.source_rect_px[0]}, {edge.source_rect_px[1]})
         </dd>
       </dl>
+      <div className="panel-actions">
+        <button onClick={() => onRetargetEdge(edge)}>Move arrival tile…</button>
+        <button className="danger" onClick={() => onDeleteEdge(edge)}>
+          Delete portal
+        </button>
+      </div>
     </div>
   );
 }
