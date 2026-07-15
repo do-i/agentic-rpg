@@ -18,12 +18,15 @@ from engine.world.tile_map import TileMap
 THUMB_MAX_W = 256
 THUMB_MAX_H = 192
 CACHE_DIRNAME = ".cache/map_editor/thumbs"
+FULL_CACHE_DIRNAME = ".cache/map_editor/full"
 
 
 class ThumbnailCache:
     def __init__(self, scenario_root: Path) -> None:
         self._cache_dir = (scenario_root / CACHE_DIRNAME).resolve()
         self._cache_dir.mkdir(parents=True, exist_ok=True)
+        self._full_cache_dir = (scenario_root / FULL_CACHE_DIRNAME).resolve()
+        self._full_cache_dir.mkdir(parents=True, exist_ok=True)
         self._thumb_memory: dict[Path, pygame.Surface] = {}
         self._full_memory: dict[Path, pygame.Surface] = {}
 
@@ -71,6 +74,32 @@ class ThumbnailCache:
         tile_map.render(full, 0, 0)
         self._full_memory[tmx_path] = full
         return full
+
+    def thumbnail_file(self, tmx_path: Path) -> Path | None:
+        """Ensure the small thumbnail PNG exists on disk and return its path.
+
+        Used by the web backend, which serves files rather than surfaces.
+        Returns None when the map cannot be rendered.
+        """
+        if self.get(tmx_path) is None:
+            return None
+        return self._disk_path(tmx_path)
+
+    def full_file(self, tmx_path: Path) -> Path | None:
+        """Ensure a native-resolution PNG render exists on disk; return its path.
+
+        Full renders back the web UI's tile pickers, where portal tiles are
+        chosen by clicking on the actual map pixels. Returns None when the map
+        cannot be rendered.
+        """
+        disk_path = self._full_cache_dir / f"{tmx_path.stem}.png"
+        if disk_path.is_file() and disk_path.stat().st_mtime >= tmx_path.stat().st_mtime:
+            return disk_path
+        full = self.get_full(tmx_path)
+        if full is None:
+            return None
+        pygame.image.save(full, str(disk_path))
+        return disk_path
 
     def _disk_path(self, tmx_path: Path) -> Path:
         return self._cache_dir / f"{tmx_path.stem}.png"
