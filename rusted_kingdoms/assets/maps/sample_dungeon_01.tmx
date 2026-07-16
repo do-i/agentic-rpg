@@ -13,7 +13,7 @@
 131,131,131,131,131,131,131,131
 </data>
  </layer>
- <layer id="2" name="collision" width="8" height="6" offsetx="3" offsety="-1.5">
+ <layer id="2" name="collision" width="8" height="6">
   <data encoding="csv">
 555,577,577,577,577,577,577,556,
 553,0,0,0,0,0,0,553,
