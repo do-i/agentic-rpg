@@ -15,6 +15,12 @@ npm run build          # outputs dist/, served by the Python backend at "/"
 ## Run
 
 ```sh
+./run map-editor                 # provisions extras + frontend build on first run
+```
+
+or manually:
+
+```sh
 pip install -e ".[dev,editor]"   # once, for fastapi/uvicorn
 python -m tools.map_editor --web --scenario ./rusted_kingdoms
 ```

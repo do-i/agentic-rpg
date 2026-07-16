@@ -18,7 +18,8 @@ usage() {
     echo "  replay        Playback a recording (./run replay <speed>)"
     echo "  test          Run tests (./run test [pytest args...])"
     echo "  validate      Run data validation"
-    echo "  map-editor    Launch the scenario map viewer/editor"
+    echo "  map-editor    Launch the map editor web UI (builds frontend on first run)"
+    echo "  map-editor-pygame  Launch the legacy pygame map viewer/editor"
     echo "  rm_cache      List or delete generated cache artifacts"
     echo "  wangset       Export Wang terrain connection graphs from a TSX file"
     echo ""
@@ -40,7 +41,7 @@ case "$cmd" in
     setup)
         python3 -m venv "$VENV"
         source "$VENV/bin/activate"
-        pip install -e ".[dev]"
+        pip install -e ".[dev,editor]"
         echo "Setup complete."
         ;;
     record)
@@ -69,6 +70,19 @@ case "$cmd" in
         exec python "$SCRIPT_DIR/tools/validate.py" --root ./rusted_kingdoms "$@"
         ;;
     map-editor)
+        # Web UI (React Flow). The editor extras (fastapi/uvicorn) and the
+        # built frontend are provisioned on first run.
+        if ! python -c "import uvicorn" 2>/dev/null; then
+            echo "Installing editor extras (first run)..."
+            pip install -e ".[dev,editor]"
+        fi
+        if [[ ! -d "$SCRIPT_DIR/tools/map_editor_web/dist" ]]; then
+            echo "Building web frontend (first run)..."
+            (cd "$SCRIPT_DIR/tools/map_editor_web" && npm install && npm run build)
+        fi
+        exec python -m tools.map_editor --web --scenario ./rusted_kingdoms "$@"
+        ;;
+    map-editor-pygame)
         exec python -m tools.map_editor --scenario ./rusted_kingdoms "$@"
         ;;
     rm_cache)
