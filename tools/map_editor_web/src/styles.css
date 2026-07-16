@@ -107,6 +107,50 @@ body,
   pointer-events: none;
 }
 
+/* Portal-tile handles: click to select the edge, drag to start a link. */
+.react-flow__handle.portal-marker-handle {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 50%;
+  background: var(--marker);
+  border: 1.5px solid #0a3a16;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: width 0.08s ease, height 0.08s ease, box-shadow 0.08s ease;
+  z-index: 5;
+}
+
+.react-flow__handle.portal-marker-handle:hover {
+  width: 19px;
+  height: 19px;
+  box-shadow: 0 0 0 3px rgba(92, 230, 122, 0.35);
+}
+
+/* While a link is being dragged, dots must not steal the drop from the
+   whole-node target cover. */
+.map-node.connect-target .react-flow__handle.portal-marker-handle {
+  pointer-events: none;
+}
+
+.arrival-marker {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #f0b04a;
+  border: 1px solid #6a4207;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.map-node.connect-target {
+  outline: 2px dashed var(--marker);
+  outline-offset: 3px;
+}
+
 .map-node-label {
   display: flex;
   justify-content: space-between;
@@ -125,16 +169,37 @@ body,
 }
 
 .source-handle {
-  width: 12px !important;
-  height: 12px !important;
+  width: 13px !important;
+  height: 13px !important;
   background: var(--marker) !important;
   border: 2px solid #0a3a16 !important;
   cursor: crosshair;
+  transition: width 0.08s ease, height 0.08s ease;
 }
 
-.target-handle {
+.source-handle:hover {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.react-flow__handle.target-hidden {
   opacity: 0;
   pointer-events: none;
+}
+
+/* While a link is dragged, the whole node accepts the drop. */
+.react-flow__handle.target-cover {
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0;
+  min-height: 0;
+  transform: none !important;
+  border-radius: 0;
+  border: none;
+  opacity: 0;
+  z-index: 10;
 }
 
 /* ── side panel ── */
@@ -377,20 +442,42 @@ button.danger:hover:not(:disabled) {
 
 .react-flow__edge-path {
   stroke: #6e82a0;
+  stroke-width: 2;
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: #a8c0e0;
+  stroke-width: 3;
 }
 
 .react-flow__edge.selected .react-flow__edge-path {
   stroke: var(--accent);
-  stroke-width: 2.5;
+  stroke-width: 3.5;
 }
 
-.react-flow__edge-textbg {
-  fill: #1c1c24;
-}
-
-.react-flow__edge-text {
-  fill: var(--text);
+.edge-label {
+  position: absolute;
+  background: #1c1c24;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
   font-size: 11px;
+  padding: 2px 7px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.panel-divider {
+  width: 7px;
+  cursor: col-resize;
+  background: var(--border);
+  flex: 0 0 auto;
+  touch-action: none;
+}
+
+.panel-divider:hover,
+.panel-divider:active {
+  background: #5a5a80;
 }
 
 .react-flow__minimap {

@@ -15,6 +15,7 @@ interface Props {
   onSelectMap: (mapId: string) => void;
   onRetargetEdge: (edge: PortalEdgeInfo) => void;
   onDeleteEdge: (edge: PortalEdgeInfo) => void;
+  width: number;
 }
 
 export function SidePanel({
@@ -24,9 +25,10 @@ export function SidePanel({
   onSelectMap,
   onRetargetEdge,
   onDeleteEdge,
+  width,
 }: Props) {
   return (
-    <aside className="side-panel">
+    <aside className="side-panel" style={{ width, minWidth: width }}>
       {selection === null && (
         <div className="panel-hint">
           <h2>Map Editor</h2>

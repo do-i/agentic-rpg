@@ -15,6 +15,8 @@ interface Props {
   source: MapNodeInfo;
   target: MapNodeInfo;
   allEdges: PortalEdgeInfo[];
+  // Prefilled door tile (set when the drag started from a portal marker).
+  initialSourceTile: [number, number] | null;
   onCancel: () => void;
   onCreate: (
     request: CreatePortalRequest,
@@ -34,8 +36,17 @@ function portalMarkers(mapId: string, edges: PortalEdgeInfo[], mapSize: [number,
     }));
 }
 
-export function PortalDialog({ source, target, allEdges, onCancel, onCreate }: Props) {
-  const [sourceTile, setSourceTile] = useState<[number, number] | null>(null);
+export function PortalDialog({
+  source,
+  target,
+  allEdges,
+  initialSourceTile,
+  onCancel,
+  onCreate,
+}: Props) {
+  const [sourceTile, setSourceTile] = useState<[number, number] | null>(
+    initialSourceTile,
+  );
   const [targetTile, setTargetTile] = useState<[number, number] | null>(null);
   const [reciprocal, setReciprocal] = useState(true);
 
